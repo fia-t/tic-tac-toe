@@ -43,11 +43,21 @@ export const findWinningCell = (grid: Grid3, symbol: string): [number, number] |
 };
 
 // Позиційний вибір клітинки, коли немає негайного виграшу чи блоку: центр > кут > край.
+// Коли доступні і центр, і кут - обираємо випадково між ними, а не завжди центр,
+// інакше ШІ щоразу відкриває порожнє поле однаково й стає передбачуваним.
 export const pickHeuristicCell = (grid: Grid3): [number, number] | null => {
-    if (grid[1][1] === null) return [1, 1];
-
     const corners: [number, number][] = [[0, 0], [0, 2], [2, 0], [2, 2]];
     const openCorners = corners.filter(([r, c]) => grid[r][c] === null);
+    const isCenterOpen = grid[1][1] === null;
+
+    if (isCenterOpen && openCorners.length > 0) {
+        return Math.random() < 0.5
+            ? [1, 1]
+            : openCorners[Math.floor(Math.random() * openCorners.length)];
+    }
+
+    if (isCenterOpen) return [1, 1];
+
     if (openCorners.length > 0) {
         return openCorners[Math.floor(Math.random() * openCorners.length)];
     }
