@@ -4,6 +4,7 @@ import {
     Title,
     Popup,
     Overlay,
+    GameLayout,
     ButtonContainer,
     Button,
     RestartIcon,
@@ -232,50 +233,52 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                 </>
             )}
 
-            <UltimateBoardContainer>
-                {boards.map((miniGrid, boardIndex) => {
-                    const result = miniResults[boardIndex];
-                    const isActive =
-                        !isGameOver &&
-                        currentTurn === "player" &&
-                        result === null &&
-                        (activeBoard === null || activeBoard === boardIndex);
+            <GameLayout>
+                <UltimateBoardContainer>
+                    {boards.map((miniGrid, boardIndex) => {
+                        const result = miniResults[boardIndex];
+                        const isActive =
+                            !isGameOver &&
+                            currentTurn === "player" &&
+                            result === null &&
+                            (activeBoard === null || activeBoard === boardIndex);
 
-                    return (
-                        <MiniBoardWrapper key={boardIndex} $isActive={isActive} $isLocked={result !== null}>
-                            {miniGrid.flat().map((cell, cellIndex) => {
-                                const row = Math.floor(cellIndex / 3);
-                                const col = cellIndex % 3;
-                                return (
-                                    <MiniCell
-                                        key={cellIndex}
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleCellClick(boardIndex, row, col);
-                                        }}
-                                    >
-                                        {cell && <img src={cell} alt="marker" style={{ width: "32px", height: "32px" }} />}
-                                    </MiniCell>
-                                );
-                            })}
-                            {result && (
-                                <MiniBoardResultOverlay>
-                                    {result === "draw" ? (
-                                        <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
-                                    ) : (
-                                        <img
-                                            src={result === "X" ? PLAYER_MARKER : AI_MARKER}
-                                            alt={result}
-                                            style={{ width: "90px", height: "90px" }}
-                                        />
-                                    )}
-                                </MiniBoardResultOverlay>
-                            )}
-                        </MiniBoardWrapper>
-                    );
-                })}
+                        return (
+                            <MiniBoardWrapper key={boardIndex} $isActive={isActive} $isLocked={result !== null}>
+                                {miniGrid.flat().map((cell, cellIndex) => {
+                                    const row = Math.floor(cellIndex / 3);
+                                    const col = cellIndex % 3;
+                                    return (
+                                        <MiniCell
+                                            key={cellIndex}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleCellClick(boardIndex, row, col);
+                                            }}
+                                        >
+                                            {cell && <img src={cell} alt="marker" style={{ width: "70%", height: "70%", objectFit: "contain" }} />}
+                                        </MiniCell>
+                                    );
+                                })}
+                                {result && (
+                                    <MiniBoardResultOverlay>
+                                        {result === "draw" ? (
+                                            <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
+                                        ) : (
+                                            <img
+                                                src={result === "X" ? PLAYER_MARKER : AI_MARKER}
+                                                alt={result}
+                                                style={{ width: "55%", height: "55%", objectFit: "contain" }}
+                                            />
+                                        )}
+                                    </MiniBoardResultOverlay>
+                                )}
+                            </MiniBoardWrapper>
+                        );
+                    })}
+                </UltimateBoardContainer>
 
-                <ButtonContainer style={{ position: "absolute", top: "10px", right: "10px" }}>
+                <ButtonContainer>
                     <Button onClick={restartUltimateGame}>
                         <RestartIcon src="/images/reload.png" alt="Restart" />
                     </Button>
@@ -286,7 +289,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                         <DifficultIcon src="/images/difficult.png" alt="Difficult" />
                     </Button>
                 </ButtonContainer>
-            </UltimateBoardContainer>
+            </GameLayout>
         </div>
     );
 };

@@ -1,67 +1,101 @@
 "use client";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
+
+// Базовий скид, щоб відсоткові/vw-розміри рахувались від реального
+// розміру екрана телефона, а не від дефолтних відступів браузера.
+export const GlobalStyle = createGlobalStyle`
+    * {
+        box-sizing: border-box;
+    }
+    html, body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+    }
+`;
 
 export const Container = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-image: url('/images/background-image.jpg');
-  background-size: cover;
-  background-position: center;
-  color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+    padding: 16px;
+    background-image: url('/images/background-image.jpg');
+    background-size: cover;
+    background-position: center;
+    color: white;
 `;
 
 // Додаємо стиль для заголовка
 export const Title = styled.h1`
-    margin-bottom: 20px;
+    margin-bottom: clamp(12px, 3vw, 20px);
     color: #8B4513;  // Використовуємо колір ліній у клітинках
-    font-size: 28px;
+    font-size: clamp(20px, 6vw, 28px);
     font-weight: bold;
     text-align: center;
 `;
 
+// Розташовує ігрове поле та панель кнопок: збоку одне від одного на широких
+// екранах, одне під одним - на екрані смартфона.
+export const GameLayout = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
 
-// Стилі для ігрового контейнера
+    @media (max-width: 640px) {
+        flex-direction: column;
+        gap: 12px;
+    }
+`;
+
+// Стилі для ігрового контейнера.
+// Розмір поля - у vw з обмеженням зверху, тому воно вписується в екран
+// будь-якого смартфона (Android/iPhone), лишаючись 480px на планшетах/десктопі.
 export const BoardContainer = styled.div`
-    width: 700px;
-    height: 500px;
+    width: min(92vw, 480px);
+    aspect-ratio: 1 / 1;
     background: url('/images/sand.png') no-repeat center/cover;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(3, 160px);
-    grid-template-rows: repeat(3, 160px);
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
     gap: 0;
     padding: 10px;
     box-sizing: border-box;
-    justify-content: start;
-    align-content: center;
 `;
 
 export const Cell = styled.div<{ $borderStyle?: string }>`
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 160px;
-    height: 160px;
+    width: 100%;
+    height: 100%;
     background-color: transparent;
     ${({ $borderStyle }) => $borderStyle};
-    font-size: 60px;
-    font-weight: bold;
     cursor: pointer;
+    touch-action: manipulation;
 `;
 
 export const ButtonContainer = styled.div`
-    position: absolute;
-    top: 50px;
-    right: 50px;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* Відстань між кнопками */
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    @media (max-width: 640px) {
+        flex-direction: row;
+    }
 `;
 
 export const Button = styled.button`
     width: 70px;
     height: 70px;
+    flex-shrink: 0;
     background-color: #67584b;
     border: none;
     border-radius: 15px;
@@ -70,6 +104,7 @@ export const Button = styled.button`
     align-items: center;
     justify-content: center;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    touch-action: manipulation;
 
     &:hover {
         background-color: rgb(152, 119, 88);
@@ -77,31 +112,30 @@ export const Button = styled.button`
     }
 `;
 
-export const RestartIcon = styled.img`
+// Іконки кнопок однакові за стилем - оголошуємо раз і перевикористовуємо,
+// щоб не тримати три ідентичні styled-компоненти.
+const ControlIcon = styled.img`
     width: 24px;
     height: 24px;
 `;
-export const TraditionalIcon = styled.img`
-    width: 24px;
-    height: 24px;
-`;
-export const DifficultIcon = styled.img`
-    width: 24px;
-    height: 24px;
-`;
+export const RestartIcon = ControlIcon;
+export const TraditionalIcon = ControlIcon;
+export const DifficultIcon = ControlIcon;
 
 export const Popup = styled.div<{ $result: string }>`
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    max-width: 90vw;
+    box-sizing: border-box;
     background: ${({ $result }) => ($result === "win" ? "#4CAF50" : $result === "lose" ? "#F44336" : "#FF9800")};
     color: white;
-    padding: 20px;
+    padding: clamp(14px, 4vw, 20px);
     border-radius: 10px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
     text-align: center;
-    font-size: 24px;
+    font-size: clamp(18px, 5vw, 24px);
     z-index: 1000;
     cursor: pointer;
 `;
@@ -132,24 +166,22 @@ export const borderStyles = [
 // --- Стилі для Ultimate Tic-Tac-Toe (режим "Складний") ---
 
 export const UltimateBoardContainer = styled.div`
-    width: 700px;
-    height: 500px;
+    width: min(92vw, 460px);
+    aspect-ratio: 1 / 1;
     background: url('/images/sand.png') no-repeat center/cover;
     position: relative;
     display: grid;
-    grid-template-columns: repeat(3, 148px);
-    grid-template-rows: repeat(3, 148px);
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap: 6px;
     padding: 10px;
     box-sizing: border-box;
-    justify-content: start;
-    align-content: center;
 `;
 
 export const MiniBoardWrapper = styled.div<{ $isActive: boolean; $isLocked: boolean }>`
     position: relative;
-    width: 148px;
-    height: 148px;
+    width: 100%;
+    height: 100%;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
@@ -164,8 +196,11 @@ export const MiniCell = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 100%;
     border: 1px solid rgba(139, 69, 19, 0.5);
     cursor: pointer;
+    touch-action: manipulation;
 `;
 
 export const MiniBoardResultOverlay = styled.div`
@@ -179,7 +214,7 @@ export const MiniBoardResultOverlay = styled.div`
 `;
 
 export const MiniBoardDrawLabel = styled.span`
-    font-size: 48px;
+    font-size: clamp(24px, 9vw, 48px);
     font-weight: bold;
     color: #f5f5f5;
 `;
