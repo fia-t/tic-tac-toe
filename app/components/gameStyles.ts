@@ -27,15 +27,6 @@ export const Container = styled.div`
     color: white;
 `;
 
-// Додаємо стиль для заголовка
-export const Title = styled.h1`
-    margin-bottom: clamp(12px, 3vw, 20px);
-    color: #8B4513;  // Використовуємо колір ліній у клітинках
-    font-size: clamp(20px, 6vw, 28px);
-    font-weight: bold;
-    text-align: center;
-`;
-
 // Розташовує ігрове поле та панель кнопок: збоку одне від одного на широких
 // екранах, одне під одним - на екрані смартфона.
 export const GameLayout = styled.div`

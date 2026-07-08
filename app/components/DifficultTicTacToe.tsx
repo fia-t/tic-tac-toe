@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from "react";
 import {
-    Title,
     Popup,
     Overlay,
     GameLayout,
@@ -213,8 +212,6 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <Title>Ultimate Tic-Tac-Toe</Title>
-
             {winner && showResultPopup && (
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />

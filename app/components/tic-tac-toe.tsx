@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { Board } from "./board";
-import { Title, Popup, Overlay } from "@/app/components/gameStyles";
+import { Popup, Overlay } from "@/app/components/gameStyles";
 import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
 import {
     Grid3,
@@ -115,8 +115,6 @@ export const TicTacToe = () => {
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <Title>Tic-Tac-Toe</Title>
-
             {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
             {winner && showResultPopup && (
                 <>
