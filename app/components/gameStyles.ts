@@ -115,8 +115,9 @@ export const Button = styled.button`
 // Іконки кнопок однакові за стилем - оголошуємо раз і перевикористовуємо,
 // щоб не тримати три ідентичні styled-компоненти.
 const ControlIcon = styled.img`
-    width: 24px;
-    height: 24px;
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
 `;
 export const RestartIcon = ControlIcon;
 export const TraditionalIcon = ControlIcon;
