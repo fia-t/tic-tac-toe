@@ -83,37 +83,42 @@ export const ButtonContainer = styled.div`
     }
 `;
 
+// Теплі піщано-бежеві "3D-плитки": квадратні кнопки з великим заокругленням,
+// без білої обводки, трохи випуклі назовні - м'яка тінь знизу/справа
+// (темніший піщаний відтінок) і легкий highlight зверху/зліва. Фон під
+// кнопкою лишається прозорим - об'єм дає лише сама плитка.
 export const Button = styled.button`
     width: 70px;
     height: 70px;
     flex-shrink: 0;
-    background-color: #67584b;
     border: none;
-    border-radius: 15px;
+    border-radius: 22px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    background: transparent;
+    background-image: linear-gradient(155deg, #f5e0b6 0%, #ecd1a1 45%, #dfbd89 100%);
+    box-shadow:
+        4px 5px 9px rgba(101, 72, 35, 0.35),
+        -3px -3px 7px rgba(255, 250, 235, 0.55),
+        inset 1px 1px 1px rgba(255, 255, 255, 0.45),
+        inset -2px -3px 5px rgba(148, 108, 58, 0.25);
     touch-action: manipulation;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 
     &:hover {
-        background-color: rgb(152, 119, 88);
-        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+
+    &:active {
+        transform: translateY(1px) scale(0.97);
+        box-shadow:
+            2px 2px 5px rgba(101, 72, 35, 0.35),
+            -1px -1px 3px rgba(255, 250, 235, 0.45),
+            inset 2px 3px 6px rgba(148, 108, 58, 0.35);
     }
 `;
-
-// Іконки кнопок однакові за стилем - оголошуємо раз і перевикористовуємо,
-// щоб не тримати три ідентичні styled-компоненти.
-const ControlIcon = styled.img`
-    display: block;
-    width: 65%;
-    height: 65%;
-    object-fit: contain;
-`;
-export const RestartIcon = ControlIcon;
-export const TraditionalIcon = ControlIcon;
-export const DifficultIcon = ControlIcon;
 
 export const Popup = styled.div<{ $result: string }>`
     position: fixed;
