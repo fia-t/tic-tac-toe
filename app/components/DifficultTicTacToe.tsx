@@ -17,6 +17,7 @@ import {
     MiniBoardDrawLabel,
 } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
+import { trackEvent } from "@/app/lib/firebase";
 import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
 import {
     Grid3,
@@ -157,12 +158,14 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
         if (metaWinner) {
             setWinner(metaWinner);
             setShowResultPopup(true);
+            trackEvent("game_finished", { mode: "hard", result: metaWinner === "X" ? "win" : "lose" });
             return;
         }
 
         if (metaDraw) {
             setIsDraw(true);
             setShowResultPopup(true);
+            trackEvent("game_finished", { mode: "hard", result: "draw" });
             return;
         }
 
@@ -211,6 +214,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
         setWinner(null);
         setIsDraw(false);
         setShowResultPopup(false);
+        trackEvent("game_restart", { mode: "hard" });
     };
 
     return (
@@ -286,19 +290,37 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                         <ControlIcon src="/images/reload.png" alt="Restart" />
                     </Button>
                     <ButtonWithTooltip>
-                        <Button onClick={() => setGameMode("traditional")} aria-label="Easy">
+                        <Button
+                            onClick={() => {
+                                trackEvent("select_mode", { mode: "easy" });
+                                setGameMode("traditional");
+                            }}
+                            aria-label="Easy"
+                        >
                             <ControlIcon src="/images/traditional.png" alt="Easy" />
                         </Button>
                         <Tooltip>Easy</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
-                        <Button onClick={() => setGameMode("difficult")} aria-label="Hard">
+                        <Button
+                            onClick={() => {
+                                trackEvent("select_mode", { mode: "hard" });
+                                setGameMode("difficult");
+                            }}
+                            aria-label="Hard"
+                        >
                             <ControlIcon src="/images/difficult.png" alt="Hard" />
                         </Button>
                         <Tooltip>Hard</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
-                        <Button onClick={() => setIsFriendModalOpen(true)} aria-label="Play with a friend">
+                        <Button
+                            onClick={() => {
+                                trackEvent("friend_modal_open", { from: "hard" });
+                                setIsFriendModalOpen(true);
+                            }}
+                            aria-label="Play with a friend"
+                        >
                             <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
                         </Button>
                         <Tooltip>Friend</Tooltip>

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GameLayout, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
+import { trackEvent } from "@/app/lib/firebase";
 
 type BoardProps = {
     board: (string | null)[][];
@@ -37,19 +38,37 @@ export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, s
                     <ControlIcon src="/images/reload.png" alt="Restart" />
                 </Button>
                 <ButtonWithTooltip>
-                    <Button onClick={() => setGameMode("traditional")} aria-label="Easy">
+                    <Button
+                        onClick={() => {
+                            trackEvent("select_mode", { mode: "easy" });
+                            setGameMode("traditional");
+                        }}
+                        aria-label="Easy"
+                    >
                         <ControlIcon src="/images/traditional.png" alt="Easy" />
                     </Button>
                     <Tooltip>Easy</Tooltip>
                 </ButtonWithTooltip>
                 <ButtonWithTooltip>
-                    <Button onClick={() => setGameMode("difficult")} aria-label="Hard">
+                    <Button
+                        onClick={() => {
+                            trackEvent("select_mode", { mode: "hard" });
+                            setGameMode("difficult");
+                        }}
+                        aria-label="Hard"
+                    >
                         <ControlIcon src="/images/difficult.png" alt="Hard" />
                     </Button>
                     <Tooltip>Hard</Tooltip>
                 </ButtonWithTooltip>
                 <ButtonWithTooltip>
-                    <Button onClick={() => setIsFriendModalOpen(true)} aria-label="Play with a friend">
+                    <Button
+                        onClick={() => {
+                            trackEvent("friend_modal_open", { from: "easy" });
+                            setIsFriendModalOpen(true);
+                        }}
+                        aria-label="Play with a friend"
+                    >
                         <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
                     </Button>
                     <Tooltip>Friend</Tooltip>

@@ -11,7 +11,7 @@ import {
     Unsubscribe,
 } from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
-import { getFirebaseAuth, getFirebaseDb } from "@/app/lib/firebase";
+import { getFirebaseAuth, getFirebaseDb, trackEvent } from "@/app/lib/firebase";
 import {
     OnlineGameMode,
     BOARD_SIZE,
@@ -102,6 +102,7 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
         });
+        trackEvent("online_room_created", { gameMode });
         return { roomId, symbol: "X" };
     }
 
@@ -154,6 +155,8 @@ export const joinRoom = async (
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
         });
+
+        if (symbol === "O") trackEvent("online_room_joined", { gameMode: room.gameMode });
 
         return { symbol, gameMode: room.gameMode };
     });
@@ -235,8 +238,10 @@ export const requestRematch = async (roomId: string, symbol: PlayerSymbol): Prom
                 lastActivity: serverTimestamp(),
                 expiresAt: expiresAtTimestamp(),
             });
+            trackEvent("online_rematch_started", { gameMode: room.gameMode });
         } else {
             tx.update(ref, { rematch, lastActivity: serverTimestamp(), expiresAt: expiresAtTimestamp() });
+            trackEvent("online_rematch_requested", { gameMode: room.gameMode });
         }
     });
 };

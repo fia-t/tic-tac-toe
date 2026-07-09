@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
     OnlineLayout,
     OnlineBoardContainer,
@@ -10,6 +10,7 @@ import {
 } from "@/app/components/onlineStyles";
 import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@/app/lib/onlineGame";
 import { BOARD_SIZE } from "@/app/components/onlineGameLogic";
+import { trackEvent } from "@/app/lib/firebase";
 
 const MARKER_SRC: Record<PlayerSymbol, string> = {
     X: "/images/x-marker-2.png",
@@ -45,6 +46,20 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     const opponentSymbol: PlayerSymbol = mySymbol === "X" ? "O" : "X";
     const myRematchReady = room.rematch[mySymbol];
     const opponentRematchReady = room.rematch[opponentSymbol];
+
+    // Трек завершення партії - лише один раз за перехід у "finished"
+    // (сам room.status може ще кілька разів оновитись, поки триває реванш-очікування).
+    const trackedFinishRef = useRef(false);
+    useEffect(() => {
+        if (isFinished && !trackedFinishRef.current) {
+            trackedFinishRef.current = true;
+            trackEvent("online_game_finished", {
+                gameMode: room.gameMode,
+                result: room.winner === "draw" ? "draw" : room.winner === mySymbol ? "win" : "loss",
+            });
+        }
+        if (!isFinished) trackedFinishRef.current = false;
+    }, [isFinished, room.gameMode, room.winner, mySymbol]);
 
     return (
         <OnlineLayout>

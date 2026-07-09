@@ -62,7 +62,8 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => 
         try {
             const { roomId } = await createRoom(mode);
             router.push(`/play/${roomId}`);
-        } catch {
+        } catch (err) {
+            console.error("createRoom failed:", err);
             setError("Не вдалося створити кімнату. Спробуйте ще раз.");
             setLoading(false);
         }

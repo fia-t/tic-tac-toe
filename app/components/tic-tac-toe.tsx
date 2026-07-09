@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { Board } from "./board";
 import { Popup, Overlay } from "@/app/components/gameStyles";
 import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
+import { trackEvent } from "@/app/lib/firebase";
 import {
     Grid3,
     createEmptyGrid,
@@ -63,12 +64,14 @@ export const TicTacToe = () => {
         if (newWinner) {
             setWinner(newWinner);
             setShowResultPopup(true);
+            trackEvent("game_finished", { mode: "easy", result: newWinner === "X" ? "win" : "lose" });
             return;
         }
 
         if (isGridFull(updatedPlayerBoard)) {
             setIsNoWinner(true);
             setShowResultPopup(true);
+            trackEvent("game_finished", { mode: "easy", result: "draw" });
             return;
         }
 
@@ -94,9 +97,11 @@ export const TicTacToe = () => {
             if (winnerAfterAI) {
                 setWinner(winnerAfterAI);
                 setShowResultPopup(true);
+                trackEvent("game_finished", { mode: "easy", result: winnerAfterAI === "X" ? "win" : "lose" });
             } else if (isGridFull(updatedBoardAfterAI)) {
                 setIsNoWinner(true);
                 setShowResultPopup(true);
+                trackEvent("game_finished", { mode: "easy", result: "draw" });
             }
         }, 500);
     };
@@ -107,6 +112,7 @@ export const TicTacToe = () => {
         setIsNoWinner(false);
         setIsAiTurn(false);
         setShowResultPopup(false);
+        trackEvent("game_restart", { mode: "easy" });
     };
 
     if (gameMode === "difficult") {
