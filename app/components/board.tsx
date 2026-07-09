@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { GameLayout, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@/app/components/gameStyles";
+import { FriendGameModal } from "@/app/components/FriendGameModal";
 
 type BoardProps = {
     board: (string | null)[][];
@@ -9,6 +10,7 @@ type BoardProps = {
 };
 
 export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode   }) => {
+    const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
 
     return (
         <GameLayout>
@@ -46,7 +48,15 @@ export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, s
                     </Button>
                     <Tooltip>Hard</Tooltip>
                 </ButtonWithTooltip>
+                <ButtonWithTooltip>
+                    <Button onClick={() => setIsFriendModalOpen(true)} aria-label="Play with a friend">
+                        <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
+                    </Button>
+                    <Tooltip>Friend</Tooltip>
+                </ButtonWithTooltip>
             </ButtonContainer>
+
+            {isFriendModalOpen && <FriendGameModal onClose={() => setIsFriendModalOpen(false)} />}
         </GameLayout>
     );
 };

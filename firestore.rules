@@ -1,0 +1,45 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /rooms/{roomId} {
+
+      // Читати кімнату може будь-хто автентифікований (анонімна авторизація теж
+      // рахується) - потрібно, щоб гравець, який щойно перейшов за посиланням,
+      // міг перевірити її статус ще до приєднання.
+      allow get: if request.auth != null;
+
+      // Перелік/пошук усіх кімнат заборонений - доступ лише за відомим roomId
+      // (з посилання-запрошення), щоб чужі кімнати не можна було перебрати.
+      allow list: if false;
+
+      allow create: if request.auth != null && isValidNewRoom(request.resource.data);
+
+      allow update: if request.auth != null &&
+        (isExistingPlayer(resource.data, request.auth.uid) || isJoiningOpenSlot(resource.data, request.resource.data));
+
+      allow delete: if false; // прибирання застарілих кімнат - через Firestore TTL, не з клієнта
+    }
+  }
+
+  function isValidNewRoom(data) {
+    return data.gameMode in ['3x3', '5x5']
+      && data.status == 'waiting'
+      && data.winner == null
+      && data.players.X.uid == request.auth.uid
+      && !('O' in data.players);
+  }
+
+  function isExistingPlayer(data, uid) {
+    return (('X' in data.players) && data.players.X.uid == uid)
+      || (('O' in data.players) && data.players.O.uid == uid);
+  }
+
+  // Дозволяє записати себе в кімнату лише на дійсно вільне місце O
+  // (X уже зайнятий кимось іншим, O ще нікому не належить).
+  function isJoiningOpenSlot(before, after) {
+    return ('X' in before.players) && !('O' in before.players)
+      && ('O' in after.players) && after.players.O.uid == request.auth.uid;
+  }
+}

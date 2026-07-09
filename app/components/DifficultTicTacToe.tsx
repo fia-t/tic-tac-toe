@@ -16,6 +16,7 @@ import {
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
 } from "@/app/components/gameStyles";
+import { FriendGameModal } from "@/app/components/FriendGameModal";
 import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
 import {
     Grid3,
@@ -114,6 +115,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
     const [winner, setWinner] = useState<"X" | "O" | null>(null);
     const [isDraw, setIsDraw] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
+    const [isFriendModalOpen, setIsFriendModalOpen] = useState<boolean>(false);
 
     const isGameOver = winner !== null || isDraw;
 
@@ -295,7 +297,15 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                         </Button>
                         <Tooltip>Hard</Tooltip>
                     </ButtonWithTooltip>
+                    <ButtonWithTooltip>
+                        <Button onClick={() => setIsFriendModalOpen(true)} aria-label="Play with a friend">
+                            <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
+                        </Button>
+                        <Tooltip>Friend</Tooltip>
+                    </ButtonWithTooltip>
                 </ButtonContainer>
+
+                {isFriendModalOpen && <FriendGameModal onClose={() => setIsFriendModalOpen(false)} />}
             </GameLayout>
         </div>
     );
