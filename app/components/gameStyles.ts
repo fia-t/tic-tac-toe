@@ -117,6 +117,50 @@ export const ControlIcon = styled.img`
     object-fit: contain;
 `;
 
+// Обгортка для кнопки з тултіпом - позиціонує підказку відносно самої кнопки.
+export const ButtonWithTooltip = styled.div`
+    position: relative;
+    display: inline-flex;
+`;
+
+// Підказка виводиться праворуч від кнопки в тому ж пісочно-бежевому стилі,
+// з маленьким "хвостиком", що вказує на кнопку.
+export const Tooltip = styled.span`
+    position: absolute;
+    left: calc(100% + 12px);
+    top: 50%;
+    transform: translateY(-50%) translateX(-4px);
+    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
+    color: #6b4a25;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 10px;
+    white-space: nowrap;
+    box-shadow:
+        3px 3px 6px rgba(101, 72, 35, 0.3),
+        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 10;
+
+    &::before {
+        content: "";
+        position: absolute;
+        right: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        border: 6px solid transparent;
+        border-right-color: #eecf9c;
+    }
+
+    ${ButtonWithTooltip}:hover & {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+`;
+
 export const Popup = styled.div<{ $result: string }>`
     position: fixed;
     top: 50%;

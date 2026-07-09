@@ -7,6 +7,8 @@ import {
     ButtonContainer,
     Button,
     ControlIcon,
+    ButtonWithTooltip,
+    Tooltip,
     UltimateBoardContainer,
     MiniBoardWrapper,
     MiniCell,
@@ -281,12 +283,18 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                     <Button onClick={restartUltimateGame} aria-label="Restart">
                         <ControlIcon src="/images/reload.png" alt="Restart" />
                     </Button>
-                    <Button onClick={() => setGameMode("traditional")} aria-label="Easy">
-                        <ControlIcon src="/images/traditional.png" alt="Easy" />
-                    </Button>
-                    <Button onClick={() => setGameMode("difficult")} aria-label="Hard">
-                        <ControlIcon src="/images/difficult.png" alt="Hard" />
-                    </Button>
+                    <ButtonWithTooltip>
+                        <Button onClick={() => setGameMode("traditional")} aria-label="Easy">
+                            <ControlIcon src="/images/traditional.png" alt="Easy" />
+                        </Button>
+                        <Tooltip>Easy</Tooltip>
+                    </ButtonWithTooltip>
+                    <ButtonWithTooltip>
+                        <Button onClick={() => setGameMode("difficult")} aria-label="Hard">
+                            <ControlIcon src="/images/difficult.png" alt="Hard" />
+                        </Button>
+                        <Tooltip>Hard</Tooltip>
+                    </ButtonWithTooltip>
                 </ButtonContainer>
             </GameLayout>
         </div>
