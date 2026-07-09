@@ -171,7 +171,7 @@ export const UltimateBoardContainer = styled.div`
     box-sizing: border-box;
 `;
 
-export const MiniBoardWrapper = styled.div<{ $isActive: boolean; $isLocked: boolean }>`
+export const MiniBoardWrapper = styled.div<{ $isActive: boolean }>`
     position: relative;
     width: 100%;
     height: 100%;
@@ -182,7 +182,6 @@ export const MiniBoardWrapper = styled.div<{ $isActive: boolean; $isLocked: bool
     background-color: rgba(255, 255, 255, 0.08);
     border: 3px solid ${({ $isActive }) => ($isActive ? "#FFD700" : "#8B4513")};
     box-shadow: ${({ $isActive }) => ($isActive ? "0 0 8px 2px rgba(255, 215, 0, 0.8)" : "none")};
-    opacity: ${({ $isLocked }) => ($isLocked ? 0.55 : 1)};
 `;
 
 export const MiniCell = styled.div`
@@ -196,14 +195,27 @@ export const MiniCell = styled.div`
     touch-action: manipulation;
 `;
 
+// Затемнення завершеного (виграного або нічийного) міні-поля.
+// Окремий шар МІЖ сіткою клітинок і зображенням переможця - тому
+// саме зображення переможця на нього не зважає і лишається чітким.
+export const MiniBoardDimOverlay = styled.div`
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+    z-index: 1;
+`;
+
+// Зображення переможця (або "нічия") - завжди поверх затемнення,
+// тому не тьмяніє разом з рештою заблокованого поля.
 export const MiniBoardResultOverlay = styled.div`
     position: absolute;
     inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.35);
     pointer-events: none;
+    z-index: 2;
 `;
 
 export const MiniBoardDrawLabel = styled.span`

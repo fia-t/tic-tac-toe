@@ -12,6 +12,7 @@ import {
     UltimateBoardContainer,
     MiniBoardWrapper,
     MiniCell,
+    MiniBoardDimOverlay,
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
 } from "@/app/components/gameStyles";
@@ -241,7 +242,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                             (activeBoard === null || activeBoard === boardIndex);
 
                         return (
-                            <MiniBoardWrapper key={boardIndex} $isActive={isActive} $isLocked={result !== null}>
+                            <MiniBoardWrapper key={boardIndex} $isActive={isActive}>
                                 {miniGrid.flat().map((cell, cellIndex) => {
                                     const row = Math.floor(cellIndex / 3);
                                     const col = cellIndex % 3;
@@ -258,17 +259,20 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                                     );
                                 })}
                                 {result && (
-                                    <MiniBoardResultOverlay>
-                                        {result === "draw" ? (
-                                            <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
-                                        ) : (
-                                            <img
-                                                src={result === "X" ? PLAYER_MARKER : AI_MARKER}
-                                                alt={result}
-                                                style={{ width: "55%", height: "55%", objectFit: "contain" }}
-                                            />
-                                        )}
-                                    </MiniBoardResultOverlay>
+                                    <>
+                                        <MiniBoardDimOverlay />
+                                        <MiniBoardResultOverlay>
+                                            {result === "draw" ? (
+                                                <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
+                                            ) : (
+                                                <img
+                                                    src={result === "X" ? PLAYER_MARKER : AI_MARKER}
+                                                    alt={result}
+                                                    style={{ width: "55%", height: "55%", objectFit: "contain" }}
+                                                />
+                                            )}
+                                        </MiniBoardResultOverlay>
+                                    </>
                                 )}
                             </MiniBoardWrapper>
                         );
