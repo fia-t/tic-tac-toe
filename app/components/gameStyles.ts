@@ -83,10 +83,8 @@ export const ButtonContainer = styled.div`
     }
 `;
 
-// Теплі піщано-бежеві "3D-плитки": квадратні кнопки з великим заокругленням,
-// без білої обводки, трохи випуклі назовні - м'яка тінь знизу/справа
-// (темніший піщаний відтінок) і легкий highlight зверху/зліва. Фон під
-// кнопкою лишається прозорим - об'єм дає лише сама плитка.
+// Кнопка - лише прозора рамка-обгортка: сам вигляд (пісочна плитка,
+// заокруглення, тінь, рельєф) уже намальований у PNG-іконці всередині.
 export const Button = styled.button`
     width: 70px;
     height: 70px;
@@ -98,14 +96,8 @@ export const Button = styled.button`
     align-items: center;
     justify-content: center;
     background: transparent;
-    background-image: linear-gradient(155deg, #f5e0b6 0%, #ecd1a1 45%, #dfbd89 100%);
-    box-shadow:
-        4px 5px 9px rgba(101, 72, 35, 0.35),
-        -3px -3px 7px rgba(255, 250, 235, 0.55),
-        inset 1px 1px 1px rgba(255, 255, 255, 0.45),
-        inset -2px -3px 5px rgba(148, 108, 58, 0.25);
     touch-action: manipulation;
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    transition: transform 0.15s ease;
 
     &:hover {
         transform: translateY(-1px);
@@ -113,11 +105,16 @@ export const Button = styled.button`
 
     &:active {
         transform: translateY(1px) scale(0.97);
-        box-shadow:
-            2px 2px 5px rgba(101, 72, 35, 0.35),
-            -1px -1px 3px rgba(255, 250, 235, 0.45),
-            inset 2px 3px 6px rgba(148, 108, 58, 0.35);
     }
+`;
+
+// Іконки кнопок - самі PNG вже мають вигляд готової пісочної 3D-плитки,
+// тож рендеримо їх на весь розмір кнопки без додаткового фону/рамки.
+export const ControlIcon = styled.img`
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 `;
 
 export const Popup = styled.div<{ $result: string }>`

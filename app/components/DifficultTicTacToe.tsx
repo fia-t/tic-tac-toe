@@ -6,6 +6,7 @@ import {
     GameLayout,
     ButtonContainer,
     Button,
+    ControlIcon,
     UltimateBoardContainer,
     MiniBoardWrapper,
     MiniCell,
@@ -13,7 +14,6 @@ import {
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
 } from "@/app/components/gameStyles";
-import { RestartIcon, EasyModeIcon, HardModeIcon } from "@/app/components/icons";
 import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
 import {
     Grid3,
@@ -279,13 +279,13 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
 
                 <ButtonContainer>
                     <Button onClick={restartUltimateGame} aria-label="Restart">
-                        <RestartIcon />
+                        <ControlIcon src="/images/reload.png" alt="Restart" />
                     </Button>
                     <Button onClick={() => setGameMode("traditional")} aria-label="Easy">
-                        <EasyModeIcon />
+                        <ControlIcon src="/images/traditional.png" alt="Easy" />
                     </Button>
                     <Button onClick={() => setGameMode("difficult")} aria-label="Hard">
-                        <HardModeIcon />
+                        <ControlIcon src="/images/difficult.png" alt="Hard" />
                     </Button>
                 </ButtonContainer>
             </GameLayout>
