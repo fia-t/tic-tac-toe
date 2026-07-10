@@ -11,6 +11,10 @@ export const GlobalStyle = createGlobalStyle`
         margin: 0;
         padding: 0;
         min-height: 100%;
+        /* Невидимий Tooltip (opacity: 0) все одно розтягує scrollWidth за
+           межі екрана на вузьких телефонах, через що vw/fixed-центрування
+           попапів (напр. "Гра з другом") зʼїжджає вбік. */
+        overflow-x: hidden;
     }
 `;
 
