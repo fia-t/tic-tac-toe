@@ -11,11 +11,7 @@ import {
 import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@/app/lib/onlineGame";
 import { BOARD_SIZE } from "@/app/components/onlineGameLogic";
 import { trackEvent } from "@/app/lib/firebase";
-
-const MARKER_SRC: Record<PlayerSymbol, string> = {
-    X: "/images/x-marker-2.png",
-    O: "/images/o-marker-2.png",
-};
+import { DEFAULT_THEME } from "@/app/lib/themes";
 
 type OnlineBoardProps = {
     roomId: string;
@@ -28,6 +24,12 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     const size = BOARD_SIZE[room.gameMode];
     const isFinished = room.status === "finished";
     const myTurn = room.status === "playing" && room.currentPlayer === mySymbol;
+    // Захист для кімнат, створених до появи тем (theme могло не бути в документі).
+    const theme = room.theme ?? DEFAULT_THEME;
+    const markerSrc: Record<PlayerSymbol, string> = {
+        X: theme.xMarkerUrl,
+        O: theme.oMarkerUrl,
+    };
 
     const handleCellClick = (index: number) => {
         if (!myTurn || room.board[index] !== null) return;
@@ -67,7 +69,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                 {isFinished ? resultLabel : myTurn ? "Ваш хід" : "Хід суперника"}
             </TurnBanner>
 
-            <OnlineBoardContainer $size={size}>
+            <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
                 {room.board.map((cell, index) => {
                     const row = Math.floor(index / size);
                     const col = index % size;
@@ -82,7 +84,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                         >
                             {cell && (
                                 <img
-                                    src={MARKER_SRC[cell as PlayerSymbol]}
+                                    src={markerSrc[cell as PlayerSymbol]}
                                     alt={cell}
                                     style={{ width: "70%", height: "70%", objectFit: "contain" }}
                                 />

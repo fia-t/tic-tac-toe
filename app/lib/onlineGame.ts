@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseDb, trackEvent } from "@/app/lib/firebase";
+import { getActiveThemes, pickRandomTheme } from "@/app/lib/themes";
 import {
     OnlineGameMode,
     BOARD_SIZE,
@@ -25,6 +26,15 @@ export type RoomStatus = "waiting" | "playing" | "finished";
 export type RoomPlayer = {
     uid: string;
     lastSeen: Timestamp | null;
+};
+
+// Знімок вибраної для цієї кімнати теми (фон + скіни X/O) - записується один
+// раз при створенні кімнати, щоб обидва гравці бачили ідентичний вигляд
+// протягом усієї партії, незалежно від подальших змін у каталозі тем.
+export type RoomTheme = {
+    backgroundUrl: string;
+    xMarkerUrl: string;
+    oMarkerUrl: string;
 };
 
 // Firestore не підтримує масив масивів, тож поле зберігається "плоским"
@@ -42,6 +52,7 @@ export type RoomDoc = {
     createdAt: Timestamp | null;
     lastActivity: Timestamp | null;
     expiresAt: Timestamp | null;
+    theme: RoomTheme;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком
@@ -81,6 +92,12 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
     const uid = await ensureAnonymousUser();
     const db = getFirebaseDb();
 
+    // Тема обирається один раз тут і записується знімком у кімнату (не
+    // themeId), щоб гра лишалась однаковою для обох гравців, навіть якщо
+    // адмін пізніше змінить/вимкне цю тему в каталозі.
+    const activeThemes = await getActiveThemes();
+    const theme = pickRandomTheme(activeThemes);
+
     for (let attempt = 0; attempt < 5; attempt++) {
         const roomId = generateRoomId();
         const ref = doc(db, roomsCollection, roomId);
@@ -101,6 +118,11 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
             createdAt: serverTimestamp(),
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
+            theme: {
+                backgroundUrl: theme.backgroundUrl,
+                xMarkerUrl: theme.xMarkerUrl,
+                oMarkerUrl: theme.oMarkerUrl,
+            },
         });
         trackEvent("online_room_created", { gameMode });
         return { roomId, symbol: "X" };

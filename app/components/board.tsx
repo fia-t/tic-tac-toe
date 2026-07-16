@@ -8,14 +8,15 @@ type BoardProps = {
     handleClick: (row: number, col: number) => void;
     restartGame: () => void;  // Додаємо пропс для перезапуску гри
     setGameMode: (mode: "traditional" | "difficult") => void;
+    backgroundUrl?: string;
 };
 
-export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode   }) => {
+export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode, backgroundUrl }) => {
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
 
     return (
         <GameLayout>
-            <BoardContainer>
+            <BoardContainer $backgroundUrl={backgroundUrl}>
                 {/* Ячейки */}
                 {board.flat().map((cell, index) => {
                     const rowIndex = Math.floor(index / 3);

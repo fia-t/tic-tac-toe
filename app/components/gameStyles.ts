@@ -50,10 +50,10 @@ export const GameLayout = styled.div`
 // Стилі для ігрового контейнера.
 // Розмір поля - у vw з обмеженням зверху, тому воно вписується в екран
 // будь-якого смартфона (Android/iPhone), лишаючись 480px на планшетах/десктопі.
-export const BoardContainer = styled.div`
+export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
     width: min(92vw, 480px);
     aspect-ratio: 1 / 1;
-    background: url('/images/sand.png') no-repeat center/cover;
+    background: url('${({ $backgroundUrl }) => $backgroundUrl || "/images/sand.png"}') no-repeat center/cover;
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -208,10 +208,10 @@ export const borderStyles = [
 
 // --- Стилі для Ultimate Tic-Tac-Toe (режим "Складний") ---
 
-export const UltimateBoardContainer = styled.div`
+export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
     width: min(92vw, 460px);
     aspect-ratio: 1 / 1;
-    background: url('/images/sand.png') no-repeat center/cover;
+    background: url('${({ $backgroundUrl }) => $backgroundUrl || "/images/sand.png"}') no-repeat center/cover;
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);

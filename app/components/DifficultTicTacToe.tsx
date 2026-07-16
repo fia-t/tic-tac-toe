@@ -18,7 +18,7 @@ import {
 } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
 import { trackEvent } from "@/app/lib/firebase";
-import { PLAYER_MARKER, AI_MARKER } from "@/app/components/markers";
+import { Theme } from "@/app/lib/themes";
 import {
     Grid3,
     createEmptyGrid,
@@ -33,16 +33,18 @@ type MetaResult = "X" | "O" | "draw" | null;
 
 type DifficultProps = {
     setGameMode: (mode: "traditional" | "difficult") => void;
+    theme: Theme;
+    themeReady: boolean;
 };
 
 // Перетворює 9 результатів малих полів у "велику" сітку 3x3,
 // щоб перевіряти перемогу на великому полі тими самими функціями, що й на малому.
-const toMetaGrid = (results: MetaResult[]): Grid3 => {
+const toMetaGrid = (results: MetaResult[], playerMarker: string, aiMarker: string): Grid3 => {
     const grid = createEmptyGrid();
     results.forEach((result, index) => {
         const row = Math.floor(index / 3);
         const col = index % 3;
-        grid[row][col] = result === "X" ? PLAYER_MARKER : result === "O" ? AI_MARKER : null;
+        grid[row][col] = result === "X" ? playerMarker : result === "O" ? aiMarker : null;
     });
     return grid;
 };
@@ -54,7 +56,9 @@ const boardOrderPreference = [4, 0, 2, 6, 8, 1, 3, 5, 7];
 const pickAiMove = (
     boards: Grid3[],
     miniResults: MetaResult[],
-    activeBoard: number | null
+    activeBoard: number | null,
+    playerMarker: string,
+    aiMarker: string
 ): [number, number, number] | null => {
     const candidateBoards =
         activeBoard !== null
@@ -68,28 +72,28 @@ const pickAiMove = (
 
     // 1. Хід, який одразу вирішує всю гру на користь ШІ
     for (const boardIndex of candidateBoards) {
-        const cell = findWinningCell(boards[boardIndex], AI_MARKER);
+        const cell = findWinningCell(boards[boardIndex], aiMarker);
         if (!cell) continue;
         const hypothetical = miniResults.map((result, index): MetaResult => (index === boardIndex ? "O" : result));
-        if (getGridWinner(toMetaGrid(hypothetical)) === AI_MARKER) {
+        if (getGridWinner(toMetaGrid(hypothetical, playerMarker, aiMarker)) === aiMarker) {
             return [boardIndex, cell[0], cell[1]];
         }
     }
 
     // 2. Виграти будь-яке мале поле
     for (const boardIndex of candidateBoards) {
-        const cell = findWinningCell(boards[boardIndex], AI_MARKER);
+        const cell = findWinningCell(boards[boardIndex], aiMarker);
         if (cell) return [boardIndex, cell[0], cell[1]];
     }
 
     // 3. Заблокувати перемогу гравця в малому полі
     for (const boardIndex of candidateBoards) {
-        const cell = findWinningCell(boards[boardIndex], PLAYER_MARKER);
+        const cell = findWinningCell(boards[boardIndex], playerMarker);
         if (cell) return [boardIndex, cell[0], cell[1]];
     }
 
     // 4. Заблокувати перемогу гравця на великому полі (у гравця 2 поля в лінії з 3)
-    const metaThreat = findWinningCell(toMetaGrid(miniResults), PLAYER_MARKER);
+    const metaThreat = findWinningCell(toMetaGrid(miniResults, playerMarker, aiMarker), playerMarker);
     if (metaThreat) {
         const threatIndex = metaThreat[0] * 3 + metaThreat[1];
         if (candidateBoards.includes(threatIndex)) {
@@ -108,7 +112,7 @@ const pickAiMove = (
     return null;
 };
 
-export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) => {
+export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady }) => {
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -117,6 +121,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
     const [isDraw, setIsDraw] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
     const [isFriendModalOpen, setIsFriendModalOpen] = useState<boolean>(false);
+
+    const playerMarker = theme.xMarkerUrl;
+    const aiMarker = theme.oMarkerUrl;
 
     const isGameOver = winner !== null || isDraw;
 
@@ -134,17 +141,17 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
         const miniWinnerMarker = getGridWinner(miniGrid);
 
         let miniResult: MetaResult = miniResultsBeforeMove[boardIndex];
-        if (miniWinnerMarker === PLAYER_MARKER) miniResult = "X";
-        else if (miniWinnerMarker === AI_MARKER) miniResult = "O";
+        if (miniWinnerMarker === playerMarker) miniResult = "X";
+        else if (miniWinnerMarker === aiMarker) miniResult = "O";
         else if (isGridFull(miniGrid)) miniResult = "draw";
 
         const updatedMiniResults = miniResultsBeforeMove.map((result, index) =>
             index === boardIndex ? miniResult : result
         );
 
-        const metaWinnerMarker = getGridWinner(toMetaGrid(updatedMiniResults));
+        const metaWinnerMarker = getGridWinner(toMetaGrid(updatedMiniResults, playerMarker, aiMarker));
         const metaWinner: "X" | "O" | null =
-            metaWinnerMarker === PLAYER_MARKER ? "X" : metaWinnerMarker === AI_MARKER ? "O" : null;
+            metaWinnerMarker === playerMarker ? "X" : metaWinnerMarker === aiMarker ? "O" : null;
         const metaDraw = !metaWinner && updatedMiniResults.every((result) => result !== null);
 
         // Наступний хід має бути в полі з таким же індексом, як клітинка щойного ходу.
@@ -174,13 +181,13 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
         if (mover === "player") {
             setCurrentTurn("ai");
             setTimeout(() => {
-                const aiMove = pickAiMove(boardsAfterMove, updatedMiniResults, nextActiveBoard);
+                const aiMove = pickAiMove(boardsAfterMove, updatedMiniResults, nextActiveBoard, playerMarker, aiMarker);
                 if (!aiMove) return;
                 const [aiBoardIndex, aiRow, aiCol] = aiMove;
 
                 const boardsAfterAiMove = boardsAfterMove.map((mini, index) =>
                     index === aiBoardIndex
-                        ? mini.map((r, ri) => r.map((cell, ci) => (ri === aiRow && ci === aiCol ? AI_MARKER : cell)))
+                        ? mini.map((r, ri) => r.map((cell, ci) => (ri === aiRow && ci === aiCol ? aiMarker : cell)))
                         : mini
                 );
 
@@ -192,14 +199,14 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
     };
 
     const handleCellClick = (boardIndex: number, row: number, col: number) => {
-        if (isGameOver || currentTurn !== "player") return;
+        if (!themeReady || isGameOver || currentTurn !== "player") return;
         if (miniResults[boardIndex] !== null) return;
         if (activeBoard !== null && activeBoard !== boardIndex) return;
         if (boards[boardIndex][row][col] !== null) return;
 
         const updatedBoards = boards.map((mini, index) =>
             index === boardIndex
-                ? mini.map((r, ri) => r.map((cell, ci) => (ri === row && ci === col ? PLAYER_MARKER : cell)))
+                ? mini.map((r, ri) => r.map((cell, ci) => (ri === row && ci === col ? playerMarker : cell)))
                 : mini
         );
 
@@ -238,7 +245,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
             )}
 
             <GameLayout>
-                <UltimateBoardContainer>
+                <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
                     {boards.map((miniGrid, boardIndex) => {
                         const result = miniResults[boardIndex];
                         const isActive =
@@ -272,7 +279,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode }) =>
                                                 <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
                                             ) : (
                                                 <img
-                                                    src={result === "X" ? PLAYER_MARKER : AI_MARKER}
+                                                    src={result === "X" ? playerMarker : aiMarker}
                                                     alt={result}
                                                     style={{ width: "55%", height: "55%", objectFit: "contain" }}
                                                 />

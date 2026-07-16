@@ -3,6 +3,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Адмін визначається виключно custom claim'ом admin: true у ID token,
+    // а не способом входу чи поштою. Claim можна встановити лише через
+    // Firebase Admin SDK (scripts/setAdminClaim.js) - жоден клієнт чи
+    // публічна Cloud Function не мають до цього доступу.
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    match /themes/{themeId} {
+      // Каталог фонів/скінів публічний на читання - його підвантажує будь-який
+      // гравець (навіть до анонімного входу) ще до старту гри.
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /rooms/{roomId} {
 
       // Читати кімнату може будь-хто автентифікований (анонімна авторизація теж

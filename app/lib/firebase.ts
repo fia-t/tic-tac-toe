@@ -2,6 +2,7 @@
 import { FirebaseApp, FirebaseOptions, getApps, initializeApp } from "firebase/app";
 import { Auth, getAuth } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
+import { FirebaseStorage, getStorage } from "firebase/storage";
 import { Analytics, getAnalytics, isSupported, logEvent } from "firebase/analytics";
 
 // Публічна (не секретна) конфігурація Firebase Web SDK - значення підставляються
@@ -21,6 +22,7 @@ export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseCon
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let storage: FirebaseStorage | null = null;
 let analytics: Analytics | null = null;
 let analyticsCheckStarted = false;
 
@@ -53,6 +55,11 @@ export const getFirebaseDb = (): Firestore => {
             : getFirestore(getFirebaseApp());
     }
     return db;
+};
+
+export const getFirebaseStorage = (): FirebaseStorage => {
+    if (!storage) storage = getStorage(getFirebaseApp());
+    return storage;
 };
 
 // Analytics працює лише в браузері й лише якщо задано measurementId (потребує
