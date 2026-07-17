@@ -46,17 +46,6 @@ const fallAndSettle = keyframes`
     }
 `;
 
-// Тінь під фішкою: маленька й бліда, поки фішка високо, витягується й
-// темнішає точно в момент удару, потім заспокоюється до м'якої "idle" тіні.
-const shadowPulse = keyframes`
-    0% { opacity: 0.08; transform: translateX(-50%) scale(0.55, 0.4); }
-    20% { opacity: 0.18; transform: translateX(-50%) scale(0.8, 0.55); }
-    28% { opacity: 0.5; transform: translateX(-50%) scale(1.2, 0.85); }
-    41% { opacity: 0.22; transform: translateX(-50%) scale(0.85, 0.65); }
-    50% { opacity: 0.35; transform: translateX(-50%) scale(1, 0.75); }
-    100% { opacity: 0.28; transform: translateX(-50%) scale(0.95, 0.7); }
-`;
-
 // Кругова хвиля - з'являється рівно в момент удару фішки об дошку.
 const ripplePulse = keyframes`
     0% { opacity: 0.35; transform: translateX(-50%) scale(0.4); }
@@ -78,25 +67,6 @@ const PieceWrapper = styled.div<{ $tx: number; $rotStart: number; $rotRest: numb
     --tx: ${(p) => p.$tx};
     --rot-start: ${(p) => p.$rotStart};
     --rot-rest: ${(p) => p.$rotRest};
-`;
-
-const PieceShadow = styled.div`
-    position: absolute;
-    left: 50%;
-    bottom: 6%;
-    width: 72%;
-    height: 22%;
-    border-radius: 50%;
-    background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 75%);
-    filter: blur(1.5px);
-    transform: translateX(-50%) scale(0.95, 0.7);
-    opacity: 0.28;
-    animation: ${shadowPulse} 680ms both;
-    pointer-events: none;
-
-    @media (prefers-reduced-motion: reduce) {
-        animation: none;
-    }
 `;
 
 const PieceRipple = styled.div`
@@ -125,7 +95,6 @@ const PieceImg = styled.img`
     object-fit: contain;
     will-change: transform, opacity;
     animation: ${fallAndSettle} 680ms both;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.25));
 
     @media (prefers-reduced-motion: reduce) {
         animation: ${reducedFade} 150ms ease-out both;
@@ -150,7 +119,6 @@ export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", class
 
     return (
         <PieceWrapper className={className} $tx={random.tx} $rotStart={random.rotStart} $rotRest={random.rotRest}>
-            <PieceShadow />
             <PieceRipple />
             <PieceImg src={src} alt={alt} draggable={false} />
         </PieceWrapper>
