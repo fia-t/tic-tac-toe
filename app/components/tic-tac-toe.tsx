@@ -46,16 +46,19 @@ export const TicTacToe = () => {
     const [gameMode, setGameMode] = useState<"traditional" | "difficult">("traditional");
     const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
     const [themeReady, setThemeReady] = useState(false);
+    const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
 
-    // Тема (фон + скіни X/O) обирається один раз на все ігрове завантаження,
-    // однакова для класичного і "складного" режимів, і не змінюється під час
-    // гри - інакше вже виставлені фішки могли б лишитись зі старим скіном.
+    // Список активних тем завантажується один раз на все ігрове завантаження.
+    // Сама тема лишається сталою, поки триває партія - інакше вже виставлені
+    // фішки могли б лишитись зі старим скіном - але при рестарті (pickNewTheme)
+    // обирається наново з цього ж списку, без повторного походу у Firestore.
     // До моменту завантаження дошка рендериться з DEFAULT_THEME і кліки
     // ігноруються (themeReady нижче), щоб не вийшло гри з "напівзмішаними" скінами.
     useEffect(() => {
         let cancelled = false;
         getActiveThemes().then((themes) => {
             if (cancelled) return;
+            setAvailableThemes(themes);
             setTheme(pickRandomTheme(themes));
             setThemeReady(true);
         });
@@ -63,6 +66,8 @@ export const TicTacToe = () => {
             cancelled = true;
         };
     }, []);
+
+    const pickNewTheme = () => setTheme(pickRandomTheme(availableThemes));
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -134,11 +139,19 @@ export const TicTacToe = () => {
         setIsNoWinner(false);
         setIsAiTurn(false);
         setShowResultPopup(false);
+        pickNewTheme();
         trackEvent("game_restart", { mode: "easy" });
     };
 
     if (gameMode === "difficult") {
-        return <DifficultTicTacToe setGameMode={setGameMode} theme={theme} themeReady={themeReady} />;
+        return (
+            <DifficultTicTacToe
+                setGameMode={setGameMode}
+                theme={theme}
+                themeReady={themeReady}
+                onRestart={pickNewTheme}
+            />
+        );
     }
 
     return (

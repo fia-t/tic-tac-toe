@@ -36,6 +36,7 @@ type DifficultProps = {
     setGameMode: (mode: "traditional" | "difficult") => void;
     theme: Theme;
     themeReady: boolean;
+    onRestart: () => void;
 };
 
 // Перетворює 9 результатів малих полів у "велику" сітку 3x3,
@@ -113,7 +114,7 @@ const pickAiMove = (
     return null;
 };
 
-export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady }) => {
+export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady, onRestart }) => {
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -222,6 +223,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
         setWinner(null);
         setIsDraw(false);
         setShowResultPopup(false);
+        onRestart();
         trackEvent("game_restart", { mode: "hard" });
     };
 
