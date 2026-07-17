@@ -17,6 +17,7 @@ import {
     MiniBoardDrawLabel,
 } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
+import { GamePiece } from "@/app/components/GamePiece";
 import { trackEvent } from "@/app/lib/firebase";
 import { Theme } from "@/app/lib/themes";
 import {
@@ -267,7 +268,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
                                                 handleCellClick(boardIndex, row, col);
                                             }}
                                         >
-                                            {cell && <img src={cell} alt="marker" style={{ width: "70%", height: "70%", objectFit: "contain" }} />}
+                                            {cell && <GamePiece src={cell} />}
                                         </MiniCell>
                                     );
                                 })}

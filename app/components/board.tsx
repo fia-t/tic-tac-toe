@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { GameLayout, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
+import { GamePiece } from "@/app/components/GamePiece";
 import { trackEvent } from "@/app/lib/firebase";
 
 type BoardProps = {
@@ -27,7 +28,7 @@ export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, s
                             $borderStyle={borderStyles[index]}
                             onClick={(e) => { e.stopPropagation(); handleClick(rowIndex, cellIndex); }}
                         >
-                            {cell && <img src={cell} alt="marker" style={{ width: "70%", height: "70%", objectFit: "contain" }} />}
+                            {cell && <GamePiece src={cell} />}
                         </Cell>
                     );
                 })}

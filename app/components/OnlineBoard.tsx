@@ -12,6 +12,7 @@ import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@/app/lib/onlin
 import { BOARD_SIZE } from "@/app/components/onlineGameLogic";
 import { trackEvent } from "@/app/lib/firebase";
 import { DEFAULT_THEME } from "@/app/lib/themes";
+import { GamePiece } from "@/app/components/GamePiece";
 
 type OnlineBoardProps = {
     roomId: string;
@@ -82,13 +83,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                             $disabled={disabled}
                             onClick={() => handleCellClick(index)}
                         >
-                            {cell && (
-                                <img
-                                    src={markerSrc[cell as PlayerSymbol]}
-                                    alt={cell}
-                                    style={{ width: "70%", height: "70%", objectFit: "contain" }}
-                                />
-                            )}
+                            {cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} />}
                         </OnlineCell>
                     );
                 })}
