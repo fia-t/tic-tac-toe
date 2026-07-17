@@ -114,7 +114,7 @@ export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", class
     const [random] = useState(() => ({
         tx: randRange(-4, 4),
         rotStart: randRange(-12, 12),
-        rotRest: randRange(-2, 2),
+        rotRest: randRange(-7, 7),
     }));
 
     return (
