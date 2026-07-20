@@ -15,11 +15,16 @@ import {
     MiniBoardDimOverlay,
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
+    ScoreBoard,
+    ScoreName,
+    ScoreValue,
+    ScoreDivider,
 } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
 import { GamePiece } from "@/app/components/GamePiece";
 import { trackEvent } from "@/app/lib/firebase";
 import { Theme } from "@/app/lib/themes";
+import { logGameResult } from "@/app/lib/gameLog";
 import {
     Grid3,
     createEmptyGrid,
@@ -37,6 +42,7 @@ type DifficultProps = {
     theme: Theme;
     themeReady: boolean;
     onRestart: () => void;
+    humanName: string | null;
 };
 
 // Перетворює 9 результатів малих полів у "велику" сітку 3x3,
@@ -114,7 +120,7 @@ const pickAiMove = (
     return null;
 };
 
-export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady, onRestart }) => {
+export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady, onRestart, humanName }) => {
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -123,6 +129,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
     const [isDraw, setIsDraw] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
     const [isFriendModalOpen, setIsFriendModalOpen] = useState<boolean>(false);
+    const [score, setScore] = useState({ ai: 0, human: 0 });
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -167,7 +174,10 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
         if (metaWinner) {
             setWinner(metaWinner);
             setShowResultPopup(true);
-            trackEvent("game_finished", { mode: "hard", result: metaWinner === "X" ? "win" : "lose" });
+            const result = metaWinner === "X" ? "win" : "lose";
+            trackEvent("game_finished", { mode: "hard", result });
+            setScore((s) => (result === "win" ? { ...s, human: s.human + 1 } : { ...s, ai: s.ai + 1 }));
+            logGameResult("ai-hard", result);
             return;
         }
 
@@ -175,6 +185,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
             setIsDraw(true);
             setShowResultPopup(true);
             trackEvent("game_finished", { mode: "hard", result: "draw" });
+            logGameResult("ai-hard", "draw");
             return;
         }
 
@@ -229,6 +240,14 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <ScoreBoard>
+                <ScoreName>🤖 ШІ</ScoreName>
+                <ScoreValue>{score.ai}</ScoreValue>
+                <ScoreDivider>—</ScoreDivider>
+                <ScoreValue>{score.human}</ScoreValue>
+                <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+            </ScoreBoard>
+
             {winner && showResultPopup && (
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />

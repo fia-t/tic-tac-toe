@@ -194,6 +194,37 @@ export const Overlay = styled.div`
     cursor: pointer;
 `;
 
+// Табло рахунку над ігровим полем - показує "ШІ: N - Ім'я: M" (vs AI)
+// або "Ім'я1: N - Ім'я2: M" (гра з другом), в тому ж пісочному стилі кнопок/тултіпів.
+export const ScoreBoard = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 8px 18px;
+    border-radius: 14px;
+    background: rgba(139, 101, 60, 0.12);
+    color: #5b3f22;
+    font-size: 14px;
+    font-weight: 700;
+    max-width: 92vw;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+`;
+
+export const ScoreName = styled.span`
+    white-space: nowrap;
+`;
+
+export const ScoreValue = styled.span`
+    color: #8B4513;
+`;
+
+export const ScoreDivider = styled.span`
+    opacity: 0.5;
+`;
+
 export const borderStyles = [
     "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",
     "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",

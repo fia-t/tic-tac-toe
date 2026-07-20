@@ -8,6 +8,7 @@ import {
     PillButton,
     WaitingText,
 } from "@/app/components/onlineStyles";
+import { ScoreBoard, ScoreName, ScoreValue, ScoreDivider } from "@/app/components/gameStyles";
 import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@/app/lib/onlineGame";
 import { BOARD_SIZE } from "@/app/components/onlineGameLogic";
 import { trackEvent } from "@/app/lib/firebase";
@@ -31,6 +32,10 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
         X: theme.xMarkerUrl,
         O: theme.oMarkerUrl,
     };
+
+    // Захист для кімнат, створених до появи імен/рахунку в документі.
+    const names = room.names ?? { X: "Гравець X", O: "Гравець O" };
+    const score = room.score ?? { X: 0, O: 0 };
 
     const handleCellClick = (index: number) => {
         if (!myTurn || room.board[index] !== null) return;
@@ -66,6 +71,14 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
 
     return (
         <OnlineLayout>
+            <ScoreBoard>
+                <ScoreName>{names.X}</ScoreName>
+                <ScoreValue>{score.X}</ScoreValue>
+                <ScoreDivider>—</ScoreDivider>
+                <ScoreValue>{score.O}</ScoreValue>
+                <ScoreName>{names.O}</ScoreName>
+            </ScoreBoard>
+
             <TurnBanner $myTurn={isFinished ? false : myTurn}>
                 {isFinished ? resultLabel : myTurn ? "Ваш хід" : "Хід суперника"}
             </TurnBanner>

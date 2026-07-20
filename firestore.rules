@@ -18,6 +18,23 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /names/{nameId} {
+      // Пул "цікавих" імен для рахунку над полем гри - так само публічний на
+      // читання, як і теми, і так само редагується лише з адмінки.
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /gameLogs/{logId} {
+      // Запис лічильника зіграних партій дозволений будь-кому (навіть без
+      // автентифікації - vs-AI режим повністю офлайн і не має анонімного
+      // входу), але лише документ строго очікуваної форми. Читає/перелічує
+      // лише адмінка (дашборд), звичайний гравець власні логи не бачить.
+      allow create: if isValidGameLog(request.resource.data);
+      allow read, list: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /rooms/{roomId} {
 
       // Читати кімнату може будь-хто автентифікований (анонімна авторизація теж
@@ -36,6 +53,12 @@ service cloud.firestore {
 
       allow delete: if false; // прибирання застарілих кімнат - через Firestore TTL, не з клієнта
     }
+  }
+
+  function isValidGameLog(data) {
+    return data.mode in ['ai-easy', 'ai-hard', 'friend-3x3', 'friend-5x5']
+      && data.outcome in ['win', 'lose', 'draw', 'x_win', 'o_win']
+      && data.createdAt == request.time;
   }
 
   function isValidNewRoom(data) {

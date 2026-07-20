@@ -2,36 +2,26 @@
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, getIdTokenResult, User } from "firebase/auth";
 import { getFirebaseAuth, isFirebaseConfigured } from "@/app/lib/firebase";
-import {
-    Theme,
-    ThemeImageKind,
-    getAllThemes,
-    createTheme,
-    updateTheme,
-    deleteTheme,
-    uploadThemeImage,
-} from "@/app/lib/themes";
 import { PillButton, TextInput, ErrorText } from "@/app/components/onlineStyles";
 import {
     AdminPage,
     AdminHeader,
     AdminHeading,
     LoginCard,
-    Section,
-    SectionTitle,
-    ThemeGrid,
-    ThemeCard,
-    ThumbRow,
-    Thumb,
-    ThemeName,
-    ThemeActionsRow,
-    SmallLabel,
-    FileInput,
-    CheckboxLabel,
-    DangerButton,
     GhostButton,
-    AddThemeRow,
+    AdminShell,
+    Sidebar,
+    SidebarBrand,
+    SidebarNav,
+    SidebarItem,
+    SidebarFooter,
+    MainContent,
+    MainContentInner,
 } from "@/app/admin/adminStyles";
+import { DashboardSection } from "@/app/admin/sections/DashboardSection";
+import { ThemesSection } from "@/app/admin/sections/ThemesSection";
+import { NamesSection } from "@/app/admin/sections/NamesSection";
+import { SeoSection } from "@/app/admin/sections/SeoSection";
 
 // Права адміна визначаються ВИКЛЮЧНО custom claim'ом `admin: true` у ID
 // token (встановлюється лише через scripts/setAdminClaim.js, Firebase Admin
@@ -44,23 +34,14 @@ type AdminAuthState =
     | { status: "admin"; user: User }
     | { status: "error"; message: string };
 
-const fieldForKind = (kind: ThemeImageKind): "backgroundUrl" | "xMarkerUrl" | "oMarkerUrl" =>
-    kind === "background" ? "backgroundUrl" : kind === "x" ? "xMarkerUrl" : "oMarkerUrl";
+type AdminSection = "dashboard" | "themes" | "names" | "seo";
 
-const kindLabel: Record<ThemeImageKind, string> = {
-    background: "Фон",
-    x: "Скін X",
-    o: "Скін O",
-};
-
-// Firebase-помилки (permission-denied, unauthenticated, тощо) мають код -
-// показуємо його поруч із текстом, інакше "Не вдалося..." нічого не каже
-// про справжню причину (протерміноване правило, ще не оновлений token і т.п.).
-const describeError = (fallback: string, err: unknown): string => {
-    const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : null;
-    console.error(fallback, err);
-    return code ? `${fallback} (${code})` : fallback;
-};
+const NAV_ITEMS: { id: AdminSection; label: string }[] = [
+    { id: "dashboard", label: "Дашборд" },
+    { id: "themes", label: "Теми" },
+    { id: "names", label: "Імена" },
+    { id: "seo", label: "SEO" },
+];
 
 export default function AdminPageRoute() {
     const [authState, setAuthState] = useState<AdminAuthState>({ status: "loading" });
@@ -69,12 +50,8 @@ export default function AdminPageRoute() {
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState<string | null>(null);
 
-    const [themes, setThemes] = useState<Theme[]>([]);
-    const [themesLoading, setThemesLoading] = useState(false);
-    const [themesError, setThemesError] = useState<string | null>(null);
-    const [busyThemeId, setBusyThemeId] = useState<string | null>(null);
-    const [newThemeName, setNewThemeName] = useState("");
-    const [creating, setCreating] = useState(false);
+    // Дашборд - стартовий розділ одразу після входу в адмінку.
+    const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
 
     useEffect(() => {
         if (!isFirebaseConfigured) {
@@ -98,6 +75,7 @@ export default function AdminPageRoute() {
                 const tokenResult = await getIdTokenResult(u, true);
                 if (tokenResult.claims.admin === true) {
                     setAuthState({ status: "admin", user: u });
+                    setActiveSection("dashboard");
                 } else {
                     setAuthState({ status: "forbidden", email: u.email });
                 }
@@ -106,22 +84,6 @@ export default function AdminPageRoute() {
             }
         });
     }, []);
-
-    const refreshThemes = async () => {
-        setThemesLoading(true);
-        setThemesError(null);
-        try {
-            setThemes(await getAllThemes());
-        } catch (err) {
-            setThemesError(describeError("Не вдалося завантажити список тем.", err));
-        } finally {
-            setThemesLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        if (authState.status === "admin") void refreshThemes();
-    }, [authState.status]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -142,60 +104,6 @@ export default function AdminPageRoute() {
         setLoginEmail("");
         setLoginPassword("");
         void signOut(getFirebaseAuth());
-    };
-
-    const handleCreateTheme = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newThemeName.trim()) return;
-        setCreating(true);
-        try {
-            await createTheme(newThemeName.trim());
-            setNewThemeName("");
-            await refreshThemes();
-        } catch (err) {
-            setThemesError(describeError("Не вдалося створити тему.", err));
-        } finally {
-            setCreating(false);
-        }
-    };
-
-    const handleImageUpload = async (theme: Theme, kind: ThemeImageKind, file: File) => {
-        setBusyThemeId(theme.id);
-        setThemesError(null);
-        try {
-            const url = await uploadThemeImage(theme.id, file, kind);
-            await updateTheme(theme.id, { [fieldForKind(kind)]: url });
-            await refreshThemes();
-        } catch (err) {
-            setThemesError(describeError("Не вдалося завантажити зображення.", err));
-        } finally {
-            setBusyThemeId(null);
-        }
-    };
-
-    const handleToggleActive = async (theme: Theme) => {
-        setBusyThemeId(theme.id);
-        try {
-            await updateTheme(theme.id, { active: !theme.active });
-            await refreshThemes();
-        } catch (err) {
-            setThemesError(describeError("Не вдалося оновити тему.", err));
-        } finally {
-            setBusyThemeId(null);
-        }
-    };
-
-    const handleDelete = async (theme: Theme) => {
-        if (!window.confirm(`Видалити тему "${theme.name}"?`)) return;
-        setBusyThemeId(theme.id);
-        try {
-            await deleteTheme(theme.id);
-            await refreshThemes();
-        } catch (err) {
-            setThemesError(describeError("Не вдалося видалити тему.", err));
-        } finally {
-            setBusyThemeId(null);
-        }
     };
 
     if (authState.status === "error") {
@@ -265,89 +173,40 @@ export default function AdminPageRoute() {
     const { user } = authState;
 
     return (
-        <AdminPage>
-            <AdminHeader>
-                <AdminHeading>Теми (фон + скіни X/O)</AdminHeading>
-                <GhostButton type="button" onClick={handleSignOut}>
-                    Вийти ({user.email})
-                </GhostButton>
-            </AdminHeader>
+        <AdminShell>
+            <Sidebar>
+                <SidebarBrand>Адмінка</SidebarBrand>
+                <SidebarNav>
+                    {NAV_ITEMS.map((item) => (
+                        <SidebarItem
+                            key={item.id}
+                            type="button"
+                            $active={activeSection === item.id}
+                            onClick={() => setActiveSection(item.id)}
+                        >
+                            {item.label}
+                        </SidebarItem>
+                    ))}
+                </SidebarNav>
+                <SidebarFooter>
+                    <GhostButton type="button" onClick={handleSignOut}>
+                        Вийти ({user.email})
+                    </GhostButton>
+                </SidebarFooter>
+            </Sidebar>
 
-            <Section>
-                <SectionTitle>Нова тема</SectionTitle>
-                <form onSubmit={handleCreateTheme}>
-                    <AddThemeRow>
-                        <TextInput
-                            placeholder="Назва теми"
-                            value={newThemeName}
-                            onChange={(e) => setNewThemeName(e.target.value)}
-                        />
-                        <PillButton type="submit" disabled={creating || !newThemeName.trim()} style={{ marginTop: 0, width: "auto" }}>
-                            {creating ? "Створюємо..." : "Додати"}
-                        </PillButton>
-                    </AddThemeRow>
-                </form>
-            </Section>
+            <MainContent>
+                <MainContentInner>
+                    <AdminHeader style={{ margin: "0 0 20px" }}>
+                        <AdminHeading>{NAV_ITEMS.find((item) => item.id === activeSection)?.label}</AdminHeading>
+                    </AdminHeader>
 
-            <Section>
-                <SectionTitle>Каталог ({themes.length})</SectionTitle>
-                {themesError && <ErrorText>{themesError}</ErrorText>}
-                {themesLoading ? (
-                    <p>Завантаження...</p>
-                ) : themes.length === 0 ? (
-                    <p>Тем ще немає - додайте першу вище.</p>
-                ) : (
-                    <ThemeGrid>
-                        {themes.map((theme) => {
-                            const busy = busyThemeId === theme.id;
-                            const complete = Boolean(theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl);
-                            return (
-                                <ThemeCard key={theme.id} $active={theme.active}>
-                                    <ThemeName>{theme.name}</ThemeName>
-                                    <ThumbRow>
-                                        <Thumb $src={theme.backgroundUrl} title="Фон" />
-                                        <Thumb $src={theme.xMarkerUrl} title="X" />
-                                        <Thumb $src={theme.oMarkerUrl} title="O" />
-                                    </ThumbRow>
-
-                                    {(["background", "x", "o"] as ThemeImageKind[]).map((kind) => (
-                                        <SmallLabel key={kind}>
-                                            {kindLabel[kind]}
-                                            <FileInput
-                                                type="file"
-                                                accept="image/*"
-                                                disabled={busy}
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) void handleImageUpload(theme, kind, file);
-                                                    e.target.value = "";
-                                                }}
-                                            />
-                                        </SmallLabel>
-                                    ))}
-
-                                    {!complete && <ErrorText style={{ margin: 0 }}>Додайте всі 3 зображення, щоб тема стала доступною в грі.</ErrorText>}
-
-                                    <ThemeActionsRow>
-                                        <CheckboxLabel>
-                                            <input
-                                                type="checkbox"
-                                                checked={theme.active}
-                                                disabled={busy || !complete}
-                                                onChange={() => void handleToggleActive(theme)}
-                                            />
-                                            Активна
-                                        </CheckboxLabel>
-                                        <DangerButton type="button" disabled={busy} onClick={() => void handleDelete(theme)}>
-                                            Видалити
-                                        </DangerButton>
-                                    </ThemeActionsRow>
-                                </ThemeCard>
-                            );
-                        })}
-                    </ThemeGrid>
-                )}
-            </Section>
-        </AdminPage>
+                    {activeSection === "dashboard" && <DashboardSection />}
+                    {activeSection === "themes" && <ThemesSection />}
+                    {activeSection === "names" && <NamesSection />}
+                    {activeSection === "seo" && <SeoSection />}
+                </MainContentInner>
+            </MainContent>
+        </AdminShell>
     );
 }

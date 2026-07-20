@@ -1,6 +1,7 @@
 "use client";
 import {
     doc,
+    collection,
     getDoc,
     setDoc,
     updateDoc,
@@ -13,6 +14,7 @@ import {
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseDb, trackEvent } from "@/app/lib/firebase";
 import { getActiveThemes, pickRandomTheme } from "@/app/lib/themes";
+import { getActiveNames, pickTwoDistinctNames } from "@/app/lib/names";
 import {
     OnlineGameMode,
     BOARD_SIZE,
@@ -37,6 +39,14 @@ export type RoomTheme = {
     oMarkerUrl: string;
 };
 
+// Знімок випадкових "цікавих" імен гравців - так само, як і тема, обирається
+// один раз при створенні кімнати, щоб обидва гравці бачили однакові імена
+// на табло рахунку протягом усієї сесії (включно з реваншами).
+export type RoomNames = {
+    X: string;
+    O: string;
+};
+
 // Firestore не підтримує масив масивів, тож поле зберігається "плоским"
 // рядком-масивом (row-major) і розгортається у 2D-сітку лише на клієнті.
 export type RoomDoc = {
@@ -53,6 +63,10 @@ export type RoomDoc = {
     lastActivity: Timestamp | null;
     expiresAt: Timestamp | null;
     theme: RoomTheme;
+    names: RoomNames;
+    // Рахунок перемог по символах, накопичується протягом усіх реваншів у кімнаті
+    // (нічия рахунок не змінює - так само, як і в табло vs-AI режимів).
+    score: Record<PlayerSymbol, number>;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком
@@ -98,6 +112,11 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
     const activeThemes = await getActiveThemes();
     const theme = pickRandomTheme(activeThemes);
 
+    // Так само - два різні "цікаві" імена обираються один раз і фіксуються
+    // знімком у кімнаті.
+    const activeNames = await getActiveNames();
+    const [nameX, nameO] = pickTwoDistinctNames(activeNames);
+
     for (let attempt = 0; attempt < 5; attempt++) {
         const roomId = generateRoomId();
         const ref = doc(db, roomsCollection, roomId);
@@ -123,6 +142,8 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
                 xMarkerUrl: theme.xMarkerUrl,
                 oMarkerUrl: theme.oMarkerUrl,
             },
+            names: { X: nameX, O: nameO },
+            score: { X: 0, O: 0 },
         });
         trackEvent("online_room_created", { gameMode });
         return { roomId, symbol: "X" };
@@ -226,6 +247,11 @@ export const makeMove = async (
             status = "finished";
         }
 
+        const scoreUpdate =
+            winner && winner !== "draw"
+                ? { [`score.${winner}`]: (room.score?.[winner] ?? 0) + 1 }
+                : {};
+
         tx.update(ref, {
             board: nextBoard,
             currentPlayer: symbol === "X" ? "O" : "X",
@@ -233,7 +259,21 @@ export const makeMove = async (
             status,
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
+            ...scoreUpdate,
         });
+
+        // Один запис на партію в gameLogs (для адмінського дашборду) - пишеться
+        // в тій самій транзакції, що й визначає завершення гри, тож дублікатів
+        // від двох клієнтів одночасно не буває.
+        if (status === "finished") {
+            const outcome = winner === "draw" ? "draw" : winner === "X" ? "x_win" : "o_win";
+            const mode = room.gameMode === "5x5" ? "friend-5x5" : "friend-3x3";
+            tx.set(doc(collection(db, "gameLogs")), {
+                mode,
+                outcome,
+                createdAt: serverTimestamp(),
+            });
+        }
     });
 };
 

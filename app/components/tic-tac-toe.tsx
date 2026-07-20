@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Board } from "./board";
-import { Popup, Overlay } from "@/app/components/gameStyles";
+import { Popup, Overlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider } from "@/app/components/gameStyles";
 import { trackEvent } from "@/app/lib/firebase";
 import {
     Grid3,
@@ -13,6 +13,8 @@ import {
 } from "@/app/components/gameLogic";
 import { DifficultTicTacToe } from "@/app/components/DifficultTicTacToe";
 import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme } from "@/app/lib/themes";
+import { getActiveNames, pickRandomName } from "@/app/lib/names";
+import { logGameResult } from "@/app/lib/gameLog";
 
 const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string): [number, number] => {
     // 1. Виграти, якщо є можливість
@@ -47,6 +49,21 @@ export const TicTacToe = () => {
     const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
     const [themeReady, setThemeReady] = useState(false);
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
+    const [humanName, setHumanName] = useState<string | null>(null);
+    const [score, setScore] = useState({ ai: 0, human: 0 });
+
+    // Ім'я гравця для табло рахунку - обирається один раз на все ігрове
+    // завантаження (не на кожну партію), щоб рахунок під час гри лишався
+    // прив'язаним до того самого "імені".
+    useEffect(() => {
+        let cancelled = false;
+        getActiveNames().then((names) => {
+            if (!cancelled) setHumanName(pickRandomName(names));
+        });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
     // Список активних тем завантажується один раз на все ігрове завантаження.
     // Сама тема лишається сталою, поки триває партія - інакше вже виставлені
@@ -76,6 +93,14 @@ export const TicTacToe = () => {
     // Це окремий від showResultPopup стан: закриття попапу більше НЕ розблоковує дошку.
     const isGameOver = winner !== null || isNoWinner;
 
+    // Оновлює табло рахунку (лише перемоги - нічия рахунок не змінює) і шле
+    // подію в gameLogs для адмінського дашборду.
+    const recordResult = (result: "win" | "lose" | "draw") => {
+        if (result === "win") setScore((s) => ({ ...s, human: s.human + 1 }));
+        if (result === "lose") setScore((s) => ({ ...s, ai: s.ai + 1 }));
+        logGameResult("ai-easy", result);
+    };
+
     const handleOnClick = (row: number, col: number) => {
         if (!themeReady || board[row][col] || isGameOver || isAiTurn) return;
 
@@ -91,7 +116,9 @@ export const TicTacToe = () => {
         if (newWinner) {
             setWinner(newWinner);
             setShowResultPopup(true);
-            trackEvent("game_finished", { mode: "easy", result: newWinner === "X" ? "win" : "lose" });
+            const result = newWinner === "X" ? "win" : "lose";
+            trackEvent("game_finished", { mode: "easy", result });
+            recordResult(result);
             return;
         }
 
@@ -99,6 +126,7 @@ export const TicTacToe = () => {
             setIsNoWinner(true);
             setShowResultPopup(true);
             trackEvent("game_finished", { mode: "easy", result: "draw" });
+            recordResult("draw");
             return;
         }
 
@@ -124,11 +152,14 @@ export const TicTacToe = () => {
             if (winnerAfterAI) {
                 setWinner(winnerAfterAI);
                 setShowResultPopup(true);
-                trackEvent("game_finished", { mode: "easy", result: winnerAfterAI === "X" ? "win" : "lose" });
+                const result = winnerAfterAI === "X" ? "win" : "lose";
+                trackEvent("game_finished", { mode: "easy", result });
+                recordResult(result);
             } else if (isGridFull(updatedBoardAfterAI)) {
                 setIsNoWinner(true);
                 setShowResultPopup(true);
                 trackEvent("game_finished", { mode: "easy", result: "draw" });
+                recordResult("draw");
             }
         }, 500);
     };
@@ -150,12 +181,22 @@ export const TicTacToe = () => {
                 theme={theme}
                 themeReady={themeReady}
                 onRestart={pickNewTheme}
+                humanName={humanName}
             />
         );
     }
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* Табло рахунку - над ігровим полем */}
+            <ScoreBoard>
+                <ScoreName>🤖 ШІ</ScoreName>
+                <ScoreValue>{score.ai}</ScoreValue>
+                <ScoreDivider>—</ScoreDivider>
+                <ScoreValue>{score.human}</ScoreValue>
+                <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+            </ScoreBoard>
+
             {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
             {winner && showResultPopup && (
                 <>
