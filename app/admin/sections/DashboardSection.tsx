@@ -26,7 +26,7 @@ const MODE_LABEL: Record<string, string> = {
     "ai-easy": "ШІ - легкий",
     "ai-hard": "ШІ - складний",
     "friend-3x3": "З другом - 3x3",
-    "friend-5x5": "З другом - 5x5",
+    "friend-9x9": "З другом - 9x9",
 };
 
 const OUTCOME_LABEL: Record<string, string> = {

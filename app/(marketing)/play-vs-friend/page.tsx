@@ -36,7 +36,7 @@ export default function PlayVsFriendPage() {
         <h2>How it works</h2>
         <ol>
           <li>Open the game and tap the friend icon next to the board.</li>
-          <li>Choose 3×3 (classic) or 5×5 (extended) mode and create the room.</li>
+          <li>Choose 3×3 (classic) or 9×9 (extended) mode and create the room.</li>
           <li>Share the generated invite link with your friend - by chat, text, or however you like.</li>
           <li>Your friend opens the link and the game starts instantly, moves sync in real time.</li>
         </ol>

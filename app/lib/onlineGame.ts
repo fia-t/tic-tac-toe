@@ -267,7 +267,7 @@ export const makeMove = async (
         // від двох клієнтів одночасно не буває.
         if (status === "finished") {
             const outcome = winner === "draw" ? "draw" : winner === "X" ? "x_win" : "o_win";
-            const mode = room.gameMode === "5x5" ? "friend-5x5" : "friend-3x3";
+            const mode = room.gameMode === "9x9" ? "friend-9x9" : "friend-3x3";
             tx.set(doc(collection(db, "gameLogs")), {
                 mode,
                 outcome,

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { GameLayout, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@/app/components/gameStyles";
+import { GameLayout, BoardColumn, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@/app/components/gameStyles";
 import { FriendGameModal } from "@/app/components/FriendGameModal";
 import { GamePiece } from "@/app/components/GamePiece";
 import { trackEvent } from "@/app/lib/firebase";
@@ -10,29 +10,33 @@ type BoardProps = {
     restartGame: () => void;  // Додаємо пропс для перезапуску гри
     setGameMode: (mode: "traditional" | "difficult") => void;
     backgroundUrl?: string;
+    scoreBoard?: React.ReactNode;
 };
 
-export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode, backgroundUrl }) => {
+export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode, backgroundUrl, scoreBoard }) => {
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
 
     return (
         <GameLayout>
-            <BoardContainer $backgroundUrl={backgroundUrl}>
-                {/* Ячейки */}
-                {board.flat().map((cell, index) => {
-                    const rowIndex = Math.floor(index / 3);
-                    const cellIndex = index % 3;
-                    return (
-                        <Cell
-                            key={index}
-                            $borderStyle={borderStyles[index]}
-                            onClick={(e) => { e.stopPropagation(); handleClick(rowIndex, cellIndex); }}
-                        >
-                            {cell && <GamePiece src={cell} />}
-                        </Cell>
-                    );
-                })}
-            </BoardContainer>
+            <BoardColumn>
+                {scoreBoard}
+                <BoardContainer $backgroundUrl={backgroundUrl}>
+                    {/* Ячейки */}
+                    {board.flat().map((cell, index) => {
+                        const rowIndex = Math.floor(index / 3);
+                        const cellIndex = index % 3;
+                        return (
+                            <Cell
+                                key={index}
+                                $borderStyle={borderStyles[index]}
+                                onClick={(e) => { e.stopPropagation(); handleClick(rowIndex, cellIndex); }}
+                            >
+                                {cell && <GamePiece src={cell} />}
+                            </Cell>
+                        );
+                    })}
+                </BoardContainer>
+            </BoardColumn>
 
             {/* Кнопка перезапуску тепер отримує restartGame з пропсів */}
             <ButtonContainer>

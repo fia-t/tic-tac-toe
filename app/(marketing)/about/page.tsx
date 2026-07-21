@@ -31,7 +31,7 @@ export default function AboutPage() {
         <ul>
           <li>A classic Traditional mode against a heuristic AI opponent.</li>
           <li>A tougher Ultimate Tic Tac Toe mode for a deeper strategic challenge.</li>
-          <li>Real-time online play with a friend via a shareable invite link, in 3×3 or 5×5.</li>
+          <li>Real-time online play with a friend via a shareable invite link, in 3×3 or 9×9.</li>
         </ul>
 
         <h2>How it&apos;s built</h2>

@@ -56,13 +56,13 @@ service cloud.firestore {
   }
 
   function isValidGameLog(data) {
-    return data.mode in ['ai-easy', 'ai-hard', 'friend-3x3', 'friend-5x5']
+    return data.mode in ['ai-easy', 'ai-hard', 'friend-3x3', 'friend-9x9']
       && data.outcome in ['win', 'lose', 'draw', 'x_win', 'o_win']
       && data.createdAt == request.time;
   }
 
   function isValidNewRoom(data) {
-    return data.gameMode in ['3x3', '5x5']
+    return data.gameMode in ['3x3', '9x9']
       && data.status == 'waiting'
       && data.winner == null
       && data.players.X.uid == request.auth.uid

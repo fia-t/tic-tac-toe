@@ -194,6 +194,14 @@ export const Overlay = styled.div`
     cursor: pointer;
 `;
 
+// Колонка "табло + поле" - гарантує, що ScoreBoard центрується САМЕ над
+// ігровим полем, а не над усім рядом (поле + панель кнопок збоку на десктопі).
+export const BoardColumn = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+`;
+
 // Табло рахунку над ігровим полем - показує "ШІ: N - Ім'я: M" (vs AI)
 // або "Ім'я1: N - Ім'я2: M" (гра з другом), в тому ж пісочному стилі кнопок/тултіпів.
 export const ScoreBoard = styled.div`

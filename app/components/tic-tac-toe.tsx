@@ -186,17 +186,18 @@ export const TicTacToe = () => {
         );
     }
 
+    const scoreBoard = (
+        <ScoreBoard>
+            <ScoreName>🤖 ШІ</ScoreName>
+            <ScoreValue>{score.ai}</ScoreValue>
+            <ScoreDivider>—</ScoreDivider>
+            <ScoreValue>{score.human}</ScoreValue>
+            <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+        </ScoreBoard>
+    );
+
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {/* Табло рахунку - над ігровим полем */}
-            <ScoreBoard>
-                <ScoreName>🤖 ШІ</ScoreName>
-                <ScoreValue>{score.ai}</ScoreValue>
-                <ScoreDivider>—</ScoreDivider>
-                <ScoreValue>{score.human}</ScoreValue>
-                <ScoreName>{humanName ?? "Гравець"}</ScoreName>
-            </ScoreBoard>
-
             {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
             {winner && showResultPopup && (
                 <>
@@ -223,6 +224,7 @@ export const TicTacToe = () => {
                 restartGame={restartGame}
                 setGameMode={setGameMode}
                 backgroundUrl={theme.backgroundUrl}
+                scoreBoard={scoreBoard}
             />
         </div>
     );

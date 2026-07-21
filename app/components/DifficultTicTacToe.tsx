@@ -4,6 +4,7 @@ import {
     Popup,
     Overlay,
     GameLayout,
+    BoardColumn,
     ButtonContainer,
     Button,
     ControlIcon,
@@ -238,16 +239,18 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
         trackEvent("game_restart", { mode: "hard" });
     };
 
+    const scoreBoard = (
+        <ScoreBoard>
+            <ScoreName>🤖 ШІ</ScoreName>
+            <ScoreValue>{score.ai}</ScoreValue>
+            <ScoreDivider>—</ScoreDivider>
+            <ScoreValue>{score.human}</ScoreValue>
+            <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+        </ScoreBoard>
+    );
+
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <ScoreBoard>
-                <ScoreName>🤖 ШІ</ScoreName>
-                <ScoreValue>{score.ai}</ScoreValue>
-                <ScoreDivider>—</ScoreDivider>
-                <ScoreValue>{score.human}</ScoreValue>
-                <ScoreName>{humanName ?? "Гравець"}</ScoreName>
-            </ScoreBoard>
-
             {winner && showResultPopup && (
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
@@ -267,7 +270,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
             )}
 
             <GameLayout>
-                <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
+                <BoardColumn>
+                    {scoreBoard}
+                    <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
                     {boards.map((miniGrid, boardIndex) => {
                         const result = miniResults[boardIndex];
                         const isActive =
@@ -312,7 +317,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
                             </MiniBoardWrapper>
                         );
                     })}
-                </UltimateBoardContainer>
+                    </UltimateBoardContainer>
+                </BoardColumn>
 
                 <ButtonContainer>
                     <Button onClick={restartUltimateGame} aria-label="Restart">

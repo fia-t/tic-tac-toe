@@ -43,7 +43,7 @@ export default function MultiplayerPage() {
         <h2>Two board sizes</h2>
         <ul>
           <li><strong>3×3</strong> - the classic Tic Tac Toe board.</li>
-          <li><strong>5×5</strong> - an extended board for longer, more tactical matches.</li>
+          <li><strong>9×9</strong> - an extended board for longer, more tactical matches.</li>
         </ul>
 
         <h2>Play from anywhere</h2>

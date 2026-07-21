@@ -3,7 +3,7 @@ import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, Timestamp
 import { getFirebaseDb, isFirebaseConfigured } from "@/app/lib/firebase";
 
 // Режими гри, за якими рахуються партії в адмінському дашборді.
-export type GameMode = "ai-easy" | "ai-hard" | "friend-3x3" | "friend-5x5";
+export type GameMode = "ai-easy" | "ai-hard" | "friend-3x3" | "friend-9x9";
 
 // Для ai-* - результат з погляду гравця ("win" | "lose" | "draw").
 // Для friend-* - хто забрав партію ("x_win" | "o_win" | "draw"), бо в онлайн-грі

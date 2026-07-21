@@ -250,7 +250,7 @@ export const ErrorText = styled.p`
     font-weight: 600;
 `;
 
-// --- Ігрове поле онлайн-режиму (динамічний розмір 3x3 / 5x5) ---
+// --- Ігрове поле онлайн-режиму (динамічний розмір 3x3 / 9x9) ---
 
 export const OnlineBoardContainer = styled.div<{ $size: number; $backgroundUrl?: string }>`
     width: min(92vw, 420px);

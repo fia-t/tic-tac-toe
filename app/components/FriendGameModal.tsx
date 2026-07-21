@@ -95,9 +95,9 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => 
                                 Звичайна гра
                                 <ModeOptionHint>3×3</ModeOptionHint>
                             </ModeOption>
-                            <ModeOption type="button" $active={mode === "5x5"} onClick={() => setMode("5x5")}>
+                            <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
                                 Розширена гра
-                                <ModeOptionHint>5×5</ModeOptionHint>
+                                <ModeOptionHint>9×9</ModeOptionHint>
                             </ModeOption>
                         </ModeOptionGroup>
 

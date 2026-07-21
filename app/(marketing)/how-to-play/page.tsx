@@ -49,7 +49,7 @@ export default function HowToPlayPage() {
           </li>
           <li>
             <Link href="/multiplayer">Multiplayer</Link> - real-time online matches with 3×3 or
-            5×5 boards.
+            9×9 boards.
           </li>
         </ul>
 
