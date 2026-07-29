@@ -39,11 +39,13 @@ import {
 type MetaResult = "X" | "O" | "draw" | null;
 
 type DifficultProps = {
-    setGameMode: (mode: "traditional" | "difficult") => void;
+    setGameMode: (mode: "traditional" | "difficult" | "five") => void;
     theme: Theme;
     themeReady: boolean;
     onRestart: () => void;
     humanName: string | null;
+    onRoomReady: (roomId: string) => void;
+    onBeforeFriendOpen?: () => Promise<boolean>;
 };
 
 // Перетворює 9 результатів малих полів у "велику" сітку 3x3,
@@ -121,7 +123,15 @@ const pickAiMove = (
     return null;
 };
 
-export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, theme, themeReady, onRestart, humanName }) => {
+export const DifficultTicTacToe: React.FC<DifficultProps> = ({
+    setGameMode,
+    theme,
+    themeReady,
+    onRestart,
+    humanName,
+    onRoomReady,
+    onBeforeFriendOpen,
+}) => {
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -239,6 +249,15 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
         trackEvent("game_restart", { mode: "hard" });
     };
 
+    const handleFriendClick = async () => {
+        trackEvent("friend_modal_open", { from: "hard" });
+        if (onBeforeFriendOpen) {
+            const allowed = await onBeforeFriendOpen();
+            if (!allowed) return;
+        }
+        setIsFriendModalOpen(true);
+    };
+
     const scoreBoard = (
         <ScoreBoard>
             <ScoreName>🤖 ШІ</ScoreName>
@@ -351,18 +370,30 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({ setGameMode, them
                     <ButtonWithTooltip>
                         <Button
                             onClick={() => {
-                                trackEvent("friend_modal_open", { from: "hard" });
-                                setIsFriendModalOpen(true);
+                                trackEvent("select_mode", { mode: "five" });
+                                setGameMode("five");
                             }}
-                            aria-label="Play with a friend"
+                            aria-label="5x5"
                         >
+                            <ControlIcon src="/images/game-5x5.png" alt="5x5" />
+                        </Button>
+                        <Tooltip>5×5</Tooltip>
+                    </ButtonWithTooltip>
+                    <ButtonWithTooltip>
+                        <Button onClick={handleFriendClick} aria-label="Play with a friend">
                             <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
                         </Button>
                         <Tooltip>Friend</Tooltip>
                     </ButtonWithTooltip>
                 </ButtonContainer>
 
-                {isFriendModalOpen && <FriendGameModal onClose={() => setIsFriendModalOpen(false)} />}
+                {isFriendModalOpen && (
+                    <FriendGameModal
+                        onClose={() => setIsFriendModalOpen(false)}
+                        onRoomReady={onRoomReady}
+                        defaultMode="9x9"
+                    />
+                )}
             </GameLayout>
         </div>
     );

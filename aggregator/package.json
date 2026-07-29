@@ -1,0 +1,31 @@
+{
+  "name": "tictactoe-aggregator-build",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Standalone HTML5 build of Tic Tac Toe for game aggregators (CrazyGames, Poki, itch.io) - shares game logic/UI with the main Next.js site via relative imports, does not reuse any next/* API.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/prepare-target.mjs crazygames && vite",
+    "build:crazygames": "node scripts/prepare-target.mjs crazygames && vite build",
+    "build:poki": "node scripts/prepare-target.mjs poki && vite build",
+    "build:itch": "node scripts/prepare-target.mjs itch && vite build",
+    "build:all": "npm run build:crazygames && npm run build:poki && npm run build:itch",
+    "typecheck": "tsc --noEmit",
+    "serve:crazygames": "npx serve dist/crazygames",
+    "serve:poki": "npx serve dist/poki",
+    "serve:itch": "npx serve dist/itch"
+  },
+  "dependencies": {
+    "firebase": "^12.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "styled-components": "^6.1.15"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5",
+    "vite": "^6.0.0"
+  }
+}

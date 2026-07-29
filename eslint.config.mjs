@@ -10,6 +10,9 @@ const compat = new FlatCompat({
 });
 
 const eslintConfig = [
+  // aggregator/ - окремий Vite-проєкт зі своїм package.json/tsconfig/lint-конфігом
+  // (standalone-білд для агрегаторів), не частина цього Next.js застосунку.
+  { ignores: ["aggregator/**"] },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
 ];
 

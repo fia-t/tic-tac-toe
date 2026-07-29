@@ -8,13 +8,33 @@ type BoardProps = {
     board: (string | null)[][];
     handleClick: (row: number, col: number) => void;
     restartGame: () => void;  // Додаємо пропс для перезапуску гри
-    setGameMode: (mode: "traditional" | "difficult") => void;
+    setGameMode: (mode: "traditional" | "difficult" | "five") => void;
     backgroundUrl?: string;
     scoreBoard?: React.ReactNode;
+    onRoomReady: (roomId: string) => void;
+    onBeforeFriendOpen?: () => Promise<boolean>;
 };
 
-export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, setGameMode, backgroundUrl, scoreBoard }) => {
+export const Board: React.FC<BoardProps> = ({
+    board,
+    handleClick,
+    restartGame,
+    setGameMode,
+    backgroundUrl,
+    scoreBoard,
+    onRoomReady,
+    onBeforeFriendOpen,
+}) => {
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
+
+    const handleFriendClick = async () => {
+        trackEvent("friend_modal_open", { from: "easy" });
+        if (onBeforeFriendOpen) {
+            const allowed = await onBeforeFriendOpen();
+            if (!allowed) return;
+        }
+        setIsFriendModalOpen(true);
+    };
 
     return (
         <GameLayout>
@@ -70,18 +90,30 @@ export const Board: React.FC<BoardProps> = ({ board, handleClick, restartGame, s
                 <ButtonWithTooltip>
                     <Button
                         onClick={() => {
-                            trackEvent("friend_modal_open", { from: "easy" });
-                            setIsFriendModalOpen(true);
+                            trackEvent("select_mode", { mode: "five" });
+                            setGameMode("five");
                         }}
-                        aria-label="Play with a friend"
+                        aria-label="5x5"
                     >
+                        <ControlIcon src="/images/game-5x5.png" alt="5x5" />
+                    </Button>
+                    <Tooltip>5×5</Tooltip>
+                </ButtonWithTooltip>
+                <ButtonWithTooltip>
+                    <Button onClick={handleFriendClick} aria-label="Play with a friend">
                         <ControlIcon src="/images/game_with_friends.png" alt="Play with a friend" />
                     </Button>
                     <Tooltip>Friend</Tooltip>
                 </ButtonWithTooltip>
             </ButtonContainer>
 
-            {isFriendModalOpen && <FriendGameModal onClose={() => setIsFriendModalOpen(false)} />}
+            {isFriendModalOpen && (
+                <FriendGameModal
+                    onClose={() => setIsFriendModalOpen(false)}
+                    onRoomReady={onRoomReady}
+                    defaultMode="3x3"
+                />
+            )}
         </GameLayout>
     );
 };

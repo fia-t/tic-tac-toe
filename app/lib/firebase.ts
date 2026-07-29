@@ -82,7 +82,20 @@ const ensureAnalytics = async (): Promise<Analytics | null> => {
     }
 };
 
+// Опційний підписник на всі ігрові події, що вже й так проходять через trackEvent
+// (game_finished, game_restart, select_mode, friend_modal_open, online_room_created...) -
+// дає змогу standalone-білду для агрегаторів реагувати на ці ж моменти (напр. показати
+// midgame-рекламу після N-ї завершеної партії через SDK агрегатора), не протягуючи
+// окремий prop крізь кожен ігровий компонент. На сайті ніхто цю функцію не викликає,
+// тож поведінка там не змінюється.
+type GameEventListener = (name: string, params?: Record<string, unknown>) => void;
+let externalListener: GameEventListener | null = null;
+export const setGameEventListener = (fn: GameEventListener | null): void => {
+    externalListener = fn;
+};
+
 export const trackEvent = (name: string, params?: Record<string, unknown>): void => {
+    externalListener?.(name, params);
     void ensureAnalytics().then((instance) => {
         if (instance) logEvent(instance, name, params);
     });

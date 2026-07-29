@@ -70,3 +70,105 @@ export const pickHeuristicCell = (grid: Grid3): [number, number] | null => {
 
     return null;
 };
+
+// --- Generic (arbitrary size + winLength) варіант вище - для режимів на кшталт 5x5,
+// де 8 захардкоджених gridLines не підходять. Не чіпає нічого з 3x3-специфічного вище.
+
+// Перевіряє, чи є winLength фішок symbol поспіль у будь-якому з 4 напрямків
+// (горизонталь/вертикаль/2 діагоналі), скануючи кожну клітинку як можливий старт лінії.
+export const getGenericWinner = (grid: Grid3, winLength: number): string | null => {
+    const size = grid.length;
+    const directions: [number, number][] = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            const symbol = grid[row][col];
+            if (!symbol) continue;
+
+            for (const [dr, dc] of directions) {
+                let count = 1;
+                for (let step = 1; step < winLength; step++) {
+                    const r = row + dr * step;
+                    const c = col + dc * step;
+                    if (r < 0 || r >= size || c < 0 || c >= size || grid[r][c] !== symbol) break;
+                    count++;
+                }
+                if (count >= winLength) return symbol;
+            }
+        }
+    }
+    return null;
+};
+
+// Пробна установка symbol у кожну вільну клітинку (з негайним відкатом - синхронно,
+// без стороннього коду між мутацією і відкатом, тож стан гри ніколи не "витікає"
+// напівзмінений) - повертає першу клітинку, що завершує лінію (виграш або блок).
+export const findWinningCellGeneric = (grid: Grid3, symbol: string, winLength: number): [number, number] | null => {
+    const size = grid.length;
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            if (grid[row][col] !== null) continue;
+            grid[row][col] = symbol;
+            const wins = getGenericWinner(grid, winLength) === symbol;
+            grid[row][col] = null;
+            if (wins) return [row, col];
+        }
+    }
+    return null;
+};
+
+// Скільки фішок symbol підряд утворилось би в кожному з 4 напрямків, якби зайняти (row, col) -
+// сума по напрямках, використовується як "офензивна"/"дефензивна" вага клітинки нижче.
+const lineScore = (grid: Grid3, row: number, col: number, symbol: string, winLength: number): number => {
+    const size = grid.length;
+    const directions: [number, number][] = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    let score = 0;
+
+    for (const [dr, dc] of directions) {
+        let count = 1;
+        for (const dir of [1, -1]) {
+            for (let step = 1; step < winLength; step++) {
+                const r = row + dr * step * dir;
+                const c = col + dc * step * dir;
+                if (r < 0 || r >= size || c < 0 || c >= size || grid[r][c] !== symbol) break;
+                count++;
+            }
+        }
+        score += count;
+    }
+    return score;
+};
+
+// Позиційний вибір для довільного поля: без негайного виграшу/блоку (ті перевіряються
+// окремо через findWinningCellGeneric) обираємо клітинку, що найбільше подовжує власні
+// лінії, трохи зважає на лінії суперника, і тяжіє до центру поля. Не мінімакс - той самий
+// рівень "евристичного" ШІ, що й у наявних 3x3/Ultimate режимах.
+export const pickHeuristicCellGeneric = (
+    grid: Grid3,
+    symbol: string,
+    opponentSymbol: string,
+    winLength: number
+): [number, number] | null => {
+    const size = grid.length;
+    const center = (size - 1) / 2;
+    let best: [number, number] | null = null;
+    let bestScore = -Infinity;
+
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            if (grid[row][col] !== null) continue;
+            const distance = Math.max(Math.abs(row - center), Math.abs(col - center));
+            const offense = lineScore(grid, row, col, symbol, winLength);
+            const defense = lineScore(grid, row, col, opponentSymbol, winLength);
+            const score = offense * 1.5 + defense - distance * 0.3 + Math.random() * 0.4;
+            if (score > bestScore) {
+                bestScore = score;
+                best = [row, col];
+            }
+        }
+    }
+    return best;
+};
+
+export const createEmptyGridN = (size: number): Grid3 =>
+    Array(size).fill(null).map(() => Array(size).fill(null));

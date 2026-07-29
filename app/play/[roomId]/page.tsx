@@ -1,4 +1,4 @@
-import { PlayRoomClient } from "@/app/components/PlayRoomClient";
+import { PlayRoomEntry } from "@/app/components/PlayRoomEntry";
 
 type PlayRoomPageProps = {
     params: Promise<{ roomId: string }>;
@@ -6,5 +6,5 @@ type PlayRoomPageProps = {
 
 export default async function PlayRoomPage({ params }: PlayRoomPageProps) {
     const { roomId } = await params;
-    return <PlayRoomClient roomId={roomId.toUpperCase()} />;
+    return <PlayRoomEntry roomId={roomId.toUpperCase()} />;
 }

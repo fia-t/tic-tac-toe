@@ -1,6 +1,5 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Container } from "@/app/components/gameStyles";
 import {
     ModalCard,
@@ -33,14 +32,16 @@ import {
 
 type PlayRoomClientProps = {
     roomId: string;
+    // Заміна router.push("/") (next/navigation) - викликач вирішує, що значить "вийти з
+    // кімнати" (перехід на "/" на сайті, скидання локального стану в standalone-білді).
+    onExit: () => void;
 };
 
 const HEARTBEAT_INTERVAL_MS = 8000;
 
 type ConnectionState = "connecting" | "ready" | "not-found" | "full" | "error";
 
-export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
-    const router = useRouter();
+export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit }) => {
     const [connection, setConnection] = useState<ConnectionState>(
         isFirebaseConfigured ? "connecting" : "error"
     );
@@ -144,7 +145,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
 
     const handleReturnToMenu = () => {
         if (mySymbol) void leaveRoom(roomId, mySymbol);
-        router.push("/");
+        onExit();
     };
 
     if (!isFirebaseConfigured) {
@@ -156,7 +157,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
                         Заповніть NEXT_PUBLIC_FIREBASE_* змінні у .env.local (див. .env.local.example) і перезапустіть
                         сервер, щоб онлайн-режим запрацював.
                     </ModalSubtitle>
-                    <PillButton type="button" onClick={() => router.push("/")}>
+                    <PillButton type="button" onClick={onExit}>
                         Повернутися в меню
                     </PillButton>
                 </ModalCard>
@@ -181,7 +182,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>Кімнату не знайдено</ModalTitle>
                     <ModalSubtitle>Можливо, посилання застаріло або гра вже завершилась і кімнату очищено.</ModalSubtitle>
-                    <PillButton type="button" onClick={() => router.push("/")}>
+                    <PillButton type="button" onClick={onExit}>
                         Повернутися в меню
                     </PillButton>
                 </ModalCard>
@@ -195,7 +196,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>Кімната вже заповнена</ModalTitle>
                     <ModalSubtitle>У цій грі вже двоє гравців.</ModalSubtitle>
-                    <PillButton type="button" onClick={() => router.push("/")}>
+                    <PillButton type="button" onClick={onExit}>
                         Повернутися в меню
                     </PillButton>
                 </ModalCard>
@@ -209,7 +210,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId }) => {
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>Щось пішло не так</ModalTitle>
                     <ErrorText>Не вдалося підключитися до кімнати. Перевірте зʼєднання й спробуйте ще раз.</ErrorText>
-                    <PillButton type="button" onClick={() => router.push("/")}>
+                    <PillButton type="button" onClick={onExit}>
                         Повернутися в меню
                     </PillButton>
                 </ModalCard>

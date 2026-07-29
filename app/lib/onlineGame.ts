@@ -21,6 +21,16 @@ import {
     getOnlineGridWinner,
     isOnlineGridFull,
 } from "@/app/components/onlineGameLogic";
+import { GameMode } from "@/app/lib/gameLog";
+
+// Мапа "режим кімнати" -> "рядок для gameLogs". Явна Record, а не ternary/switch без
+// exhaustiveness-перевірки - TS одразу підкаже, якщо OnlineGameMode отримає нове значення,
+// а цю мапу забудуть оновити (саме так 5x5 партії з другом мало не залогувались як 3x3).
+const FRIEND_LOG_MODE: Record<OnlineGameMode, GameMode> = {
+    "3x3": "friend-3x3",
+    "9x9": "friend-9x9",
+    "5x5": "friend-5x5",
+};
 
 export type PlayerSymbol = "X" | "O";
 export type RoomStatus = "waiting" | "playing" | "finished";
@@ -267,7 +277,7 @@ export const makeMove = async (
         // від двох клієнтів одночасно не буває.
         if (status === "finished") {
             const outcome = winner === "draw" ? "draw" : winner === "X" ? "x_win" : "o_win";
-            const mode = room.gameMode === "9x9" ? "friend-9x9" : "friend-3x3";
+            const mode = FRIEND_LOG_MODE[room.gameMode];
             tx.set(doc(collection(db, "gameLogs")), {
                 mode,
                 outcome,

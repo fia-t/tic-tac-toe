@@ -2,18 +2,21 @@
 // 3x3-лінії), тут поле може бути 3x3 або 9x9, тож лінії перемоги рахуються
 // узагальнено - для будь-якого розміру поля й довжини виграшної лінії.
 export type OnlineGrid = (string | null)[][];
-export type OnlineGameMode = "3x3" | "9x9";
+export type OnlineGameMode = "3x3" | "9x9" | "5x5";
 
 export const BOARD_SIZE: Record<OnlineGameMode, number> = {
     "3x3": 3,
     "9x9": 9,
+    "5x5": 5,
 };
 
 // На 9x9 три-в-ряд збирається за пару ходів і робить гру занадто короткою,
 // тому там перемога - це пʼять фішок поспіль (звичне "гомоку"-розширення правил).
+// На 5x5 три-в-ряд теж занадто легко (майже завжди виграє перший гравець) - тому 4.
 export const WIN_LENGTH: Record<OnlineGameMode, number> = {
     "3x3": 3,
     "9x9": 5,
+    "5x5": 4,
 };
 
 export const createEmptyOnlineGrid = (mode: OnlineGameMode): OnlineGrid => {

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Overlay } from "@/app/components/gameStyles";
 import {
     ModalCard,
@@ -21,6 +20,12 @@ import { OnlineGameMode } from "@/app/components/onlineGameLogic";
 
 type FriendGameModalProps = {
     onClose: () => void;
+    // Замість router.push всередині модалки (next/navigation) - викликається з готовим
+    // roomId, а куди саме перейти/що показати, вирішує викликач. Так цей компонент
+    // лишається portable для не-Next.js оточення (напр. standalone-білд для агрегаторів).
+    onRoomReady: (roomId: string) => void;
+    // Який режим підсвітити першим - відповідно до офлайн-режиму, з якого відкрили модалку.
+    defaultMode?: OnlineGameMode;
 };
 
 // Приймає або "сирий" код кімнати, або повне посилання-запрошення
@@ -43,9 +48,8 @@ const extractRoomId = (input: string): string => {
     return trimmed.toUpperCase();
 };
 
-export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => {
-    const router = useRouter();
-    const [mode, setMode] = useState<OnlineGameMode>("3x3");
+export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoomReady, defaultMode }) => {
+    const [mode, setMode] = useState<OnlineGameMode>(defaultMode ?? "3x3");
     const [view, setView] = useState<"select" | "join">("select");
     const [joinInput, setJoinInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -61,7 +65,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => 
         setError(null);
         try {
             const { roomId } = await createRoom(mode);
-            router.push(`/play/${roomId}`);
+            onRoomReady(roomId);
         } catch (err) {
             console.error("createRoom failed:", err);
             setError("Не вдалося створити кімнату. Спробуйте ще раз.");
@@ -75,7 +79,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => 
             setError("Вставте посилання-запрошення або код кімнати.");
             return;
         }
-        router.push(`/play/${roomId}`);
+        onRoomReady(roomId);
     };
 
     return (
@@ -98,6 +102,10 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose }) => 
                             <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
                                 Розширена гра
                                 <ModeOptionHint>9×9</ModeOptionHint>
+                            </ModeOption>
+                            <ModeOption type="button" $active={mode === "5x5"} onClick={() => setMode("5x5")}>
+                                Велике поле
+                                <ModeOptionHint>5×5</ModeOptionHint>
                             </ModeOption>
                         </ModeOptionGroup>
 

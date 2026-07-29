@@ -12,6 +12,7 @@ import {
     pickHeuristicCell,
 } from "@/app/components/gameLogic";
 import { DifficultTicTacToe } from "@/app/components/DifficultTicTacToe";
+import { FiveByFiveTicTacToe } from "@/app/components/FiveByFiveTicTacToe";
 import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme } from "@/app/lib/themes";
 import { getActiveNames, pickRandomName } from "@/app/lib/names";
 import { logGameResult } from "@/app/lib/gameLog";
@@ -39,13 +40,25 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
     return null;
 };
 
-export const TicTacToe = () => {
+type TicTacToeProps = {
+    // Куди перейти після створення/приєднання до онлайн-кімнати "Гра з другом" - на сайті
+    // це router.push(`/play/${roomId}`), у standalone-білді для агрегаторів - локальний стан.
+    // Немає next/navigation усередині цього дерева компонентів саме тому, що це рішення
+    // приймає викликач (TicTacToeEntry на сайті, App.tsx у Vite-білді), а не сам компонент.
+    onRoomReady: (roomId: string) => void;
+    // Якщо передано - викликається перед відкриттям "Гра з другом"; модалка відкривається
+    // лише коли проміс резолвиться true. Використовується для rewarded-ad гейта на
+    // агрегаторах - на сайті не передається, і поведінка лишається безкоштовною як раніше.
+    onBeforeFriendOpen?: () => Promise<boolean>;
+};
+
+export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) => {
     const [board, setBoard] = useState<Grid3>(createEmptyGrid());
     const [winner, setWinner] = useState<string | null>(null);
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
     const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
-    const [gameMode, setGameMode] = useState<"traditional" | "difficult">("traditional");
+    const [gameMode, setGameMode] = useState<"traditional" | "difficult" | "five">("traditional");
     const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
     const [themeReady, setThemeReady] = useState(false);
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
@@ -182,6 +195,22 @@ export const TicTacToe = () => {
                 themeReady={themeReady}
                 onRestart={pickNewTheme}
                 humanName={humanName}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
+            />
+        );
+    }
+
+    if (gameMode === "five") {
+        return (
+            <FiveByFiveTicTacToe
+                setGameMode={setGameMode}
+                theme={theme}
+                themeReady={themeReady}
+                onRestart={pickNewTheme}
+                humanName={humanName}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
             />
         );
     }
@@ -225,6 +254,8 @@ export const TicTacToe = () => {
                 setGameMode={setGameMode}
                 backgroundUrl={theme.backgroundUrl}
                 scoreBoard={scoreBoard}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
             />
         </div>
     );

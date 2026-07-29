@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { TicTacToe } from "@/app/components/tic-tac-toe";
+import { TicTacToeEntry } from "@/app/components/TicTacToeEntry";
 import { Container } from "@/app/components/gameStyles";
 import { buildMetadata } from "@/app/lib/seo/metadata";
 
@@ -50,7 +50,7 @@ export default function Home() {
         Play Tic Tac Toe Online Free - vs AI, with Friends, or Multiplayer
       </h1>
       <Container>
-        <TicTacToe />
+        <TicTacToeEntry />
       </Container>
       <nav
         aria-label="Site navigation"
