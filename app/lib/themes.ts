@@ -79,6 +79,28 @@ export const pickRandomTheme = (themes: Theme[]): Theme => {
     return themes[Math.floor(Math.random() * themes.length)];
 };
 
+const preloadImage = (src: string): Promise<void> =>
+    new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = src;
+    });
+
+// Підвантажує фон і фішки X/O наперед для всіх переданих тем, щоб під час гри
+// (перше розміщення фішки, рестарт з новою випадковою темою) картинка вже була
+// в кеші браузера - інакше замість фішки на мить показується назва файлу,
+// поки img вантажиться "з нуля" в момент першого рендеру.
+export const preloadThemeImages = async (themes: Theme[]): Promise<void> => {
+    const urls = new Set<string>();
+    themes.forEach((theme) => {
+        urls.add(theme.backgroundUrl);
+        urls.add(theme.xMarkerUrl);
+        urls.add(theme.oMarkerUrl);
+    });
+    await Promise.all(Array.from(urls).map(preloadImage));
+};
+
 // --- Адмінські операції (запис дозволений лише isAdmin() у Security Rules) ---
 
 export const getAllThemes = async (): Promise<Theme[]> => {

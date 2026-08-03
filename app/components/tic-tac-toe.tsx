@@ -13,7 +13,7 @@ import {
 } from "@/app/components/gameLogic";
 import { DifficultTicTacToe } from "@/app/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@/app/components/FiveByFiveTicTacToe";
-import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme } from "@/app/lib/themes";
+import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme, preloadThemeImages } from "@/app/lib/themes";
 import { getActiveNames, pickRandomName } from "@/app/lib/names";
 import { logGameResult } from "@/app/lib/gameLog";
 
@@ -86,7 +86,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
     // ігноруються (themeReady нижче), щоб не вийшло гри з "напівзмішаними" скінами.
     useEffect(() => {
         let cancelled = false;
-        getActiveThemes().then((themes) => {
+        getActiveThemes().then(async (themes) => {
+            if (cancelled) return;
+            // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) -
+            // рестарт (pickNewTheme) може вибрати будь-яку з них, і на той момент
+            // вона вже має бути в кеші браузера.
+            await preloadThemeImages(themes.length > 0 ? themes : [DEFAULT_THEME]);
             if (cancelled) return;
             setAvailableThemes(themes);
             setTheme(pickRandomTheme(themes));
