@@ -61,6 +61,8 @@ export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
     gap: 0;
     padding: 10px;
     box-sizing: border-box;
+    border-radius: 18px;
+    overflow: hidden;
 `;
 
 export const Cell = styled.div<{ $borderStyle?: string }>`
@@ -258,6 +260,8 @@ export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
     gap: 6px;
     padding: 10px;
     box-sizing: border-box;
+    border-radius: 18px;
+    overflow: hidden;
 `;
 
 export const MiniBoardWrapper = styled.div<{ $isActive: boolean }>`

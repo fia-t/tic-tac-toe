@@ -358,18 +358,6 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                     <ButtonWithTooltip>
                         <Button
                             onClick={() => {
-                                trackEvent("select_mode", { mode: "hard" });
-                                setGameMode("difficult");
-                            }}
-                            aria-label="Hard"
-                        >
-                            <ControlIcon src="/images/difficult.png" alt="Hard" />
-                        </Button>
-                        <Tooltip>Hard</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
                                 trackEvent("select_mode", { mode: "five" });
                                 setGameMode("five");
                             }}
@@ -378,6 +366,18 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                             <ControlIcon src="/images/game-5x5.png" alt="5x5" />
                         </Button>
                         <Tooltip>5×5</Tooltip>
+                    </ButtonWithTooltip>
+                    <ButtonWithTooltip>
+                        <Button
+                            onClick={() => {
+                                trackEvent("select_mode", { mode: "hard" });
+                                setGameMode("difficult");
+                            }}
+                            aria-label="Hard"
+                        >
+                            <ControlIcon src="/images/difficult.png" alt="Hard" />
+                        </Button>
+                        <Tooltip>Hard</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
                         <Button onClick={handleFriendClick} aria-label="Play with a friend">

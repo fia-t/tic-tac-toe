@@ -243,6 +243,18 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                     <ButtonWithTooltip>
                         <Button
                             onClick={() => {
+                                trackEvent("select_mode", { mode: "five" });
+                                setGameMode("five");
+                            }}
+                            aria-label="5x5"
+                        >
+                            <ControlIcon src="/images/game-5x5.png" alt="5x5" />
+                        </Button>
+                        <Tooltip>5×5</Tooltip>
+                    </ButtonWithTooltip>
+                    <ButtonWithTooltip>
+                        <Button
+                            onClick={() => {
                                 trackEvent("select_mode", { mode: "hard" });
                                 setGameMode("difficult");
                             }}
