@@ -250,7 +250,7 @@ export const borderStyles = [
 // --- Стилі для Ultimate Tic-Tac-Toe (режим "Складний") ---
 
 export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
-    width: min(92vw, 460px);
+    width: min(92vw, 480px);
     aspect-ratio: 1 / 1;
     background: url('${({ $backgroundUrl }) => $backgroundUrl || "/images/sand.png"}') no-repeat center/cover;
     position: relative;

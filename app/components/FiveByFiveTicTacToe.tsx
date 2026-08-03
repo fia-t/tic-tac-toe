@@ -205,7 +205,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
-                    <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl}>
+                    <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={480}>
                         {board.flat().map((cell, index) => {
                             const row = Math.floor(index / SIZE);
                             const col = index % SIZE;
@@ -238,7 +238,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                         >
                             <ControlIcon src="/images/traditional.png" alt="Easy" />
                         </Button>
-                        <Tooltip>Easy</Tooltip>
+                        <Tooltip>3×3</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
                         <Button

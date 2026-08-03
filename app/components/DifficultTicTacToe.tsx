@@ -353,7 +353,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                         >
                             <ControlIcon src="/images/traditional.png" alt="Easy" />
                         </Button>
-                        <Tooltip>Easy</Tooltip>
+                        <Tooltip>3×3</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
                         <Button
