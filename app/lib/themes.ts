@@ -148,6 +148,20 @@ export const deleteTheme = async (themeId: string): Promise<void> => {
 export const uploadThemeImage = async (themeId: string, file: File, kind: ThemeImageKind): Promise<string> => {
     const storage = getFirebaseStorage();
     const storageRef = ref(storage, `themes/${themeId}/${kind}`);
+    // Спершу видаляємо попередній файл за тим самим шляхом. Firebase Storage
+    // при звичайному перезаписі того ж шляху зберігає старий download-токен
+    // (firebaseStorageDownloadTokens), тож getDownloadURL() повертає ІДЕНТИЧНИЙ
+    // URL, що й був до заміни картинки. Оскільки URL не змінюється, браузер і
+    // Firestore (де він же зберігається в backgroundUrl/xMarkerUrl/oMarkerUrl)
+    // не бачать різниці - і при наступному завантаженні сторінки показується
+    // стара картинка з кешу браузера, попри те, що на сервері файл вже інший.
+    // Видалення старого об'єкта перед завантаженням нового змушує Firebase
+    // згенерувати новий токен -> новий URL -> кеш більше не застосовується.
+    try {
+        await deleteObject(storageRef);
+    } catch {
+        // об'єкта могло не бути (перше завантаження цього kind) - це нормально
+    }
     await uploadBytes(storageRef, file, { contentType: file.type });
     return getDownloadURL(storageRef);
 };
