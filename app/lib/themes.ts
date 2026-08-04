@@ -74,9 +74,14 @@ export const getActiveThemes = async (): Promise<Theme[]> => {
     }
 };
 
-export const pickRandomTheme = (themes: Theme[]): Theme => {
+// excludeId дозволяє не повторювати щойно зіграну тему при рестарті - якщо
+// відфільтроване виключення лишає порожній список (усього 1 активна тема),
+// повертаємось до повного списку, бо повторення тоді неминуче.
+export const pickRandomTheme = (themes: Theme[], excludeId?: string): Theme => {
     if (themes.length === 0) return DEFAULT_THEME;
-    return themes[Math.floor(Math.random() * themes.length)];
+    const candidates = excludeId ? themes.filter((theme) => theme.id !== excludeId) : themes;
+    const pool = candidates.length > 0 ? candidates : themes;
+    return pool[Math.floor(Math.random() * pool.length)];
 };
 
 const preloadImage = (src: string): Promise<void> =>

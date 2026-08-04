@@ -116,7 +116,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
         );
     }
 
-    const pickNewTheme = () => setTheme(pickRandomTheme(availableThemes));
+    // Виключаємо поточну тему з вибірки, щоб рестарт ніколи не показував
+    // ту саму тему двічі поспіль (коли активних тем 2+).
+    const pickNewTheme = () => setTheme((current) => pickRandomTheme(availableThemes, current.id));
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
