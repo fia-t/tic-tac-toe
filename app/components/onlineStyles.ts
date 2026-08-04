@@ -107,6 +107,14 @@ export const ModeOptionHint = styled.span`
     color: #8a6a42;
 `;
 
+// Іконка режиму всередині ModeOption - ті самі PNG, що й на кнопках вибору
+// режиму головного поля (board.tsx), щоб вигляд лишався впізнаваним.
+export const ModeOptionIcon = styled.img`
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+`;
+
 export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
     width: 100%;
     padding: 12px 16px;

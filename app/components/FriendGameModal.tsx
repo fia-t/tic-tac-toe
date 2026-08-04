@@ -8,6 +8,7 @@ import {
     ModalSubtitle,
     ModeOptionGroup,
     ModeOption,
+    ModeOptionIcon,
     ModeOptionHint,
     PillButton,
     ButtonRow,
@@ -96,16 +97,16 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                         <ModalSubtitle>Оберіть режим гри</ModalSubtitle>
                         <ModeOptionGroup>
                             <ModeOption type="button" $active={mode === "3x3"} onClick={() => setMode("3x3")}>
-                                Звичайна гра
+                                <ModeOptionIcon src="/images/traditional.png" alt="3×3" />
                                 <ModeOptionHint>3×3</ModeOptionHint>
                             </ModeOption>
-                            <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
-                                Розширена гра
-                                <ModeOptionHint>9×9</ModeOptionHint>
-                            </ModeOption>
                             <ModeOption type="button" $active={mode === "5x5"} onClick={() => setMode("5x5")}>
-                                Велике поле
+                                <ModeOptionIcon src="/images/game-5x5.png" alt="5×5" />
                                 <ModeOptionHint>5×5</ModeOptionHint>
+                            </ModeOption>
+                            <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
+                                <ModeOptionIcon src="/images/difficult.png" alt="9×9" />
+                                <ModeOptionHint>9×9</ModeOptionHint>
                             </ModeOption>
                         </ModeOptionGroup>
 
