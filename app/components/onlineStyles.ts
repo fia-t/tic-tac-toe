@@ -110,8 +110,8 @@ export const ModeOptionHint = styled.span`
 // Іконка режиму всередині ModeOption - ті самі PNG, що й на кнопках вибору
 // режиму головного поля (board.tsx), щоб вигляд лишався впізнаваним.
 export const ModeOptionIcon = styled.img`
-    width: 36px;
-    height: 36px;
+    width: 70px;
+    height: 70px;
     object-fit: contain;
 `;
 
