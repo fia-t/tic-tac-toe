@@ -192,6 +192,25 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
         trackEvent("game_restart", { mode: "easy" });
     };
 
+    // На відміну від DifficultTicTacToe/FiveByFiveTicTacToe (які повністю
+    // розмонтовуються при зміні gameMode і тому завжди монтуються заново з
+    // чистою дошкою), 3x3-гілка рендериться прямо тут, у TicTacToe - а сам
+    // TicTacToe при перемиканні режиму НЕ розмонтовується. Тож board/winner
+    // цього режиму лишались би зі старими URL фішок (записаними в клітинки
+    // під час ходів), навіть якщо тим часом у іншому режимі був рестарт і
+    // pickNewTheme() змінила спільний theme - при поверненні сюди фон був би
+    // вже новий, а фішки на дошці - зі старої теми. Тому перед переходом в
+    // інший режим скидаємо дошку 3x3 так само, як це відбувається "безкоштовно"
+    // для difficult/five через розмонтування.
+    const handleSetGameMode = (mode: "traditional" | "difficult" | "five") => {
+        setBoard(createEmptyGrid());
+        setWinner(null);
+        setIsNoWinner(false);
+        setIsAiTurn(false);
+        setShowResultPopup(false);
+        setGameMode(mode);
+    };
+
     if (gameMode === "difficult") {
         return (
             <DifficultTicTacToe
@@ -256,7 +275,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
                 board={board}
                 handleClick={handleOnClick}
                 restartGame={restartGame}
-                setGameMode={setGameMode}
+                setGameMode={handleSetGameMode}
                 backgroundUrl={theme.backgroundUrl}
                 scoreBoard={scoreBoard}
                 onRoomReady={onRoomReady}
