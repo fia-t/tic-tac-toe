@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Board } from "./board";
-import { Popup, Overlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider } from "@/app/components/gameStyles";
+import { Popup, Overlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@/app/components/gameStyles";
 import { trackEvent } from "@/app/lib/firebase";
 import {
     Grid3,
@@ -101,6 +101,20 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
             cancelled = true;
         };
     }, []);
+
+    // Поки тема ще не підвантажилась з Firestore, замість дошки з фейковим
+    // DEFAULT_THEME (фон/фішки, які за секунду підміняться на реальні) -
+    // показуємо нейтральний спінер. Це стосується всіх трьох режимів, бо
+    // gameMode завжди стартує з "traditional" ще до першого рендеру теми.
+    if (!themeReady) {
+        return (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <ThemeLoadingBox>
+                    <Spinner />
+                </ThemeLoadingBox>
+            </div>
+        );
+    }
 
     const pickNewTheme = () => setTheme(pickRandomTheme(availableThemes));
 

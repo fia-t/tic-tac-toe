@@ -1,5 +1,5 @@
 "use client";
-import styled, { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle, keyframes } from "styled-components";
 
 // Базовий скид, щоб відсоткові/vw-розміри рахувались від реального
 // розміру екрана телефона, а не від дефолтних відступів браузера.
@@ -315,4 +315,32 @@ export const MiniBoardDrawLabel = styled.span`
     font-size: clamp(24px, 9vw, 48px);
     font-weight: bold;
     color: #f5f5f5;
+`;
+
+// --- Індикатор завантаження теми ---
+
+// Займає той самий розмір/форму, що й ігрове поле (BoardContainer/UltimateBoardContainer),
+// щоб коли тема довантажиться і замінить цей блок на реальну дошку, розмітка
+// сторінки не "стрибала".
+export const ThemeLoadingBox = styled.div`
+    width: min(92vw, 480px);
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 18px;
+    background: rgba(139, 101, 60, 0.12);
+`;
+
+const spin = keyframes`
+    to { transform: rotate(360deg); }
+`;
+
+export const Spinner = styled.div`
+    width: 56px;
+    height: 56px;
+    border: 6px solid rgba(139, 69, 19, 0.2);
+    border-top-color: #8B4513;
+    border-radius: 50%;
+    animation: ${spin} 0.8s linear infinite;
 `;
