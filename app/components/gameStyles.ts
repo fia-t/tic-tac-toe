@@ -214,7 +214,11 @@ export const ScoreBoard = styled.div`
     margin-bottom: 12px;
     padding: 8px 18px;
     border-radius: 14px;
-    background: rgba(139, 101, 60, 0.12);
+    background: transparent;
+    border: 2px solid rgba(139, 101, 60, 0.35);
+    box-shadow:
+        inset 2px 2px 4px rgba(101, 72, 35, 0.35),
+        inset -1px -1px 2px rgba(255, 255, 255, 0.35);
     color: #5b3f22;
     font-size: 14px;
     font-weight: 700;
