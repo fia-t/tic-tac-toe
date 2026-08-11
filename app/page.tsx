@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { TicTacToeEntry } from "@/app/components/TicTacToeEntry";
 import { Container } from "@/app/components/gameStyles";
+import { HideWhenEmbedded } from "@/app/components/portal/HideWhenEmbedded";
 import { buildMetadata } from "@/app/lib/seo/metadata";
 
 export const metadata: Metadata = buildMetadata({
@@ -31,6 +32,14 @@ const homeLinks = [
 // full-bleed ігровий екран, що й раніше, без header/footer, які зламали б вигляд гри.
 // Замість цього: прихований для очей, але доступний для скрін-рідерів і пошукових
 // систем H1/опис, і компактна навігація під грою - єдиний вихід із "/" на нові SEO-сторінки.
+//
+// Ця навігація ховається, коли сторінку завантажено як cross-origin iframe (портал) -
+// інакше клік по ній виводить гравця з iframe порталу на маркетингові сторінки сайту.
+// Перевірка (HideWhenEmbedded) - клієнтська (window.self !== window.top), а не
+// серверна: nav лежить нижче Container-а на всю висоту viewport, тому і в
+// звичайному вбудованому кейсі гравець фізично не встигає побачити його до
+// прихованого стану, а сторінка "/" лишається статично згенерованою (важливо
+// для SEO - це головна посадкова сторінка сайту).
 export default function Home() {
   return (
     <main>
@@ -52,39 +61,41 @@ export default function Home() {
       <Container>
         <TicTacToeEntry />
       </Container>
-      <nav
-        aria-label="Site navigation"
-        style={{
-          background: "#2b1a08",
-          color: "#e6c890",
-          padding: "20px 16px 28px",
-          textAlign: "center",
-        }}
-      >
-        <ul
+      <HideWhenEmbedded>
+        <nav
+          aria-label="Site navigation"
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: "8px 16px",
-            listStyle: "none",
-            margin: "0 auto",
-            padding: 0,
-            maxWidth: 900,
+            background: "#2b1a08",
+            color: "#e6c890",
+            padding: "20px 16px 28px",
+            textAlign: "center",
           }}
         >
-          {homeLinks.map((link) => (
-            <li key={link.href}>
-              <Link href={link.href} style={{ color: "#e6c890", fontSize: 14, textDecoration: "none" }}>
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <p style={{ fontSize: 12, opacity: 0.6, marginTop: 16 }}>
-          © {new Date().getFullYear()} Tic Tac Toe Online. All rights reserved.
-        </p>
-      </nav>
+          <ul
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "8px 16px",
+              listStyle: "none",
+              margin: "0 auto",
+              padding: 0,
+              maxWidth: 900,
+            }}
+          >
+            {homeLinks.map((link) => (
+              <li key={link.href}>
+                <Link href={link.href} style={{ color: "#e6c890", fontSize: 14, textDecoration: "none" }}>
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <p style={{ fontSize: 12, opacity: 0.6, marginTop: 16 }}>
+            © {new Date().getFullYear()} Tic Tac Toe Online. All rights reserved.
+          </p>
+        </nav>
+      </HideWhenEmbedded>
     </main>
   );
 }
