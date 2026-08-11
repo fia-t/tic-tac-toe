@@ -2,12 +2,18 @@ import { useEffect, useRef, useState } from "react";
 import { TicTacToe } from "@/app/components/tic-tac-toe";
 import { PlayRoomClient } from "@/app/components/PlayRoomClient";
 import { GlobalStyle, Container } from "@/app/components/gameStyles";
-import { setGameEventListener } from "@/app/lib/firebase";
+import { addGameEventListener } from "@/app/lib/firebase";
+import { PortalGameBridge } from "@/app/components/portal/PortalGameBridge";
 import { sdk } from "./sdk";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
 // каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
 const MIDGAME_AD_EVERY = 3;
+
+// Той самий portal-адаптер, що й на основному сайті (app/components/TicTacToeEntry.tsx) -
+// тут читаємо origin через Vite-специфічний import.meta.env, бо PortalGameBridge
+// навмисно не знає, у якому бандлері він зібраний.
+const PORTAL_ORIGIN = import.meta.env.VITE_PORTAL_ORIGIN || "https://play-dev.quartsoft.com";
 
 export default function App() {
     // Room-екран тут - локальний стан, а не next/navigation роутинг (якого в
@@ -20,7 +26,7 @@ export default function App() {
         sdk.loadingStop();
         sdk.gameplayStart();
 
-        setGameEventListener((name) => {
+        return addGameEventListener((name) => {
             if (name === "game_finished") {
                 finishedCount.current += 1;
                 if (finishedCount.current % MIDGAME_AD_EVERY === 0) {
@@ -28,8 +34,6 @@ export default function App() {
                 }
             }
         });
-
-        return () => setGameEventListener(null);
     }, []);
 
     // PlayRoomClient уже огортає власний вміст у Container (як і на сайті) - тут
@@ -38,7 +42,9 @@ export default function App() {
         return (
             <>
                 <GlobalStyle />
-                <PlayRoomClient roomId={roomId} onExit={() => setRoomId(null)} />
+                <PortalGameBridge origin={PORTAL_ORIGIN}>
+                    <PlayRoomClient roomId={roomId} onExit={() => setRoomId(null)} />
+                </PortalGameBridge>
             </>
         );
     }
@@ -46,9 +52,11 @@ export default function App() {
     return (
         <>
             <GlobalStyle />
-            <Container>
-                <TicTacToe onRoomReady={setRoomId} onBeforeFriendOpen={() => sdk.showRewardedAd()} />
-            </Container>
+            <PortalGameBridge origin={PORTAL_ORIGIN}>
+                <Container>
+                    <TicTacToe onRoomReady={setRoomId} onBeforeFriendOpen={() => sdk.showRewardedAd()} />
+                </Container>
+            </PortalGameBridge>
         </>
     );
 }

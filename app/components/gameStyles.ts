@@ -10,6 +10,11 @@ export const GlobalStyle = createGlobalStyle`
     html, body {
         margin: 0;
         padding: 0;
+        width: 100%;
+        /* Явний (не лише min-) height по всьому ланцюжку html/body - інакше
+           height:100% нижче по дереву (Container) не резолвиться, що критично
+           для вбудовування у cross-origin iframe порталу довільного розміру. */
+        height: 100%;
         min-height: 100%;
         /* Невидимий Tooltip (opacity: 0) все одно розтягує scrollWidth за
            межі екрана на вузьких телефонах, через що vw/fixed-центрування
@@ -22,7 +27,11 @@ export const Container = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    /* height:100% замість 100vh - у вбудованому iframe і мобільних in-app
+       вебв'ю 100vh рахується від "справжнього" viewport, а не від фактичного
+       розміру iframe/адресного рядка, що спричиняло overflow/обрізання. */
+    height: 100%;
+    min-height: 100%;
     width: 100%;
     padding: 16px;
     background-image: url('/images/background-image.jpg');
