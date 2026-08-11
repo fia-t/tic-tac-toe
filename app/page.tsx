@@ -42,7 +42,14 @@ const homeLinks = [
 // для SEO - це головна посадкова сторінка сайту).
 export default function Home() {
   return (
-    <main>
+    // height:100% - без цього <main> лишається auto-висоти (лише за вмістом), і
+    // Container{height:100%} нижче не резолвиться (у CSS відсоткова height працює
+    // лише коли БАТЬКО має явну, не-auto висоту). У звичайній вкладці це непомітно -
+    // <nav> одразу після Container "дотягує" сторінку вниз своїм фоном. Але коли
+    // HideWhenEmbedded ховає <nav> в iframe, порожній залишок явно заданої html/body
+    // висоти (next.config.ts CSS-фікс під iframe) проступає голим білим фоном body
+    // під грою - саме це й видно на скріншоті.
+    <main style={{ height: "100%" }}>
       <h1
         style={{
           position: "absolute",
