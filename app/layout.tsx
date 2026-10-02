@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { GlobalStyle } from "@/app/components/gameStyles";
+import { GlobalStyle } from "@game/components/gameStyles";
 import StyledComponentsRegistry from "@/app/lib/registry";
 import { siteConfig } from "@/app/lib/seo/site-config";
 import { JsonLd, organizationJsonLd, webApplicationJsonLd } from "@/app/lib/seo/json-ld";

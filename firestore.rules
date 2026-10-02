@@ -35,6 +35,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /gameBuilds/{buildId} {
+      // Історія білдів гри для порталу (адмінка -> "Білд гри"). Адмін створює
+      // заявку в статусі queued, далі статус/посилання на ZIP пише GitHub Actions
+      // через Admin SDK (в обхід rules). update дозволений адміну лише щоб
+      // позначити failed, якщо workflow так і не вдалося запустити.
+      allow read: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.status == "queued";
+      allow update: if isAdmin() && request.resource.data.status == "failed";
+      allow delete: if false;
+    }
+
     match /rooms/{roomId} {
 
       // Читати кімнату може будь-хто автентифікований (анонімна авторизація теж

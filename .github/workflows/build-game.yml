@@ -1,0 +1,70 @@
+# Білд standalone-гри (game/) у ZIP для порталу. Запускається кнопкою "Зібрати гру"
+# в адмінці: app/api/admin/game-build/route.ts -> workflow_dispatch з build_id
+# документа gameBuilds/{build_id}, який адмінка щойно створила в статусі queued.
+#
+# Потрібно в Settings -> Secrets and variables -> Actions цього репозиторію:
+#   secret   FIREBASE_SERVICE_ACCOUNT  - JSON ключа service account (Firestore + Storage запис)
+#   variables NEXT_PUBLIC_FIREBASE_*    - ті самі публічні значення, що й у .env.local/Vercel
+#             NEXT_PUBLIC_FIRESTORE_DATABASE_ID, NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_PORTAL_ORIGIN
+name: Build game
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_id:
+        description: "gameBuilds document id (створює адмінка)"
+        required: true
+      target:
+        description: "portal | crazygames | poki | itch"
+        required: false
+        default: portal
+
+# Білди по черзі: кожен у кінці перемикає game-builds/current.json, паралельні
+# перегони тут нічого б не дали, крім плутанини, який білд "поточний".
+concurrency:
+  group: build-game
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BUILD_ID: ${{ inputs.build_id }}
+      GAME_TARGET: ${{ inputs.target }}
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      NEXT_PUBLIC_FIREBASE_API_KEY: ${{ vars.NEXT_PUBLIC_FIREBASE_API_KEY }}
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${{ vars.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_PROJECT_ID }}
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${{ vars.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }}
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
+      NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
+      NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+      NEXT_PUBLIC_FIRESTORE_DATABASE_ID: ${{ vars.NEXT_PUBLIC_FIRESTORE_DATABASE_ID }}
+      NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+      NEXT_PUBLIC_PORTAL_ORIGIN: ${{ vars.NEXT_PUBLIC_PORTAL_ORIGIN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Mark build as started
+        run: node game/scripts/build-publish.mjs status building
+
+      - name: Build
+        run: npx vite build --config game/vite.config.ts --mode "$GAME_TARGET"
+
+      - name: Upload ZIP and site copy
+        run: node game/scripts/build-publish.mjs publish
+
+      - name: Mark build as failed
+        if: failure()
+        run: node game/scripts/build-publish.mjs status failed

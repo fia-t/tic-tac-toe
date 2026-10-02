@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, getIdTokenResult, User } from "firebase/auth";
-import { getFirebaseAuth, isFirebaseConfigured } from "@/app/lib/firebase";
-import { PillButton, TextInput, ErrorText } from "@/app/components/onlineStyles";
+import { getFirebaseAuth, isFirebaseConfigured } from "@game/lib/firebase";
+import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import {
     AdminPage,
     AdminHeader,
@@ -22,6 +22,7 @@ import { DashboardSection } from "@/app/admin/sections/DashboardSection";
 import { ThemesSection } from "@/app/admin/sections/ThemesSection";
 import { NamesSection } from "@/app/admin/sections/NamesSection";
 import { SeoSection } from "@/app/admin/sections/SeoSection";
+import { GameBuildSection } from "@/app/admin/sections/GameBuildSection";
 
 // Права адміна визначаються ВИКЛЮЧНО custom claim'ом `admin: true` у ID
 // token (встановлюється лише через scripts/setAdminClaim.js, Firebase Admin
@@ -34,13 +35,14 @@ type AdminAuthState =
     | { status: "admin"; user: User }
     | { status: "error"; message: string };
 
-type AdminSection = "dashboard" | "themes" | "names" | "seo";
+type AdminSection = "dashboard" | "themes" | "names" | "seo" | "build";
 
 const NAV_ITEMS: { id: AdminSection; label: string }[] = [
     { id: "dashboard", label: "Дашборд" },
     { id: "themes", label: "Теми" },
     { id: "names", label: "Імена" },
     { id: "seo", label: "SEO" },
+    { id: "build", label: "Білд гри" },
 ];
 
 export default function AdminPageRoute() {
@@ -205,6 +207,7 @@ export default function AdminPageRoute() {
                     {activeSection === "themes" && <ThemesSection />}
                     {activeSection === "names" && <NamesSection />}
                     {activeSection === "seo" && <SeoSection />}
+                    {activeSection === "build" && <GameBuildSection user={user} />}
                 </MainContentInner>
             </MainContent>
         </AdminShell>

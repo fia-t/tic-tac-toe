@@ -1,9 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { TicTacToe } from "@/app/components/tic-tac-toe";
-import { PortalGameBridge } from "@/app/components/portal/PortalGameBridge";
-
-const PORTAL_ORIGIN = process.env.NEXT_PUBLIC_PORTAL_ORIGIN || "https://play-dev.quartsoft.com";
+import { TicTacToe } from "@game/components/tic-tac-toe";
+import { PortalGameBridge } from "@game/portal/PortalGameBridge";
+import { PORTAL_ORIGIN } from "@game/portal/config";
 
 // Єдине місце на сайті, де TicTacToe-дерево компонентів знає про Next.js-роутинг -
 // сам TicTacToe (і все під ним: Board/DifficultTicTacToe/FiveByFiveTicTacToe/

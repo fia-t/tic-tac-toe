@@ -13,5 +13,13 @@ service firebase.storage {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Зібрані білди гри (ZIP для порталу + розпакована копія, яку віддає /game
+    // на сайті). Сама гра й так публічна, тож читання відкрите; пише лише
+    // GitHub Actions через Admin SDK, з клієнта - ніхто.
+    match /game-builds/{allPaths=**} {
+      allow read: if true;
+      allow write: if false;
+    }
   }
 }

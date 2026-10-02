@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { GameLogEntry, getGameLogsInRange } from "@/app/lib/gameLog";
-import { ErrorText } from "@/app/components/onlineStyles";
+import { GameLogEntry, getGameLogsInRange } from "@game/lib/gameLog";
+import { ErrorText } from "@game/components/onlineStyles";
 import {
     Section,
     SectionTitle,

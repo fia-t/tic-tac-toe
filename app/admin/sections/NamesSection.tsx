@@ -7,8 +7,8 @@ import {
     updateName,
     deleteName,
     seedDefaultNames,
-} from "@/app/lib/names";
-import { PillButton, TextInput, ErrorText } from "@/app/components/onlineStyles";
+} from "@game/lib/names";
+import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import {
     Section,
     SectionTitle,

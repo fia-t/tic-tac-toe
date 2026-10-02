@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TicTacToeEntry } from "@/app/components/TicTacToeEntry";
-import { Container } from "@/app/components/gameStyles";
+import { Container } from "@game/components/gameStyles";
 import { HideWhenEmbedded } from "@/app/components/portal/HideWhenEmbedded";
 import { buildMetadata } from "@/app/lib/seo/metadata";
 

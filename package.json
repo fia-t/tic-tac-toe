@@ -7,26 +7,36 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "admin:set-claim": "node scripts/setAdminClaim.js"
+    "admin:set-claim": "node scripts/setAdminClaim.js",
+    "game:dev": "vite --config game/vite.config.ts --mode portal",
+    "game:build": "vite build --config game/vite.config.ts --mode portal",
+    "game:build:crazygames": "vite build --config game/vite.config.ts --mode crazygames",
+    "game:build:poki": "vite build --config game/vite.config.ts --mode poki",
+    "game:build:itch": "vite build --config game/vite.config.ts --mode itch",
+    "game:preview": "vite preview --config game/vite.config.ts --mode portal",
+    "game:typecheck": "tsc -p game/tsconfig.json"
   },
   "dependencies": {
     "firebase": "^12.16.0",
     "next": "^15.5.20",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "styled-components": "^6.1.15"
+    "styled-components": "^6.1.15",
+    "firebase-admin": "^13.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "^15.5.20",
-    "firebase-admin": "^13.0.0",
+    "fflate": "^0.8.3",
     "postcss": "^8.5.3",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vite": "^6.4.3"
   }
 }

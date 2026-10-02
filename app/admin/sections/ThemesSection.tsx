@@ -8,8 +8,8 @@ import {
     updateTheme,
     deleteTheme,
     uploadThemeImage,
-} from "@/app/lib/themes";
-import { PillButton, TextInput, ErrorText } from "@/app/components/onlineStyles";
+} from "@game/lib/themes";
+import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import {
     Section,
     SectionTitle,
