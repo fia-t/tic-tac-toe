@@ -10,10 +10,17 @@ export type GameMode = "ai-easy" | "ai-hard" | "ai-5x5" | "friend-3x3" | "friend
 // немає єдиного "гравця", з чийого погляду вважати перемогу/поразку.
 export type GameOutcome = "win" | "lose" | "draw" | "x_win" | "o_win";
 
+// Звідки зіграна партія: "site" - Next.js-сайт, решта - ціль Vite-білду
+// (GAME_TARGET: portal/crazygames/poki/itch). Старі записи поля не мають (null).
+export type GameSource = "site" | "portal" | "crazygames" | "poki" | "itch";
+
+export const gameSource: GameSource = (process.env.GAME_TARGET as GameSource | undefined) ?? "site";
+
 export type GameLogEntry = {
     id: string;
     mode: GameMode;
     outcome: GameOutcome;
+    source: GameSource | null;
     createdAt: Timestamp | null;
 };
 
@@ -28,6 +35,7 @@ export const logGameResult = (mode: GameMode, outcome: GameOutcome): void => {
     void addDoc(collection(getFirebaseDb(), gameLogsCollection), {
         mode,
         outcome,
+        source: gameSource,
         createdAt: serverTimestamp(),
     }).catch(() => {
         // тихо ігноруємо - див. коментар вище
@@ -50,6 +58,7 @@ export const getGameLogsInRange = async (start: Date, end: Date): Promise<GameLo
             id: d.id,
             mode: data.mode as GameMode,
             outcome: data.outcome as GameOutcome,
+            source: (data.source as GameSource | undefined) ?? null,
             createdAt: (data.createdAt as Timestamp) ?? null,
         };
     });

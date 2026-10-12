@@ -69,6 +69,8 @@ service cloud.firestore {
   function isValidGameLog(data) {
     return data.mode in ['ai-easy', 'ai-hard', 'ai-5x5', 'friend-3x3', 'friend-9x9', 'friend-5x5']
       && data.outcome in ['win', 'lose', 'draw', 'x_win', 'o_win']
+      // source необов'язкове - вже викладені на порталах старі білди його не шлють.
+      && (!('source' in data) || data.source in ['site', 'portal', 'crazygames', 'poki', 'itch'])
       && data.createdAt == request.time;
   }
 

@@ -21,7 +21,7 @@ import {
     getOnlineGridWinner,
     isOnlineGridFull,
 } from "@game/components/onlineGameLogic";
-import { GameMode } from "@game/lib/gameLog";
+import { GameMode, gameSource } from "@game/lib/gameLog";
 
 // Мапа "режим кімнати" -> "рядок для gameLogs". Явна Record, а не ternary/switch без
 // exhaustiveness-перевірки - TS одразу підкаже, якщо OnlineGameMode отримає нове значення,
@@ -281,6 +281,7 @@ export const makeMove = async (
             tx.set(doc(collection(db, "gameLogs")), {
                 mode,
                 outcome,
+                source: gameSource,
                 createdAt: serverTimestamp(),
             });
         }

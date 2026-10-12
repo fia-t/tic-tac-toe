@@ -27,7 +27,23 @@ const MODE_LABEL: Record<string, string> = {
     "ai-hard": "ШІ - складний",
     "friend-3x3": "З другом - 3x3",
     "friend-9x9": "З другом - 9x9",
+    "ai-5x5": "ШІ - 5x5",
+    "friend-5x5": "З другом - 5x5",
 };
+
+// "unknown" - записи до появи поля source (сайт чи портал - невідомо).
+type SourceFilter = "all" | "site" | "portal" | "crazygames" | "poki" | "itch" | "unknown";
+
+const SOURCE_LABEL: Record<Exclude<SourceFilter, "all">, string> = {
+    site: "Сайт",
+    portal: "Портал",
+    crazygames: "CrazyGames",
+    poki: "Poki",
+    itch: "itch.io",
+    unknown: "Не вказано",
+};
+
+const sourceKey = (log: GameLogEntry): Exclude<SourceFilter, "all"> => log.source ?? "unknown";
 
 const OUTCOME_LABEL: Record<string, string> = {
     win: "Перемога гравця",
@@ -100,28 +116,43 @@ export const DashboardSection: React.FC = () => {
         };
     }, [range]);
 
+    const [sourceFilter, setSourceFilter] = useState<SourceFilter>("all");
+
+    // Розбивка по джерелах завжди по всіх логах періоду - щоб було видно, які
+    // джерела взагалі є, навіть коли вибрано фільтр.
+    const bySource = useMemo(() => {
+        const map = new Map<Exclude<SourceFilter, "all">, number>();
+        (logs ?? []).forEach((log) => map.set(sourceKey(log), (map.get(sourceKey(log)) ?? 0) + 1));
+        return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+    }, [logs]);
+
+    const filteredLogs = useMemo(
+        () => (logs ?? []).filter((log) => sourceFilter === "all" || sourceKey(log) === sourceFilter),
+        [logs, sourceFilter]
+    );
+
     const byDay = useMemo(() => {
         const map = new Map<string, number>();
-        (logs ?? []).forEach((log) => {
+        filteredLogs.forEach((log) => {
             const date = log.createdAt?.toDate();
             const key = date ? toDateInputValue(date) : "?";
             map.set(key, (map.get(key) ?? 0) + 1);
         });
         return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-    }, [logs]);
+    }, [filteredLogs]);
 
     const byMode = useMemo(() => {
         const map = new Map<string, Map<string, number>>();
-        (logs ?? []).forEach((log) => {
+        filteredLogs.forEach((log) => {
             const outcomes = map.get(log.mode) ?? new Map<string, number>();
             outcomes.set(log.outcome, (outcomes.get(log.outcome) ?? 0) + 1);
             map.set(log.mode, outcomes);
         });
         return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    }, [logs]);
+    }, [filteredLogs]);
 
-    const total = logs?.length ?? 0;
-    const hasData = logs !== null && logs.length > 0;
+    const total = filteredLogs.length;
+    const hasData = logs !== null && filteredLogs.length > 0;
 
     return (
         <>
@@ -161,6 +192,23 @@ export const DashboardSection: React.FC = () => {
                     )}
                 </FilterBar>
 
+                <SectionTitle>Джерело</SectionTitle>
+                <FilterBar>
+                    <FilterButton type="button" $active={sourceFilter === "all"} onClick={() => setSourceFilter("all")}>
+                        Усі
+                    </FilterButton>
+                    {(Object.keys(SOURCE_LABEL) as Exclude<SourceFilter, "all">[]).map((key) => (
+                        <FilterButton
+                            key={key}
+                            type="button"
+                            $active={sourceFilter === key}
+                            onClick={() => setSourceFilter(key)}
+                        >
+                            {SOURCE_LABEL[key]}
+                        </FilterButton>
+                    ))}
+                </FilterBar>
+
                 {error && <ErrorText>{error}</ErrorText>}
 
                 <StatCardRow>
@@ -174,6 +222,30 @@ export const DashboardSection: React.FC = () => {
             {!loading && !hasData && !error && (
                 <Section>
                     <EmptyState>Немає даних</EmptyState>
+                </Section>
+            )}
+
+            {logs !== null && logs.length > 0 && (
+                <Section>
+                    <SectionTitle>Партії по джерелах</SectionTitle>
+                    <TableWrap>
+                        <Table>
+                            <thead>
+                                <tr>
+                                    <Th>Джерело</Th>
+                                    <Th>Кількість партій</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {bySource.map(([key, count]) => (
+                                    <tr key={key}>
+                                        <Td>{SOURCE_LABEL[key]}</Td>
+                                        <Td>{count}</Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </Table>
+                    </TableWrap>
                 </Section>
             )}
 
