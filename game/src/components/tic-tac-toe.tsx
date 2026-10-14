@@ -33,7 +33,7 @@ import { setScreenState } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
-import { Difficulty, getDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
+import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -114,8 +114,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
     // шукати, як почати гру. Меню - кнопка "Додому" зліва вгорі.
     const isNewPlayer = profile.stats.games === 0;
+    // Перша партія новачка - на рівні "Легкий" (якщо він ще сам не обирав рівень),
+    // щоб перша гра частіше закінчувалась перемогою.
     useEffect(() => {
-        if (getProfile().stats.games === 0) setScreen("game");
+        if (getProfile().stats.games !== 0) return;
+        setScreen("game");
+        if (!hasStoredDifficulty()) setDifficulty("easy");
     }, []);
     const shownName = profileName ?? humanName;
 

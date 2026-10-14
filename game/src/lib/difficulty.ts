@@ -20,6 +20,15 @@ const readStored = (): Difficulty => {
 };
 
 let current: Difficulty = readStored();
+
+// Чи гравець уже колись обирав рівень (новачку без вибору ставимо "Легкий").
+export const hasStoredDifficulty = (): boolean => {
+    try {
+        return typeof localStorage !== "undefined" && localStorage.getItem(STORAGE_KEY) !== null;
+    } catch {
+        return false;
+    }
+};
 // Тимчасовий рівень на одну партію (виклик дня) - не перезаписує вибір гравця.
 let override: Difficulty | null = null;
 const listeners = new Set<() => void>();
