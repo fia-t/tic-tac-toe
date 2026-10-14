@@ -76,9 +76,28 @@ export const GlobalStyle = createGlobalStyle`
     #root {
         height: 100%;
     }
-    /* Шрифт інтерфейсу - системний без засічок (білд для порталу не тягне веб-шрифти). */
+    /* Шрифти (підключені в fonts.ts): основний текст - рукописний Neucha для обох мов;
+       заголовки - Lilita One, але в нього немає кирилиці, тож українською (data-lang="uk")
+       --font-heading перемикається на Unbounded - ним набирається весь заголовок разом із цифрами. */
+    :root {
+        --font-body: "Neucha", "Segoe UI", system-ui, sans-serif;
+        --font-heading-latin: "Lilita One", "Neucha", system-ui, sans-serif;
+        --font-uk: "Unbounded", "Segoe UI", system-ui, sans-serif;
+        --font-heading: var(--font-heading-latin);
+    }
+    html[data-lang="uk"] {
+        --font-heading: var(--font-uk);
+    }
     body {
-        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: var(--font-body);
+    }
+    /* Заголовки: без "домальованого" жирного - у Lilita One лише одна вага, Unbounded підключено у 700. */
+    h1,
+    h2,
+    h3,
+    h4 {
+        font-family: var(--font-heading);
+        font-synthesis: none;
     }
 `;
 

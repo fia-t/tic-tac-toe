@@ -577,12 +577,19 @@ let current: Locale =
     getSavedLocale() ?? (process.env.GAME_TARGET && typeof navigator !== "undefined" ? toLocale(navigator.language) : "uk");
 const listeners = new Set<() => void>();
 
+// Мова сторінки з самого старту - від неї залежить шрифт заголовків.
+if (typeof document !== "undefined") document.documentElement.dataset.lang = current;
+
 export const getLocale = (): Locale => current;
 
 export const setLocale = (locale: Locale): void => {
     if (locale === current) return;
     current = locale;
-    if (typeof document !== "undefined") document.documentElement.lang = locale;
+    if (typeof document !== "undefined") {
+        document.documentElement.lang = locale;
+        // Шрифт заголовків залежить від мови (gameStyles.ts: html[data-lang="uk"]).
+        document.documentElement.dataset.lang = locale;
+    }
     listeners.forEach((listener) => listener());
 };
 

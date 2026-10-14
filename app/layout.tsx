@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { GlobalStyle } from "@game/components/gameStyles";
+import "@game/fonts";
 import StyledComponentsRegistry from "@/app/lib/registry";
 import { siteConfig } from "@/app/lib/seo/site-config";
 import { JsonLd, organizationJsonLd, webApplicationJsonLd } from "@/app/lib/seo/json-ld";
@@ -58,7 +59,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    // data-lang (шрифт заголовків за мовою) виставляє i18n гри ще до гідратації.
+    <html lang="en" suppressHydrationWarning>
       <head>
         <JsonLd data={organizationJsonLd()} />
         <JsonLd data={webApplicationJsonLd()} />
