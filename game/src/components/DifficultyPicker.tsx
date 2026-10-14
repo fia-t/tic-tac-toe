@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
+import { endDailyRun, useDailyRun } from "@game/lib/daily";
 
 // Перемикач рівня ШІ над полем - у тому ж пісочному стилі, що й табло рахунку.
 // Зміна рівня починає нову партію (це робить TicTacToe, підписаний на useDifficulty).
@@ -38,9 +39,43 @@ const Option = styled.button<{ $active: boolean }>`
     }
 `;
 
+const DailyBanner = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: min(92vw, 460px);
+    margin: 0 0 8px;
+    padding: 6px 6px 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(155deg, #ffe3a3 0%, #f5c96a 100%);
+    box-shadow: 3px 3px 6px rgba(101, 72, 35, 0.25);
+    color: #4a2c0c;
+    font-size: 14px;
+    font-weight: 700;
+
+    span {
+        min-width: 0;
+    }
+`;
+
+// Поки йде виклик дня, рівень ШІ задає сам виклик - замість перемикача показуємо ціль.
 export const DifficultyPicker = () => {
     const t = useT();
     const difficulty = useDifficulty();
+    const dailyRun = useDailyRun();
+
+    if (dailyRun) {
+        return (
+            <DailyBanner>
+                <span>
+                    {t("dailyBadge", { n: String(dailyRun.day) })}: {t(`daily_${dailyRun.template.id}` as Parameters<typeof t>[0])}
+                </span>
+                <Option type="button" $active={true} onClick={endDailyRun}>
+                    {t("dailyLeave")}
+                </Option>
+            </DailyBanner>
+        );
+    }
 
     return (
         <Group role="group" aria-label={t("difficultyLabel")}>

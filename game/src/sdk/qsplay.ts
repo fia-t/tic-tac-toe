@@ -80,6 +80,7 @@ export const qsplaySdk: AggregatorSdk = {
     // Сам SDK ніколи не кидає й тротлить (5 с, лише останнє значення) - обгортка не потрібна.
     reportPlayerLevel: (level) => api()?.game.reportPlayerLevel(level),
 
+    shareLink: () => safe("game.shareLink", () => api()?.game.shareLink(), null),
     getLocale: async () => (await safe("game.getConfig", () => api()?.game.getConfig(), null))?.locale ?? null,
     onLocaleChange: (callback) => api()?.game.addLocaleListener(({ locale }) => callback(locale)) ?? (() => {}),
 

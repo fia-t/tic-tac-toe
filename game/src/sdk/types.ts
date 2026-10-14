@@ -29,6 +29,8 @@ export type AggregatorSdk = {
     // Хмарні збереження (гість або акаунт порталу).
     loadData?: <T>(key: string) => Promise<T | null>;
     saveData?: (key: string, value: unknown) => Promise<void>;
+    // Посилання на сторінку гри з UTM-мітками порталу - для кнопок "Поділитися".
+    shareLink?: () => Promise<string | null>;
     // Мова порталу (напр. "en", "uk") і її зміна без перезавантаження; повертає відписку.
     getLocale?: () => Promise<string | null>;
     onLocaleChange?: (callback: (locale: string) => void) => () => void;

@@ -10,6 +10,8 @@ import {
     isGridFull,
     findWinningCell,
     pickHeuristicCell,
+    countMarker,
+    encodeGrid,
     winningIndexSet,
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
@@ -20,6 +22,8 @@ import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
+import { DailyChallenge } from "@game/components/DailyChallenge";
+import { useDailyRun } from "@game/lib/daily";
 import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
 
@@ -66,9 +70,11 @@ type TicTacToeProps = {
     // Викликається, коли теми й картинки підвантажені і дошка стає клікабельною
     // (сигнал loadingStop для SDK агрегатора/порталу).
     onReady?: () => void;
+    // Посилання для шерингу результату виклику дня (портал: game.shareLink() SDK).
+    getShareLink?: () => Promise<string | null>;
 };
 
-export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacToeProps) => {
+export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLink }: TicTacToeProps) => {
     const t = useT();
     const [board, setBoard] = useState<Grid3>(createEmptyGrid());
     const [winner, setWinner] = useState<string | null>(null);
@@ -82,6 +88,23 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
     const difficulty = useDifficulty();
+    const dailyRun = useDailyRun();
+    // Старт і кінець виклику дня - завжди чиста дошка (у т.ч. для 5×5/Ultimate через key),
+    // навіть якщо рівень ШІ виклику збігається з обраним гравцем. Завершення партії
+    // виклику (finished) дошку НЕ скидає - щоб було видно фінальну позицію.
+    const [runKey, setRunKey] = useState(0);
+    const dailyActive = dailyRun !== null;
+    const prevDailyActive = useRef(dailyActive);
+    useEffect(() => {
+        if (prevDailyActive.current === dailyActive) return;
+        prevDailyActive.current = dailyActive;
+        setBoard(createEmptyGrid());
+        setWinner(null);
+        setIsNoWinner(false);
+        setIsAiTurn(false);
+        setShowResultPopup(false);
+        setRunKey((k) => k + 1);
+    }, [dailyActive]);
 
     // Новий рівень ШІ - нова партія і новий рахунок (рахунок "проти Майстра" не
     // змішується з рахунком проти легкого ШІ). 5×5/Ultimate скидаються через key нижче.
@@ -185,7 +208,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
             setWinner(newWinner);
             setShowResultPopup(true);
             const result = newWinner === "X" ? "win" : "lose";
-            trackEvent("game_finished", { mode: "easy", result });
+            trackEvent("game_finished", { mode: "easy", result, moves: countMarker(updatedPlayerBoard, playerMarker), grid: encodeGrid(updatedPlayerBoard, playerMarker, aiMarker) });
             recordResult(result);
             return;
         }
@@ -193,7 +216,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
         if (isGridFull(updatedPlayerBoard)) {
             setIsNoWinner(true);
             setShowResultPopup(true);
-            trackEvent("game_finished", { mode: "easy", result: "draw" });
+            trackEvent("game_finished", { mode: "easy", result: "draw", moves: countMarker(updatedPlayerBoard, playerMarker), grid: encodeGrid(updatedPlayerBoard, playerMarker, aiMarker) });
             recordResult("draw");
             return;
         }
@@ -222,12 +245,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
                 setWinner(winnerAfterAI);
                 setShowResultPopup(true);
                 const result = winnerAfterAI === "X" ? "win" : "lose";
-                trackEvent("game_finished", { mode: "easy", result });
+                trackEvent("game_finished", { mode: "easy", result, moves: countMarker(updatedBoardAfterAI, playerMarker), grid: encodeGrid(updatedBoardAfterAI, playerMarker, aiMarker) });
                 recordResult(result);
             } else if (isGridFull(updatedBoardAfterAI)) {
                 setIsNoWinner(true);
                 setShowResultPopup(true);
-                trackEvent("game_finished", { mode: "easy", result: "draw" });
+                trackEvent("game_finished", { mode: "easy", result: "draw", moves: countMarker(updatedBoardAfterAI, playerMarker), grid: encodeGrid(updatedBoardAfterAI, playerMarker, aiMarker) });
                 recordResult("draw");
             }
         }, 500);
@@ -262,10 +285,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
         setGameMode(mode);
     };
 
+    const daily = <DailyChallenge onStart={handleSetGameMode} getShareLink={getShareLink} />;
+
     if (gameMode === "difficult") {
         return (
+            <>
+            {daily}
             <DifficultTicTacToe
-                key={difficulty}
+                key={`${difficulty}:${runKey}`}
+                hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}
                 themeReady={themeReady}
@@ -274,13 +302,17 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />
+            </>
         );
     }
 
     if (gameMode === "five") {
         return (
+            <>
+            {daily}
             <FiveByFiveTicTacToe
-                key={difficulty}
+                key={`${difficulty}:${runKey}`}
+                hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}
                 themeReady={themeReady}
@@ -289,6 +321,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />
+            </>
         );
     }
 
@@ -304,8 +337,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {daily}
             {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
-            {winner && showResultPopup && (
+            {winner && showResultPopup && !dailyActive && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
@@ -315,7 +349,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
             )}
 
             {/* Попап для нічиєї */}
-            {isNoWinner && !winner && showResultPopup && (
+            {isNoWinner && !winner && showResultPopup && !dailyActive && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>

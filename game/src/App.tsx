@@ -9,6 +9,7 @@ import { sdk } from "./sdk";
 import { lifecycle } from "./sdk/lifecycle";
 import { progress } from "./sdk/progress";
 import { getDifficulty } from "@game/lib/difficulty";
+import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -41,7 +42,15 @@ export default function App() {
     useEffect(() => {
         void sdk.init();
         void progress.reload();
-        const unsubscribeAuth = sdk.onAuthChange?.(() => void progress.reload());
+        // Виклик дня на порталі - у хмарних збереженнях гравця (серія не губиться між пристроями).
+        if (sdk.loadData && sdk.saveData) {
+            const load = sdk.loadData, saveData = sdk.saveData;
+            void configureDailyStorage({ load: () => load<DailyState>("daily"), save: (state) => saveData("daily", state) });
+        }
+        const unsubscribeAuth = sdk.onAuthChange?.(() => {
+            void progress.reload();
+            void reloadDaily();
+        });
 
         const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
         if (sdk.getInviteParams || sdk.getLocale) {
@@ -58,6 +67,7 @@ export default function App() {
             switch (name) {
                 case "select_mode":
                 case "select_difficulty":
+                case "daily_started":
                 case "game_restart":
                     lifecycle.setGameplay(true);
                     sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: progress.get() });
@@ -143,6 +153,7 @@ export default function App() {
                         onRoomReady={setRoomId}
                         onBeforeFriendOpen={() => sdk.showRewardedAd()}
                         onReady={handleReady}
+                        getShareLink={sdk.shareLink}
                     />
                 </Container>
             </PortalGameBridge>

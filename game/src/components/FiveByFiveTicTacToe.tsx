@@ -28,6 +28,8 @@ import {
     isGridFull,
     findWinningCellGeneric,
     pickHeuristicCellGeneric,
+    countMarker,
+    encodeGrid,
     winningIndexSet,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
@@ -54,6 +56,8 @@ type FiveByFiveProps = {
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // Виклик дня показує власну картку результату замість звичайного попапу.
+    hideResultPopup?: boolean;
 };
 
 const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string, difficulty: Difficulty): [number, number] => {
@@ -91,6 +95,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
+    hideResultPopup = false,
 }) => {
     const t = useT();
     const [board, setBoard] = useState<Grid3>(() => createEmptyGridN(SIZE));
@@ -126,7 +131,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             setWinner(newWinner);
             setShowResultPopup(true);
             const result = newWinner === "X" ? "win" : "lose";
-            trackEvent("game_finished", { mode: "five", result });
+            trackEvent("game_finished", { mode: "five", result, moves: countMarker(updatedPlayerBoard, playerMarker), grid: encodeGrid(updatedPlayerBoard, playerMarker, aiMarker) });
             recordResult(result);
             return;
         }
@@ -134,7 +139,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         if (isGridFull(updatedPlayerBoard)) {
             setIsNoWinner(true);
             setShowResultPopup(true);
-            trackEvent("game_finished", { mode: "five", result: "draw" });
+            trackEvent("game_finished", { mode: "five", result: "draw", moves: countMarker(updatedPlayerBoard, playerMarker), grid: encodeGrid(updatedPlayerBoard, playerMarker, aiMarker) });
             recordResult("draw");
             return;
         }
@@ -159,12 +164,12 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 setWinner(winnerAfterAI);
                 setShowResultPopup(true);
                 const result = winnerAfterAI === "X" ? "win" : "lose";
-                trackEvent("game_finished", { mode: "five", result });
+                trackEvent("game_finished", { mode: "five", result, moves: countMarker(updatedBoardAfterAI, playerMarker), grid: encodeGrid(updatedBoardAfterAI, playerMarker, aiMarker) });
                 recordResult(result);
             } else if (isGridFull(updatedBoardAfterAI)) {
                 setIsNoWinner(true);
                 setShowResultPopup(true);
-                trackEvent("game_finished", { mode: "five", result: "draw" });
+                trackEvent("game_finished", { mode: "five", result: "draw", moves: countMarker(updatedBoardAfterAI, playerMarker), grid: encodeGrid(updatedBoardAfterAI, playerMarker, aiMarker) });
                 recordResult("draw");
             }
         }, 500);
@@ -203,7 +208,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {winner && showResultPopup && (
+            {winner && showResultPopup && !hideResultPopup && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
@@ -212,7 +217,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 </>
             )}
 
-            {isNoWinner && !winner && showResultPopup && (
+            {isNoWinner && !winner && showResultPopup && !hideResultPopup && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>

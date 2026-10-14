@@ -34,6 +34,7 @@ import {
     isGridFull,
     findWinningCell,
     pickHeuristicCell,
+    countMarker,
     winningIndexSet,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
@@ -54,6 +55,8 @@ type DifficultProps = {
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // Виклик дня показує власну картку результату замість звичайного попапу.
+    hideResultPopup?: boolean;
 };
 
 // Перетворює 9 результатів малих полів у "велику" сітку 3x3,
@@ -70,6 +73,10 @@ const toMetaGrid = (results: MetaResult[], playerMarker: string, aiMarker: strin
 
 // Порядок переваги при виборі малого поля, коли гравець може ходити куди завгодно:
 // центральне поле найсильніше, потім кути, потім краї.
+// Результати 9 малих полів у форматі encodeGrid ("D" - нічия в малому полі).
+const ultimateGrid = (results: MetaResult[]): string =>
+    [0, 1, 2].map((r) => results.slice(r * 3, r * 3 + 3).map((v) => (v === "draw" ? "D" : v ?? ".")).join("")).join("/");
+
 const boardOrderPreference = [4, 0, 2, 6, 8, 1, 3, 5, 7];
 
 const pickAiMove = (
@@ -153,6 +160,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
+    hideResultPopup = false,
 }) => {
     const t = useT();
     const rules = useUltimateRules();
@@ -211,7 +219,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
             setWinner(metaWinner);
             setShowResultPopup(true);
             const result = metaWinner === "X" ? "win" : "lose";
-            trackEvent("game_finished", { mode: "hard", result });
+            trackEvent("game_finished", { mode: "hard", result, moves: boardsAfterMove.reduce((n, g) => n + countMarker(g, playerMarker), 0), grid: ultimateGrid(updatedMiniResults) });
             setScore((s) => (result === "win" ? { ...s, human: s.human + 1 } : { ...s, ai: s.ai + 1 }));
             logGameResult("ai-hard", result);
             return;
@@ -220,7 +228,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         if (metaDraw) {
             setIsDraw(true);
             setShowResultPopup(true);
-            trackEvent("game_finished", { mode: "hard", result: "draw" });
+            trackEvent("game_finished", { mode: "hard", result: "draw", moves: boardsAfterMove.reduce((n, g) => n + countMarker(g, playerMarker), 0), grid: ultimateGrid(updatedMiniResults) });
             logGameResult("ai-hard", "draw");
             return;
         }
@@ -298,7 +306,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {winner && showResultPopup && (
+            {winner && showResultPopup && !hideResultPopup && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
@@ -307,7 +315,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 </>
             )}
 
-            {isDraw && !winner && showResultPopup && (
+            {isDraw && !winner && showResultPopup && !hideResultPopup && (
                 <>
                     <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>

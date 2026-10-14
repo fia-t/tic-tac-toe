@@ -203,3 +203,10 @@ export const findWinningLine = (grid: Grid3, winLength: number): [number, number
 // рендеру, що малює дошку через board.flat().map(...).
 export const winningIndexSet = (grid: Grid3, winLength: number): Set<number> =>
     new Set((findWinningLine(grid, winLength) ?? []).map(([r, c]) => r * grid.length + c));
+
+// Компактний запис фінальної дошки для виклику дня ("X" - гравець, "O" - ШІ,
+// "." - порожньо, рядки через "/") - з нього будується емодзі-сітка для шерингу.
+export const encodeGrid = (grid: Grid3, playerMarker: string, aiMarker: string): string =>
+    grid.map((row) => row.map((c) => (c === playerMarker ? "X" : c === aiMarker ? "O" : ".")).join("")).join("/");
+
+export const countMarker = (grid: Grid3, marker: string): number => grid.flat().filter((c) => c === marker).length;

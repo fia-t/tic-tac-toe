@@ -20,9 +20,17 @@ const readStored = (): Difficulty => {
 };
 
 let current: Difficulty = readStored();
+// Тимчасовий рівень на одну партію (виклик дня) - не перезаписує вибір гравця.
+let override: Difficulty | null = null;
 const listeners = new Set<() => void>();
 
-export const getDifficulty = (): Difficulty => current;
+export const getDifficulty = (): Difficulty => override ?? current;
+
+export const setDifficultyOverride = (value: Difficulty | null): void => {
+    if (value === override) return;
+    override = value;
+    listeners.forEach((listener) => listener());
+};
 
 export const setDifficulty = (value: Difficulty): void => {
     if (value === current) return;

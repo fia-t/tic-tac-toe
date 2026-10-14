@@ -85,6 +85,11 @@ npm run game:typecheck
   `DEFAULT_NAMES_EN` (імена в адмінці українські).
 - **Звук** - `lib/sound.ts`: синтез WebAudio (без файлів), кнопка `SoundToggle` (вибір у
   localStorage `ttt-muted`), глушиться у фоновій вкладці та на паузі/рекламі порталу.
+- **Виклик дня** - `lib/daily.ts` (шаблони, зірки, серія, збереження) + `components/DailyChallenge.tsx`
+  (кнопка зліва вгорі, картки виклику й результату, шеринг емодзі-сіткою). Шаблон дня = номер дня
+  (1 = 01.01.2026) -> `DAILY_TEMPLATES`. Портал: стан у `QSPlaySDK.data` (ключ `daily`), посилання -
+  `game.shareLink()`; сайт/агрегатори - localStorage `ttt-daily`. Рівень ШІ виклику -
+  `setDifficultyOverride`, вибір гравця не змінюється. Нові шаблони (модифікатори) - лише в масив.
 - **`none.ts`** - itch.io: реклами з SDK немає (на порталі її показує сам
   портал через `PortalGameBridge`), `showRewardedAd()` одразу повертає `true`.
 
