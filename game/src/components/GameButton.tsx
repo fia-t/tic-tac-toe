@@ -152,9 +152,11 @@ const Root = styled.button<{ $size: GameButtonSize; $square: boolean; $block: bo
 `;
 
 // SVG-іконка - окремий шар, точно по центру кнопки (для кнопок лише з іконкою).
+// Від'ємний inset на товщину бортика: шар займає всю кнопку, а не вузьку зону всередині
+// border-image, інакше іконка, більша за цю зону, з'їжджає вправо-вниз.
 const IconLayer = styled.span`
     position: absolute;
-    inset: 0;
+    inset: calc(-1 * var(--gb-c, 0px));
     display: grid;
     place-items: center;
     pointer-events: none;
