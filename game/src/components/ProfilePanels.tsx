@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
@@ -10,6 +10,8 @@ import { CAMPAIGN_LEVELS, totalStars, useCampaign } from "@game/lib/campaign";
 import { useWallet } from "@game/lib/wallet";
 import { closePanel, useOpenPanel, useToasts } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
+import { LeaderboardRow, fetchLeaderboard, useMyRating } from "@game/lib/matchmaking";
+import { leagueFor } from "@game/lib/rating";
 
 const Progress = styled.div`
     height: 10px;
@@ -178,6 +180,7 @@ const ProfilePanel = ({ fallbackName }: { fallbackName: string | null }) => {
     const profile = useProfile();
     const wallet = useWallet();
     const campaign = useCampaign();
+    const myRating = useMyRating();
     const level = levelForXp(profile.xp);
     const [from, to] = levelBounds(level);
     const s = profile.stats;
@@ -208,6 +211,7 @@ const ProfilePanel = ({ fallbackName }: { fallbackName: string | null }) => {
                 <Pill>
                     {t("profileAwards")}: {achieved} / {ACHIEVEMENTS.length}
                 </Pill>
+                <Pill>{t("profileRating", { rating: String(myRating.rating), league: t(`league_${leagueFor(myRating.rating)}`) })}</Pill>
             </Pills>
             <ModalSubtitle>{t("profileStats")}</ModalSubtitle>
             <Stats>
@@ -218,6 +222,83 @@ const ProfilePanel = ({ fallbackName }: { fallbackName: string | null }) => {
                     </Stat>
                 ))}
             </Stats>
+        </Modal>
+    );
+};
+
+const Board = styled.ol`
+    list-style: none;
+    margin: 8px 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const BoardRow = styled.li<{ $me: boolean }>`
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: ${({ $me }) => ($me ? "rgba(15, 111, 140, 0.14)" : "rgba(255, 255, 255, 0.55)")};
+    color: #4a2c0c;
+    font-size: 14px;
+
+    b {
+        font-variant-numeric: tabular-nums;
+    }
+
+    span {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+`;
+
+const LeaderboardPanel = () => {
+    const t = useT();
+    const me = useMyRating();
+    const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
+    const [failed, setFailed] = useState(false);
+    useEffect(() => {
+        let cancelled = false;
+        fetchLeaderboard(20)
+            .then((list) => !cancelled && setRows(list))
+            .catch(() => !cancelled && setFailed(true));
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+    return (
+        <Modal id="leaderboard-title" title={t("leaderboardTitle")}>
+            <Muted>{t("leaderboardHint")}</Muted>
+            <ModalSubtitle>{t("profileRating", { rating: String(me.rating), league: t(`league_${leagueFor(me.rating)}`) })}</ModalSubtitle>
+            {failed ? (
+                <Muted>{t("leaderboardError")}</Muted>
+            ) : rows === null ? (
+                <Muted>…</Muted>
+            ) : rows.length === 0 ? (
+                <Muted>{t("leaderboardEmpty")}</Muted>
+            ) : (
+                <Board>
+                    {rows.map((row, index) => {
+                        const isMe = row.playerId === me.playerId;
+                        return (
+                            <BoardRow key={row.playerId} $me={isMe}>
+                                <b>{index + 1}</b>
+                                <span title={row.name}>
+                                    {row.name}
+                                    {isMe ? ` (${t("leaderboardYou")})` : ""} · {t(`league_${leagueFor(row.rating)}`)}
+                                </span>
+                                <b>{row.rating}</b>
+                            </BoardRow>
+                        );
+                    })}
+                </Board>
+            )}
         </Modal>
     );
 };
@@ -253,6 +334,7 @@ export const ProfilePanels = ({ fallbackName }: { fallbackName: string | null })
         <>
             {panel === "awards" && <AwardsPanel />}
             {panel === "profile" && <ProfilePanel fallbackName={fallbackName} />}
+            {panel === "leaderboard" && <LeaderboardPanel />}
             {toasts.map((toast, index) => (
                 <ToastBox key={toast.id} role="status" style={{ top: 60 + index * 48 }}>
                     {toast.text}

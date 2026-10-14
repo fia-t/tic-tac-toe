@@ -13,6 +13,7 @@ import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wal
 import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/lib/campaign";
 import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, ProfileState } from "@game/lib/profile";
 import { getScreen } from "@game/lib/ui";
+import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -44,6 +45,7 @@ export default function App() {
 
     useEffect(() => {
         void sdk.init();
+        if (sdk.getUserToken) setPortalTokenProvider(sdk.getUserToken);
         if (sdk.reportPlayerLevel) {
             const report = sdk.reportPlayerLevel;
             setLevelReporter((level) => report(level));

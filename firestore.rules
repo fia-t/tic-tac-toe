@@ -46,6 +46,19 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /matchQueue/{uid} {
+      // Черга швидкого матчу: пише лише сервер (Admin SDK), гравець бачить лише свій запис -
+      // щоб дізнатися, що суперника знайдено.
+      allow get: if request.auth != null && request.auth.uid == uid;
+      allow list, write: if false;
+    }
+
+    match /ratings/{playerId} {
+      // Рейтинг і лідерборд: читає будь-хто, пише лише сервер після рейтингового матчу.
+      allow read: if true;
+      allow write: if false;
+    }
+
     match /rooms/{roomId} {
 
       // Читати кімнату може будь-хто автентифікований (анонімна авторизація теж
@@ -59,8 +72,13 @@ service cloud.firestore {
 
       allow create: if request.auth != null && isValidNewRoom(request.resource.data);
 
-      allow update: if request.auth != null &&
-        (isExistingPlayer(resource.data, request.auth.uid) || isJoiningOpenSlot(resource.data, request.resource.data));
+      // Рейтингова кімната (швидкий матч): ходи й результат пише лише сервер (/api/match/move) -
+      // клієнт може оновити тільки свою присутність (heartbeat, "покинув гру"), не змінюючи гравців.
+      allow update: if request.auth != null && (
+        resource.data.get('rated', false) == true
+          ? isExistingPlayer(resource.data, request.auth.uid) && isPresenceOnlyUpdate(resource.data, request.resource.data)
+          : (isExistingPlayer(resource.data, request.auth.uid) || isJoiningOpenSlot(resource.data, request.resource.data))
+      );
 
       allow delete: if false; // прибирання застарілих кімнат - через Firestore TTL, не з клієнта
     }
@@ -80,6 +98,12 @@ service cloud.firestore {
       && data.winner == null
       && data.players.X.uid == request.auth.uid
       && !('O' in data.players);
+  }
+
+  function isPresenceOnlyUpdate(before, after) {
+    return after.diff(before).affectedKeys().hasOnly(['players', 'leftPlayer', 'lastActivity', 'expiresAt'])
+      && after.players.X.uid == before.players.X.uid
+      && after.players.O.uid == before.players.O.uid;
   }
 
   function isExistingPlayer(data, uid) {

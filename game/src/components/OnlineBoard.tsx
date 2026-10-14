@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
     OnlineLayout,
     OnlineBoardContainer,
@@ -17,6 +17,7 @@ import { DEFAULT_THEME } from "@game/lib/themes";
 import { GamePiece } from "@game/components/GamePiece";
 import { useT } from "@game/lib/i18n";
 import { playSound } from "@game/lib/sound";
+import { ratedMove, rememberRating } from "@game/lib/matchmaking";
 
 type OnlineBoardProps = {
     roomId: string;
@@ -49,10 +50,22 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
               )
             : undefined;
 
+    const [moveError, setMoveError] = useState(false);
     const handleCellClick = (index: number) => {
         if (!myTurn || room.board[index] !== null) return;
+        // Рейтинговий матч: хід перевіряє й записує сервер (клієнту rules дошку міняти не дають).
+        if (room.rated) {
+            setMoveError(false);
+            void ratedMove(roomId, index).catch(() => setMoveError(true));
+            return;
+        }
         void makeMove(roomId, index, mySymbol, uid);
     };
+
+    // Після рейтингової партії - запам'ятати новий рейтинг (для профілю й черги).
+    useEffect(() => {
+        if (room.rated && isFinished && room.playerIds && room.ratingsAfter) rememberRating(room.playerIds[mySymbol], room.ratingsAfter[mySymbol]);
+    }, [room.rated, isFinished, room.playerIds, room.ratingsAfter, mySymbol]);
 
     const resultLabel =
         room.winner === "draw"
@@ -124,7 +137,21 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                 })}
             </OnlineBoardContainer>
 
-            {isFinished && (
+            {moveError && <div style={{ marginTop: 8, color: "#b8382a", fontWeight: 700 }}>{t("matchMoveError")}</div>}
+
+            {isFinished && room.rated && (
+                <div style={{ marginTop: 14, width: "min(92vw, 420px)", textAlign: "center", color: "#4a2c0c", fontWeight: 800 }}>
+                    {room.ratingDelta && room.ratingsAfter
+                        ? t("matchRatingChange", {
+                              delta: `${room.ratingDelta[mySymbol] > 0 ? "+" : ""}${room.ratingDelta[mySymbol]}`,
+                              rating: String(room.ratingsAfter[mySymbol]),
+                          })
+                        : t("matchRated")}
+                    <div style={{ marginTop: 6, fontSize: 13, fontWeight: 600, color: "#7a5a35" }}>{t("matchNextHint")}</div>
+                </div>
+            )}
+
+            {isFinished && !room.rated && (
                 <div style={{ marginTop: 14, width: "min(92vw, 420px)", textAlign: "center" }}>
                     {myRematchReady ? (
                         <WaitingText>{t("waitingRematch")}</WaitingText>

@@ -78,6 +78,11 @@ export type RoomDoc = {
     // Рахунок перемог по символах, накопичується протягом усіх реваншів у кімнаті
     // (нічия рахунок не змінює - так само, як і в табло vs-AI режимів).
     score: Record<PlayerSymbol, number>;
+    // Рейтинговий швидкий матч (кімнату створює сервер, ходи - через /api/match/move).
+    rated?: boolean;
+    playerIds?: Record<PlayerSymbol, string>;
+    ratingDelta?: Record<PlayerSymbol, number> | null;
+    ratingsAfter?: Record<PlayerSymbol, number>;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком

@@ -110,6 +110,12 @@ npm run game:typecheck
   Геймплей для порталу - лише на полі: події `open_game` / `open_menu` у App.tsx.
 - **Профіль і досягнення** - `lib/profile.ts` (статистика, досвід, рівень -> `reportPlayerLevel`,
   9 досягнень з монетами; на порталі - `QSPlaySDK.data`, ключ `profile`), `components/ProfilePanels.tsx`.
+- **Швидкий матч і рейтинг** - сервер: `app/api/match/queue` (черга, підбір за рейтингом, створення
+  кімнати `rated: true`) і `app/api/match/move` (хід, переможець і Elo однією транзакцією); спільне -
+  `app/lib/server/matchServer.ts` (Admin SDK, CORS, перевірка токена QS Play). Клієнт - `lib/matchmaking.ts`,
+  `components/QuickMatch.tsx`, лідерборд у `ProfilePanels.tsx`; Elo й ліги - `lib/rating.ts`.
+  Потрібно: `FIREBASE_SERVICE_ACCOUNT` у Vercel; `firebase deploy --only firestore:rules,firestore:indexes`
+  (колекції `matchQueue`, `ratings`, індекс черги, заборона клієнтам міняти дошку rated-кімнат).
 - **Вигляд поля** - `boardSlab`/`boardTile` у `gameStyles.ts`: об'ємна плита й окремі клітинки-плитки
   поверх фону теми, однаково для 3×3, 5×5, Ultimate і онлайн-гри.
 - **Iframe порталу** - `Container` масштабує поле від висоти (`--board`, `100dvh`), прокручується замість

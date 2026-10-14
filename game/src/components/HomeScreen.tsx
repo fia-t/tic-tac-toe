@@ -11,7 +11,10 @@ import { currentStreak, dayNumber, templateForDay, todayKey, useDailyState } fro
 import { CAMPAIGN_LEVELS, currentLevelIndex, totalStars, useCampaign } from "@game/lib/campaign";
 import { GameModeKey, MODIFIERS_BY_MODE, setModifier, weeklyModifier } from "@game/lib/modifiers";
 import { levelForXp, useProfile } from "@game/lib/profile";
-import { Panel, openPanel } from "@game/lib/ui";
+import { Panel, openPanel, useOpenPanel } from "@game/lib/ui";
+import { QuickMatch } from "@game/components/QuickMatch";
+import { useMyRating } from "@game/lib/matchmaking";
+import { leagueFor } from "@game/lib/rating";
 
 // Головний екран (як у прототипі): виклик дня, швидка гра, модифікатор тижня, кампанія,
 // онлайн і нижня навігація. Саме поле - окремий екран (TicTacToe, screen === "game").
@@ -195,17 +198,6 @@ const Bar = styled.div`
     }
 `;
 
-const Soon = styled.span`
-    margin-left: 6px;
-    padding: 2px 6px;
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.85);
-    color: #b32f1c;
-    font-size: 10px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-`;
-
 const Nav = styled.nav`
     position: fixed;
     left: 0;
@@ -278,6 +270,8 @@ const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
         </>
     ),
     daily: null,
+    leaderboard: null,
+    match: null,
 };
 
 const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
@@ -301,6 +295,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const daily = useDailyState();
     const campaign = useCampaign();
     const profile = useProfile();
+    const myRating = useMyRating();
+    const panel = useOpenPanel();
 
     const today = todayKey();
     const template = templateForDay(today);
@@ -413,18 +409,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             </Two>
 
             <Card aria-labelledby="home-online">
-                <h2 id="home-online">{t("homeOnline")}</h2>
+                <Row style={{ justifyContent: "space-between" }}>
+                    <h2 id="home-online">{t("homeOnline")}</h2>
+                    <Eyebrow>{t("profileRating", { rating: String(myRating.rating), league: t(`league_${leagueFor(myRating.rating)}`) })}</Eyebrow>
+                </Row>
                 <Two>
-                    <Big type="button" $variant="red" disabled>
+                    <Big type="button" $variant="red" onClick={() => openPanel("match")}>
                         {t("homeMatch")}
-                        <Soon>{t("homeSoon")}</Soon>
                     </Big>
                     <Big type="button" $variant="sand" onClick={() => void openFriend()}>
                         {t("homeFriend")}
                     </Big>
                 </Two>
                 <Muted>{t("homeOnlineHint")}</Muted>
+                <Big type="button" $variant="sand" onClick={() => openPanel("leaderboard")}>
+                    {t("homeLeaderboard")}
+                </Big>
             </Card>
+
+            {panel === "match" && <QuickMatch fallbackName={name} onMatched={onRoomReady} onPlayBot={() => play("traditional")} />}
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={mode === "five" ? "5x5" : "3x3"} />}
 
