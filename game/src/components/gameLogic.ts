@@ -172,3 +172,34 @@ export const pickHeuristicCellGeneric = (
 
 export const createEmptyGridN = (size: number): Grid3 =>
     Array(size).fill(null).map(() => Array(size).fill(null));
+
+// Клітинки виграшної лінії (winLength однакових фішок поспіль) - для підсвітки
+// переможної лінії після кінця партії. null - лінії немає.
+export const findWinningLine = (grid: Grid3, winLength: number): [number, number][] | null => {
+    const size = grid.length;
+    const directions: [number, number][] = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+    for (let row = 0; row < size; row++) {
+        for (let col = 0; col < size; col++) {
+            const symbol = grid[row][col];
+            if (!symbol) continue;
+
+            for (const [dr, dc] of directions) {
+                const line: [number, number][] = [[row, col]];
+                for (let step = 1; step < winLength; step++) {
+                    const r = row + dr * step;
+                    const c = col + dc * step;
+                    if (r < 0 || r >= size || c < 0 || c >= size || grid[r][c] !== symbol) break;
+                    line.push([r, c]);
+                }
+                if (line.length >= winLength) return line;
+            }
+        }
+    }
+    return null;
+};
+
+// Те саме, але як множина плоских індексів (row * size + col) - так зручніше
+// рендеру, що малює дошку через board.flat().map(...).
+export const winningIndexSet = (grid: Grid3, winLength: number): Set<number> =>
+    new Set((findWinningLine(grid, winLength) ?? []).map(([r, c]) => r * grid.length + c));

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import {
     Popup,
-    Overlay,
+    ResultOverlay,
     GameLayout,
     BoardColumn,
     ButtonContainer,
@@ -28,6 +28,7 @@ import {
     isGridFull,
     findWinningCellGeneric,
     pickHeuristicCellGeneric,
+    winningIndexSet,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
@@ -188,11 +189,13 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         </ScoreBoard>
     );
 
+    const winningCells = winner ? winningIndexSet(board, WIN_LENGTH) : undefined;
+
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             {winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
                         {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
@@ -201,7 +204,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
             {isNoWinner && !winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
                         {t("resultDraw")}
                     </Popup>
@@ -223,7 +226,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                     $disabled={!themeReady || isGameOver || isAiTurn || cell !== null}
                                     onClick={() => handleCellClick(row, col)}
                                 >
-                                    {cell && <GamePiece src={cell} />}
+                                    {cell && <GamePiece src={cell} winning={winningCells?.has(index)} />}
                                 </OnlineCell>
                             );
                         })}

@@ -52,13 +52,47 @@ const ripplePulse = keyframes`
     100% { opacity: 0; transform: translateX(-50%) scale(1.5); }
 `;
 
+// Пульс фішок переможної лінії - стартує після того, як фішка "сіла" (680 мс),
+// три рази, і лишає золоте світіння, доки гравець не почне нову партію.
+const winPulse = keyframes`
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.14); }
+`;
+
+// Подвійне світіння: щільне біле ядро читається навіть на світлих/жовтих фонах тем,
+// золотий ореол - на темних.
+export const winGlow =
+    "drop-shadow(0 0 4px rgba(255, 255, 255, 1)) drop-shadow(0 0 10px rgba(255, 210, 60, 1)) drop-shadow(0 0 20px rgba(255, 170, 20, 0.9))";
+
+// Обгортка для будь-якого елемента переможної лінії (напр. результат міні-поля в Ultimate).
+export const WinningHighlight = styled.div<{ $active: boolean }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    ${({ $active }) => ($active ? `filter: ${winGlow};` : "")}
+    animation: ${({ $active }) => ($active ? winPulse : "none")} 520ms ease-in-out 700ms 3;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
 const reducedFade = keyframes`
     0% { opacity: 0; transform: scale(0.9); }
     100% { opacity: 1; transform: scale(1); }
 `;
 
-const PieceWrapper = styled.div<{ $tx: number; $rotStart: number; $rotRest: number }>`
+const PieceWrapper = styled.div<{ $tx: number; $rotStart: number; $rotRest: number; $winning: boolean }>`
     position: relative;
+    ${({ $winning }) => ($winning ? `filter: ${winGlow};` : "")}
+    animation: ${({ $winning }) => ($winning ? winPulse : "none")} 520ms ease-in-out 700ms 3;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+
     width: 70%;
     height: 70%;
     display: flex;
@@ -105,12 +139,14 @@ type GamePieceProps = {
     src: string;
     alt?: string;
     className?: string;
+    // Фішка входить у виграшну лінію - світиться й пульсує.
+    winning?: boolean;
 };
 
 // Обгортка над маркером X/O (яким би не було зображення теми) - додає
 // "тактильну" анімацію розстановки: падіння, удар, відскок, усадку й
 // коротке похитування, без жодного зсуву макета (лише transform/opacity).
-export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", className }) => {
+export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", className, winning = false }) => {
     const [random] = useState(() => ({
         tx: randRange(-4, 4),
         rotStart: randRange(-12, 12),
@@ -118,7 +154,7 @@ export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", class
     }));
 
     return (
-        <PieceWrapper className={className} $tx={random.tx} $rotStart={random.rotStart} $rotRest={random.rotRest}>
+        <PieceWrapper className={className} $tx={random.tx} $rotStart={random.rotStart} $rotRest={random.rotRest} $winning={winning}>
             <PieceRipple />
             <PieceImg src={src} alt={alt} draggable={false} />
         </PieceWrapper>

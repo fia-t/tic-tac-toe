@@ -15,6 +15,8 @@ type BoardProps = {
     scoreBoard?: React.ReactNode;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // Плоскі індекси клітинок переможної лінії - підсвічуються після кінця партії.
+    winningCells?: Set<number>;
 };
 
 export const Board: React.FC<BoardProps> = ({
@@ -26,6 +28,7 @@ export const Board: React.FC<BoardProps> = ({
     scoreBoard,
     onRoomReady,
     onBeforeFriendOpen,
+    winningCells,
 }) => {
     const t = useT();
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
@@ -54,7 +57,7 @@ export const Board: React.FC<BoardProps> = ({
                                 $borderStyle={borderStyles[index]}
                                 onClick={(e) => { e.stopPropagation(); handleClick(rowIndex, cellIndex); }}
                             >
-                                {cell && <GamePiece src={cell} />}
+                                {cell && <GamePiece src={cell} winning={winningCells?.has(index)} />}
                             </Cell>
                         );
                     })}

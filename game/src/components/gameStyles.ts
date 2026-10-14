@@ -177,6 +177,20 @@ export const Tooltip = styled.span`
     }
 `;
 
+// Пауза перед попапом результату - щоб гравець встиг побачити підсвічену
+// переможну лінію (GamePiece winning) до того, як дошку накриє затемнення.
+const RESULT_REVEAL_DELAY_MS = 900;
+
+const popupReveal = keyframes`
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+`;
+
+const overlayReveal = keyframes`
+    from { opacity: 0; }
+    to { opacity: 1; }
+`;
+
 export const Popup = styled.div<{ $result: string }>`
     position: fixed;
     top: 50%;
@@ -193,6 +207,11 @@ export const Popup = styled.div<{ $result: string }>`
     font-size: clamp(18px, 5vw, 24px);
     z-index: 1000;
     cursor: pointer;
+    animation: ${popupReveal} 220ms ease-out ${RESULT_REVEAL_DELAY_MS}ms both;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation-duration: 1ms;
+    }
 `;
 
 export const Overlay = styled.div`
@@ -208,6 +227,11 @@ export const Overlay = styled.div`
 
 // Колонка "табло + поле" - гарантує, що ScoreBoard центрується САМЕ над
 // ігровим полем, а не над усім рядом (поле + панель кнопок збоку на десктопі).
+// Затемнення під попапом результату - з тією ж паузою, що й сам Popup.
+export const ResultOverlay = styled(Overlay)`
+    animation: ${overlayReveal} 220ms ease-out ${RESULT_REVEAL_DELAY_MS}ms both;
+`;
+
 export const BoardColumn = styled.div`
     display: flex;
     flex-direction: column;

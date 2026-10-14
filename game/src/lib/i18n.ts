@@ -63,6 +63,16 @@ const uk = {
     waitingPlayer: "Очікування другого гравця...",
     opponentLeft: "Суперник покинув гру",
     waitReturn: "Чекати повернення",
+    rulesButton: "Правила Ultimate",
+    rulesTitle: "Як грати в Ultimate",
+    rule1: "Велике поле складається з 9 малих. Виграйте мале поле - збирайте три в ряд, як у звичайній грі.",
+    rule2: "Клітинка, у яку ви ходите, визначає мале поле, де ходитиме суперник. Воно підсвічується золотим.",
+    rule3: "Якщо це поле вже вигране чи заповнене, хід можна робити в будь-яке відкрите поле.",
+    rule4: "Перемагає той, хто виграє три малих поля в ряд.",
+    gotIt: "Зрозуміло",
+    hintAnyBoard: "Ходіть у будь-яке відкрите поле",
+    hintActiveBoard: "Ваш хід - у підсвічене поле",
+    hintAiTurn: "ШІ думає...",
 };
 
 type Key = keyof typeof uk;
@@ -123,6 +133,16 @@ const en: Record<Key, string> = {
     waitingPlayer: "Waiting for the second player...",
     opponentLeft: "Your opponent left the game",
     waitReturn: "Wait for them",
+    rulesButton: "Ultimate rules",
+    rulesTitle: "How to play Ultimate",
+    rule1: "The big board is made of 9 small ones. Win a small board by getting three in a row, like the classic game.",
+    rule2: "The cell you play in decides which small board your opponent plays in next. It glows gold.",
+    rule3: "If that board is already won or full, the next move can go in any open board.",
+    rule4: "Win three small boards in a row to win the game.",
+    gotIt: "Got it",
+    hintAnyBoard: "Play in any open board",
+    hintActiveBoard: "Your move: play in the highlighted board",
+    hintAiTurn: "AI is thinking...",
 };
 
 const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };

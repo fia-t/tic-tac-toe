@@ -10,7 +10,8 @@ import {
 } from "@game/components/onlineStyles";
 import { ScoreBoard, ScoreName, ScoreValue, ScoreDivider } from "@game/components/gameStyles";
 import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@game/lib/onlineGame";
-import { BOARD_SIZE } from "@game/components/onlineGameLogic";
+import { BOARD_SIZE, WIN_LENGTH } from "@game/components/onlineGameLogic";
+import { winningIndexSet } from "@game/components/gameLogic";
 import { trackEvent } from "@game/lib/firebase";
 import { DEFAULT_THEME } from "@game/lib/themes";
 import { GamePiece } from "@game/components/GamePiece";
@@ -39,6 +40,14 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     // Захист для кімнат, створених до появи імен/рахунку в документі.
     const names = room.names ?? { X: t("playerX"), O: t("playerO") };
     const score = room.score ?? { X: 0, O: 0 };
+
+    const winningCells =
+        room.winner && room.winner !== "draw"
+            ? winningIndexSet(
+                  Array.from({ length: size }, (_, r) => room.board.slice(r * size, (r + 1) * size)),
+                  WIN_LENGTH[room.gameMode]
+              )
+            : undefined;
 
     const handleCellClick = (index: number) => {
         if (!myTurn || room.board[index] !== null) return;
@@ -111,7 +120,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                             $disabled={disabled}
                             onClick={() => handleCellClick(index)}
                         >
-                            {cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} />}
+                            {cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} />}
                         </OnlineCell>
                     );
                 })}

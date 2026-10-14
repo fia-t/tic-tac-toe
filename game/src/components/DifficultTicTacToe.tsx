@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import {
     Popup,
-    Overlay,
+    ResultOverlay,
     GameLayout,
     BoardColumn,
     ButtonContainer,
@@ -22,7 +22,8 @@ import {
     ScoreDivider,
 } from "@game/components/gameStyles";
 import { FriendGameModal } from "@game/components/FriendGameModal";
-import { GamePiece } from "@game/components/GamePiece";
+import { GamePiece, WinningHighlight } from "@game/components/GamePiece";
+import { UltimateHint, UltimateRulesModal, useUltimateRules } from "@game/components/UltimateRules";
 import { trackEvent } from "@game/lib/firebase";
 import { Theme } from "@game/lib/themes";
 import { logGameResult } from "@game/lib/gameLog";
@@ -33,6 +34,7 @@ import {
     isGridFull,
     findWinningCell,
     pickHeuristicCell,
+    winningIndexSet,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
@@ -136,6 +138,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     onBeforeFriendOpen,
 }) => {
     const t = useT();
+    const rules = useUltimateRules();
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -273,11 +276,14 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         </ScoreBoard>
     );
 
+    // Три міні-поля переможної лінії на "великому" полі - підсвічуються після перемоги.
+    const metaWinningBoards = winner ? winningIndexSet(toMetaGrid(miniResults, playerMarker, aiMarker), 3) : undefined;
+
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             {winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
                         {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
@@ -286,16 +292,22 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
             {isDraw && !winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
                         {t("resultDraw")}
                     </Popup>
                 </>
             )}
 
+            {rules.open && <UltimateRulesModal onClose={rules.close} />}
+
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
+                    <UltimateHint
+                        state={isGameOver ? null : currentTurn === "ai" ? "ai" : activeBoard === null ? "any" : "active"}
+                        onShowRules={rules.show}
+                    />
                     <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
                     {boards.map((miniGrid, boardIndex) => {
                         const result = miniResults[boardIndex];
@@ -329,11 +341,13 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                                             {result === "draw" ? (
                                                 <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
                                             ) : (
-                                                <img
-                                                    src={result === "X" ? playerMarker : aiMarker}
-                                                    alt={result}
-                                                    style={{ width: "55%", height: "55%", objectFit: "contain" }}
-                                                />
+                                                <WinningHighlight $active={metaWinningBoards?.has(boardIndex) ?? false}>
+                                                    <img
+                                                        src={result === "X" ? playerMarker : aiMarker}
+                                                        alt={result}
+                                                        style={{ width: "55%", height: "55%", objectFit: "contain" }}
+                                                    />
+                                                </WinningHighlight>
                                             )}
                                         </MiniBoardResultOverlay>
                                     </>

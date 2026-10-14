@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { Board } from "./board";
-import { Popup, Overlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
+import { Popup, ResultOverlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -10,6 +10,7 @@ import {
     isGridFull,
     findWinningCell,
     pickHeuristicCell,
+    winningIndexSet,
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
@@ -279,7 +280,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
             {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
             {winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
                         {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
@@ -289,7 +290,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
             {/* Попап для нічиєї */}
             {isNoWinner && !winner && showResultPopup && (
                 <>
-                    <Overlay onClick={() => setShowResultPopup(false)} />
+                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
                         {t("resultDraw")}
                     </Popup>
@@ -303,6 +304,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
                 setGameMode={handleSetGameMode}
                 backgroundUrl={theme.backgroundUrl}
                 scoreBoard={scoreBoard}
+                winningCells={winner ? winningIndexSet(board, 3) : undefined}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />
