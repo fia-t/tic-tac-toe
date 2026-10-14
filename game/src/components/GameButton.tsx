@@ -10,8 +10,8 @@ import { assetUrl } from "@game/lib/assets";
 
 export type GameButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 // Кольори - та сама еталонна форма, перефарбована зі збереженням світлотіні:
-// default - кремова (звичайні кнопки), primary - бірюзова ("Грати", головна дія),
-// wood - дерев'яна (вибраний варіант: рівень, модифікатор, вкладка), danger - червона, amber - золота.
+// default - кремова (звичайні кнопки, #49301F), primary - глибока бірюзова #176B78 ("Грати", головна дія),
+// wood - горіхова #80532F (вибраний варіант: рівень, модифікатор, вкладка), danger - червона, amber - золота.
 export type GameButtonTone = "default" | "primary" | "wood" | "danger" | "amber";
 
 // h - висота, c - товщина кута (скільки пікселів займає заокруглений бортик), fs - шрифт,
@@ -29,9 +29,10 @@ const SIZES: Record<GameButtonSize, { h: number; c: number; fs: number; px: numb
 const MOBILE_STEP: Record<GameButtonSize, GameButtonSize> = { xs: "xs", sm: "sm", md: "sm", lg: "md", xl: "lg" };
 
 const TONES: Record<GameButtonTone, { img: string; color: string; shadow: string }> = {
-    default: { img: "button-base-gold.png", color: "#5b3f22", shadow: "0 1px 0 rgba(255, 255, 255, 0.55)" },
-    primary: { img: "button-base-teal.png", color: "#ffffff", shadow: "0 1px 1px rgba(5, 50, 65, 0.45)" },
-    wood: { img: "button-base-wood.png", color: "#fff6e6", shadow: "0 1px 1px rgba(60, 30, 5, 0.5)" },
+    // Другорядні кнопки - кремова основа з пом'якшеними блиском і нижньою кромкою (менше візуальної ваги).
+    default: { img: "button-base-cream.png", color: "#49301f", shadow: "none" },
+    primary: { img: "button-base-teal.png", color: "#fff7e8", shadow: "0 1px 1px rgba(5, 40, 45, 0.4)" },
+    wood: { img: "button-base-wood.png", color: "#fff7e8", shadow: "0 1px 1px rgba(50, 25, 5, 0.45)" },
     danger: { img: "button-base-red.png", color: "#ffffff", shadow: "0 1px 1px rgba(90, 20, 5, 0.45)" },
     amber: { img: "button-base-amber.png", color: "#4a2c0c", shadow: "0 1px 0 rgba(255, 240, 200, 0.6)" },
 };
@@ -59,7 +60,7 @@ export const gameButtonFace = css`
     border-style: solid;
     border-color: transparent;
     border-width: var(--gb-c, 16px);
-    border-image: url("${assetUrl("images/ui/button-base-gold.png")}") 30% fill / var(--gb-c, 16px) stretch;
+    border-image: url("${assetUrl("images/ui/button-base-cream.png")}") 30% fill / var(--gb-c, 16px) stretch;
     background: transparent;
     box-shadow: none;
     ${buttonTone("default")}
