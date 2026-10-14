@@ -1,4 +1,5 @@
 "use client";
+import { IconFriends, IconMode3, IconMode5, IconModeUltimate, IconRestart } from "@game/components/GameIcons";
 import React, { useState } from "react";
 import styled from "styled-components";
 import {
@@ -334,7 +335,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
                 <ButtonContainer>
                     <Button onClick={restartGame} aria-label={t("restart")}>
-                        <ControlIcon src={assetUrl("images/reload.png")} alt="" />
+                        <IconRestart size={30} />
                     </Button>
                     <ButtonWithTooltip>
                         <Button
@@ -344,7 +345,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                             }}
                             aria-label={t("modeClassic")}
                         >
-                            <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
+                            <IconMode3 size={42} />
                         </Button>
                         <Tooltip>3×3</Tooltip>
                     </ButtonWithTooltip>
@@ -356,7 +357,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                             }}
                             aria-label={t("modeFive")}
                         >
-                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
+                            <IconMode5 size={42} />
                         </Button>
                         <Tooltip>5×5</Tooltip>
                     </ButtonWithTooltip>
@@ -368,13 +369,13 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                             }}
                             aria-label={t("modeHard")}
                         >
-                            <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
+                            <IconModeUltimate size={42} />
                         </Button>
                         <Tooltip>{t("tooltipHard")}</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
                         <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
-                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
+                            <IconFriends size={44} />
                         </Button>
                         <Tooltip>{t("tooltipFriend")}</Tooltip>
                     </ButtonWithTooltip>

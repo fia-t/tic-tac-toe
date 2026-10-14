@@ -1,4 +1,5 @@
 "use client";
+import { IconClose } from "@game/components/GameIcons";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
@@ -124,7 +125,7 @@ const Modal: React.FC<{ id: string; title: string; children: React.ReactNode }> 
             <Overlay onClick={closePanel} style={{ zIndex: 1600 }} />
             <ModalCard role="dialog" aria-modal="true" aria-labelledby={id} onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                 <ModalCloseButton onClick={closePanel} aria-label={t("close")}>
-                    ×
+                    <IconClose size={16} />
                 </ModalCloseButton>
                 <ModalTitle id={id}>{title}</ModalTitle>
                 {children}

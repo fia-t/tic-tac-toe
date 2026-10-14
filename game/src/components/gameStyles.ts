@@ -1,69 +1,11 @@
 "use client";
 import styled, { createGlobalStyle, css, keyframes } from "styled-components";
+import { gameButtonCss } from "@game/components/GameButton";
 import { assetUrl } from "@game/lib/assets";
 
 // Вигляд поля (як у прототипі й артах порталу): об'ємна плита з тінню й світлим краєм,
 // клітинки - окремі заглиблені плитки поверх фону теми, без ліній-розділювачів.
 // Один стиль для всіх режимів (3×3, 5×5, Ultimate, онлайн).
-// Єдина форма всіх кнопок - як PNG-плитки режимів: заокруглений квадрат зі світлим товстим
-// бортиком і "губою" знизу, а всередині заглиблена панель (::before) кольору face.
-// isolation: isolate + z-index: -1 - панель малюється над фоном кнопки, але під її текстом/іконкою.
-const TILE_FACES = {
-    sand: { face: "linear-gradient(180deg, #f9e1b8 0%, #f1cd96 100%)", color: "#5b3f22" },
-    teal: { face: "linear-gradient(180deg, #1d95b8 0%, #0f6f8c 100%)", color: "#ffffff" },
-    red: { face: "linear-gradient(180deg, #d6543c 0%, #b32f1c 100%)", color: "#ffffff" },
-    wood: { face: "linear-gradient(180deg, #9d6b38 0%, #7b4d23 100%)", color: "#fff8ec" },
-    gold: { face: "linear-gradient(180deg, #ffd884 0%, #f2b12c 100%)", color: "#4a2c0c" },
-};
-export type TileFace = keyof typeof TILE_FACES;
-
-export const tileButton = (face: TileFace = "sand", inset = 5) => css`
-    position: relative;
-    isolation: isolate;
-    border: none;
-    border-radius: var(--tile-radius, 18px);
-    color: ${TILE_FACES[face].color};
-    background: linear-gradient(180deg, #fff3dd 0%, #f8dbab 55%, #ecc38a 100%);
-    box-shadow:
-        inset 0 2px 0 rgba(255, 255, 255, 0.9),
-        inset 0 -3px 0 rgba(170, 110, 40, 0.35),
-        0 4px 0 #d7a464,
-        0 8px 14px rgba(90, 50, 10, 0.26);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
-
-    &::before {
-        content: "";
-        position: absolute;
-        inset: ${inset}px;
-        z-index: -1;
-        border-radius: max(4px, calc(var(--tile-radius, 18px) - ${inset}px));
-        background: ${TILE_FACES[face].face};
-        box-shadow:
-            inset 0 2px 4px rgba(120, 75, 25, 0.32),
-            0 1px 0 rgba(255, 255, 255, 0.65);
-    }
-
-    &:active:not(:disabled) {
-        transform: translateY(2px);
-        box-shadow:
-            inset 0 2px 0 rgba(255, 255, 255, 0.9),
-            inset 0 -3px 0 rgba(170, 110, 40, 0.35),
-            0 2px 0 #d7a464,
-            0 4px 8px rgba(90, 50, 10, 0.22);
-    }
-
-    &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-`;
-
-// Кнопки верхнього ряду (виклик дня, монети, карта, меню, звук, "?").
-export const hudTile = css`
-    --tile-radius: 15px;
-    ${tileButton("sand", 4)}
-`;
-
 export const boardSlab = css`
     /* Поле - як велика PNG-кнопка режимів: пісочна рамка з товстою нижньою "губою" й тінню,
        а фон скіна - лише у внутрішній, заглибленій зоні (content-box = без рамки --frame). */
@@ -242,33 +184,8 @@ export const ButtonContainer = styled.div`
 // Кнопка - лише прозора рамка-обгортка: сам вигляд (пісочна плитка,
 // заокруглення, тінь, рельєф) уже намальований у PNG-іконці всередині.
 export const Button = styled.button`
-    width: 70px;
-    height: 70px;
-
-    @media (max-width: 640px) {
-        width: 56px;
-        height: 56px;
-        border-radius: 18px;
-    }
-
+    ${gameButtonCss("xl", { square: true })}
     flex-shrink: 0;
-    border: none;
-    border-radius: 22px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    touch-action: manipulation;
-    transition: transform 0.15s ease;
-
-    &:hover {
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(1px) scale(0.97);
-    }
 `;
 
 // Іконки кнопок - самі PNG вже мають вигляд готової пісочної 3D-плитки,
@@ -538,20 +455,5 @@ export const HudLeft = styled.div`
 
 // Квадратна кнопка верхнього ряду (напр. "Меню" на полі) - у стилі SoundToggle.
 export const HudButton = styled.button`
-    width: 40px;
-    height: 40px;
-    border: none;
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    color: #6b4a25;
-    ${hudTile}
-    touch-action: manipulation;
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
+    ${gameButtonCss("sm", { square: true })}
 `;

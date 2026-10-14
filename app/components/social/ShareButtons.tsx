@@ -1,5 +1,7 @@
 "use client";
 import { useState } from "react";
+import styled from "styled-components";
+import { GameButton, gameButtonCss } from "@game/components/GameButton";
 import { siteConfig } from "@/app/lib/seo/site-config";
 
 export function ShareButtons({ title, path }: { title: string; path: string }) {
@@ -22,41 +24,31 @@ export function ShareButtons({ title, path }: { title: string; path: string }) {
       aria-label="Share this page"
       style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 24 }}
     >
-      <a
+      <ShareLink
         href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on X (Twitter)"
-        style={shareButtonStyle}
       >
         Share on X
-      </a>
-      <a
+      </ShareLink>
+      <ShareLink
         href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Share on Facebook"
-        style={shareButtonStyle}
       >
         Share on Facebook
-      </a>
-      <button type="button" onClick={handleCopy} aria-label="Copy link" style={shareButtonStyle}>
+      </ShareLink>
+      <GameButton size="sm" onClick={handleCopy} aria-label="Copy link">
         {copied ? "Link copied!" : "Copy Link"}
-      </button>
+      </GameButton>
     </div>
   );
 }
 
-const shareButtonStyle: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "8px 16px",
-  borderRadius: 999,
-  border: "1px solid #8B4513",
-  background: "transparent",
-  color: "#4a3016",
-  fontSize: 14,
-  fontWeight: 600,
-  textDecoration: "none",
-  cursor: "pointer",
-};
+// Посилання поділитися - та сама еталонна форма кнопки, що й у грі.
+const ShareLink = styled.a`
+  ${gameButtonCss("sm")}
+  text-decoration: none;
+`;

@@ -83,6 +83,10 @@ export type RoomDoc = {
     playerIds?: Record<PlayerSymbol, string>;
     ratingDelta?: Record<PlayerSymbol, number> | null;
     ratingsAfter?: Record<PlayerSymbol, number>;
+    // До коли має сходити currentPlayer; інакше - технічна перемога суперника (/api/match/forfeit).
+    turnDeadline?: Timestamp | null;
+    // Хто програв за часом (якщо партія закінчилась так).
+    forfeit?: PlayerSymbol;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком

@@ -160,6 +160,8 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
     const showOpponentLeft =
         Boolean(room) &&
         room?.status !== "waiting" &&
+        // Рейтингова партія: замість цього вікна - відлік часу на хід і технічна перемога.
+        !room?.rated &&
         Boolean(opponent) &&
         (opponentExplicitlyLeft || opponentStale) &&
         !leftBannerDismissed;

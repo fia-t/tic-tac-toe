@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Overlay, hudTile } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
+import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
 import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useLastEarning, useWallet } from "@game/lib/wallet";
@@ -10,26 +11,9 @@ import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
 // Лічильник монет (у ряду кнопок зліва вгорі, поруч із викликом дня) і магазин скінів.
 const CoinButton = styled.button`
-    position: relative;
-    height: 40px;
-    padding: 0 12px 0 8px;
-    border: none;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
+    ${gameButtonCss("sm")}
     gap: 6px;
-    cursor: pointer;
-    color: #6b4a25;
-    font-weight: 800;
-    font-size: 14px;
     font-variant-numeric: tabular-nums;
-    ${hudTile}
-    touch-action: manipulation;
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
 `;
 
 const rise = keyframes`
@@ -126,8 +110,6 @@ const Note = styled.div`
 
 const SmallButton = styled(PillButton)`
     margin-top: 0;
-    padding: 8px 10px;
-    min-height: 38px;
     font-size: 13px;
 `;
 

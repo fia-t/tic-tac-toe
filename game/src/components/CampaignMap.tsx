@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Overlay, hudTile, tileButton } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
+import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Star, StarRow } from "@game/components/DailyChallenge";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
@@ -26,27 +27,9 @@ import { useT } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
 const MapButton = styled.button`
-    position: relative;
-    height: 40px;
-    min-width: 40px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
+    ${gameButtonCss("sm")}
     gap: 6px;
-    cursor: pointer;
-    color: #6b4a25;
-    font-weight: 800;
-    font-size: 14px;
     font-variant-numeric: tabular-nums;
-    ${hudTile}
-    touch-action: manipulation;
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
 `;
 
 const Chapter = styled.section`
@@ -84,31 +67,18 @@ const Levels = styled.div`
 `;
 
 const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
+    ${gameButtonCss("lg")}
+    width: 100%;
+    height: auto;
+    min-height: 0;
     aspect-ratio: 1;
-    cursor: pointer;
-    display: flex;
+    padding: 0;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: 2px;
     font-size: 20px;
-    font-weight: 800;
-    touch-action: manipulation;
-    --tile-radius: 16px;
-    ${({ $boss }) => tileButton($boss ? "gold" : "sand", 5)}
-    outline: ${({ $current }) => ($current ? "3px solid #0f6f8c" : "none")};
-    outline-offset: 2px;
-
-    &:disabled {
-        opacity: 0.5;
-        filter: grayscale(0.6);
-    }
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`
+    ${({ $boss }) => ($boss ? "filter: sepia(0.35) saturate(1.8) hue-rotate(-8deg);" : "")}
+    ${({ $current }) => ($current ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3);" : "")}
+`;
 
 const MiniStars = styled.span`
     display: flex;

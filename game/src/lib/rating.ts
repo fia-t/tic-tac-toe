@@ -25,3 +25,11 @@ export const leagueFor = (rating: number): League =>
 
 // Наскільки далекий за рейтингом суперник підходить: що довше гравець у черзі, то ширше вікно.
 export const matchWindow = (waitedMs: number): number => Math.min(600, 150 + 25 * Math.floor(waitedMs / 1000));
+
+// Час на хід у рейтинговому матчі. Не встиг (чи закрив гру) - перемога за суперником.
+// Перший хід - трохи довше: обом ще треба завантажити кімнату.
+export const RATED_TURN_MS = 30_000;
+export const RATED_FIRST_TURN_MS = 40_000;
+// Запас на мережу: хід, відправлений в останню мить, ще приймається, а технічна поразка -
+// лише після цього запасу.
+export const RATED_GRACE_MS = 1_500;

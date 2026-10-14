@@ -1,7 +1,9 @@
 "use client";
+import { IconClose, IconHelp } from "@game/components/GameIcons";
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Overlay, hudTile } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
+import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
 import { useT } from "@game/lib/i18n";
 
@@ -57,7 +59,7 @@ export const UltimateRulesModal = ({ onClose }: { onClose: () => void }) => {
             <Overlay onClick={onClose} />
             <ModalCard role="dialog" aria-modal="true" aria-labelledby="ultimate-rules-title" onClick={(e) => e.stopPropagation()}>
                 <ModalCloseButton onClick={onClose} aria-label={t("close")}>
-                    ×
+                    <IconClose size={16} />
                 </ModalCloseButton>
                 <ModalTitle id="ultimate-rules-title">{t("rulesTitle")}</ModalTitle>
                 <RulesList>
@@ -88,22 +90,8 @@ const HintRow = styled.div`
 `;
 
 const HelpButton = styled.button`
-    width: 36px;
-    height: 36px;
+    ${gameButtonCss("sm", { square: true })}
     flex-shrink: 0;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    color: #6b4a25;
-    font-size: 18px;
-    font-weight: 800;
-    ${hudTile}
-    touch-action: manipulation;
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
 `;
 
 type UltimateHintProps = {
@@ -120,7 +108,7 @@ export const UltimateHint: React.FC<UltimateHintProps> = ({ state, onShowRules }
         <HintRow>
             <span aria-live="polite">{text}</span>
             <HelpButton type="button" onClick={onShowRules} aria-label={t("rulesButton")} title={t("rulesButton")}>
-                ?
+                <IconHelp size={20} />
             </HelpButton>
         </HintRow>
     );

@@ -64,6 +64,10 @@ export const watchQueue = async (callback: (roomId: string) => void): Promise<Un
 export const ratedMove = (roomId: string, index: number): Promise<{ ok?: boolean; error?: string }> =>
     call("/api/match/move", "POST", { roomId, index });
 
+// Час на хід вийшов - попросити сервер зарахувати технічну перемогу (сервер сам перевіряє час).
+export const claimTimeout = (roomId: string): Promise<{ ok?: boolean; error?: string; retryInMs?: number }> =>
+    call("/api/match/forfeit", "POST", { roomId });
+
 export type LeaderboardRow = { playerId: string; name: string; rating: number; games: number; wins: number };
 
 export const fetchLeaderboard = async (size = 20): Promise<LeaderboardRow[]> => {

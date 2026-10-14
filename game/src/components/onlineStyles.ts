@@ -1,6 +1,7 @@
 "use client";
 import styled, { keyframes } from "styled-components";
-import { boardSlab, boardTile, tileButton } from "@game/components/gameStyles";
+import { boardSlab, boardTile } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
 import { assetUrl } from "@game/lib/assets";
 
 // Стилі для онлайн-режиму "Гра з другом" - витримані в тій самій пляжній
@@ -32,22 +33,11 @@ export const ModalCard = styled.div`
 `;
 
 export const ModalCloseButton = styled.button`
-    --tile-radius: 12px;
-    ${tileButton("sand", 4)}
-    /* Після tileButton (той задає position: relative). */
+    ${gameButtonCss("xs", { square: true })}
     position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 36px;
-    height: 36px;
-    font-size: 18px;
-    font-weight: 800;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-`
+    top: 12px;
+    right: 12px;
+`;
 
 export const ModalTitle = styled.h2`
     margin: 0 0 16px;
@@ -74,29 +64,14 @@ export const ModeOptionGroup = styled.div`
 `;
 
 export const ModeOption = styled.button<{ $active: boolean }>`
+    ${gameButtonCss("lg")}
     flex: 1;
-    display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 4px;
-    padding: 14px 10px;
-    border-radius: 16px;
-    cursor: pointer;
-    border: 2px solid ${({ $active }) => ($active ? "#c9974f" : "transparent")};
-    background: ${({ $active }) =>
-        $active
-            ? "linear-gradient(155deg, #f5e0b6 0%, #ecd1a1 45%, #dfbd89 100%)"
-            : "rgba(139, 101, 60, 0.08)"};
-    box-shadow: ${({ $active }) =>
-        $active ? "2px 3px 6px rgba(101, 72, 35, 0.3), inset 1px 1px 1px rgba(255,255,255,0.5)" : "none"};
-    color: #5b3f22;
-    font-weight: 600;
+    min-height: 120px;
+    padding: 6px 4px;
     font-size: 14px;
-    transition: transform 0.15s ease;
-
-    &:hover {
-        transform: translateY(-1px);
-    }
+    ${({ $active }) => ($active ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3); transform: translateY(1px);" : "")}
 `;
 
 export const ModeOptionHint = styled.span`
@@ -107,23 +82,20 @@ export const ModeOptionHint = styled.span`
 
 // Іконка режиму всередині ModeOption - ті самі PNG, що й на кнопках вибору
 // режиму головного поля (board.tsx), щоб вигляд лишався впізнаваним.
-export const ModeOptionIcon = styled.img`
-    width: 70px;
-    height: 70px;
-    object-fit: contain;
+export const ModeOptionIcon = styled.span`
+    display: grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
 `;
 
 export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
+    ${gameButtonCss("md")}
+    display: flex;
     width: 100%;
-    padding: 13px 16px;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 800;
     margin-top: 10px;
-    touch-action: manipulation;
-    --tile-radius: 18px;
-    ${({ $variant }) => tileButton($variant === "ghost" ? "sand" : "teal")}
-`
+    ${({ $variant }) => ($variant === "ghost" ? "" : "color: #0f6f8c;")}
+`;
 
 export const ButtonRow = styled.div`
     display: flex;
@@ -174,14 +146,9 @@ export const InviteLinkBox = styled.div`
 `;
 
 export const CopyIconButton = styled.button`
+    ${gameButtonCss("sm")}
     flex-shrink: 0;
-    padding: 0 16px;
-    font-weight: 800;
-    font-size: 13px;
-    cursor: pointer;
-    --tile-radius: 14px;
-    ${tileButton("sand", 4)}
-`
+`;
 
 export const CopyFeedback = styled.span`
     display: inline-block;

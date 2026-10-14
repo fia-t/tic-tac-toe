@@ -1,7 +1,9 @@
 "use client";
+import { IconClose } from "@game/components/GameIcons";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { Overlay, hudTile } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
+import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
 import { setDifficultyOverride } from "@game/lib/difficulty";
@@ -28,26 +30,8 @@ import { dailyReward } from "@game/lib/wallet";
 
 // Кнопка виклику дня - у лівому верхньому куті, дзеркально до SoundToggle.
 const DailyButtonEl = styled.button`
-    position: relative;
-    height: 40px;
-    min-width: 44px;
-    padding: 0 10px;
-    border: none;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
+    ${gameButtonCss("sm")}
     gap: 6px;
-    cursor: pointer;
-    color: #6b4a25;
-    font-weight: 800;
-    font-size: 14px;
-    ${hudTile}
-    touch-action: manipulation;
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
 `;
 
 const Dot = styled.span`
@@ -242,8 +226,8 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                     <Overlay onClick={closeAll} style={{ zIndex: 1600 }} />
                     <ModalCard role="dialog" aria-modal="true" aria-labelledby="daily-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                         <ModalCloseButton onClick={closeAll} aria-label={t("close")}>
-                            ×
-                        </ModalCloseButton>
+                    <IconClose size={16} />
+                </ModalCloseButton>
                         <ModalTitle id="daily-title">{t("dailyBadge", { n: String(day) })}</ModalTitle>
 
                         {view.kind === "result" ? (

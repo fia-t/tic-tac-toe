@@ -1,7 +1,8 @@
 "use client";
+import { IconMode3, IconMode5, IconModeUltimate } from "@game/components/GameIcons";
 import React, { useState } from "react";
 import styled from "styled-components";
-import { tileButton } from "@game/components/gameStyles";
+import { gameButtonCss, gameButtonFace } from "@game/components/GameButton";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star } from "@game/components/DailyChallenge";
@@ -102,21 +103,9 @@ const Muted = styled.p`
 `;
 
 const Big = styled.button<{ $variant?: "primary" | "sand" | "red" }>`
-    min-height: 50px;
-    padding: 12px 18px;
-    cursor: pointer;
-    font: inherit;
-    font-size: 16px;
-    font-weight: 800;
-    touch-action: manipulation;
-    --tile-radius: 18px;
-    ${({ $variant }) => tileButton($variant === "sand" ? "sand" : $variant === "red" ? "red" : "teal")}
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`
+    ${gameButtonCss("lg")}
+    ${({ $variant }) => ($variant === "red" ? "color: #b32f1c;" : $variant === "sand" ? "" : "color: #0f6f8c;")}
+`;
 
 const Modes = styled.div`
     display: grid;
@@ -132,25 +121,34 @@ const ModeButton = styled.button<{ $on: boolean }>`
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     font: inherit;
     font-size: 13px;
     font-weight: 800;
     color: ${({ $on }) => ($on ? "#0f6f8c" : "#4a2c0c")};
 
-    img {
-        width: 100%;
-        max-width: 104px;
-        aspect-ratio: 1;
-        transform: ${({ $on }) => ($on ? "translateY(-3px) scale(1.04)" : "none")};
-        filter: ${({ $on }) => ($on ? "drop-shadow(0 10px 12px rgba(15, 111, 140, 0.35))" : "drop-shadow(0 8px 10px rgba(70, 40, 10, 0.18))")};
-        transition: transform 0.15s ease;
-    }
-
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
         border-radius: 16px;
+    }
+`;
+
+// "Обличчя" картки режиму - та сама еталонна форма кнопки з SVG-іконкою по центру.
+const ModeFace = styled.span<{ $on: boolean }>`
+    ${gameButtonFace}
+    --gb-c: 24px;
+    width: min(100%, 104px);
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    ${({ $on }) => ($on ? "filter: brightness(0.93) saturate(1.3); transform: translateY(1px);" : "")}
+
+    @media (hover: hover) {
+        button:hover > & {
+            filter: brightness(1.05);
+            transform: translateY(-1px);
+        }
     }
 `;
 
@@ -212,35 +210,17 @@ const Nav = styled.nav`
 `;
 
 const NavButton = styled.button<{ $on: boolean }>`
-    border: none;
-    min-height: 54px;
-    padding: 6px 2px;
-    cursor: pointer;
-    display: flex;
+    ${gameButtonCss("lg")}
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
     gap: 2px;
-    font: inherit;
+    padding: 0;
     font-size: 11px;
-    font-weight: 800;
-    color: #7a5530;
-    background: transparent;
-    border-radius: 16px;
-    touch-action: manipulation;
-    --tile-radius: 16px;
-    ${({ $on }) => ($on ? tileButton("sand", 4) : "")}
 
     svg {
-        width: 22px;
-        height: 22px;
+        width: 20px;
+        height: 20px;
     }
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`
+`;
 
 const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
     home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -263,10 +243,10 @@ const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
     match: null,
 };
 
-const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
-    { id: "traditional", img: "images/traditional.png", label: "modeClassic" },
-    { id: "five", img: "images/game-5x5.png", label: "modeFive" },
-    { id: "difficult", img: "images/difficult.png", label: "tooltipHard" },
+const MODES: { id: GameModeKey; icon: React.ReactNode; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
+    { id: "traditional", icon: <IconMode3 size={56} />, label: "modeClassic" },
+    { id: "five", icon: <IconMode5 size={56} />, label: "modeFive" },
+    { id: "difficult", icon: <IconModeUltimate size={56} />, label: "tooltipHard" },
 ];
 
 type HomeScreenProps = {
@@ -350,7 +330,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <Modes role="group" aria-label={t("homeQuick")}>
                     {MODES.map((m) => (
                         <ModeButton key={m.id} type="button" $on={mode === m.id} aria-pressed={mode === m.id} onClick={() => setMode(m.id)}>
-                            <img src={assetUrl(m.img)} alt="" />
+                            <ModeFace $on={mode === m.id} aria-hidden="true">{m.icon}</ModeFace>
                             <span>{t(m.label)}</span>
                         </ModeButton>
                     ))}

@@ -1,6 +1,6 @@
 "use client";
 import styled from "styled-components";
-import { tileButton } from "@game/components/gameStyles";
+import { gameButtonCss } from "@game/components/GameButton";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
@@ -12,25 +12,13 @@ import { GameModeKey, MODIFIERS_BY_MODE, effectiveModifier, setModifier, useModi
 const Group = styled.div`
     display: inline-flex;
     gap: 6px;
-    padding: 0 0 4px;
     margin: 0 0 8px;
-`
+`;
 
 const Option = styled.button<{ $active: boolean }>`
-    min-height: 40px;
-    padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 800;
-    touch-action: manipulation;
-    --tile-radius: 14px;
-    ${({ $active }) => tileButton($active ? "wood" : "sand", 4)}
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`
+    ${gameButtonCss("sm")}
+    ${({ $active }) => ($active ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3); transform: translateY(1px);" : "")}
+`;
 
 const DailyBanner = styled.div`
     display: flex;
@@ -70,22 +58,10 @@ const Chips = styled.div`
 `;
 
 const Chip = styled.button<{ $active: boolean }>`
-    min-height: 34px;
-    padding: 6px 12px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 800;
-    touch-action: manipulation;
+    ${gameButtonCss("xs")}
     flex-shrink: 0;
     white-space: nowrap;
-    --tile-radius: 12px;
-    ${({ $active }) => tileButton($active ? "teal" : "sand", 3)}
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`
+`;
 
 const WeekTag = styled.span`
     margin-left: 5px;

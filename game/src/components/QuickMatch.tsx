@@ -1,4 +1,5 @@
 "use client";
+import { IconClose } from "@game/components/GameIcons";
 import React, { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
@@ -118,7 +119,7 @@ export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched,
             <Overlay onClick={close} style={{ zIndex: 1600 }} />
             <ModalCard role="dialog" aria-modal="true" aria-labelledby="match-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                 <ModalCloseButton onClick={close} aria-label={t("close")}>
-                    ×
+                    <IconClose size={16} />
                 </ModalCloseButton>
                 <ModalTitle id="match-title">{t("matchTitle")}</ModalTitle>
                 <ModalSubtitle>

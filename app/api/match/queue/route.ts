@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { MatchConfigError, generateRoomId, getMatchAdmin, json, preflight, requireUid, verifyPortalToken } from "@/app/lib/server/matchServer";
-import { START_RATING, matchWindow } from "@game/lib/rating";
+import { RATED_FIRST_TURN_MS, START_RATING, matchWindow } from "@game/lib/rating";
 
 // Швидкий матч: черга й підбір суперника. Підбір - лише тут, на сервері (клієнти в
 // matchQueue не пишуть), тому двоє не "заберуть" того самого суперника.
@@ -128,6 +128,7 @@ export const POST = (request: Request) =>
                 playerIds: { X: other.playerId, O: playerId },
                 ratings: { X: other.rating, O: rating },
                 ratingDelta: null,
+                turnDeadline: Timestamp.fromMillis(now.toMillis() + RATED_FIRST_TURN_MS),
             });
             tx.update(opponent.ref, { status: "matched", roomId: roomRef.id });
             tx.set(myRef, { uid, playerId, name, rating, mode: MODE, status: "matched", roomId: roomRef.id, createdAt: now, heartbeatAt: now });

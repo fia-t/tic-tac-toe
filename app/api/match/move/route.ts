@@ -1,7 +1,8 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { MatchConfigError, getMatchAdmin, json, preflight, requireUid } from "@/app/lib/server/matchServer";
 import { BOARD_SIZE, getOnlineGridWinner, isOnlineGridFull, type OnlineGameMode } from "@game/components/onlineGameLogic";
-import { START_RATING, ratingDelta } from "@game/lib/rating";
+import { RATED_GRACE_MS, RATED_TURN_MS } from "@game/lib/rating";
+import { finishRated } from "@/app/lib/server/ratedFinish";
 
 // Хід у рейтинговому матчі. На відміну від "Гри з другом", тут хід пише лише сервер:
 // перевіряє, що ходить саме цей гравець і в порожню клітинку, сам визначає переможця і
@@ -39,11 +40,14 @@ export async function POST(request: Request) {
                 playerIds: Record<Symbol, string>;
                 names: Record<Symbol, string>;
                 score?: Record<Symbol, number>;
+                turnDeadline?: Timestamp | null;
             };
             if (!room.rated) return { error: "not_rated", status: 400 };
             const symbol: Symbol | null = room.players.X?.uid === uid ? "X" : room.players.O?.uid === uid ? "O" : null;
             if (!symbol) return { error: "not_a_player", status: 403 };
             if (room.status !== "playing" || room.currentPlayer !== symbol) return { error: "not_your_turn", status: 409 };
+            const deadline = room.turnDeadline?.toMillis?.();
+            if (typeof deadline === "number" && Date.now() > deadline + RATED_GRACE_MS) return { error: "time_out", status: 409 };
             const size = BOARD_SIZE[room.gameMode];
             if (index < 0 || index >= size * size || room.board[index] !== null) return { error: "illegal_move", status: 409 };
 
@@ -62,42 +66,9 @@ export async function POST(request: Request) {
                 expiresAt: Timestamp.fromMillis(Date.now() + ROOM_TTL_MS),
             };
 
-            if (winner) {
-                // Рейтинги - поточні значення з колекції ratings (не знімок у кімнаті), щоб паралельні матчі не губили зміни.
-                const refs = { X: db.collection("ratings").doc(room.playerIds.X), O: db.collection("ratings").doc(room.playerIds.O) };
-                const [xSnap, oSnap] = await Promise.all([tx.get(refs.X), tx.get(refs.O)]);
-                const current = {
-                    X: typeof xSnap.get("rating") === "number" ? (xSnap.get("rating") as number) : START_RATING,
-                    O: typeof oSnap.get("rating") === "number" ? (oSnap.get("rating") as number) : START_RATING,
-                };
-                const scoreX: 0 | 0.5 | 1 = winner === "draw" ? 0.5 : winner === "X" ? 1 : 0;
-                const delta = {
-                    X: ratingDelta(current.X, current.O, scoreX),
-                    O: ratingDelta(current.O, current.X, (1 - scoreX) as 0 | 0.5 | 1),
-                };
-                for (const side of ["X", "O"] as const) {
-                    const prev = side === "X" ? xSnap : oSnap;
-                    const result = winner === "draw" ? "draws" : winner === side ? "wins" : "losses";
-                    tx.set(refs[side], {
-                        playerId: room.playerIds[side],
-                        name: room.names[side],
-                        rating: current[side] + delta[side],
-                        games: ((prev.get("games") as number) ?? 0) + 1,
-                        wins: ((prev.get("wins") as number) ?? 0) + (result === "wins" ? 1 : 0),
-                        draws: ((prev.get("draws") as number) ?? 0) + (result === "draws" ? 1 : 0),
-                        losses: ((prev.get("losses") as number) ?? 0) + (result === "losses" ? 1 : 0),
-                        updatedAt: FieldValue.serverTimestamp(),
-                    });
-                }
-                update.ratingDelta = delta;
-                update.ratingsAfter = { X: current.X + delta.X, O: current.O + delta.O };
-                if (winner !== "draw") update[`score.${winner}`] = (room.score?.[winner] ?? 0) + 1;
-                tx.set(db.collection("gameLogs").doc(), {
-                    mode: "friend-3x3",
-                    outcome: winner === "draw" ? "draw" : winner === "X" ? "x_win" : "o_win",
-                    createdAt: FieldValue.serverTimestamp(),
-                });
-            }
+            // Наступному гравцю - свіжий час на хід; після кінця партії дедлайн знімається.
+            if (winner) Object.assign(update, await finishRated(tx, db, room, winner));
+            else update.turnDeadline = Timestamp.fromMillis(Date.now() + RATED_TURN_MS);
             tx.update(roomRef, update as FirebaseFirestore.UpdateData<FirebaseFirestore.DocumentData>);
             return { ok: true, status: 200 };
         });

@@ -1,4 +1,6 @@
 "use client";
+import { GameButton } from "@game/components/GameButton";
+import { IconClose } from "@game/components/GameIcons";
 import { useEffect, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
@@ -52,27 +54,16 @@ export function InstallPrompt() {
       }}
     >
       <span>Install Tic Tac Toe Online?</span>
-      <button
-        onClick={handleInstall}
-        style={{
-          background: "#e6c890",
-          color: "#2b1a08",
-          border: "none",
-          borderRadius: 999,
-          padding: "6px 14px",
-          fontWeight: 700,
-          cursor: "pointer",
-        }}
-      >
+      <GameButton size="xs" tone="accent" onClick={handleInstall}>
         Install
-      </button>
-      <button
+      </GameButton>
+      <GameButton
+        size="xs"
+        square
         onClick={() => setDismissed(true)}
         aria-label="Dismiss install prompt"
-        style={{ background: "transparent", border: "none", color: "#e6c890", cursor: "pointer" }}
-      >
-        ✕
-      </button>
+        icon={<IconClose size={14} />}
+      />
     </div>
   );
 }

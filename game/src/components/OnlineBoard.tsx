@@ -18,6 +18,7 @@ import { GamePiece } from "@game/components/GamePiece";
 import { useT } from "@game/lib/i18n";
 import { playSound } from "@game/lib/sound";
 import { ratedMove, rememberRating } from "@game/lib/matchmaking";
+import { TurnAlert, formatClock, useRatedTurnClock } from "@game/components/RatedTurnTimer";
 
 type OnlineBoardProps = {
     roomId: string;
@@ -67,8 +68,15 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
         if (room.rated && isFinished && room.playerIds && room.ratingsAfter) rememberRating(room.playerIds[mySymbol], room.ratingsAfter[mySymbol]);
     }, [room.rated, isFinished, room.playerIds, room.ratingsAfter, mySymbol]);
 
+    // Рейтинговий матч: час на хід і технічна перемога, якщо хтось не встиг.
+    const turnRemaining = useRatedTurnClock(roomId, room);
+
     const resultLabel =
-        room.winner === "draw"
+        room.forfeit && room.winner && room.winner !== "draw"
+            ? room.forfeit === mySymbol
+                ? t("forfeitLoss")
+                : t("forfeitWin")
+            : room.winner === "draw"
             ? t("onlineDraw")
             : room.winner === mySymbol
             ? t("onlineWin")
@@ -117,8 +125,16 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             </ScoreBoard>
 
             <TurnBanner $myTurn={isFinished ? false : myTurn}>
-                {isFinished ? resultLabel : myTurn ? t("yourTurn") : t("opponentTurn")}
+                {isFinished
+                    ? resultLabel
+                    : turnRemaining !== null
+                    ? t(myTurn ? "turnClockMine" : "turnClockTheirs", { t: formatClock(turnRemaining) })
+                    : myTurn
+                    ? t("yourTurn")
+                    : t("opponentTurn")}
             </TurnBanner>
+
+            <TurnAlert room={room} mySymbol={mySymbol} remaining={turnRemaining} />
 
             <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
                 {room.board.map((cell, index) => {
