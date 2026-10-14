@@ -10,6 +10,7 @@ import { lifecycle } from "./sdk/lifecycle";
 import { progress } from "./sdk/progress";
 import { getDifficulty } from "@game/lib/difficulty";
 import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily";
+import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wallet";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -46,10 +47,12 @@ export default function App() {
         if (sdk.loadData && sdk.saveData) {
             const load = sdk.loadData, saveData = sdk.saveData;
             void configureDailyStorage({ load: () => load<DailyState>("daily"), save: (state) => saveData("daily", state) });
+            void configureWalletStorage({ load: () => load<WalletState>("wallet"), save: (state) => saveData("wallet", state) });
         }
         const unsubscribeAuth = sdk.onAuthChange?.(() => {
             void progress.reload();
             void reloadDaily();
+            void reloadWallet();
         });
 
         const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
@@ -155,6 +158,7 @@ export default function App() {
                         onBeforeFriendOpen={() => sdk.showRewardedAd()}
                         onReady={handleReady}
                         getShareLink={sdk.shareLink}
+                        onRewardedAd={sdk.hasRewardedAds ? sdk.showRewardedAd : undefined}
                     />
                 </Container>
             </PortalGameBridge>

@@ -15,6 +15,7 @@ declare global {
 }
 
 export const pokiSdk: AggregatorSdk = {
+    hasRewardedAds: true,
     init: async () => {
         try {
             await window.PokiSDK?.init();

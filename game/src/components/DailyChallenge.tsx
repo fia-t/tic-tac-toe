@@ -22,14 +22,12 @@ import {
     useDailyState,
 } from "@game/lib/daily";
 import { useT } from "@game/lib/i18n";
+import { dailyReward } from "@game/lib/wallet";
 
 // Кнопка виклику дня - у лівому верхньому куті, дзеркально до SoundToggle.
 const DailyButtonEl = styled.button`
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1500;
-    height: 44px;
+    position: relative;
+    height: 40px;
     min-width: 44px;
     padding: 0 10px;
     border: none;
@@ -173,7 +171,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                 };
                 const saved = recordDailyResult(daily);
                 setDailyRun({ ...run, finished: true });
-                trackEvent("daily_finished", { day: run.day, template: run.template.id, stars: daily.stars });
+                trackEvent("daily_finished", { day: run.day, template: run.template.id, stars: daily.stars, streak: currentStreak(saved) });
                 const shown = saved.results[todayKey()] ?? daily;
                 setTimeout(() => setView({ kind: "result", result: shown }), 900);
             }),
@@ -269,6 +267,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                                     <>
                                         <Rules>{rules}</Rules>
                                         <Rules>{t("dailySame")}</Rules>
+                                        <Rules>{t("dailyReward", { n: String(dailyReward(streak + 1)) })}</Rules>
                                     </>
                                 )}
                                 {streak > 0 && <Rules>{t("dailyStreak", { n: String(streak) })}</Rules>}

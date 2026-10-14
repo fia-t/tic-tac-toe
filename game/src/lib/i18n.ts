@@ -122,6 +122,18 @@ const uk = {
     modifierDesc_misere: "Навпаки: хто склав лінію, той програв.",
     weeklyTag: "тижня",
     timerLabel: "Час на хід",
+    dailyReward: "Нагорода: {n} монет (більше за довшу серію).",
+    shopTitle: "Скіни",
+    shopOpen: "Магазин скінів, монет: {n}",
+    shopCoins: "Монети: {n}",
+    shopHint: "Монети - за перемоги, нічиї з Майстром, онлайн-партії й виклик дня. Новий скін починає нову партію.",
+    shopEquipped: "Обрано",
+    shopEquip: "Обрати",
+    shopBuy: "Купити · {n}",
+    shopFree: "Отримати",
+    shopTrial: "24 год за рекламу",
+    shopTrialLeft: "Пробний: ще {h} год",
+    shopNotEnough: "Не вистачає {n} монет",
 };
 
 type Key = keyof typeof uk;
@@ -241,6 +253,18 @@ const en: Record<Key, string> = {
     modifierDesc_misere: "Reversed: whoever completes a line loses.",
     weeklyTag: "of the week",
     timerLabel: "Time for your move",
+    dailyReward: "Reward: {n} coins (more for a longer streak).",
+    shopTitle: "Skins",
+    shopOpen: "Skin shop, coins: {n}",
+    shopCoins: "Coins: {n}",
+    shopHint: "Earn coins for wins, draws against Master, online games and the daily challenge. A new skin starts a new game.",
+    shopEquipped: "Equipped",
+    shopEquip: "Equip",
+    shopBuy: "Buy · {n}",
+    shopFree: "Get",
+    shopTrial: "24 h for an ad",
+    shopTrialLeft: "Trial: {h} h left",
+    shopNotEnough: "{n} more coins needed",
 };
 
 const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };

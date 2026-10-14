@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="sand" cx="0.5" cy="0.38" r="0.85">
+      <stop offset="0" stop-color="#fde7c3"/>
+      <stop offset="0.65" stop-color="#f5d19a"/>
+      <stop offset="1" stop-color="#e3b273"/>
+    </radialGradient>
+    <pattern id="grain" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="5" cy="6" r="1.5" fill="#c99a5b" fill-opacity="0.28"/>
+      <circle cx="17" cy="18" r="1.1" fill="#ffffff" fill-opacity="0.45"/>
+      <circle cx="21" cy="5" r="0.9" fill="#b98848" fill-opacity="0.22"/>
+    </pattern>
+    <linearGradient id="rim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.45"/>
+      <stop offset="0.12" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0.88" stop-color="#8b5a2b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#8b5a2b" stop-opacity="0.28"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="600" fill="url(#sand)"/>
+  <rect width="600" height="600" fill="url(#grain)"/>
+  <rect width="600" height="600" fill="url(#rim)"/>
+</svg>

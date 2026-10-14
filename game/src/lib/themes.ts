@@ -26,21 +26,30 @@ export type Theme = {
     active: boolean;
     order: number;
     createdAt: Timestamp | null;
+    // Ціна в магазині скінів (монети). Не задано в адмінці - DEFAULT_SKIN_PRICE; 0 - безкоштовно.
+    price?: number;
 };
 
-// Тема "за замовчуванням" - той самий вигляд, що й до появи адмінки. Слугує
-// фолбеком, поки в Firestore немає жодної активної теми (свіжий деплой) або
-// Firebase взагалі не налаштовано.
-export const DEFAULT_THEME: Theme = {
-    id: "default",
-    name: "Класична",
-    backgroundUrl: assetUrl("images/sand.png"),
-    xMarkerUrl: assetUrl("images/x-marker-2.png"),
-    oMarkerUrl: assetUrl("images/o-marker-2.png"),
+export const DEFAULT_SKIN_PRICE = 300;
+export const skinPrice = (theme: Theme): number =>
+    typeof theme.price === "number" && theme.price >= 0 ? Math.floor(theme.price) : DEFAULT_SKIN_PRICE;
+
+// Вбудований скін "Класика" - у стилі логотипа й артів порталу (пісочне поле,
+// пластиліновий червоний X і бірюзовий O, SVG у public/images/themes). Безкоштовний,
+// обраний за замовчуванням і водночас фолбек, поки в Firestore немає активних тем.
+export const CLASSIC_THEME: Theme = {
+    id: "classic",
+    name: "Класика",
+    backgroundUrl: assetUrl("images/themes/classic-board.svg"),
+    xMarkerUrl: assetUrl("images/themes/classic-x.svg"),
+    oMarkerUrl: assetUrl("images/themes/classic-o.svg"),
     active: true,
-    order: 0,
+    order: -1,
     createdAt: null,
+    price: 0,
 };
+
+export const DEFAULT_THEME: Theme = CLASSIC_THEME;
 
 const themesCollection = "themes";
 
@@ -53,6 +62,7 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
     active: Boolean(data.active),
     order: (data.order as number) ?? 0,
     createdAt: (data.createdAt as Timestamp) ?? null,
+    price: typeof data.price === "number" ? data.price : undefined,
 });
 
 // Публічний список активних тем - читає будь-хто, навіть до анонімного входу

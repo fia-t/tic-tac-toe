@@ -16,7 +16,10 @@ import {
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
-import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme, preloadThemeImages } from "@game/lib/themes";
+import { CLASSIC_THEME, Theme, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
+import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
+import { SkinShop } from "@game/components/SkinShop";
+import { HudLeft } from "@game/components/gameStyles";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
@@ -75,9 +78,11 @@ type TicTacToeProps = {
     onReady?: () => void;
     // Посилання для шерингу результату виклику дня (портал: game.shareLink() SDK).
     getShareLink?: () => Promise<string | null>;
+    // Rewarded-реклама агрегатора - для примірки скіна на 24 год (див. SkinShop).
+    onRewardedAd?: () => Promise<boolean>;
 };
 
-export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLink }: TicTacToeProps) => {
+export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLink, onRewardedAd }: TicTacToeProps) => {
     const t = useT();
     const [board, setBoard] = useState<Grid3>(createEmptyGrid());
     const [winner, setWinner] = useState<string | null>(null);
@@ -85,9 +90,11 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
     const [gameMode, setGameMode] = useState<"traditional" | "difficult" | "five">("traditional");
-    const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
     const [themeReady, setThemeReady] = useState(false);
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
+    // Тема партії = обраний у магазині скін (вбудована "Класика" або тема з адмінки).
+    const equippedSkinId = getEquippedSkinId(useWallet());
+    const theme: Theme = availableThemes.find((item) => item.id === equippedSkinId) ?? CLASSIC_THEME;
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
     const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
@@ -128,11 +135,13 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setScore({ ai: 0, human: 0 });
     }, [difficulty]);
 
-    // Новий модифікатор - так само нова партія (5×5/Ultimate - через key нижче).
-    const prevModifier = useRef(modifierChoice);
+    // Новий модифікатор або скін - так само нова партія (5×5/Ultimate - через key нижче).
+    // Скін теж: фішки на дошці зберігаються як URL картинок теми, тож старі не "перефарбуються".
+    const settingsKey = `${modifierChoice}|${equippedSkinId}`;
+    const prevModifier = useRef(settingsKey);
     useEffect(() => {
-        if (prevModifier.current === modifierChoice) return;
-        prevModifier.current = modifierChoice;
+        if (prevModifier.current === settingsKey) return;
+        prevModifier.current = settingsKey;
         setBoard(createEmptyGrid());
         setHist(EMPTY_HISTORY);
         setWinner(null);
@@ -140,7 +149,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setIsAiTurn(false);
         setShowResultPopup(false);
         setScore({ ai: 0, human: 0 });
-    }, [modifierChoice]);
+    }, [settingsKey]);
 
     // Модифікатор "таймер" для 3×3 (5×5 і Ultimate мають власні). Хук - до раннього
     // return нижче; сам випадковий хід підставляється пізніше через ref.
@@ -178,10 +187,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) -
             // рестарт (pickNewTheme) може вибрати будь-яку з них, і на той момент
             // вона вже має бути в кеші браузера.
-            await preloadThemeImages(themes.length > 0 ? themes : [DEFAULT_THEME]);
+            await preloadThemeImages([CLASSIC_THEME, ...themes]);
             if (cancelled) return;
             setAvailableThemes(themes);
-            setTheme(pickRandomTheme(themes));
             setThemeReady(true);
             onReady?.();
         });
@@ -206,7 +214,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     // Виключаємо поточну тему з вибірки, щоб рестарт ніколи не показував
     // ту саму тему двічі поспіль (коли активних тем 2+).
-    const pickNewTheme = () => setTheme((current) => pickRandomTheme(availableThemes, current.id));
+    // Раніше рестарт обирав випадкову тему; тепер тема - обраний гравцем скін, тож рестарт її не змінює.
+    const pickNewTheme = () => {};
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -372,14 +381,19 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setGameMode(mode);
     };
 
-    const daily = <DailyChallenge onStart={handleSetGameMode} getShareLink={getShareLink} />;
+    const daily = (
+        <HudLeft>
+            <DailyChallenge onStart={handleSetGameMode} getShareLink={getShareLink} />
+            <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
+        </HudLeft>
+    );
 
     if (gameMode === "difficult") {
         return (
             <>
             {daily}
             <DifficultTicTacToe
-                key={`${difficulty}:${modifierChoice}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}
@@ -398,7 +412,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <>
             {daily}
             <FiveByFiveTicTacToe
-                key={`${difficulty}:${modifierChoice}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}

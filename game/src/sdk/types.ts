@@ -12,6 +12,9 @@ export type AggregatorSdk = {
     // Rewarded-реклама: true = переглянуто (можна відкривати "Гра з другом"),
     // false = відхилено/не вдалося показати.
     showRewardedAd: () => Promise<boolean>;
+    // Чи справді є rewarded-реклама (CrazyGames, Poki). Без неї гра не пропонує
+    // "нагород за рекламу" - showRewardedAd там лише заглушка, що одразу віддає true.
+    hasRewardedAds?: boolean;
     happyTime?: () => void;
 
     // --- Нижче - можливості, які має лише QSPlay SDK порталу (src/sdk/qsplay.ts). ---

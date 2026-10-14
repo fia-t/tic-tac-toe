@@ -22,19 +22,45 @@ export const GlobalStyle = createGlobalStyle`
            попапів (напр. "Гра з другом") зʼїжджає вбік. */
         overflow-x: hidden;
     }
+    /* Корінь React у standalone-білді (index.html порталу) - теж на всю висоту,
+       інакше Container з фоном закінчувався за вмістом і внизу iframe лишалась біла смуга. */
+    #root {
+        height: 100%;
+    }
 `;
 
 export const Container = styled.div`
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     /* height:100% замість 100vh - у вбудованому iframe і мобільних in-app
        вебв'ю 100vh рахується від "справжнього" viewport, а не від фактичного
        розміру iframe/адресного рядка, що спричиняло overflow/обрізання. */
     height: 100%;
     min-height: 100%;
     width: 100%;
-    padding: 16px;
+    box-sizing: border-box;
+    /* Зверху - ряд кнопок у кутах (виклик дня, монети / звук), тому відступ 60px. */
+    padding: 60px 12px 12px;
+    /* Якщо вміст вищий за iframe порталу - прокрутка, а не обрізання. margin-block:auto
+       дитини центрує по вертикалі, коли місця вдосталь, і притискає догори, коли ні
+       (на відміну від align-items:center, що обрізав би верх без прокрутки). */
+    overflow-y: auto;
+    /* overflow-y:auto робить і x "auto" - невидимі тултіпи кнопок давали б горизонтальну прокрутку. */
+    overflow-x: hidden;
+    & > * {
+        margin-block: auto;
+    }
+    /* Розмір поля - і від ширини, і від ВИСОТИ вікна/iframe: --board-chrome - скільки
+       висоти займає все, крім поля (табло, рівні, модифікатори, кнопки на мобільному). */
+    --board-chrome: 270px;
+    --board: max(240px, min(92vw, 480px, calc(100vh - var(--board-chrome))));
+    --board: max(240px, min(92vw, 480px, calc(100dvh - var(--board-chrome))));
+
+    @media (max-width: 640px) {
+        padding: 58px 8px 10px;
+        --board-chrome: 330px;
+    }
     background-image: url('${assetUrl("images/background-image.jpg")}');
     background-size: cover;
     background-position: center;
@@ -61,7 +87,7 @@ export const GameLayout = styled.div`
 // Розмір поля - у vw з обмеженням зверху, тому воно вписується в екран
 // будь-якого смартфона (Android/iPhone), лишаючись 480px на планшетах/десктопі.
 export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
-    width: min(92vw, 480px);
+    width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
     background: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}') no-repeat center/cover;
     position: relative;
@@ -96,6 +122,8 @@ export const ButtonContainer = styled.div`
 
     @media (max-width: 640px) {
         flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
     }
 `;
 
@@ -104,6 +132,13 @@ export const ButtonContainer = styled.div`
 export const Button = styled.button`
     width: 70px;
     height: 70px;
+
+    @media (max-width: 640px) {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+    }
+
     flex-shrink: 0;
     border: none;
     border-radius: 22px;
@@ -288,7 +323,7 @@ export const borderStyles = [
 // --- Стилі для Ultimate Tic-Tac-Toe (режим "Складний") ---
 
 export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
-    width: min(92vw, 480px);
+    width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
     background: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}') no-repeat center/cover;
     position: relative;
@@ -361,7 +396,7 @@ export const MiniBoardDrawLabel = styled.span`
 // щоб коли тема довантажиться і замінить цей блок на реальну дошку, розмітка
 // сторінки не "стрибала".
 export const ThemeLoadingBox = styled.div`
-    width: min(92vw, 480px);
+    width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
@@ -381,4 +416,16 @@ export const Spinner = styled.div`
     border-top-color: #8B4513;
     border-radius: 50%;
     animation: ${spin} 0.8s linear infinite;
+`;
+
+// Ряд кнопок у лівому верхньому куті (виклик дня, монети) - дзеркально до SoundToggle
+// справа. Висоту під нього резервує верхній відступ Container.
+export const HudLeft = styled.div`
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 `;

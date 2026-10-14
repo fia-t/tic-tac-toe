@@ -13,7 +13,8 @@ import {
 } from "firebase/firestore";
 import { signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirebaseAuth, getFirebaseDb, trackEvent } from "@game/lib/firebase";
-import { getActiveThemes, pickRandomTheme } from "@game/lib/themes";
+import { CLASSIC_THEME, getActiveThemes } from "@game/lib/themes";
+import { getEquippedSkinId } from "@game/lib/wallet";
 import { getActiveNames, pickTwoDistinctNames } from "@game/lib/names";
 import {
     OnlineGameMode,
@@ -112,6 +113,16 @@ export const ensureAnonymousUser = (): Promise<string> => {
 
 const expiresAtTimestamp = () => Timestamp.fromMillis(Date.now() + ROOM_TTL_MS);
 
+// Вбудовані скіни мають відносні шляхи ("./images/..." у білді для порталу) - у кімнату
+// пишемо абсолютні, бо суперник може відкрити її з іншої сторінки чи домену.
+const absoluteUrl = (url: string): string => {
+    try {
+        return new URL(url, window.location.href).href;
+    } catch {
+        return url;
+    }
+};
+
 export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: string; symbol: PlayerSymbol }> => {
     const uid = await ensureAnonymousUser();
     const db = getFirebaseDb();
@@ -120,7 +131,9 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
     // themeId), щоб гра лишалась однаковою для обох гравців, навіть якщо
     // адмін пізніше змінить/вимкне цю тему в каталозі.
     const activeThemes = await getActiveThemes();
-    const theme = pickRandomTheme(activeThemes);
+    // Скін творця кімнати (з магазину) - обидва гравці бачать його.
+    const equippedId = getEquippedSkinId();
+    const theme = activeThemes.find((item) => item.id === equippedId) ?? CLASSIC_THEME;
 
     // Так само - два різні "цікаві" імена обираються один раз і фіксуються
     // знімком у кімнаті.
@@ -148,9 +161,9 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
             theme: {
-                backgroundUrl: theme.backgroundUrl,
-                xMarkerUrl: theme.xMarkerUrl,
-                oMarkerUrl: theme.oMarkerUrl,
+                backgroundUrl: absoluteUrl(theme.backgroundUrl),
+                xMarkerUrl: absoluteUrl(theme.xMarkerUrl),
+                oMarkerUrl: absoluteUrl(theme.oMarkerUrl),
             },
             names: { X: nameX, O: nameO },
             score: { X: 0, O: 0 },

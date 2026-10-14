@@ -10,8 +10,8 @@ const ToggleButton = styled.button`
     top: 10px;
     right: 10px;
     z-index: 1500;
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border: none;
     border-radius: 14px;
     display: flex;

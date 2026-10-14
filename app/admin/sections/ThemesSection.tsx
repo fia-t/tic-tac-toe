@@ -8,7 +8,9 @@ import {
     updateTheme,
     deleteTheme,
     uploadThemeImage,
+    DEFAULT_SKIN_PRICE,
 } from "@game/lib/themes";
+import { deleteField } from "firebase/firestore";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import {
     Section,
@@ -111,6 +113,22 @@ export const ThemesSection: React.FC = () => {
         }
     };
 
+    const handlePriceSave = async (theme: Theme, raw: string) => {
+        const value = raw.trim() === "" ? null : Math.max(0, Math.floor(Number(raw)));
+        if (value !== null && Number.isNaN(value)) return;
+        if ((theme.price ?? null) === value) return;
+        setBusyThemeId(theme.id);
+        try {
+            // Порожнє поле - ціна за замовчуванням (DEFAULT_SKIN_PRICE у грі).
+            await updateTheme(theme.id, { price: value ?? deleteField() } as Partial<Theme>);
+            await refreshThemes();
+        } catch (err) {
+            setThemesError(describeError("Не вдалося зберегти ціну.", err));
+        } finally {
+            setBusyThemeId(null);
+        }
+    };
+
     const handleDelete = async (theme: Theme) => {
         if (!window.confirm(`Видалити тему "${theme.name}"?`)) return;
         setBusyThemeId(theme.id);
@@ -178,6 +196,21 @@ export const ThemesSection: React.FC = () => {
                                             />
                                         </SmallLabel>
                                     ))}
+
+                                    <SmallLabel>
+                                        Ціна в магазині (монети; 0 - безкоштовно, порожньо - {DEFAULT_SKIN_PRICE})
+                                        <TextInput
+                                            key={`${theme.id}-${theme.price ?? ""}`}
+                                            type="number"
+                                            min={0}
+                                            step={10}
+                                            inputMode="numeric"
+                                            defaultValue={theme.price ?? ""}
+                                            placeholder={String(DEFAULT_SKIN_PRICE)}
+                                            disabled={busy}
+                                            onBlur={(e) => void handlePriceSave(theme, e.target.value)}
+                                        />
+                                    </SmallLabel>
 
                                     {!complete && <ErrorText style={{ margin: 0 }}>Додайте всі 3 зображення, щоб тема стала доступною в грі.</ErrorText>}
 

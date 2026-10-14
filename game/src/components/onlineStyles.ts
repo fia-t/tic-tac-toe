@@ -262,7 +262,7 @@ export const ErrorText = styled.p`
 // --- Ігрове поле онлайн-режиму (динамічний розмір 3x3 / 9x9) ---
 
 export const OnlineBoardContainer = styled.div<{ $size: number; $backgroundUrl?: string; $maxWidth?: number }>`
-    width: min(92vw, ${({ $maxWidth }) => $maxWidth ?? 420}px);
+    width: min(var(--board, 92vw), ${({ $maxWidth }) => $maxWidth ?? 420}px);
     aspect-ratio: 1 / 1;
     background: url("${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}") no-repeat center/cover;
     position: relative;

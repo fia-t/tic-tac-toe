@@ -95,6 +95,13 @@ npm run game:typecheck
   звичайні партії лишаються на `gameLogic.ts`/`aiLevels.ts`), `components/MoveTimer.tsx` (таймер 5 с).
   3×3: зникаючі, мізер, таймер; 5×5: гравітація, каміння, мізер, таймер; Ultimate: таймер.
   Виклик дня задає модифікатор через `setModifierOverride`; з #288 у ротації шаблони з модифікаторами.
+- **Монети й скіни** - `lib/wallet.ts` (монети, колекція, примірка 24 год, нагороди за партії й виклик
+  дня; на порталі - `QSPlaySDK.data`, ключ `wallet`), `components/SkinShop.tsx`. Скіни = вбудована
+  «Класика» (`CLASSIC_THEME`, SVG у `public/images/themes`, у стилі логотипа) + активні теми з адмінки;
+  ціна - поле `price` теми в адмінці (порожньо = `DEFAULT_SKIN_PRICE`). Примірка за рекламу - лише де
+  `sdk.hasRewardedAds` (CrazyGames, Poki).
+- **Iframe порталу** - `Container` масштабує поле від висоти (`--board`, `100dvh`), прокручується замість
+  обрізання; кнопки в кутах (`HudLeft`, `SoundToggle`) - у зарезервованому верхньому ряду.
 - **`none.ts`** - itch.io: реклами з SDK немає (на порталі її показує сам
   портал через `PortalGameBridge`), `showRewardedAd()` одразу повертає `true`.
 

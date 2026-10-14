@@ -56,5 +56,6 @@ export const crazyGamesSdk: AggregatorSdk = {
         await requestAd("midgame");
     },
     showRewardedAd: () => requestAd("rewarded"),
+    hasRewardedAds: true,
     happyTime: () => window.CrazyGames?.SDK.game.happytime(),
 };

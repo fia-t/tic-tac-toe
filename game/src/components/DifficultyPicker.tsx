@@ -64,8 +64,17 @@ const Chips = styled.div`
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
-    max-width: min(92vw, 460px);
+    max-width: min(92vw, 600px);
     margin: 0 0 6px;
+
+    /* Вузький iframe/телефон: один рядок з прокруткою вбік - щоб не з'їдати висоту поля. */
+    @media (max-width: 640px) {
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        overflow-x: auto;
+        padding: 2px 2px 4px;
+        scrollbar-width: none;
+    }
 `;
 
 const Chip = styled.button<{ $active: boolean }>`
@@ -80,6 +89,8 @@ const Chip = styled.button<{ $active: boolean }>`
     background: ${({ $active }) => ($active ? "#0f6f8c" : "rgba(255, 246, 230, 0.92)")};
     box-shadow: ${({ $active }) => ($active ? "inset 0 -3px 0 rgba(0, 0, 0, 0.2)" : "inset 0 0 0 2px #e6c890")};
     touch-action: manipulation;
+    flex-shrink: 0;
+    white-space: nowrap;
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;
