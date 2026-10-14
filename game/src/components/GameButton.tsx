@@ -9,7 +9,10 @@ import { assetUrl } from "@game/lib/assets";
 // рамок чи тіней - лише картинка, текст і SVG-іконка поверх.
 
 export type GameButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
-export type GameButtonTone = "default" | "accent" | "danger" | "gold";
+// Кольори - та сама еталонна форма, перефарбована зі збереженням світлотіні:
+// default - кремова (звичайні кнопки), primary - бірюзова ("Грати", головна дія),
+// wood - дерев'яна (вибраний варіант: рівень, модифікатор, вкладка), danger - червона, amber - золота.
+export type GameButtonTone = "default" | "primary" | "wood" | "danger" | "amber";
 
 // h - висота, c - товщина кута (скільки пікселів займає заокруглений бортик), fs - шрифт,
 // px - горизонтальний відступ тексту від краю кнопки.
@@ -25,14 +28,20 @@ const SIZES: Record<GameButtonSize, { h: number; c: number; fs: number; px: numb
 // для кнопок, у які треба влучати пальцем.
 const MOBILE_STEP: Record<GameButtonSize, GameButtonSize> = { xs: "xs", sm: "sm", md: "sm", lg: "md", xl: "lg" };
 
-const BASE_URL = assetUrl("images/ui/button-base-gold.png");
-
-const TONE_COLOR: Record<GameButtonTone, string> = {
-    default: "#5b3f22",
-    accent: "#0f6f8c",
-    danger: "#b32f1c",
-    gold: "#6b4306",
+const TONES: Record<GameButtonTone, { img: string; color: string; shadow: string }> = {
+    default: { img: "button-base-gold.png", color: "#5b3f22", shadow: "0 1px 0 rgba(255, 255, 255, 0.55)" },
+    primary: { img: "button-base-teal.png", color: "#ffffff", shadow: "0 1px 1px rgba(5, 50, 65, 0.45)" },
+    wood: { img: "button-base-wood.png", color: "#fff6e6", shadow: "0 1px 1px rgba(60, 30, 5, 0.5)" },
+    danger: { img: "button-base-red.png", color: "#ffffff", shadow: "0 1px 1px rgba(90, 20, 5, 0.45)" },
+    amber: { img: "button-base-amber.png", color: "#4a2c0c", shadow: "0 1px 0 rgba(255, 240, 200, 0.6)" },
 };
+
+// Колір кнопки - картинка-основа плюс колір тексту. Можна підставляти в будь-який styled-компонент.
+export const buttonTone = (tone: GameButtonTone) => css`
+    border-image-source: url("${assetUrl(`images/ui/${TONES[tone].img}`)}");
+    color: ${TONES[tone].color};
+    text-shadow: ${TONES[tone].shadow};
+`;
 
 const sizeVars = (size: GameButtonSize) => {
     const s = SIZES[size];
@@ -50,49 +59,46 @@ export const gameButtonFace = css`
     border-style: solid;
     border-color: transparent;
     border-width: var(--gb-c, 16px);
-    border-image: url("${BASE_URL}") 30% fill / var(--gb-c, 16px) stretch;
+    border-image: url("${assetUrl("images/ui/button-base-gold.png")}") 30% fill / var(--gb-c, 16px) stretch;
     background: transparent;
     box-shadow: none;
-    color: ${TONE_COLOR.default};
+    ${buttonTone("default")}
     transition:
         transform 0.12s ease,
         filter 0.12s ease;
 
-    &[data-tone="accent"] {
-        color: ${TONE_COLOR.accent};
+    &[data-tone="primary"] {
+        ${buttonTone("primary")}
+    }
+    &[data-tone="wood"] {
+        ${buttonTone("wood")}
     }
     &[data-tone="danger"] {
-        color: ${TONE_COLOR.danger};
+        ${buttonTone("danger")}
     }
-    &[data-tone="gold"] {
-        color: ${TONE_COLOR.gold};
-        filter: sepia(0.35) saturate(1.8) hue-rotate(-8deg);
+    &[data-tone="amber"] {
+        ${buttonTone("amber")}
     }
 `;
 
 const states = css`
     @media (hover: hover) {
         &:hover:not(:disabled) {
-            filter: brightness(1.05) saturate(1.06);
+            filter: brightness(1.06) saturate(1.05);
             transform: translateY(-1px);
-        }
-        &[data-tone="gold"]:hover:not(:disabled) {
-            filter: sepia(0.35) saturate(1.8) hue-rotate(-8deg) brightness(1.05);
         }
     }
 
-    /* Активна (вибрана) - вибраний рівень, режим, вкладка. */
+    /* Активна (вибрана) - вибраний рівень, режим, вкладка: дерев'яна кнопка зі світлим текстом. */
     &[data-selected="true"],
     &[aria-pressed="true"],
     &[aria-current="page"] {
-        color: ${TONE_COLOR.accent};
-        filter: brightness(0.93) saturate(1.3);
-        transform: translateY(1px);
+        ${buttonTone("wood")}
     }
 
     /* Натиснута в момент кліку. */
     &:active:not(:disabled) {
-        filter: brightness(0.9) saturate(1.2);
+        filter: brightness(0.9);
         transform: translateY(2px) scale(0.98);
     }
 
@@ -100,7 +106,7 @@ const states = css`
     &:disabled,
     &[aria-disabled="true"] {
         cursor: not-allowed;
-        filter: grayscale(0.55) opacity(0.55);
+        filter: grayscale(0.6) opacity(0.6);
         transform: none;
     }
 
@@ -110,9 +116,13 @@ const states = css`
     }
 `;
 
-export const gameButtonCss = (size: GameButtonSize = "md", options: { square?: boolean; mobileSize?: GameButtonSize } = {}) => css`
+export const gameButtonCss = (
+    size: GameButtonSize = "md",
+    options: { square?: boolean; mobileSize?: GameButtonSize; tone?: GameButtonTone } = {}
+) => css`
     ${sizeVars(size)}
     ${gameButtonFace}
+    ${options.tone && options.tone !== "default" ? buttonTone(options.tone) : ""}
     ${states}
     position: relative;
     display: inline-flex;

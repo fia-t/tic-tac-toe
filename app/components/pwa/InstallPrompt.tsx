@@ -54,7 +54,7 @@ export function InstallPrompt() {
       }}
     >
       <span>Install Tic Tac Toe Online?</span>
-      <GameButton size="xs" tone="accent" onClick={handleInstall}>
+      <GameButton size="xs" tone="primary" onClick={handleInstall}>
         Install
       </GameButton>
       <GameButton

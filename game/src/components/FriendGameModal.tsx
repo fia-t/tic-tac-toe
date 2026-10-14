@@ -1,5 +1,5 @@
 "use client";
-import { IconClose, IconFriends, IconMode3, IconMode5, IconModeUltimate, IconRestart } from "@game/components/GameIcons";
+import { IconClose } from "@game/components/GameIcons";
 import React, { useState } from "react";
 import { Overlay } from "@game/components/gameStyles";
 import {
@@ -101,15 +101,15 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                         <ModalSubtitle>{t("chooseMode")}</ModalSubtitle>
                         <ModeOptionGroup>
                             <ModeOption type="button" $active={mode === "3x3"} onClick={() => setMode("3x3")}>
-                                <ModeOptionIcon aria-hidden="true"><IconMode3 size={50} /></ModeOptionIcon>
+                                <ModeOptionIcon src={assetUrl("images/traditional.png")} alt="3×3" />
                                 <ModeOptionHint>3×3</ModeOptionHint>
                             </ModeOption>
                             <ModeOption type="button" $active={mode === "5x5"} onClick={() => setMode("5x5")}>
-                                <ModeOptionIcon aria-hidden="true"><IconMode5 size={50} /></ModeOptionIcon>
+                                <ModeOptionIcon src={assetUrl("images/game-5x5.png")} alt="5×5" />
                                 <ModeOptionHint>5×5</ModeOptionHint>
                             </ModeOption>
                             <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
-                                <ModeOptionIcon aria-hidden="true"><IconModeUltimate size={50} /></ModeOptionIcon>
+                                <ModeOptionIcon src={assetUrl("images/difficult.png")} alt="9×9" />
                                 <ModeOptionHint>9×9</ModeOptionHint>
                             </ModeOption>
                         </ModeOptionGroup>

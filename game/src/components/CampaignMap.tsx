@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
+import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Star, StarRow } from "@game/components/DailyChallenge";
@@ -76,8 +76,8 @@ const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
     flex-direction: column;
     gap: 2px;
     font-size: 20px;
-    ${({ $boss }) => ($boss ? "filter: sepia(0.35) saturate(1.8) hue-rotate(-8deg);" : "")}
-    ${({ $current }) => ($current ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3);" : "")}
+    ${({ $boss }) => ($boss ? buttonTone("amber") : "")}
+    ${({ $current }) => ($current ? buttonTone("primary") : "")}
 `;
 
 const MiniStars = styled.span`

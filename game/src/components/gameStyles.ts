@@ -184,8 +184,47 @@ export const ButtonContainer = styled.div`
 // Кнопка - лише прозора рамка-обгортка: сам вигляд (пісочна плитка,
 // заокруглення, тінь, рельєф) уже намальований у PNG-іконці всередині.
 export const Button = styled.button`
-    ${gameButtonCss("xl", { square: true })}
+    width: 70px;
+    height: 70px;
+
+    @media (max-width: 640px) {
+        width: 56px;
+        height: 56px;
+        border-radius: 18px;
+    }
+
     flex-shrink: 0;
+    border: none;
+    border-radius: 22px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    touch-action: manipulation;
+    transition: transform 0.15s ease, filter 0.15s ease;
+
+    @media (hover: hover) {
+        &:hover:not(:disabled) {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
+        }
+    }
+
+    &:active:not(:disabled) {
+        transform: translateY(1px) scale(0.97);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
+        filter: grayscale(0.6) opacity(0.6);
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
 `;
 
 // Іконки кнопок - самі PNG вже мають вигляд готової пісочної 3D-плитки,

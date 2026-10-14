@@ -1,6 +1,6 @@
 "use client";
 import styled from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
+import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
@@ -17,7 +17,7 @@ const Group = styled.div`
 
 const Option = styled.button<{ $active: boolean }>`
     ${gameButtonCss("sm")}
-    ${({ $active }) => ($active ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3); transform: translateY(1px);" : "")}
+    ${({ $active }) => ($active ? buttonTone("wood") : "")}
 `;
 
 const DailyBanner = styled.div`

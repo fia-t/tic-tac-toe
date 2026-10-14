@@ -1,7 +1,7 @@
 "use client";
 import styled, { keyframes } from "styled-components";
 import { boardSlab, boardTile } from "@game/components/gameStyles";
-import { gameButtonCss } from "@game/components/GameButton";
+import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { assetUrl } from "@game/lib/assets";
 
 // Стилі для онлайн-режиму "Гра з другом" - витримані в тій самій пляжній
@@ -57,21 +57,35 @@ export const ModeOptionGroup = styled.div`
     display: flex;
     gap: 10px;
     margin-bottom: 18px;
-
-    @media (max-width: 420px) {
-        flex-direction: column;
-    }
 `;
 
+// Вибір режиму - готові PNG-плитки, як на головному екрані; вибрана піднімається й підсвічується.
 export const ModeOption = styled.button<{ $active: boolean }>`
-    ${gameButtonCss("lg")}
     flex: 1;
+    display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 4px;
-    min-height: 120px;
-    padding: 6px 4px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
     font-size: 14px;
-    ${({ $active }) => ($active ? "color: #0f6f8c; filter: brightness(0.93) saturate(1.3); transform: translateY(1px);" : "")}
+    font-weight: 800;
+    color: ${({ $active }) => ($active ? "#0f6f8c" : "#5b3f22")};
+
+    img {
+        transform: ${({ $active }) => ($active ? "translateY(-3px) scale(1.04)" : "none")};
+        filter: ${({ $active }) => ($active ? "drop-shadow(0 10px 12px rgba(15, 111, 140, 0.35))" : "drop-shadow(0 6px 8px rgba(70, 40, 10, 0.18))")};
+        transition: transform 0.15s ease;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+        border-radius: 16px;
+    }
 `;
 
 export const ModeOptionHint = styled.span`
@@ -82,11 +96,15 @@ export const ModeOptionHint = styled.span`
 
 // Іконка режиму всередині ModeOption - ті самі PNG, що й на кнопках вибору
 // режиму головного поля (board.tsx), щоб вигляд лишався впізнаваним.
-export const ModeOptionIcon = styled.span`
-    display: grid;
-    place-items: center;
-    width: 56px;
-    height: 56px;
+export const ModeOptionIcon = styled.img`
+    width: 84px;
+    height: 84px;
+    object-fit: contain;
+
+    @media (max-width: 420px) {
+        width: 72px;
+        height: 72px;
+    }
 `;
 
 export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
@@ -94,7 +112,7 @@ export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
     display: flex;
     width: 100%;
     margin-top: 10px;
-    ${({ $variant }) => ($variant === "ghost" ? "" : "color: #0f6f8c;")}
+    ${({ $variant }) => ($variant === "ghost" ? "" : buttonTone("primary"))}
 `;
 
 export const ButtonRow = styled.div`
