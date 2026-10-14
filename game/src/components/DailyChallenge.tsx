@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { Overlay } from "@game/components/gameStyles";
+import { Overlay, hudTile } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
 import { setDifficultyOverride } from "@game/lib/difficulty";
@@ -41,10 +41,7 @@ const DailyButtonEl = styled.button`
     color: #6b4a25;
     font-weight: 800;
     font-size: 14px;
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.3),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    ${hudTile}
     touch-action: manipulation;
 
     &:focus-visible {

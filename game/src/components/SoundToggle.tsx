@@ -1,5 +1,6 @@
 "use client";
 import styled from "styled-components";
+import { hudTile } from "@game/components/gameStyles";
 import { setMuted, useMuted } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
 
@@ -19,10 +20,7 @@ const ToggleButton = styled.button`
     justify-content: center;
     cursor: pointer;
     color: #6b4a25;
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.3),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    ${hudTile}
     touch-action: manipulation;
 
     &:active {

@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { Overlay } from "@game/components/gameStyles";
+import { Overlay, hudTile } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
 import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useLastEarning, useWallet } from "@game/lib/wallet";
@@ -23,10 +23,7 @@ const CoinButton = styled.button`
     font-weight: 800;
     font-size: 14px;
     font-variant-numeric: tabular-nums;
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.3),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    ${hudTile}
     touch-action: manipulation;
 
     &:focus-visible {

@@ -5,12 +5,56 @@ import { assetUrl } from "@game/lib/assets";
 // Вигляд поля (як у прототипі й артах порталу): об'ємна плита з тінню й світлим краєм,
 // клітинки - окремі заглиблені плитки поверх фону теми, без ліній-розділювачів.
 // Один стиль для всіх режимів (3×3, 5×5, Ultimate, онлайн).
-export const boardSlab = css`
-    border-radius: 30px;
+export const hudTile = css`
+    border: none;
+    border-radius: 15px;
+    color: #6b4a25;
+    background: linear-gradient(180deg, #fde9c8 0%, #f4d29d 100%);
     box-shadow:
-        inset 0 -10px 0 rgba(120, 75, 25, 0.35),
-        inset 0 7px 0 rgba(255, 245, 225, 0.55),
-        0 22px 44px rgba(90, 50, 10, 0.28);
+        inset 0 2px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -3px 0 rgba(176, 115, 45, 0.3),
+        0 5px 0 #d9a660,
+        0 9px 14px rgba(90, 50, 10, 0.28);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+
+    &:active {
+        transform: translateY(3px);
+        box-shadow:
+            inset 0 2px 0 rgba(255, 255, 255, 0.8),
+            inset 0 -3px 0 rgba(176, 115, 45, 0.3),
+            0 2px 0 #d9a660,
+            0 4px 8px rgba(90, 50, 10, 0.25);
+    }
+`;
+
+export const boardSlab = css`
+    /* Поле - як велика PNG-кнопка режимів: пісочна рамка з товстою нижньою "губою" й тінню,
+       а фон скіна - лише у внутрішній, заглибленій зоні (content-box = без рамки --frame). */
+    position: relative;
+    padding: var(--frame);
+    background:
+        var(--board-image) center / cover no-repeat content-box,
+        linear-gradient(165deg, #fde7c2 0%, #f6d39d 55%, #eec38a 100%) border-box;
+    border-radius: 34px;
+    box-shadow:
+        inset 0 3px 0 rgba(255, 255, 255, 0.75),
+        inset 0 -5px 0 rgba(176, 115, 45, 0.35),
+        0 9px 0 #d6a15c,
+        0 18px 30px rgba(90, 50, 10, 0.32);
+    margin-bottom: 9px;
+
+    /* Внутрішній бортик ігрової зони. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: calc(var(--frame) - 3px);
+        border-radius: 22px;
+        box-shadow:
+            inset 0 4px 10px rgba(90, 50, 10, 0.35),
+            inset 0 0 0 2px rgba(150, 95, 35, 0.35);
+        pointer-events: none;
+        z-index: 2;
+    }
 `;
 
 export const boardTile = css`
@@ -84,13 +128,13 @@ export const Container = styled.div`
     }
     /* Розмір поля - і від ширини, і від ВИСОТИ вікна/iframe: --board-chrome - скільки
        висоти займає все, крім поля (табло, рівні, модифікатори, кнопки на мобільному). */
-    --board-chrome: 270px;
+    --board-chrome: 295px;
     --board: max(240px, min(92vw, 480px, calc(100vh - var(--board-chrome))));
     --board: max(240px, min(92vw, 480px, calc(100dvh - var(--board-chrome))));
 
     @media (max-width: 640px) {
         padding: 58px 8px 10px;
-        --board-chrome: 330px;
+        --board-chrome: 355px;
     }
     background-image: url('${assetUrl("images/background-image.jpg")}');
     background-size: cover;
@@ -120,15 +164,14 @@ export const GameLayout = styled.div`
 export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
     width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
-    background: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}') no-repeat center/cover;
+    --board-image: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}');
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 8px;
-    padding: 14px;
+    --frame: 16px;
     box-sizing: border-box;
-    overflow: hidden;
     ${boardSlab}
 `;
 
@@ -345,15 +388,14 @@ export const ScoreDivider = styled.span`
 export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
     width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
-    background: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}') no-repeat center/cover;
+    --board-image: url('${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}');
     position: relative;
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     gap: 8px;
-    padding: 12px;
+    --frame: 14px;
     box-sizing: border-box;
-    overflow: hidden;
     ${boardSlab}
 `;
 
@@ -468,10 +510,7 @@ export const HudButton = styled.button`
     justify-content: center;
     cursor: pointer;
     color: #6b4a25;
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.3),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    ${hudTile}
     touch-action: manipulation;
 
     &:focus-visible {

@@ -265,15 +265,14 @@ export const ErrorText = styled.p`
 export const OnlineBoardContainer = styled.div<{ $size: number; $backgroundUrl?: string; $maxWidth?: number }>`
     width: min(var(--board, 92vw), ${({ $maxWidth }) => $maxWidth ?? 420}px);
     aspect-ratio: 1 / 1;
-    background: url("${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}") no-repeat center/cover;
+    --board-image: url("${({ $backgroundUrl }) => $backgroundUrl || assetUrl("images/sand.png")}");
     position: relative;
     display: grid;
     grid-template-columns: ${({ $size }) => `repeat(${$size}, 1fr)`};
     grid-template-rows: ${({ $size }) => `repeat(${$size}, 1fr)`};
     gap: ${({ $size }) => ($size > 3 ? 6 : 8)}px;
-    padding: ${({ $size }) => ($size > 3 ? 12 : 14)}px;
+    --frame: ${({ $size }) => ($size > 3 ? 14 : 16)}px;
     box-sizing: border-box;
-    overflow: hidden;
     ${boardSlab}
 `;
 
