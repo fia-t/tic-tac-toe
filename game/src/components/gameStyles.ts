@@ -94,7 +94,8 @@ export const Container = styled.div`
     width: 100%;
     box-sizing: border-box;
     /* Зверху - ряд кнопок у кутах (виклик дня, монети / звук), тому відступ 60px. */
-    padding: 60px 12px 12px;
+    /* --nav-space - місце під нижнім меню на екрані гри (BottomNav), інакше 0. */
+    padding: 60px 12px calc(12px + var(--nav-space, 0px));
     /* Якщо вміст вищий за iframe порталу - прокрутка, а не обрізання. margin-block:auto
        дитини центрує по вертикалі, коли місця вдосталь, і притискає догори, коли ні
        (на відміну від align-items:center, що обрізав би верх без прокрутки). */
@@ -107,13 +108,13 @@ export const Container = styled.div`
     }
     /* Розмір поля - і від ширини, і від ВИСОТИ вікна/iframe: --board-chrome - скільки
        висоти займає все, крім поля (табло, рівні, модифікатори, кнопки на мобільному). */
-    --board-chrome: 320px;
+    --board-chrome: calc(320px + var(--nav-space, 0px));
     --board: max(240px, min(92vw, 480px, calc(100vh - var(--board-chrome))));
     --board: max(240px, min(92vw, 480px, calc(100dvh - var(--board-chrome))));
 
     @media (max-width: 640px) {
-        padding: 58px 8px 10px;
-        --board-chrome: 375px;
+        padding: 58px 8px calc(10px + var(--nav-space, 0px));
+        --board-chrome: calc(375px + var(--nav-space, 0px));
     }
     background-image: url('${assetUrl("images/background-image.jpg")}');
     background-size: cover;
@@ -492,7 +493,39 @@ export const HudLeft = styled.div`
     gap: 8px;
 `;
 
-// Квадратна кнопка верхнього ряду (напр. "Меню" на полі) - у стилі шестерні налаштувань.
-export const HudButton = styled.button`
-    ${gameButtonCss("sm", { square: true })}
+// Логотип у верхньому ряду - кнопка "На головну", без підкладки-кнопки (як у прототипі).
+export const BrandButton = styled.button`
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+    touch-action: manipulation;
+    transition: transform 0.12s ease;
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            transform: translateY(-1px) rotate(-4deg);
+        }
+    }
+
+    &:active {
+        transform: translateY(1px) scale(0.96);
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+        border-radius: 12px;
+    }
 `;
+

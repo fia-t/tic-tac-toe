@@ -23,7 +23,9 @@ import { HudLeft } from "@game/components/gameStyles";
 import { CampaignMap } from "@game/components/CampaignMap";
 import { HomeScreen } from "@game/components/HomeScreen";
 import { ProfilePanels } from "@game/components/ProfilePanels";
-import { HudButton } from "@game/components/gameStyles";
+import { BrandButton } from "@game/components/gameStyles";
+import { assetUrl } from "@game/lib/assets";
+import { BottomNav } from "@game/components/BottomNav";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
 import { FirstMoveHint } from "@game/components/FirstMoveHint";
@@ -429,18 +431,22 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const daily = (
         <>
             <HudLeft>
-                {screen === "game" && (
-                    <HudButton type="button" onClick={goToMenu} aria-label={t("backToMenu")} title={t("backToMenu")}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                            <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
-                        </svg>
-                    </HudButton>
-                )}
+                {/* Логотип - "На головну" (у грі - вихід у меню, на головній - прокрутка вгору). */}
+                <BrandButton
+                    type="button"
+                    onClick={screen === "game" ? goToMenu : () => window.scrollTo(0, 0)}
+                    aria-label={t("nav_home")}
+                    title={t("nav_home")}
+                >
+                    <img src={assetUrl("images/logo.png")} alt="" />
+                </BrandButton>
                 <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
                 <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
                 <CampaignMap onStart={goToGame} />
             </HudLeft>
             <ProfilePanels fallbackName={humanName} />
+            {/* Під час партії нижнє меню теж видно: "Головна" - вихід у меню. */}
+            {screen === "game" && <BottomNav homeCurrent={false} onHome={goToMenu} reserveSpace />}
         </>
     );
 

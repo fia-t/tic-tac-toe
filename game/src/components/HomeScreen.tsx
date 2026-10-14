@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
+import { BottomNav } from "@game/components/BottomNav";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star } from "@game/components/DailyChallenge";
@@ -181,66 +182,6 @@ const Bar = styled.div`
     }
 `;
 
-const Nav = styled.nav`
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1400;
-    padding: 8px max(10px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
-    pointer-events: none;
-
-    & > div {
-        max-width: 560px;
-        margin: 0 auto;
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 4px;
-        padding: 6px;
-        border-radius: 22px;
-        background: #fff6e6;
-        box-shadow:
-            inset 0 -4px 0 #ebcb98,
-            0 10px 26px rgba(70, 40, 10, 0.25);
-        pointer-events: auto;
-    }
-`;
-
-const NavButton = styled.button<{ $on: boolean }>`
-    ${gameButtonCss("lg")}
-    flex-direction: column;
-    gap: 2px;
-    padding: 0;
-    font-size: 11px;
-
-    svg {
-        width: 20px;
-        height: 20px;
-    }
-`;
-
-const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
-    home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
-    campaign: <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" />,
-    shop: <path d="M4 8h16l-1.5 12h-13zM8 8a4 4 0 0 1 8 0" />,
-    awards: (
-        <>
-            <circle cx="12" cy="9" r="6" />
-            <path d="M8.5 14 7 22l5-3 5 3-1.5-8" />
-        </>
-    ),
-    profile: (
-        <>
-            <circle cx="12" cy="8" r="4" />
-            <path d="M4 21c1-4 4.5-6 8-6s7 2 8 6" />
-        </>
-    ),
-    daily: null,
-    leaderboard: null,
-    match: null,
-    settings: null,
-};
-
 const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
     { id: "traditional", img: "images/traditional.png", label: "modeClassic" },
     { id: "five", img: "images/game-5x5.png", label: "modeFive" },
@@ -398,24 +339,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={mode === "five" ? "5x5" : "3x3"} />}
 
-            <Nav aria-label={t("navLabel")}>
-                <div>
-                    {(["home", "campaign", "shop", "awards", "profile"] as const).map((item) => (
-                        <NavButton
-                            key={item}
-                            type="button"
-                            $on={item === "home"}
-                            aria-current={item === "home" ? "page" : undefined}
-                            onClick={() => (item === "home" ? window.scrollTo(0, 0) : openPanel(item))}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
-                                {NAV_ICONS[item]}
-                            </svg>
-                            {t(`nav_${item}`)}
-                        </NavButton>
-                    ))}
-                </div>
-            </Nav>
+            <BottomNav homeCurrent onHome={() => window.scrollTo(0, 0)} />
         </Page>
     );
 };
