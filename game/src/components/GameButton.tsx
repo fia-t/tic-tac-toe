@@ -28,18 +28,20 @@ const SIZES: Record<GameButtonSize, { h: number; c: number; fs: number; px: numb
 // для кнопок, у які треба влучати пальцем.
 const MOBILE_STEP: Record<GameButtonSize, GameButtonSize> = { xs: "xs", sm: "sm", md: "sm", lg: "md", xl: "lg" };
 
-const TONES: Record<GameButtonTone, { img: string; color: string; shadow: string }> = {
+// fill - колір центру основи (для підкладки, див. gameButtonFace).
+const TONES: Record<GameButtonTone, { img: string; fill: string; color: string; shadow: string }> = {
     // Другорядні кнопки - кремова основа з пом'якшеними блиском і нижньою кромкою (менше візуальної ваги).
-    default: { img: "button-base-cream.png", color: "#49301f", shadow: "none" },
-    primary: { img: "button-base-teal.png", color: "#fff7e8", shadow: "0 1px 1px rgba(5, 40, 45, 0.4)" },
-    wood: { img: "button-base-wood.png", color: "#fff7e8", shadow: "0 1px 1px rgba(50, 25, 5, 0.45)" },
-    danger: { img: "button-base-red.png", color: "#ffffff", shadow: "0 1px 1px rgba(90, 20, 5, 0.45)" },
-    amber: { img: "button-base-amber.png", color: "#4a2c0c", shadow: "0 1px 0 rgba(255, 240, 200, 0.6)" },
+    default: { img: "button-base-cream.png", fill: "#f6e2b8", color: "#49301f", shadow: "none" },
+    primary: { img: "button-base-teal.png", fill: "#1a6d7a", color: "#fff7e8", shadow: "0 1px 1px rgba(5, 40, 45, 0.4)" },
+    wood: { img: "button-base-wood.png", fill: "#815532", color: "#fff7e8", shadow: "0 1px 1px rgba(50, 25, 5, 0.45)" },
+    danger: { img: "button-base-red.png", fill: "#cc442d", color: "#ffffff", shadow: "0 1px 1px rgba(90, 20, 5, 0.45)" },
+    amber: { img: "button-base-amber.png", fill: "#f3b638", color: "#4a2c0c", shadow: "0 1px 0 rgba(255, 240, 200, 0.6)" },
 };
 
 // Колір кнопки - картинка-основа плюс колір тексту. Можна підставляти в будь-який styled-компонент.
 export const buttonTone = (tone: GameButtonTone) => css`
     border-image-source: url("${assetUrl(`images/ui/${TONES[tone].img}`)}");
+    --gb-fill: ${TONES[tone].fill};
     color: ${TONES[tone].color};
     text-shadow: ${TONES[tone].shadow};
 `;
@@ -61,7 +63,15 @@ export const gameButtonFace = css`
     border-color: transparent;
     border-width: var(--gb-c, 16px);
     border-image: url("${assetUrl("images/ui/button-base-cream.png")}") 30% fill / var(--gb-c, 16px) stretch;
-    background: transparent;
+    /* Підкладка кольору центру трохи ширша за центральну частину 9-slice: на дробовому масштабі
+       екрана між частинами border-image бувають субпіксельні щілини - так крізь них не видно фон. */
+    background-color: transparent;
+    background-image: linear-gradient(var(--gb-fill, #f6e2b8), var(--gb-fill, #f6e2b8));
+    background-origin: border-box;
+    background-clip: border-box;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: calc(100% - 2 * var(--gb-c, 16px) + 6px) calc(100% - 2 * var(--gb-c, 16px) + 6px);
     box-shadow: none;
     ${buttonTone("default")}
     transition:
@@ -84,8 +94,9 @@ export const gameButtonFace = css`
 
 const states = css`
     @media (hover: hover) {
+        /* Тіні під кнопкою немає; при наведенні - ледь помітна. */
         &:hover:not(:disabled) {
-            filter: brightness(1.06) saturate(1.05);
+            filter: brightness(1.04) drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
             transform: translateY(-1px);
         }
     }
@@ -141,6 +152,11 @@ export const gameButtonCss = (
     touch-action: manipulation;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+
+    /* Іконка не стискається до вузької зони між бортиками - лишається свого розміру по центру. */
+    & > svg {
+        flex-shrink: 0;
+    }
 
     @media (max-width: 640px) {
         ${sizeVars(options.mobileSize ?? MOBILE_STEP[size])}

@@ -132,8 +132,14 @@ const ModeButton = styled.button<{ $on: boolean }>`
         max-width: 104px;
         aspect-ratio: 1;
         transform: ${({ $on }) => ($on ? "translateY(-3px) scale(1.04)" : "none")};
-        filter: ${({ $on }) => ($on ? "drop-shadow(0 10px 12px rgba(15, 111, 140, 0.35))" : "drop-shadow(0 8px 10px rgba(70, 40, 10, 0.18))")};
-        transition: transform 0.15s ease;
+        transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    /* Без постійної тіні під плиткою; при наведенні - ледь помітна. */
+    @media (hover: hover) {
+        &:hover img {
+            filter: drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
+        }
     }
 
     &:focus-visible {
@@ -232,6 +238,7 @@ const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
     daily: null,
     leaderboard: null,
     match: null,
+    settings: null,
 };
 
 const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [

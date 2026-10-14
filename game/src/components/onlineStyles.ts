@@ -9,10 +9,12 @@ import { assetUrl } from "@game/lib/assets";
 // існуючий файл стилів класичної/Ultimate гри.
 
 export const ModalCard = styled.div`
+    /* Центр без transform: зсув на дробові пікселі через translate дає смуги на кнопках
+       (щілини між частинами border-image у GameButton). */
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    margin: auto;
+    height: fit-content;
     width: min(92vw, 420px);
     max-height: 88vh;
     overflow-y: auto;
@@ -77,8 +79,13 @@ export const ModeOption = styled.button<{ $active: boolean }>`
 
     img {
         transform: ${({ $active }) => ($active ? "translateY(-3px) scale(1.04)" : "none")};
-        filter: ${({ $active }) => ($active ? "drop-shadow(0 10px 12px rgba(15, 111, 140, 0.35))" : "drop-shadow(0 6px 8px rgba(70, 40, 10, 0.18))")};
-        transition: transform 0.15s ease;
+        transition: transform 0.15s ease, filter 0.15s ease;
+    }
+
+    @media (hover: hover) {
+        &:hover img {
+            filter: drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
+        }
     }
 
     &:focus-visible {
@@ -257,10 +264,12 @@ export const OnlineLayout = styled.div`
 `;
 
 export const OpponentLeftCard = styled.div`
+    /* Центр без transform: зсув на дробові пікселі через translate дає смуги на кнопках
+       (щілини між частинами border-image у GameButton). */
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
+    margin: auto;
+    height: fit-content;
     width: min(92vw, 360px);
     box-sizing: border-box;
     background: linear-gradient(160deg, #fff6e6 0%, #f7e6c4 100%);

@@ -28,7 +28,7 @@ import { useT } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { dailyReward } from "@game/lib/wallet";
 
-// Кнопка виклику дня - у лівому верхньому куті, дзеркально до SoundToggle.
+// Кнопка виклику дня - у лівому верхньому куті, дзеркально до шестерні налаштувань.
 const DailyButtonEl = styled.button`
     ${gameButtonCss("sm")}
     gap: 6px;

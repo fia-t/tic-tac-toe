@@ -22,6 +22,12 @@ const uk = {
     playWithFriend: "Гра з другом",
     soundOff: "Вимкнути звук",
     soundOn: "Увімкнути звук",
+    settings: "Налаштування",
+    firstMoveHint: "Ти граєш хрестиками. Торкнись будь-якої клітинки!",
+    settingsSound: "Звук",
+    settingsLanguage: "Мова",
+    settingsOn: "Увімк.",
+    settingsOff: "Вимк.",
     close: "Закрити",
     friendTitle: "🎮 Гра з другом",
     chooseMode: "Оберіть режим гри",
@@ -287,6 +293,12 @@ const en: Record<Key, string> = {
     playWithFriend: "Play with a friend",
     soundOff: "Mute sound",
     soundOn: "Unmute sound",
+    settings: "Settings",
+    firstMoveHint: "You play crosses. Tap any cell!",
+    settingsSound: "Sound",
+    settingsLanguage: "Language",
+    settingsOn: "On",
+    settingsOff: "Off",
     close: "Close",
     friendTitle: "🎮 Play with a friend",
     chooseMode: "Choose a game mode",
@@ -540,8 +552,19 @@ const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };
 export const toLocale = (raw: string | null | undefined): Locale =>
     raw?.toLowerCase().startsWith("uk") ? "uk" : "en";
 
+// Мова, яку гравець сам обрав у налаштуваннях, - має перевагу над мовою браузера й порталу на старті.
+const SAVED_LOCALE_KEY = "ttt-locale";
+export const getSavedLocale = (): Locale | null => {
+    try {
+        const raw = typeof localStorage !== "undefined" ? localStorage.getItem(SAVED_LOCALE_KEY) : null;
+        return raw === "uk" || raw === "en" ? raw : null;
+    } catch {
+        return null;
+    }
+};
+
 let current: Locale =
-    process.env.GAME_TARGET && typeof navigator !== "undefined" ? toLocale(navigator.language) : "uk";
+    getSavedLocale() ?? (process.env.GAME_TARGET && typeof navigator !== "undefined" ? toLocale(navigator.language) : "uk");
 const listeners = new Set<() => void>();
 
 export const getLocale = (): Locale => current;
@@ -552,6 +575,18 @@ export const setLocale = (locale: Locale): void => {
     if (typeof document !== "undefined") document.documentElement.lang = locale;
     listeners.forEach((listener) => listener());
 };
+
+// Вибір мови в налаштуваннях: застосувати й запам'ятати.
+export const chooseLocale = (locale: Locale): void => {
+    try {
+        localStorage.setItem(SAVED_LOCALE_KEY, locale);
+    } catch {
+        // Сховище недоступне (приватний режим) - мова діє до кінця сесії.
+    }
+    setLocale(locale);
+};
+
+export const useLocale = (): Locale => useSyncExternalStore(subscribe, getLocale, () => "uk" as Locale);
 
 const subscribe = (listener: () => void) => {
     listeners.add(listener);

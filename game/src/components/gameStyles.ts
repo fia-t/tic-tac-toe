@@ -208,7 +208,7 @@ export const Button = styled.button`
     @media (hover: hover) {
         &:hover:not(:disabled) {
             transform: translateY(-1px);
-            filter: brightness(1.05);
+            filter: brightness(1.04) drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
         }
     }
 
@@ -480,7 +480,7 @@ export const Spinner = styled.div`
     animation: ${spin} 0.8s linear infinite;
 `;
 
-// Ряд кнопок у лівому верхньому куті (виклик дня, монети) - дзеркально до SoundToggle
+// Ряд кнопок у лівому верхньому куті (виклик дня, монети) - дзеркально до шестерні налаштувань
 // справа. Висоту під нього резервує верхній відступ Container.
 export const HudLeft = styled.div`
     position: fixed;
@@ -492,7 +492,7 @@ export const HudLeft = styled.div`
     gap: 8px;
 `;
 
-// Квадратна кнопка верхнього ряду (напр. "Меню" на полі) - у стилі SoundToggle.
+// Квадратна кнопка верхнього ряду (напр. "Меню" на полі) - у стилі шестерні налаштувань.
 export const HudButton = styled.button`
     ${gameButtonCss("sm", { square: true })}
 `;

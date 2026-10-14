@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 
 // Яке вікно (панель) відкрите - спільне для кнопок у верхньому ряду, карток головного
 // екрана й нижньої навігації: усі вони відкривають ті самі вікна, а не власні копії.
-export type Panel = "daily" | "campaign" | "shop" | "awards" | "profile" | "leaderboard" | "match";
+export type Panel = "daily" | "campaign" | "shop" | "awards" | "profile" | "leaderboard" | "match" | "settings";
 
 let open: Panel | null = null;
 const listeners = new Set<() => void>();

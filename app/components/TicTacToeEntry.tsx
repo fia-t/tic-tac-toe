@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import { TicTacToe } from "@game/components/tic-tac-toe";
 import { PortalGameBridge } from "@game/portal/PortalGameBridge";
 import { PORTAL_ORIGIN } from "@game/portal/config";
-import { SoundToggle } from "@game/components/SoundToggle";
+import { SettingsButton } from "@game/components/SettingsPanel";
 
 // Єдине місце на сайті, де TicTacToe-дерево компонентів знає про Next.js-роутинг -
 // сам TicTacToe (і все під ним: Board/DifficultTicTacToe/FiveByFiveTicTacToe/
@@ -13,7 +13,7 @@ export const TicTacToeEntry = () => {
     const router = useRouter();
     return (
         <PortalGameBridge origin={PORTAL_ORIGIN}>
-            <SoundToggle />
+            <SettingsButton />
             <TicTacToe onRoomReady={(roomId) => router.push(`/play/${roomId}`)} />
         </PortalGameBridge>
     );

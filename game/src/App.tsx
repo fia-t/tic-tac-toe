@@ -14,8 +14,8 @@ import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/l
 import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, ProfileState } from "@game/lib/profile";
 import { getScreen } from "@game/lib/ui";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
-import { setLocale, toLocale } from "@game/lib/i18n";
-import { SoundToggle } from "@game/components/SoundToggle";
+import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
+import { SettingsButton } from "@game/components/SettingsPanel";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
 // каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
@@ -68,7 +68,8 @@ export default function App() {
         const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
         if (sdk.getInviteParams || sdk.getLocale) {
             void Promise.all([sdk.getLocale?.(), sdk.getInviteParams?.()]).then(([locale, params]) => {
-                if (locale) setLocale(toLocale(locale));
+                // Мова з порталу - лише якщо гравець не обрав свою в налаштуваннях.
+                if (locale && !getSavedLocale()) setLocale(toLocale(locale));
                 const invitedRoom = params?.[INVITE_ROOM_KEY];
                 if (typeof invitedRoom === "string" && invitedRoom) setRoomId(invitedRoom.toUpperCase());
                 setStartupChecked(true);
@@ -151,7 +152,7 @@ export default function App() {
         return (
             <>
                 <GlobalStyle />
-                <SoundToggle />
+                <SettingsButton />
                 <PortalGameBridge origin={PORTAL_ORIGIN}>
                     <PlayRoomClient
                         roomId={roomId}
@@ -168,7 +169,7 @@ export default function App() {
     return (
         <>
             <GlobalStyle />
-            <SoundToggle />
+            <SettingsButton />
             <PortalGameBridge origin={PORTAL_ORIGIN}>
                 <Container>
                     <TicTacToe

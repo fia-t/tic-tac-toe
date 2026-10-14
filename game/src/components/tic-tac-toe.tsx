@@ -25,7 +25,8 @@ import { HomeScreen } from "@game/components/HomeScreen";
 import { ProfilePanels } from "@game/components/ProfilePanels";
 import { HudButton } from "@game/components/gameStyles";
 import { endDailyRun } from "@game/lib/daily";
-import { useProfile } from "@game/lib/profile";
+import { getProfile, useProfile } from "@game/lib/profile";
+import { FirstMoveHint } from "@game/components/FirstMoveHint";
 import { setScreenState } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
@@ -106,7 +107,14 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [score, setScore] = useState({ ai: 0, human: 0 });
     // Гра відкривається на головному меню; "game" - саме поле.
     const [screen, setScreen] = useState<"home" | "game">("home");
-    const profileName = useProfile().name;
+    const profile = useProfile();
+    const profileName = profile.name;
+    // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
+    // шукати, як почати гру. Меню - кнопка "Додому" зліва вгорі.
+    const isNewPlayer = profile.stats.games === 0;
+    useEffect(() => {
+        if (getProfile().stats.games === 0) setScreen("game");
+    }, []);
     const shownName = profileName ?? humanName;
 
     // Облік часу гри на порталі: геймплей - лише на полі, меню - пауза (App слухає ці події).
@@ -531,6 +539,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 scoreBoard={
                     <>
                         {scoreBoard}
+                        {isNewPlayer && !isGameOver && board.every((row) => row.every((cell) => cell === null)) && <FirstMoveHint />}
                         <DifficultyPicker mode="traditional" />
                         {modifier3 === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     </>
