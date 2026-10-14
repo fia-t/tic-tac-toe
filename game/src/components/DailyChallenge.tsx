@@ -5,6 +5,7 @@ import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
 import { setDifficultyOverride } from "@game/lib/difficulty";
+import { setModifierOverride } from "@game/lib/modifiers";
 import {
     DailyMode,
     DailyResult,
@@ -182,6 +183,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     const start = () => {
         setView(null);
         setDifficultyOverride(template.difficulty);
+        setModifierOverride(template.modifier ?? null);
         setDailyRun({ template, day, finished: false });
         trackEvent("daily_started", { day, template: template.id });
         onStart(template.mode);

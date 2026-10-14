@@ -141,12 +141,14 @@ type GamePieceProps = {
     className?: string;
     // Фішка входить у виграшну лінію - світиться й пульсує.
     winning?: boolean;
+    // Зникаючі фішки: ця фішка зникне наступним ходом свого власника.
+    fading?: boolean;
 };
 
 // Обгортка над маркером X/O (яким би не було зображення теми) - додає
 // "тактильну" анімацію розстановки: падіння, удар, відскок, усадку й
 // коротке похитування, без жодного зсуву макета (лише transform/opacity).
-export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", className, winning = false }) => {
+export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", className, winning = false, fading = false }) => {
     const [random] = useState(() => ({
         tx: randRange(-4, 4),
         rotStart: randRange(-12, 12),
@@ -154,7 +156,7 @@ export const GamePiece: React.FC<GamePieceProps> = ({ src, alt = "marker", class
     }));
 
     return (
-        <PieceWrapper className={className} $tx={random.tx} $rotStart={random.rotStart} $rotRest={random.rotRest} $winning={winning}>
+        <PieceWrapper className={className} $tx={random.tx} $rotStart={random.rotStart} $rotRest={random.rotRest} $winning={winning} style={fading ? { opacity: 0.4, filter: "grayscale(0.5)" } : undefined}>
             <PieceRipple />
             <PieceImg src={src} alt={alt} draggable={false} />
         </PieceWrapper>

@@ -43,6 +43,8 @@ import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterUltimatePositional, randomFreeCell } from "@game/components/aiLevels";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
+import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
+import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
 
 // Результат кожного з 9 малих полів: хто його забрав, чи нічия, чи гра в ньому ще триває.
 type MetaResult = "X" | "O" | "draw" | null;
@@ -163,6 +165,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     hideResultPopup = false,
 }) => {
     const t = useT();
+    const modifierChoice = useModifierChoice();
     const rules = useUltimateRules();
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
@@ -270,6 +273,22 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         finishMove(updatedBoards, miniResults, boardIndex, row, col, "player");
     };
 
+    // Модифікатор "таймер": не встиг - випадковий дозволений хід у дозволеному полі.
+    const modifier = effectiveModifier("difficult", modifierChoice);
+    const timerLeft = useMoveTimer(
+        modifier === "timer" && themeReady && !isGameOver && currentTurn === "player",
+        boards,
+        TIMER_SECONDS,
+        () => {
+            const open = miniResults.flatMap((result, index) => (result === null ? [index] : []));
+            const allowed = activeBoard !== null && miniResults[activeBoard] === null ? [activeBoard] : open;
+            const options = allowed.flatMap((b) => boards[b].flat().flatMap((cell, i) => (cell === null ? [[b, i] as const] : [])));
+            if (!options.length) return;
+            const [b, i] = options[Math.floor(Math.random() * options.length)];
+            handleCellClick(b, Math.floor(i / 3), i % 3);
+        }
+    );
+
     const restartUltimateGame = () => {
         setBoards(Array.from({ length: 9 }, createEmptyGrid));
         setMiniResults(Array(9).fill(null));
@@ -329,7 +348,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
-                    <DifficultyPicker />
+                    <DifficultyPicker mode="difficult" />
+                    {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     <UltimateHint
                         state={isGameOver ? null : currentTurn === "ai" ? "ai" : activeBoard === null ? "any" : "active"}
                         onShowRules={rules.show}

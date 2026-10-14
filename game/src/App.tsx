@@ -68,6 +68,7 @@ export default function App() {
                 case "select_mode":
                 case "select_difficulty":
                 case "daily_started":
+                case "select_modifier":
                 case "game_restart":
                     lifecycle.setGameplay(true);
                     sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: progress.get() });

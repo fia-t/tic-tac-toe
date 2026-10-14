@@ -23,6 +23,9 @@ import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { DailyChallenge } from "@game/components/DailyChallenge";
+import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
+import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
+import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
 import { useDailyRun } from "@game/lib/daily";
 import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
@@ -87,7 +90,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
+    const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
     const difficulty = useDifficulty();
+    const modifierChoice = useModifierChoice();
+    const modifier3 = effectiveModifier("traditional", modifierChoice);
     const dailyRun = useDailyRun();
     // Старт і кінець виклику дня - завжди чиста дошка (у т.ч. для 5×5/Ultimate через key),
     // навіть якщо рівень ШІ виклику збігається з обраним гравцем. Завершення партії
@@ -99,6 +105,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         if (prevDailyActive.current === dailyActive) return;
         prevDailyActive.current = dailyActive;
         setBoard(createEmptyGrid());
+        setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
@@ -113,12 +120,37 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         if (prevDifficulty.current === difficulty) return;
         prevDifficulty.current = difficulty;
         setBoard(createEmptyGrid());
+        setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
         setShowResultPopup(false);
         setScore({ ai: 0, human: 0 });
     }, [difficulty]);
+
+    // Новий модифікатор - так само нова партія (5×5/Ultimate - через key нижче).
+    const prevModifier = useRef(modifierChoice);
+    useEffect(() => {
+        if (prevModifier.current === modifierChoice) return;
+        prevModifier.current = modifierChoice;
+        setBoard(createEmptyGrid());
+        setHist(EMPTY_HISTORY);
+        setWinner(null);
+        setIsNoWinner(false);
+        setIsAiTurn(false);
+        setShowResultPopup(false);
+        setScore({ ai: 0, human: 0 });
+    }, [modifierChoice]);
+
+    // Модифікатор "таймер" для 3×3 (5×5 і Ultimate мають власні). Хук - до раннього
+    // return нижче; сам випадковий хід підставляється пізніше через ref.
+    const timeoutMoveRef = useRef<() => void>(() => {});
+    const timerLeft = useMoveTimer(
+        gameMode === "traditional" && modifier3 === "timer" && themeReady && !isAiTurn && winner === null && !isNoWinner,
+        board,
+        TIMER_SECONDS,
+        () => timeoutMoveRef.current()
+    );
 
     // Ім'я гравця для табло рахунку - обирається один раз на все ігрове
     // завантаження (не на кожну партію), щоб рахунок під час гри лишався
@@ -191,8 +223,53 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         logGameResult("ai-easy", result);
     };
 
+    // --- партія з модифікатором правил (зникаючі фішки, мізер): хід через modEngine ---
+    const rules3 = { vanish: modifier3 === "vanish", misere: modifier3 === "misere" };
+    const ruleMode = rules3.vanish || rules3.misere;
+    const markers = { player: playerMarker, ai: aiMarker };
+
+    const finishRuleGame = (turn: TurnResult) => {
+        const outcome = turn.outcome?.winner ?? "draw";
+        const result = outcome === "draw" ? "draw" : outcome === "X" ? "win" : "lose";
+        if (outcome === "draw") setIsNoWinner(true);
+        else setWinner(outcome);
+        setShowResultPopup(true);
+        trackEvent("game_finished", {
+            mode: "easy",
+            result,
+            modifier: modifier3,
+            moves: Math.ceil(turn.hist.moves / 2),
+            grid: encodeGrid(turn.grid, playerMarker, aiMarker),
+        });
+        recordResult(result);
+    };
+
+    const handleRuleClick = (row: number, col: number) => {
+        const turn = playTurn(board, hist, rules3, 3, markers, "X", { index: row * 3 + col });
+        if (!turn) return;
+        setBoard(turn.grid);
+        setHist(turn.hist);
+        playSound("move");
+        if (turn.outcome) return finishRuleGame(turn);
+
+        setIsAiTurn(true);
+        setTimeout(() => {
+            const reply = playTurn(turn.grid, turn.hist, rules3, 3, markers, "O", { difficulty: getDifficulty() });
+            setIsAiTurn(false);
+            if (!reply) return;
+            setBoard(reply.grid);
+            setHist(reply.hist);
+            playSound("reply");
+            if (reply.outcome) finishRuleGame(reply);
+        }, 500);
+    };
+
     const handleOnClick = (row: number, col: number) => {
         if (!themeReady || board[row][col] || isGameOver || isAiTurn) return;
+        if (ruleMode) {
+            handleRuleClick(row, col);
+            return;
+        }
 
         const updatedPlayerBoard = board.map((newRow, rowIndex) =>
             newRow.map((cell, cellIndex) =>
@@ -256,8 +333,17 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         }, 500);
     };
 
+    // Час вийшов - випадковий дозволений хід за гравця.
+    timeoutMoveRef.current = () => {
+        const empty = board.flat().flatMap((cell, i) => (cell === null ? [i] : []));
+        const index = ruleMode ? randomLegalCell(board, rules3, markers) : empty[Math.floor(Math.random() * empty.length)];
+        if (index === null || index === undefined) return;
+        handleOnClick(Math.floor(index / 3), index % 3);
+    };
+
     const restartGame = () => {
         setBoard(createEmptyGrid());
+        setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
@@ -278,6 +364,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // для difficult/five через розмонтування.
     const handleSetGameMode = (mode: "traditional" | "difficult" | "five") => {
         setBoard(createEmptyGrid());
+        setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
@@ -292,7 +379,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <>
             {daily}
             <DifficultTicTacToe
-                key={`${difficulty}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}
@@ -311,7 +398,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <>
             {daily}
             <FiveByFiveTicTacToe
-                key={`${difficulty}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={setGameMode}
                 theme={theme}
@@ -367,10 +454,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 scoreBoard={
                     <>
                         {scoreBoard}
-                        <DifficultyPicker />
+                        <DifficultyPicker mode="traditional" />
+                        {modifier3 === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     </>
                 }
                 winningCells={winner ? winningIndexSet(board, 3) : undefined}
+                fadingCells={isGameOver ? undefined : fadingCells(hist, rules3)}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />

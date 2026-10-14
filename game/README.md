@@ -90,6 +90,11 @@ npm run game:typecheck
   (1 = 01.01.2026) -> `DAILY_TEMPLATES`. Портал: стан у `QSPlaySDK.data` (ключ `daily`), посилання -
   `game.shareLink()`; сайт/агрегатори - localStorage `ttt-daily`. Рівень ШІ виклику -
   `setDifficultyOverride`, вибір гравця не змінюється. Нові шаблони (модифікатори) - лише в масив.
+- **Модифікатори** - `lib/modifiers.ts` (вибір, доступність за режимом, модифікатор тижня),
+  `components/modEngine.ts` (правила й ШІ для зникаючих фішок, гравітації, каміння, мізеру;
+  звичайні партії лишаються на `gameLogic.ts`/`aiLevels.ts`), `components/MoveTimer.tsx` (таймер 5 с).
+  3×3: зникаючі, мізер, таймер; 5×5: гравітація, каміння, мізер, таймер; Ultimate: таймер.
+  Виклик дня задає модифікатор через `setModifierOverride`; з #288 у ротації шаблони з модифікаторами.
 - **`none.ts`** - itch.io: реклами з SDK немає (на порталі її показує сам
   портал через `PortalGameBridge`), `showRewardedAd()` одразу повертає `true`.
 

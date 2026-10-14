@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import styled from "styled-components";
 import {
     Popup,
     ResultOverlay,
@@ -38,6 +39,21 @@ import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterMoveN, randomFreeCell } from "@game/components/aiLevels";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
+import { EMPTY_HISTORY, ModHistory, STONE, TurnResult, createBoard, playTurn, randomLegalCell } from "@game/components/modEngine";
+import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
+import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
+
+// Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
+const StoneTile = styled.div`
+    width: 70%;
+    height: 70%;
+    border-radius: 32%;
+    background: radial-gradient(circle at 35% 30%, #c2b6a4, #7f7465 70%);
+    box-shadow:
+        inset 0 -5px 0 rgba(0, 0, 0, 0.25),
+        inset 0 3px 4px rgba(255, 255, 255, 0.3),
+        0 4px 6px rgba(0, 0, 0, 0.2);
+`;
 
 // 5x5 - новий режим (не перейменування наявних): поле більше за класичне, тож
 // перемога - 4 фішки поспіль, а не 3 (інакше на такому полі майже завжди
@@ -98,7 +114,11 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     hideResultPopup = false,
 }) => {
     const t = useT();
-    const [board, setBoard] = useState<Grid3>(() => createEmptyGridN(SIZE));
+    // Модифікатор фіксується на всю партію: його зміна перемонтовує компонент (key у TicTacToe).
+    const modifier = effectiveModifier("five", useModifierChoice());
+    const stones = modifier === "stones" ? STONES_COUNT : 0;
+    const [board, setBoard] = useState<Grid3>(() => createBoard(SIZE, stones));
+    const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
     const [winner, setWinner] = useState<string | null>(null);
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
     const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
@@ -117,8 +137,55 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         logGameResult("ai-5x5", result);
     };
 
+    // --- партія з модифікатором правил (гравітація, каміння, мізер): хід через modEngine ---
+    const rules = { gravity: modifier === "gravity", misere: modifier === "misere" };
+    const ruleMode = rules.gravity || rules.misere || modifier === "stones";
+    const markers = { player: playerMarker, ai: aiMarker };
+
+    const finishRuleGame = (turn: TurnResult) => {
+        const outcome = turn.outcome?.winner ?? "draw";
+        const result = outcome === "draw" ? "draw" : outcome === "X" ? "win" : "lose";
+        if (outcome === "draw") setIsNoWinner(true);
+        else setWinner(outcome);
+        setShowResultPopup(true);
+        trackEvent("game_finished", {
+            mode: "five",
+            result,
+            modifier,
+            moves: Math.ceil(turn.hist.moves / 2),
+            grid: encodeGrid(turn.grid, playerMarker, aiMarker),
+        });
+        recordResult(result);
+    };
+
+    const handleRuleClick = (row: number, col: number) => {
+        const turn = playTurn(board, hist, rules, WIN_LENGTH, markers, "X", { index: row * SIZE + col });
+        if (!turn) return;
+        setBoard(turn.grid);
+        setHist(turn.hist);
+        playSound("move");
+        if (turn.outcome) return finishRuleGame(turn);
+
+        setIsAiTurn(true);
+        setTimeout(() => {
+            const reply = playTurn(turn.grid, turn.hist, rules, WIN_LENGTH, markers, "O", { difficulty: getDifficulty() });
+            setIsAiTurn(false);
+            if (!reply) return;
+            setBoard(reply.grid);
+            setHist(reply.hist);
+            playSound("reply");
+            if (reply.outcome) finishRuleGame(reply);
+        }, 500);
+    };
+
     const handleCellClick = (row: number, col: number) => {
-        if (!themeReady || board[row][col] || isGameOver || isAiTurn) return;
+        if (!themeReady || isGameOver || isAiTurn) return;
+        // З гравітацією натискання будь-якої клітинки стовпця кидає фішку в нього.
+        if (ruleMode) {
+            handleRuleClick(row, col);
+            return;
+        }
+        if (board[row][col]) return;
 
         const updatedPlayerBoard = board.map((r, rowIndex) =>
             r.map((cell, cellIndex) => (rowIndex === row && cellIndex === col ? playerMarker : cell))
@@ -175,8 +242,21 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         }, 500);
     };
 
+    const timerLeft = useMoveTimer(
+        modifier === "timer" && themeReady && !isAiTurn && !isGameOver,
+        board,
+        TIMER_SECONDS,
+        () => {
+            const empty = board.flat().flatMap((cell, i) => (cell === null ? [i] : []));
+            const index = ruleMode ? randomLegalCell(board, rules, markers) : empty[Math.floor(Math.random() * empty.length)];
+            if (index === null || index === undefined) return;
+            handleCellClick(Math.floor(index / SIZE), index % SIZE);
+        }
+    );
+
     const restartGame = () => {
-        setBoard(createEmptyGridN(SIZE));
+        setBoard(createBoard(SIZE, stones));
+        setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
@@ -229,7 +309,8 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
-                    <DifficultyPicker />
+                    <DifficultyPicker mode="five" />
+                    {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={480}>
                         {board.flat().map((cell, index) => {
                             const row = Math.floor(index / SIZE);
@@ -239,10 +320,14 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                     key={index}
                                     $borderRight={col < SIZE - 1}
                                     $borderBottom={row < SIZE - 1}
-                                    $disabled={!themeReady || isGameOver || isAiTurn || cell !== null}
+                                    $disabled={!themeReady || isGameOver || isAiTurn || (cell !== null && !rules.gravity)}
                                     onClick={() => handleCellClick(row, col)}
                                 >
-                                    {cell && <GamePiece src={cell} winning={winningCells?.has(index)} />}
+                                    {cell === STONE ? (
+                                        <StoneTile role="img" aria-label={t("modifier_stones")} />
+                                    ) : (
+                                        cell && <GamePiece src={cell} winning={winningCells?.has(index)} />
+                                    )}
                                 </OnlineCell>
                             );
                         })}

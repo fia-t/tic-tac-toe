@@ -1,6 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { Difficulty, setDifficultyOverride } from "@game/lib/difficulty";
+import { Modifier, setModifierOverride } from "@game/lib/modifiers";
 
 // Виклик дня: одна партія на день, однакова для всіх гравців (шаблон обирається за
 // номером дня), з зірками, серією днів поспіль і результатом для шерингу.
@@ -17,6 +18,7 @@ export type DailyTemplate = {
     // survive - 3 зірки за будь-який результат, крім поразки (напр. проти непереможного Майстра 3×3).
     goal: "win" | "survive";
     par: number;
+    modifier?: Modifier;
 };
 
 export const DAILY_TEMPLATES: DailyTemplate[] = [
@@ -27,7 +29,19 @@ export const DAILY_TEMPLATES: DailyTemplate[] = [
     { id: "five-easy", mode: "five", difficulty: "easy", goal: "win", par: 5 },
     { id: "ultimate-medium", mode: "difficult", difficulty: "medium", goal: "win", par: 18 },
     { id: "five-master", mode: "five", difficulty: "master", goal: "survive", par: 12 },
+    // З #288 (15.10.2026) у ротації й модифікатори. Нові шаблони - лише в кінець масиву.
+    { id: "classic-vanish", mode: "traditional", difficulty: "medium", goal: "win", par: 5, modifier: "vanish" },
+    { id: "five-gravity", mode: "five", difficulty: "medium", goal: "win", par: 7, modifier: "gravity" },
+    { id: "five-stones", mode: "five", difficulty: "medium", goal: "win", par: 7, modifier: "stones" },
+    { id: "classic-misere", mode: "traditional", difficulty: "master", goal: "survive", par: 5, modifier: "misere" },
+    { id: "five-timer", mode: "five", difficulty: "easy", goal: "win", par: 6, modifier: "timer" },
+    { id: "ultimate-timer", mode: "difficult", difficulty: "easy", goal: "win", par: 15, modifier: "timer" },
 ];
+
+// Скільки шаблонів було в ротації до появи модифікаторів - щоб уже зіграні дні
+// (і сьогоднішній #287) не змінили свій виклик заднім числом.
+const LEGACY_TEMPLATE_COUNT = 7;
+const MODIFIER_ROTATION_FROM_DAY = 288;
 
 export type DailyResult = {
     stars: number;
@@ -59,8 +73,11 @@ const yesterdayKey = (): string => {
 export const dayNumber = (key = todayKey()): number =>
     Math.round((Date.parse(key) - Date.parse("2026-01-01")) / 86_400_000) + 1;
 
-export const templateForDay = (key = todayKey()): DailyTemplate =>
-    DAILY_TEMPLATES[(((dayNumber(key) * 3) % DAILY_TEMPLATES.length) + DAILY_TEMPLATES.length) % DAILY_TEMPLATES.length];
+export const templateForDay = (key = todayKey()): DailyTemplate => {
+    const day = dayNumber(key);
+    const pool = day < MODIFIER_ROTATION_FROM_DAY ? DAILY_TEMPLATES.slice(0, LEGACY_TEMPLATE_COUNT) : DAILY_TEMPLATES;
+    return pool[(((day * 3) % pool.length) + pool.length) % pool.length];
+};
 
 export const starsFor = (template: DailyTemplate, result: DailyResult["result"], moves: number): number => {
     if (result === "lose") return 0;
@@ -177,6 +194,7 @@ export const setDailyRun = (value: DailyRun | null): void => {
 export const endDailyRun = (): void => {
     setDailyRun(null);
     setDifficultyOverride(null);
+    setModifierOverride(undefined);
 };
 
 export const useDailyRun = (): DailyRun | null =>
