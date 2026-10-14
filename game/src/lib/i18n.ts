@@ -17,7 +17,7 @@ const uk = {
     modeClassic: "Класичний 3×3",
     modeFive: "Поле 5×5",
     modeHard: "Ultimate: 9 полів",
-    tooltipHard: "Складний",
+    tooltipHard: "Ultimate",
     tooltipFriend: "З другом",
     playWithFriend: "Гра з другом",
     soundOff: "Вимкнути звук",
@@ -73,6 +73,10 @@ const uk = {
     hintAnyBoard: "Ходіть у будь-яке відкрите поле",
     hintActiveBoard: "Ваш хід - у підсвічене поле",
     hintAiTurn: "ШІ думає...",
+    difficultyLabel: "Складність ШІ",
+    difficulty_easy: "Легкий",
+    difficulty_medium: "Середній",
+    difficulty_master: "Майстер",
 };
 
 type Key = keyof typeof uk;
@@ -87,7 +91,7 @@ const en: Record<Key, string> = {
     modeClassic: "Classic 3×3",
     modeFive: "5×5 board",
     modeHard: "Ultimate: nine boards",
-    tooltipHard: "Hard",
+    tooltipHard: "Ultimate",
     tooltipFriend: "Friend",
     playWithFriend: "Play with a friend",
     soundOff: "Mute sound",
@@ -143,6 +147,10 @@ const en: Record<Key, string> = {
     hintAnyBoard: "Play in any open board",
     hintActiveBoard: "Your move: play in the highlighted board",
     hintAiTurn: "AI is thinking...",
+    difficultyLabel: "AI difficulty",
+    difficulty_easy: "Easy",
+    difficulty_medium: "Medium",
+    difficulty_master: "Master",
 };
 
 const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };

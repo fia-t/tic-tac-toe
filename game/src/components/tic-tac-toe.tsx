@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Board } from "./board";
 import { Popup, ResultOverlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
 import { trackEvent } from "@game/lib/firebase";
@@ -18,9 +18,19 @@ import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme, preloadThemeIma
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
+import { Difficulty, getDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
+import { DifficultyPicker } from "@game/components/DifficultyPicker";
+import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
 
-const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string): [number, number] => {
+const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string, difficulty: Difficulty): [number, number] => {
+    // Легкий: інколи просто випадковий хід. Майстер: мінімакс (непереможний).
+    if (shouldBlunder(difficulty)) {
+        const randomCell = randomFreeCell(board);
+        if (randomCell) return randomCell;
+    }
+    if (difficulty === "master") return pickMasterMove3(board, aiMarker, playerMarker) ?? [-1, -1];
+
     // 1. Виграти, якщо є можливість
     const winningCell = findWinningCell(board, aiMarker);
     if (winningCell) return winningCell;
@@ -71,6 +81,21 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
+    const difficulty = useDifficulty();
+
+    // Новий рівень ШІ - нова партія і новий рахунок (рахунок "проти Майстра" не
+    // змішується з рахунком проти легкого ШІ). 5×5/Ultimate скидаються через key нижче.
+    const prevDifficulty = useRef(difficulty);
+    useEffect(() => {
+        if (prevDifficulty.current === difficulty) return;
+        prevDifficulty.current = difficulty;
+        setBoard(createEmptyGrid());
+        setWinner(null);
+        setIsNoWinner(false);
+        setIsAiTurn(false);
+        setShowResultPopup(false);
+        setScore({ ai: 0, human: 0 });
+    }, [difficulty]);
 
     // Ім'я гравця для табло рахунку - обирається один раз на все ігрове
     // завантаження (не на кожну партію), щоб рахунок під час гри лишався
@@ -176,7 +201,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
         // Блокуємо клітинки на час "ходу" ШІ, щоб гравець не встиг клікнути двічі поспіль.
         setIsAiTurn(true);
         setTimeout(() => {
-            const [computerRow, computerCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker);
+            const [computerRow, computerCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker, getDifficulty());
             if (computerRow === -1 || computerCol === -1) {
                 setIsAiTurn(false);
                 return;
@@ -240,6 +265,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
     if (gameMode === "difficult") {
         return (
             <DifficultTicTacToe
+                key={difficulty}
                 setGameMode={setGameMode}
                 theme={theme}
                 themeReady={themeReady}
@@ -254,6 +280,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
     if (gameMode === "five") {
         return (
             <FiveByFiveTicTacToe
+                key={difficulty}
                 setGameMode={setGameMode}
                 theme={theme}
                 themeReady={themeReady}
@@ -303,7 +330,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacTo
                 restartGame={restartGame}
                 setGameMode={handleSetGameMode}
                 backgroundUrl={theme.backgroundUrl}
-                scoreBoard={scoreBoard}
+                scoreBoard={
+                    <>
+                        {scoreBoard}
+                        <DifficultyPicker />
+                    </>
+                }
                 winningCells={winner ? winningIndexSet(board, 3) : undefined}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}

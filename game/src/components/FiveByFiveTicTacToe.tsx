@@ -32,6 +32,9 @@ import {
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
+import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
+import { pickMasterMoveN, randomFreeCell } from "@game/components/aiLevels";
+import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
 
 // 5x5 - новий режим (не перейменування наявних): поле більше за класичне, тож
@@ -53,7 +56,14 @@ type FiveByFiveProps = {
     onBeforeFriendOpen?: () => Promise<boolean>;
 };
 
-const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string): [number, number] => {
+const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string, difficulty: Difficulty): [number, number] => {
+    // Легкий: інколи просто випадковий хід. Майстер: бачить і будує "вилки".
+    if (shouldBlunder(difficulty)) {
+        const randomCell = randomFreeCell(board);
+        if (randomCell) return randomCell;
+    }
+    if (difficulty === "master") return pickMasterMoveN(board, aiMarker, playerMarker, WIN_LENGTH) ?? [-1, -1];
+
     const winningCell = findWinningCellGeneric(board, aiMarker, WIN_LENGTH);
     if (winningCell) return winningCell;
 
@@ -131,7 +141,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
         setIsAiTurn(true);
         setTimeout(() => {
-            const [aiRow, aiCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker);
+            const [aiRow, aiCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker, getDifficulty());
             if (aiRow === -1 || aiCol === -1) {
                 setIsAiTurn(false);
                 return;
@@ -214,6 +224,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
+                    <DifficultyPicker />
                     <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={480}>
                         {board.flat().map((cell, index) => {
                             const row = Math.floor(index / SIZE);

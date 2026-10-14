@@ -38,6 +38,9 @@ import {
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
+import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
+import { pickMasterUltimatePositional, randomFreeCell } from "@game/components/aiLevels";
+import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
 
 // Результат кожного з 9 малих полів: хто його забрав, чи нічия, чи гра в ньому ще триває.
@@ -74,7 +77,8 @@ const pickAiMove = (
     miniResults: MetaResult[],
     activeBoard: number | null,
     playerMarker: string,
-    aiMarker: string
+    aiMarker: string,
+    difficulty: Difficulty
 ): [number, number, number] | null => {
     const candidateBoards =
         activeBoard !== null
@@ -85,6 +89,13 @@ const pickAiMove = (
               }, []);
 
     if (candidateBoards.length === 0) return null;
+
+    // Легкий: інколи випадковий дозволений хід.
+    if (shouldBlunder(difficulty)) {
+        const boardIndex = candidateBoards[Math.floor(Math.random() * candidateBoards.length)];
+        const cell = randomFreeCell(boards[boardIndex]);
+        if (cell) return [boardIndex, cell[0], cell[1]];
+    }
 
     // 1. Хід, який одразу вирішує всю гру на користь ШІ
     for (const boardIndex of candidateBoards) {
@@ -116,6 +127,12 @@ const pickAiMove = (
             const cell = pickHeuristicCell(boards[threatIndex]);
             if (cell) return [threatIndex, cell[0], cell[1]];
         }
+    }
+
+    // 5. Майстер: хід, що не відправляє гравця у вигідне йому поле.
+    if (difficulty === "master") {
+        const safest = pickMasterUltimatePositional(boards, miniResults, candidateBoards, aiMarker, playerMarker);
+        if (safest) return safest;
     }
 
     // 5. Позиційний вибір: центральне поле, потім кутові, потім будь-яке доступне
@@ -213,7 +230,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         if (mover === "player") {
             setCurrentTurn("ai");
             setTimeout(() => {
-                const aiMove = pickAiMove(boardsAfterMove, updatedMiniResults, nextActiveBoard, playerMarker, aiMarker);
+                const aiMove = pickAiMove(boardsAfterMove, updatedMiniResults, nextActiveBoard, playerMarker, aiMarker, getDifficulty());
                 if (!aiMove) return;
                 const [aiBoardIndex, aiRow, aiCol] = aiMove;
 
@@ -304,6 +321,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
             <GameLayout>
                 <BoardColumn>
                     {scoreBoard}
+                    <DifficultyPicker />
                     <UltimateHint
                         state={isGameOver ? null : currentTurn === "ai" ? "ai" : activeBoard === null ? "any" : "active"}
                         onShowRules={rules.show}

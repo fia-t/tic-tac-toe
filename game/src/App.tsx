@@ -8,6 +8,7 @@ import { PORTAL_ORIGIN } from "@game/portal/config";
 import { sdk } from "./sdk";
 import { lifecycle } from "./sdk/lifecycle";
 import { progress } from "./sdk/progress";
+import { getDifficulty } from "@game/lib/difficulty";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -56,16 +57,17 @@ export default function App() {
             const mode = params?.mode ?? params?.gameMode;
             switch (name) {
                 case "select_mode":
+                case "select_difficulty":
                 case "game_restart":
                     lifecycle.setGameplay(true);
-                    sdk.setGameContext?.({ screen: "game", mode, stats: progress.get() });
+                    sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: progress.get() });
                     break;
                 case "game_finished":
                 case "online_game_finished": {
                     lifecycle.setGameplay(false);
                     const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
                     void progress.record(result).then(() =>
-                        sdk.setGameContext?.({ screen: "result", mode, result, stats: progress.get() })
+                        sdk.setGameContext?.({ screen: "result", mode, result, difficulty: getDifficulty(), stats: progress.get() })
                     );
                     if (name === "game_finished") {
                         finishedCount.current += 1;
@@ -89,7 +91,7 @@ export default function App() {
     const handleReady = useCallback(() => {
         lifecycle.loadingStop();
         lifecycle.setGameplay(true);
-        sdk.setGameContext?.({ screen: "game", mode: "easy", stats: progress.get() });
+        sdk.setGameContext?.({ screen: "game", mode: "easy", difficulty: getDifficulty(), stats: progress.get() });
     }, []);
 
     const handleRoomStatus = useCallback(
