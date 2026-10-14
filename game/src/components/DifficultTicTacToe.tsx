@@ -1,8 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
+import React, { useState, useMemo } from "react";
 import {
-    Popup,
-    ResultOverlay,
     GameLayout,
     BoardColumn,
     ButtonContainer,
@@ -17,6 +16,7 @@ import {
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
     ScoreBoard,
+    ScoreStatus,
     ScoreName,
     ScoreValue,
     ScoreDivider,
@@ -57,6 +57,8 @@ type DifficultProps = {
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // "До меню" у вікні результату.
+    onMenu?: () => void;
     // Виклик дня показує власну картку результату замість звичайного попапу.
     hideResultPopup?: boolean;
 };
@@ -162,6 +164,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
+    onMenu,
     hideResultPopup = false,
 }) => {
     const t = useT();
@@ -181,6 +184,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     const aiMarker = theme.oMarkerUrl;
 
     const isGameOver = winner !== null || isDraw;
+    const roundCells = useMemo(() => boards.flat(2), [boards]);
+    const roundSummary = useRoundSummary(roundCells, playerMarker);
 
     // Спільна логіка завершення ходу - викликається і для ходу гравця, і для ходу ШІ,
     // щоб не дублювати перевірку перемоги/нічиєї та визначення наступного активного поля.
@@ -310,6 +315,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         setIsFriendModalOpen(true);
     };
 
+    const statusText = isGameOver
+        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+        : currentTurn === "ai" ? t("aiThinking") : t("yourTurn");
     const scoreBoard = (
         <ScoreBoard>
             <ScoreName>{t("ai")}</ScoreName>
@@ -317,6 +325,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
             <ScoreName>{humanName ?? t("player")}</ScoreName>
+            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
         </ScoreBoard>
     );
 
@@ -325,30 +334,22 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {winner && showResultPopup && !hideResultPopup && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? t("resultWin") : t("resultLose")}
-                    </Popup>
-                </>
-            )}
-
-            {isDraw && !winner && showResultPopup && !hideResultPopup && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        {t("resultDraw")}
-                    </Popup>
-                </>
+            {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
+            {(winner || isDraw) && showResultPopup && !hideResultPopup && (
+                <ResultPopup
+                    result={winner === "X" ? "win" : winner ? "lose" : "draw"}
+                    summary={roundSummary}
+                    onClose={() => setShowResultPopup(false)}
+                    onRestart={restartUltimateGame}
+                    onMenu={onMenu}
+                />
             )}
 
             {rules.open && <UltimateRulesModal onClose={rules.close} />}
 
             <GameLayout>
                 <BoardColumn>
-                    {scoreBoard}
-                    <DifficultyPicker mode="difficult" />
+                    <DifficultyPicker mode="difficult" leading={scoreBoard} />
                     {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     <UltimateHint
                         state={isGameOver ? null : currentTurn === "ai" ? "ai" : activeBoard === null ? "any" : "active"}

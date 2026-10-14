@@ -107,14 +107,14 @@ export const Container = styled.div`
         margin-block: auto;
     }
     /* Розмір поля - і від ширини, і від ВИСОТИ вікна/iframe: --board-chrome - скільки
-       висоти займає все, крім поля (табло, рівні, модифікатори, кнопки на мобільному). */
-    --board-chrome: calc(320px + var(--nav-space, 0px));
-    --board: max(240px, min(92vw, 480px, calc(100vh - var(--board-chrome))));
-    --board: max(240px, min(92vw, 480px, calc(100dvh - var(--board-chrome))));
+       висоти займає все, крім поля (смуга з табло й виборами, кнопки на мобільному). */
+    --board-chrome: calc(250px + var(--nav-space, 0px));
+    --board: max(240px, min(92vw, 540px, calc(100vh - var(--board-chrome))));
+    --board: max(240px, min(92vw, 540px, calc(100dvh - var(--board-chrome))));
 
     @media (max-width: 640px) {
         padding: 58px 8px calc(10px + var(--nav-space, 0px));
-        --board-chrome: calc(375px + var(--nav-space, 0px));
+        --board-chrome: calc(310px + var(--nav-space, 0px));
     }
     background-image: url('${assetUrl("images/background-image.jpg")}');
     background-size: cover;
@@ -140,7 +140,7 @@ export const GameLayout = styled.div`
 
 // Стилі для ігрового контейнера.
 // Розмір поля - у vw з обмеженням зверху, тому воно вписується в екран
-// будь-якого смартфона (Android/iPhone), лишаючись 480px на планшетах/десктопі.
+// будь-якого смартфона (Android/iPhone), лишаючись 540px на планшетах/десктопі.
 export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
     width: var(--board, min(92vw, 480px));
     aspect-ratio: 1 / 1;
@@ -344,6 +344,17 @@ export const BoardColumn = styled.div`
 
 // Табло рахунку над ігровим полем - показує "ШІ: N - Ім'я: M" (vs AI)
 // або "Ім'я1: N - Ім'я2: M" (гра з другом), в тому ж пісочному стилі кнопок/тултіпів.
+// Рядок статусу ("Твій хід", "ШІ думає...") - під іменами й рахунком у тому ж табло.
+export const ScoreStatus = styled.div`
+    flex-basis: 100%;
+    margin-top: -6px;
+    text-align: center;
+    color: #0f6f8c;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.1;
+`;
+
 export const ScoreBoard = styled.div`
     display: flex;
     align-items: center;

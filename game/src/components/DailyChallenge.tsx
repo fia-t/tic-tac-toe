@@ -34,10 +34,12 @@ const DailyButtonEl = styled.button`
     gap: 6px;
 `;
 
+// Червона крапка "ще не грав сьогодні" - у кутку кнопки: absolute рахується від внутрішнього
+// краю бортика (border-image), тож зсув назовні на його товщину (--gb-c).
 const Dot = styled.span`
     position: absolute;
-    top: -3px;
-    right: -3px;
+    top: calc(-1 * var(--gb-c, 13px) - 3px);
+    right: calc(-1 * var(--gb-c, 13px) - 3px);
     width: 12px;
     height: 12px;
     border-radius: 50%;
@@ -84,8 +86,8 @@ export const Star = ({ on, size = 34 }: { on: boolean; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
         <path
             d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"
-            fill={on ? "#f5b82e" : "#e3d3b8"}
-            stroke={on ? "#c98a12" : "#cdb995"}
+            fill={on ? "#1fb3d9" : "#e3d3b8"}
+            stroke={on ? "#0f6f8c" : "#cdb995"}
             strokeWidth="1.2"
             strokeLinejoin="round"
         />
@@ -213,11 +215,10 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                 aria-label={`${t("dailyBadge", { n: String(day) })}${todayResult ? "" : `, ${t("dailyNotPlayed")}`}`}
                 title={t("dailyTitle")}
             >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <rect x="3" y="5" width="18" height="16" rx="3" />
-                    <path d="M3 10h18M8 3v4M16 3v4" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#e8662f" aria-hidden="true">
+                    <path d="M12 2c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z" />
                 </svg>
-                {streak > 0 && <span>{streak}</span>}
+                <span>{streak}</span>
                 {!todayResult && <Dot aria-hidden="true" />}
             </DailyButtonEl>
 

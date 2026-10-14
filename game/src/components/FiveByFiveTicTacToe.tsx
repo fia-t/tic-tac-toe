@@ -1,9 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
+import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import {
-    Popup,
-    ResultOverlay,
     GameLayout,
     BoardColumn,
     ButtonContainer,
@@ -12,6 +11,7 @@ import {
     ButtonWithTooltip,
     Tooltip,
     ScoreBoard,
+    ScoreStatus,
     ScoreName,
     ScoreValue,
     ScoreDivider,
@@ -72,6 +72,8 @@ type FiveByFiveProps = {
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // "До меню" у вікні результату.
+    onMenu?: () => void;
     // Виклик дня показує власну картку результату замість звичайного попапу.
     hideResultPopup?: boolean;
 };
@@ -111,6 +113,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
+    onMenu,
     hideResultPopup = false,
 }) => {
     const t = useT();
@@ -130,6 +133,8 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const aiMarker = theme.oMarkerUrl;
 
     const isGameOver = winner !== null || isNoWinner;
+    const roundCells = useMemo(() => board.flat(), [board]);
+    const roundSummary = useRoundSummary(roundCells, playerMarker);
 
     const recordResult = (result: "win" | "lose" | "draw") => {
         if (result === "win") setScore((s) => ({ ...s, human: s.human + 1 }));
@@ -274,6 +279,9 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         setIsFriendModalOpen(true);
     };
 
+    const statusText = isGameOver
+        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+        : isAiTurn ? t("aiThinking") : t("yourTurn");
     const scoreBoard = (
         <ScoreBoard>
             <ScoreName>{t("ai")}</ScoreName>
@@ -281,6 +289,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
             <ScoreName>{humanName ?? t("player")}</ScoreName>
+            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
         </ScoreBoard>
     );
 
@@ -288,28 +297,20 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {winner && showResultPopup && !hideResultPopup && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? t("resultWin") : t("resultLose")}
-                    </Popup>
-                </>
-            )}
-
-            {isNoWinner && !winner && showResultPopup && !hideResultPopup && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        {t("resultDraw")}
-                    </Popup>
-                </>
+            {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
+            {(winner || isNoWinner) && showResultPopup && !hideResultPopup && (
+                <ResultPopup
+                    result={winner === "X" ? "win" : winner ? "lose" : "draw"}
+                    summary={roundSummary}
+                    onClose={() => setShowResultPopup(false)}
+                    onRestart={restartGame}
+                    onMenu={onMenu}
+                />
             )}
 
             <GameLayout>
                 <BoardColumn>
-                    {scoreBoard}
-                    <DifficultyPicker mode="five" />
+                    <DifficultyPicker mode="five" leading={scoreBoard} />
                     {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={480}>
                         {board.flat().map((cell, index) => {

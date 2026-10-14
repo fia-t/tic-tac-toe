@@ -1,7 +1,8 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Board } from "./board";
-import { Popup, ResultOverlay, ScoreBoard, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
+import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
+import { ScoreBoard, ScoreStatus, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -239,6 +240,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         };
     }, []);
 
+    // Підсумок партії для вікна результату - до раннього return нижче (порядок хуків незмінний).
+    const roundCells = useMemo(() => board.flat(), [board]);
+    const roundSummary = useRoundSummary(roundCells, theme.xMarkerUrl);
+
     // Поки тема ще не підвантажилась з Firestore, замість дошки з фейковим
     // DEFAULT_THEME (фон/фішки, які за секунду підміняться на реальні) -
     // показуємо нейтральний спінер. Це стосується всіх трьох режимів, бо
@@ -444,9 +449,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 >
                     <img src={assetUrl("images/logo.png")} alt="" />
                 </BrandButton>
-                <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
-                <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
                 <CampaignMap onStart={goToGame} />
+                <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
+                <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
             </HudLeft>
             <ProfilePanels fallbackName={humanName} />
             {/* Під час партії нижнє меню теж видно: "Головна" - вихід у меню. */}
@@ -483,6 +488,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
+                onMenu={goToMenu}
             />
             </>
         );
@@ -502,11 +508,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
+                onMenu={goToMenu}
             />
             </>
         );
     }
 
+    const statusText = isGameOver
+        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+        : isAiTurn ? t("aiThinking") : t("yourTurn");
     const scoreBoard = (
         <ScoreBoard>
             <ScoreName>{t("ai")}</ScoreName>
@@ -514,30 +524,22 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
             <ScoreName>{shownName ?? t("player")}</ScoreName>
+            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
         </ScoreBoard>
     );
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
             {daily}
-            {/* Попап для перемоги/поразки. Закриття попапу лише ховає його - дошка лишається заблокованою до рестарту. */}
-            {winner && showResultPopup && !dailyActive && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? t("resultWin") : t("resultLose")}
-                    </Popup>
-                </>
-            )}
-
-            {/* Попап для нічиєї */}
-            {isNoWinner && !winner && showResultPopup && !dailyActive && (
-                <>
-                    <ResultOverlay onClick={() => setShowResultPopup(false)} />
-                    <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        {t("resultDraw")}
-                    </Popup>
-                </>
+            {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
+            {(winner || isNoWinner) && showResultPopup && !dailyActive && (
+                <ResultPopup
+                    result={winner === "X" ? "win" : winner ? "lose" : "draw"}
+                    summary={roundSummary}
+                    onClose={() => setShowResultPopup(false)}
+                    onRestart={restartGame}
+                    onMenu={goToMenu}
+                />
             )}
 
             <Board
@@ -548,9 +550,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 backgroundUrl={theme.backgroundUrl}
                 scoreBoard={
                     <>
-                        {scoreBoard}
+                        <DifficultyPicker mode="traditional" leading={scoreBoard} />
                         {isNewPlayer && !isGameOver && board.every((row) => row.every((cell) => cell === null)) && <FirstMoveHint />}
-                        <DifficultyPicker mode="traditional" />
                         {modifier3 === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
                     </>
                 }
