@@ -19,6 +19,8 @@ export type DailyTemplate = {
     goal: "win" | "survive";
     par: number;
     modifier?: Modifier;
+    // Стартова позиція (головоломки кампанії, лише 3×3): індекси клітинок 0-8.
+    preset?: { X: number[]; O: number[] };
 };
 
 export const DAILY_TEMPLATES: DailyTemplate[] = [
@@ -179,7 +181,20 @@ export const useDailyState = (): DailyState => useSyncExternalStore(subscribe, g
 
 // --- активна партія виклику (одна на сторінку) ---
 
-export type DailyRun = { template: DailyTemplate; day: number; finished: boolean };
+// Активна партія з заданими умовами - виклик дня або рівень кампанії (один механізм:
+// рівень ШІ й модифікатор задаються на партію, звичайний попап замінює власна картка).
+// id - новий для кожного старту, щоб TicTacToe скидав дошку навіть між двома рівнями поспіль.
+export type DailyRun = {
+    kind: "daily" | "campaign";
+    id: number;
+    template: DailyTemplate;
+    day: number;
+    level?: number;
+    finished: boolean;
+};
+
+let runSequence = 0;
+export const nextRunId = (): number => ++runSequence;
 
 let run: DailyRun | null = null;
 const runListeners = new Set<() => void>();

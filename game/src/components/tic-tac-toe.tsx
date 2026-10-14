@@ -20,6 +20,7 @@ import { CLASSIC_THEME, Theme, getActiveThemes, preloadThemeImages } from "@game
 import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
 import { SkinShop } from "@game/components/SkinShop";
 import { HudLeft } from "@game/components/gameStyles";
+import { CampaignMap } from "@game/components/CampaignMap";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
@@ -107,18 +108,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // виклику (finished) дошку НЕ скидає - щоб було видно фінальну позицію.
     const [runKey, setRunKey] = useState(0);
     const dailyActive = dailyRun !== null;
-    const prevDailyActive = useRef(dailyActive);
-    useEffect(() => {
-        if (prevDailyActive.current === dailyActive) return;
-        prevDailyActive.current = dailyActive;
-        setBoard(createEmptyGrid());
-        setHist(EMPTY_HISTORY);
-        setWinner(null);
-        setIsNoWinner(false);
-        setIsAiTurn(false);
-        setShowResultPopup(false);
-        setRunKey((k) => k + 1);
-    }, [dailyActive]);
+    const runId = dailyRun?.id ?? 0;
 
     // Новий рівень ШІ - нова партія і новий рахунок (рахунок "проти Майстра" не
     // змішується з рахунком проти легкого ШІ). 5×5/Ultimate скидаються через key нижче.
@@ -150,6 +140,27 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setShowResultPopup(false);
         setScore({ ai: 0, human: 0 });
     }, [settingsKey]);
+
+    // Старт виклику/рівня - останнім із ефектів скидання: зміна рівня ШІ чи модифікатора
+    // в тому ж кадрі інакше стерла б стартову позицію головоломки.
+    const prevRunId = useRef(runId);
+    useEffect(() => {
+        if (prevRunId.current === runId) return;
+        prevRunId.current = runId;
+        // Головоломка кампанії стартує із заданої позиції (лише 3×3).
+        const preset = dailyRun?.template.mode === "traditional" ? dailyRun.template.preset : undefined;
+        const grid = createEmptyGrid();
+        preset?.X.forEach((i) => (grid[Math.floor(i / 3)][i % 3] = theme.xMarkerUrl));
+        preset?.O.forEach((i) => (grid[Math.floor(i / 3)][i % 3] = theme.oMarkerUrl));
+        setBoard(grid);
+        setHist(EMPTY_HISTORY);
+        setWinner(null);
+        setIsNoWinner(false);
+        setIsAiTurn(false);
+        setShowResultPopup(false);
+        setRunKey((k) => k + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- скидаємо лише на новий старт
+    }, [runId]);
 
     // Модифікатор "таймер" для 3×3 (5×5 і Ultimate мають власні). Хук - до раннього
     // return нижче; сам випадковий хід підставляється пізніше через ref.
@@ -385,6 +396,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         <HudLeft>
             <DailyChallenge onStart={handleSetGameMode} getShareLink={getShareLink} />
             <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
+            <CampaignMap onStart={handleSetGameMode} />
         </HudLeft>
     );
 

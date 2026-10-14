@@ -160,7 +160,9 @@ export const DifficultyPicker = ({ mode }: { mode: GameModeKey }) => {
             <>
             <DailyBanner>
                 <span>
-                    {t("dailyBadge", { n: String(dailyRun.day) })}: {t(`daily_${dailyRun.template.id}` as Parameters<typeof t>[0])}
+                    {dailyRun.kind === "campaign"
+                        ? `${t("campaignLevel", { n: String((dailyRun.level ?? 0) + 1) })}: ${t(`level_${dailyRun.template.id}` as Parameters<typeof t>[0])}`
+                        : `${t("dailyBadge", { n: String(dailyRun.day) })}: ${t(`daily_${dailyRun.template.id}` as Parameters<typeof t>[0])}`}
                 </span>
                 <Option type="button" $active={true} onClick={endDailyRun}>
                     {t("dailyLeave")}

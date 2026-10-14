@@ -11,6 +11,7 @@ import { progress } from "./sdk/progress";
 import { getDifficulty } from "@game/lib/difficulty";
 import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily";
 import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wallet";
+import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/lib/campaign";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -48,11 +49,13 @@ export default function App() {
             const load = sdk.loadData, saveData = sdk.saveData;
             void configureDailyStorage({ load: () => load<DailyState>("daily"), save: (state) => saveData("daily", state) });
             void configureWalletStorage({ load: () => load<WalletState>("wallet"), save: (state) => saveData("wallet", state) });
+            void configureCampaignStorage({ load: () => load<CampaignState>("campaign"), save: (state) => saveData("campaign", state) });
         }
         const unsubscribeAuth = sdk.onAuthChange?.(() => {
             void progress.reload();
             void reloadDaily();
             void reloadWallet();
+            void reloadCampaign();
         });
 
         const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
@@ -72,6 +75,7 @@ export default function App() {
                 case "select_difficulty":
                 case "daily_started":
                 case "select_modifier":
+                case "campaign_level_started":
                 case "game_restart":
                     lifecycle.setGameplay(true);
                     sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: progress.get() });

@@ -13,6 +13,7 @@ import {
     endDailyRun,
     dayNumber,
     getDailyRun,
+    nextRunId,
     recordDailyResult,
     setDailyRun,
     shareText,
@@ -97,8 +98,8 @@ const CopyNote = styled.div`
     text-align: center;
 `;
 
-const Star = ({ on }: { on: boolean }) => (
-    <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+export const Star = ({ on, size = 34 }: { on: boolean; size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
         <path
             d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"
             fill={on ? "#f5b82e" : "#e3d3b8"}
@@ -109,7 +110,7 @@ const Star = ({ on }: { on: boolean }) => (
     </svg>
 );
 
-const StarRow = ({ count, label }: { count: number; label: string }) => (
+export const StarRow = ({ count, label }: { count: number; label: string }) => (
     <Stars role="img" aria-label={label}>
         {[0, 1, 2].map((i) => (
             <Star key={i} on={i < count} />
@@ -160,7 +161,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                     endDailyRun();
                     return;
                 }
-                if (name !== "game_finished" || run.finished) return;
+                if (name !== "game_finished" || run.finished || run.kind !== "daily") return;
                 const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
                 const moves = typeof params?.moves === "number" ? params.moves : 0;
                 const daily: DailyResult = {
@@ -182,7 +183,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
         setView(null);
         setDifficultyOverride(template.difficulty);
         setModifierOverride(template.modifier ?? null);
-        setDailyRun({ template, day, finished: false });
+        setDailyRun({ kind: "daily", id: nextRunId(), template, day, finished: false });
         trackEvent("daily_started", { day, template: template.id });
         onStart(template.mode);
     };

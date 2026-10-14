@@ -115,8 +115,6 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     return (
                         <OnlineCell
                             key={index}
-                            $borderRight={col < size - 1}
-                            $borderBottom={row < size - 1}
                             $disabled={disabled}
                             onClick={() => handleCellClick(index)}
                         >

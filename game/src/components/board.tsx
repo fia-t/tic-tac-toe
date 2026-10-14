@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { GameLayout, BoardColumn, BoardContainer, Cell, borderStyles, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@game/components/gameStyles";
+import { GameLayout, BoardColumn, BoardContainer, Cell, ButtonContainer, Button, ControlIcon, ButtonWithTooltip, Tooltip } from "@game/components/gameStyles";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { GamePiece } from "@game/components/GamePiece";
 import { trackEvent } from "@game/lib/firebase";
@@ -57,7 +57,6 @@ export const Board: React.FC<BoardProps> = ({
                         return (
                             <Cell
                                 key={index}
-                                $borderStyle={borderStyles[index]}
                                 onClick={(e) => { e.stopPropagation(); handleClick(rowIndex, cellIndex); }}
                             >
                                 {cell && <GamePiece src={cell} winning={winningCells?.has(index)} fading={fadingCells?.has(index)} />}

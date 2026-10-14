@@ -1,6 +1,32 @@
 "use client";
-import styled, { createGlobalStyle, keyframes } from "styled-components";
+import styled, { createGlobalStyle, css, keyframes } from "styled-components";
 import { assetUrl } from "@game/lib/assets";
+
+// Вигляд поля (як у прототипі й артах порталу): об'ємна плита з тінню й світлим краєм,
+// клітинки - окремі заглиблені плитки поверх фону теми, без ліній-розділювачів.
+// Один стиль для всіх режимів (3×3, 5×5, Ultimate, онлайн).
+export const boardSlab = css`
+    border-radius: 30px;
+    box-shadow:
+        inset 0 -10px 0 rgba(120, 75, 25, 0.35),
+        inset 0 7px 0 rgba(255, 245, 225, 0.55),
+        0 22px 44px rgba(90, 50, 10, 0.28);
+`;
+
+export const boardTile = css`
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.18);
+    box-shadow:
+        inset 0 3px 6px rgba(90, 50, 10, 0.28),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.35);
+    transition: background 0.15s ease;
+
+    @media (hover: hover) {
+        &:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    }
+`;
 
 // Базовий скид, щоб відсоткові/vw-розміри рахувались від реального
 // розміру екрана телефона, а не від дефолтних відступів браузера.
@@ -94,21 +120,22 @@ export const BoardContainer = styled.div<{ $backgroundUrl?: string }>`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 0;
-    padding: 10px;
+    gap: 8px;
+    padding: 14px;
     box-sizing: border-box;
-    border-radius: 18px;
     overflow: hidden;
+    ${boardSlab}
 `;
 
-export const Cell = styled.div<{ $borderStyle?: string }>`
+export const Cell = styled.div`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: transparent;
-    ${({ $borderStyle }) => $borderStyle};
+    min-width: 0;
+    min-height: 0;
+    ${boardTile}
     cursor: pointer;
     touch-action: manipulation;
 `;
@@ -308,18 +335,6 @@ export const ScoreDivider = styled.span`
     opacity: 0.5;
 `;
 
-export const borderStyles = [
-    "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",
-    "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",
-    "border-bottom: 4px solid #8B4513;",
-    "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",
-    "border-right: 4px solid #8B4513; border-bottom: 4px solid #8B4513;",
-    "border-bottom: 4px solid #8B4513;",
-    "border-right: 4px solid #8B4513;",
-    "border-right: 4px solid #8B4513;",
-    ""
-];
-
 // --- Стилі для Ultimate Tic-Tac-Toe (режим "Складний") ---
 
 export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
@@ -330,11 +345,11 @@ export const UltimateBoardContainer = styled.div<{ $backgroundUrl?: string }>`
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
-    gap: 6px;
-    padding: 10px;
+    gap: 8px;
+    padding: 12px;
     box-sizing: border-box;
-    border-radius: 18px;
     overflow: hidden;
+    ${boardSlab}
 `;
 
 export const MiniBoardWrapper = styled.div<{ $isActive: boolean }>`
@@ -345,9 +360,12 @@ export const MiniBoardWrapper = styled.div<{ $isActive: boolean }>`
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(3, 1fr);
     box-sizing: border-box;
-    background-color: rgba(255, 255, 255, 0.08);
-    border: 3px solid ${({ $isActive }) => ($isActive ? "#FFD700" : "#8B4513")};
-    box-shadow: ${({ $isActive }) => ($isActive ? "0 0 8px 2px rgba(255, 215, 0, 0.8)" : "none")};
+    gap: 3px;
+    padding: 5px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    box-shadow: ${({ $isActive }) =>
+        $isActive ? "inset 0 0 0 3px #f5b82e, 0 0 14px rgba(245, 184, 46, 0.85)" : "inset 0 0 0 2px rgba(110, 70, 30, 0.35)"};
 `;
 
 export const MiniCell = styled.div`
@@ -356,7 +374,10 @@ export const MiniCell = styled.div`
     justify-content: center;
     width: 100%;
     height: 100%;
-    border: 1px solid rgba(139, 69, 19, 0.5);
+    min-width: 0;
+    min-height: 0;
+    ${boardTile}
+    border-radius: 7px;
     cursor: pointer;
     touch-action: manipulation;
 `;
@@ -367,6 +388,7 @@ export const MiniCell = styled.div`
 export const MiniBoardDimOverlay = styled.div`
     position: absolute;
     inset: 0;
+    border-radius: inherit;
     background: rgba(0, 0, 0, 0.45);
     pointer-events: none;
     z-index: 1;

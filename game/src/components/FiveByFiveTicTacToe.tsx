@@ -318,8 +318,6 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                             return (
                                 <OnlineCell
                                     key={index}
-                                    $borderRight={col < SIZE - 1}
-                                    $borderBottom={row < SIZE - 1}
                                     $disabled={!themeReady || isGameOver || isAiTurn || (cell !== null && !rules.gravity)}
                                     onClick={() => handleCellClick(row, col)}
                                 >

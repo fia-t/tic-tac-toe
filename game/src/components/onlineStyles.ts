@@ -1,5 +1,6 @@
 "use client";
 import styled, { keyframes } from "styled-components";
+import { boardSlab, boardTile } from "@game/components/gameStyles";
 import { assetUrl } from "@game/lib/assets";
 
 // Стилі для онлайн-режиму "Гра з другом" - витримані в тій самій пляжній
@@ -269,22 +270,23 @@ export const OnlineBoardContainer = styled.div<{ $size: number; $backgroundUrl?:
     display: grid;
     grid-template-columns: ${({ $size }) => `repeat(${$size}, 1fr)`};
     grid-template-rows: ${({ $size }) => `repeat(${$size}, 1fr)`};
-    gap: 0;
-    padding: 10px;
+    gap: ${({ $size }) => ($size > 3 ? 6 : 8)}px;
+    padding: ${({ $size }) => ($size > 3 ? 12 : 14)}px;
     box-sizing: border-box;
-    border-radius: 18px;
     overflow: hidden;
+    ${boardSlab}
 `;
 
-export const OnlineCell = styled.div<{ $borderRight: boolean; $borderBottom: boolean; $disabled: boolean }>`
+export const OnlineCell = styled.div<{ $disabled: boolean }>`
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
-    background-color: transparent;
-    border-right: ${({ $borderRight }) => ($borderRight ? "3px solid #8B4513" : "none")};
-    border-bottom: ${({ $borderBottom }) => ($borderBottom ? "3px solid #8B4513" : "none")};
+    min-width: 0;
+    min-height: 0;
+    ${boardTile}
+    border-radius: 10px;
     cursor: ${({ $disabled }) => ($disabled ? "default" : "pointer")};
     touch-action: manipulation;
 `;
