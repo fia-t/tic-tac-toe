@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { Overlay, hudTile } from "@game/components/gameStyles";
+import { Overlay, hudTile, tileButton } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Star, StarRow } from "@game/components/DailyChallenge";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
@@ -85,8 +85,6 @@ const Levels = styled.div`
 
 const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
     aspect-ratio: 1;
-    border: none;
-    border-radius: 16px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -95,26 +93,22 @@ const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
     gap: 2px;
     font-size: 20px;
     font-weight: 800;
-    color: #4a2c0c;
-    background: ${({ $boss }) => ($boss ? "linear-gradient(160deg, #ffd27a, #f5b82e)" : "linear-gradient(160deg, #fbe3bc, #f1c88c)")};
-    box-shadow: ${({ $current }) =>
-        $current
-            ? "inset 0 -4px 0 rgba(139, 90, 43, 0.35), 0 0 0 3px #0f6f8c, 0 6px 10px rgba(70, 40, 10, 0.2)"
-            : "inset 0 -4px 0 rgba(139, 90, 43, 0.35), 0 6px 10px rgba(70, 40, 10, 0.18)"};
     touch-action: manipulation;
+    --tile-radius: 16px;
+    ${({ $boss }) => tileButton($boss ? "gold" : "sand", 5)}
+    outline: ${({ $current }) => ($current ? "3px solid #0f6f8c" : "none")};
+    outline-offset: 2px;
 
     &:disabled {
-        cursor: default;
-        color: #a8957c;
-        background: #e7dccb;
-        box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.08);
+        opacity: 0.5;
+        filter: grayscale(0.6);
     }
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
     }
-`;
+`
 
 const MiniStars = styled.span`
     display: flex;

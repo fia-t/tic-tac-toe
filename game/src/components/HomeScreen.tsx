@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import styled from "styled-components";
+import { tileButton } from "@game/components/gameStyles";
 import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star } from "@game/components/DailyChallenge";
@@ -101,34 +102,21 @@ const Muted = styled.p`
 `;
 
 const Big = styled.button<{ $variant?: "primary" | "sand" | "red" }>`
-    min-height: 46px;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 999px;
+    min-height: 50px;
+    padding: 12px 18px;
     cursor: pointer;
     font: inherit;
     font-size: 16px;
     font-weight: 800;
-    color: ${({ $variant }) => ($variant === "sand" ? "#4a2c0c" : "#ffffff")};
-    background: ${({ $variant }) => ($variant === "sand" ? "#f7d7a6" : $variant === "red" ? "#b32f1c" : "#0f6f8c")};
-    box-shadow: ${({ $variant }) =>
-        $variant === "sand"
-            ? "inset 0 -5px 0 #e2b676, 0 8px 14px rgba(70, 40, 10, 0.16)"
-            : $variant === "red"
-            ? "inset 0 -5px 0 #8a2213, 0 8px 14px rgba(120, 40, 10, 0.22)"
-            : "inset 0 -5px 0 #0a5068, 0 8px 14px rgba(10, 60, 80, 0.22)"};
     touch-action: manipulation;
-
-    &:disabled {
-        opacity: 0.55;
-        cursor: default;
-    }
+    --tile-radius: 18px;
+    ${({ $variant }) => tileButton($variant === "sand" ? "sand" : $variant === "red" ? "red" : "teal")}
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
     }
-`;
+`
 
 const Modes = styled.div`
     display: grid;
@@ -225,9 +213,8 @@ const Nav = styled.nav`
 
 const NavButton = styled.button<{ $on: boolean }>`
     border: none;
-    border-radius: 16px;
-    min-height: 50px;
-    padding: 4px 2px;
+    min-height: 54px;
+    padding: 6px 2px;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -237,10 +224,12 @@ const NavButton = styled.button<{ $on: boolean }>`
     font: inherit;
     font-size: 11px;
     font-weight: 800;
-    color: ${({ $on }) => ($on ? "#4a2c0c" : "#7a5530")};
-    background: ${({ $on }) => ($on ? "#f7d7a6" : "transparent")};
-    box-shadow: ${({ $on }) => ($on ? "inset 0 -3px 0 #e2b676" : "none")};
+    color: #7a5530;
+    background: transparent;
+    border-radius: 16px;
     touch-action: manipulation;
+    --tile-radius: 16px;
+    ${({ $on }) => ($on ? tileButton("sand", 4) : "")}
 
     svg {
         width: 22px;
@@ -251,7 +240,7 @@ const NavButton = styled.button<{ $on: boolean }>`
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
     }
-`;
+`
 
 const NAV_ICONS: Record<"home" | Panel, React.ReactNode> = {
     home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,

@@ -1,6 +1,6 @@
 "use client";
 import styled, { keyframes } from "styled-components";
-import { boardSlab, boardTile } from "@game/components/gameStyles";
+import { boardSlab, boardTile, tileButton } from "@game/components/gameStyles";
 import { assetUrl } from "@game/lib/assets";
 
 // Стилі для онлайн-режиму "Гра з другом" - витримані в тій самій пляжній
@@ -32,26 +32,22 @@ export const ModalCard = styled.div`
 `;
 
 export const ModalCloseButton = styled.button`
+    --tile-radius: 12px;
+    ${tileButton("sand", 4)}
+    /* Після tileButton (той задає position: relative). */
     position: absolute;
     top: 14px;
     right: 14px;
-    width: 32px;
-    height: 32px;
-    border: none;
-    border-radius: 10px;
-    background: rgba(139, 101, 60, 0.15);
-    color: #6b4a25;
+    width: 36px;
+    height: 36px;
     font-size: 18px;
+    font-weight: 800;
     line-height: 1;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    &:hover {
-        background: rgba(139, 101, 60, 0.25);
-    }
-`;
+`
 
 export const ModalTitle = styled.h2`
     margin: 0 0 16px;
@@ -119,43 +115,15 @@ export const ModeOptionIcon = styled.img`
 
 export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
     width: 100%;
-    padding: 12px 16px;
-    border: none;
-    border-radius: 14px;
+    padding: 13px 16px;
     cursor: pointer;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 800;
     margin-top: 10px;
     touch-action: manipulation;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-
-    ${({ $variant }) =>
-        $variant === "ghost"
-            ? `
-        background: rgba(139, 101, 60, 0.12);
-        color: #6b4a25;
-        box-shadow: none;
-    `
-            : `
-        background: linear-gradient(155deg, #f5e0b6 0%, #ecd1a1 45%, #dfbd89 100%);
-        color: #5b3f22;
-        box-shadow: 3px 4px 8px rgba(101, 72, 35, 0.3), inset 1px 1px 1px rgba(255,255,255,0.5);
-    `}
-
-    &:hover {
-        transform: translateY(-1px);
-    }
-
-    &:active {
-        transform: translateY(1px) scale(0.98);
-    }
-
-    &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        transform: none;
-    }
-`;
+    --tile-radius: 18px;
+    ${({ $variant }) => tileButton($variant === "ghost" ? "sand" : "teal")}
+`
 
 export const ButtonRow = styled.div`
     display: flex;
@@ -207,20 +175,13 @@ export const InviteLinkBox = styled.div`
 
 export const CopyIconButton = styled.button`
     flex-shrink: 0;
-    padding: 0 14px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(155deg, #f5e0b6 0%, #ecd1a1 45%, #dfbd89 100%);
-    color: #5b3f22;
-    font-weight: 700;
+    padding: 0 16px;
+    font-weight: 800;
     font-size: 13px;
     cursor: pointer;
-    box-shadow: 2px 3px 6px rgba(101, 72, 35, 0.3);
-
-    &:hover {
-        transform: translateY(-1px);
-    }
-`;
+    --tile-radius: 14px;
+    ${tileButton("sand", 4)}
+`
 
 export const CopyFeedback = styled.span`
     display: inline-block;

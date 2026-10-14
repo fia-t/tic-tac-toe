@@ -7,25 +7,19 @@ import { useT } from "@game/lib/i18n";
 // Та сама пісочна плитка, що й тултіпи (gameStyles.ts), - у правому верхньому куті,
 // над ігровим полем, але під BlockingOverlay порталу (z-index 2000).
 const ToggleButton = styled.button`
+    ${hudTile}
+    /* Після hudTile: плиткова форма задає position: relative, а кнопка звуку - фіксована в куті. */
     position: fixed;
     top: 10px;
     right: 10px;
     z-index: 1500;
     width: 40px;
     height: 40px;
-    border: none;
-    border-radius: 14px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    color: #6b4a25;
-    ${hudTile}
     touch-action: manipulation;
-
-    &:active {
-        transform: translateY(1px) scale(0.97);
-    }
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;

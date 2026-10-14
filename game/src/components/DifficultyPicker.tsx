@@ -1,5 +1,6 @@
 "use client";
 import styled from "styled-components";
+import { tileButton } from "@game/components/gameStyles";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
@@ -10,35 +11,26 @@ import { GameModeKey, MODIFIERS_BY_MODE, effectiveModifier, setModifier, useModi
 // Зміна рівня починає нову партію (це робить TicTacToe, підписаний на useDifficulty).
 const Group = styled.div`
     display: inline-flex;
-    gap: 4px;
-    padding: 4px;
+    gap: 6px;
+    padding: 0 0 4px;
     margin: 0 0 8px;
-    border-radius: 999px;
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.25),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
-`;
+`
 
 const Option = styled.button<{ $active: boolean }>`
-    min-height: 36px;
-    padding: 6px 14px;
-    border: none;
-    border-radius: 999px;
+    min-height: 40px;
+    padding: 8px 16px;
     cursor: pointer;
     font-size: 14px;
-    font-weight: 700;
-    color: ${({ $active }) => ($active ? "#fff8ec" : "#6b4a25")};
-    background: ${({ $active }) => ($active ? "#8b5a2b" : "transparent")};
-    box-shadow: ${({ $active }) => ($active ? "inset 0 -3px 0 rgba(0, 0, 0, 0.2)" : "none")};
+    font-weight: 800;
     touch-action: manipulation;
-    transition: background 0.15s ease;
+    --tile-radius: 14px;
+    ${({ $active }) => tileButton($active ? "wood" : "sand", 4)}
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
     }
-`;
+`
 
 const DailyBanner = styled.div`
     display: flex;
@@ -78,25 +70,22 @@ const Chips = styled.div`
 `;
 
 const Chip = styled.button<{ $active: boolean }>`
-    min-height: 32px;
-    padding: 5px 11px;
-    border: none;
-    border-radius: 999px;
+    min-height: 34px;
+    padding: 6px 12px;
     cursor: pointer;
     font-size: 13px;
-    font-weight: 700;
-    color: ${({ $active }) => ($active ? "#ffffff" : "#6b4a25")};
-    background: ${({ $active }) => ($active ? "#0f6f8c" : "rgba(255, 246, 230, 0.92)")};
-    box-shadow: ${({ $active }) => ($active ? "inset 0 -3px 0 rgba(0, 0, 0, 0.2)" : "inset 0 0 0 2px #e6c890")};
+    font-weight: 800;
     touch-action: manipulation;
     flex-shrink: 0;
     white-space: nowrap;
+    --tile-radius: 12px;
+    ${({ $active }) => tileButton($active ? "teal" : "sand", 3)}
 
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
     }
-`;
+`
 
 const WeekTag = styled.span`
     margin-left: 5px;
