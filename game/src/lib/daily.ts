@@ -170,6 +170,7 @@ export const currentStreak = (s: DailyState = state): number =>
     s.last === todayKey() || s.last === yesterdayKey() ? s.streak : 0;
 
 const getState = () => state;
+export const getDailyState = (): DailyState => state;
 const subscribe = (listener: () => void) => {
     listeners.add(listener);
     return () => {

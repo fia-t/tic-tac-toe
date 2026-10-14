@@ -23,6 +23,7 @@ import {
 } from "@game/lib/campaign";
 import { earnCoins } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
+import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
 const MapButton = styled.button`
     position: relative;
@@ -147,7 +148,7 @@ type CampaignMapProps = {
 export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
     const t = useT();
     const progress = useCampaign();
-    const [mapOpen, setMapOpen] = useState(false);
+    const mapOpen = useOpenPanel() === "campaign";
     const [result, setResult] = useState<Result | null>(null);
 
     const total = totalStars(progress);
@@ -177,7 +178,7 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
     const start = (index: number) => {
         const level = CAMPAIGN_LEVELS[index];
         if (!level) return;
-        setMapOpen(false);
+        closePanel();
         setResult(null);
         setDifficultyOverride(level.difficulty);
         setModifierOverride(level.modifier ?? null);
@@ -193,7 +194,7 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
         <>
             <MapButton
                 type="button"
-                onClick={() => setMapOpen(true)}
+                onClick={() => openPanel("campaign")}
                 aria-label={t("campaignOpen", { n: String(total), total: String(maxStars) })}
                 title={t("campaignTitle")}
             >
@@ -207,9 +208,9 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
 
             {mapOpen && (
                 <>
-                    <Overlay onClick={() => setMapOpen(false)} style={{ zIndex: 1600 }} />
+                    <Overlay onClick={() => closePanel()} style={{ zIndex: 1600 }} />
                     <ModalCard role="dialog" aria-modal="true" aria-labelledby="campaign-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                        <ModalCloseButton onClick={() => setMapOpen(false)} aria-label={t("close")}>
+                        <ModalCloseButton onClick={() => closePanel()} aria-label={t("close")}>
                             ×
                         </ModalCloseButton>
                         <ModalTitle id="campaign-title">{t("campaignTitle")}</ModalTitle>
@@ -281,7 +282,7 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
                             );
                         })}
 
-                        <PillButton type="button" $variant="ghost" onClick={() => setMapOpen(false)}>
+                        <PillButton type="button" $variant="ghost" onClick={() => closePanel()}>
                             {t("close")}
                         </PillButton>
                     </ModalCard>
@@ -316,7 +317,7 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
                                 $variant="ghost"
                                 onClick={() => {
                                     setResult(null);
-                                    setMapOpen(true);
+                                    openPanel("campaign");
                                 }}
                             >
                                 {t("campaignMap")}

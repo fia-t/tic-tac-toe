@@ -137,4 +137,6 @@ const subscribe = (listener: () => void) => {
         listeners.delete(listener);
     };
 };
+export const getCampaign = (): CampaignState => state;
+
 export const useCampaign = (): CampaignState => useSyncExternalStore(subscribe, () => state, () => EMPTY);

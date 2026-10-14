@@ -21,6 +21,12 @@ import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
 import { SkinShop } from "@game/components/SkinShop";
 import { HudLeft } from "@game/components/gameStyles";
 import { CampaignMap } from "@game/components/CampaignMap";
+import { HomeScreen } from "@game/components/HomeScreen";
+import { ProfilePanels } from "@game/components/ProfilePanels";
+import { HudButton } from "@game/components/gameStyles";
+import { endDailyRun } from "@game/lib/daily";
+import { useProfile } from "@game/lib/profile";
+import { setScreenState } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
@@ -98,6 +104,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const theme: Theme = availableThemes.find((item) => item.id === equippedSkinId) ?? CLASSIC_THEME;
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
+    // Гра відкривається на головному меню; "game" - саме поле.
+    const [screen, setScreen] = useState<"home" | "game">("home");
+    const profileName = useProfile().name;
+    const shownName = profileName ?? humanName;
+
+    // Облік часу гри на порталі: геймплей - лише на полі, меню - пауза (App слухає ці події).
+    useEffect(() => {
+        setScreenState(screen);
+        trackEvent(screen === "game" ? "open_game" : "open_menu");
+    }, [screen]);
     const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
     const difficulty = useDifficulty();
     const modifierChoice = useModifierChoice();
@@ -392,13 +408,48 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setGameMode(mode);
     };
 
+    const goToGame = (mode: "traditional" | "difficult" | "five") => {
+        handleSetGameMode(mode);
+        setScreen("game");
+    };
+
+    const goToMenu = () => {
+        endDailyRun();
+        setScreen("home");
+    };
+
     const daily = (
-        <HudLeft>
-            <DailyChallenge onStart={handleSetGameMode} getShareLink={getShareLink} />
-            <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
-            <CampaignMap onStart={handleSetGameMode} />
-        </HudLeft>
+        <>
+            <HudLeft>
+                {screen === "game" && (
+                    <HudButton type="button" onClick={goToMenu} aria-label={t("backToMenu")} title={t("backToMenu")}>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+                        </svg>
+                    </HudButton>
+                )}
+                <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
+                <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
+                <CampaignMap onStart={goToGame} />
+            </HudLeft>
+            <ProfilePanels fallbackName={humanName} />
+        </>
     );
+
+    if (screen === "home") {
+        return (
+            <>
+                {daily}
+                <HomeScreen
+                    name={shownName}
+                    initialMode={gameMode}
+                    onPlay={goToGame}
+                    onRoomReady={onRoomReady}
+                    onBeforeFriendOpen={onBeforeFriendOpen}
+                />
+            </>
+        );
+    }
 
     if (gameMode === "difficult") {
         return (
@@ -411,7 +462,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 theme={theme}
                 themeReady={themeReady}
                 onRestart={pickNewTheme}
-                humanName={humanName}
+                humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />
@@ -430,7 +481,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 theme={theme}
                 themeReady={themeReady}
                 onRestart={pickNewTheme}
-                humanName={humanName}
+                humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
             />
@@ -444,7 +495,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <ScoreValue>{score.ai}</ScoreValue>
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? t("player")}</ScoreName>
+            <ScoreName>{shownName ?? t("player")}</ScoreName>
         </ScoreBoard>
     );
 

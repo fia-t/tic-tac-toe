@@ -6,6 +6,7 @@ import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/compo
 import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useLastEarning, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
+import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
 // Лічильник монет (у ряду кнопок зліва вгорі, поруч із викликом дня) і магазин скінів.
 const CoinButton = styled.button`
@@ -152,7 +153,7 @@ export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
     const t = useT();
     const wallet = useWallet();
     const earning = useLastEarning();
-    const [open, setOpen] = useState(false);
+    const open = useOpenPanel() === "shop";
     const [bubble, setBubble] = useState<number | null>(null);
 
     // "+N" біля лічильника на кожне нарахування.
@@ -174,7 +175,7 @@ export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
 
     return (
         <>
-            <CoinButton type="button" onClick={() => setOpen(true)} aria-label={t("shopOpen", { n: String(wallet.coins) })} title={t("shopTitle")}>
+            <CoinButton type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} title={t("shopTitle")}>
                 <Coin />
                 <span>{wallet.coins}</span>
                 {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
@@ -182,9 +183,9 @@ export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
 
             {open && (
                 <>
-                    <Overlay onClick={() => setOpen(false)} style={{ zIndex: 1600 }} />
+                    <Overlay onClick={() => closePanel()} style={{ zIndex: 1600 }} />
                     <ModalCard role="dialog" aria-modal="true" aria-labelledby="shop-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                        <ModalCloseButton onClick={() => setOpen(false)} aria-label={t("close")}>
+                        <ModalCloseButton onClick={() => closePanel()} aria-label={t("close")}>
                             ×
                         </ModalCloseButton>
                         <ModalTitle id="shop-title">{t("shopTitle")}</ModalTitle>
@@ -238,7 +239,7 @@ export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
                                 );
                             })}
                         </Grid>
-                        <PillButton type="button" $variant="ghost" onClick={() => setOpen(false)}>
+                        <PillButton type="button" $variant="ghost" onClick={() => closePanel()}>
                             {t("close")}
                         </PillButton>
                     </ModalCard>

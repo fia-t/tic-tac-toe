@@ -53,6 +53,10 @@ export const GlobalStyle = createGlobalStyle`
     #root {
         height: 100%;
     }
+    /* Шрифт інтерфейсу - системний без засічок (білд для порталу не тягне веб-шрифти). */
+    body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
 `;
 
 export const Container = styled.div`
@@ -74,6 +78,7 @@ export const Container = styled.div`
     overflow-y: auto;
     /* overflow-y:auto робить і x "auto" - невидимі тултіпи кнопок давали б горизонтальну прокрутку. */
     overflow-x: hidden;
+    scrollbar-width: thin;
     & > * {
         margin-block: auto;
     }
@@ -450,4 +455,27 @@ export const HudLeft = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
+`;
+
+// Квадратна кнопка верхнього ряду (напр. "Меню" на полі) - у стилі SoundToggle.
+export const HudButton = styled.button`
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #6b4a25;
+    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
+    box-shadow:
+        3px 3px 6px rgba(101, 72, 35, 0.3),
+        -1px -1px 2px rgba(255, 250, 235, 0.5);
+    touch-action: manipulation;
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
 `;

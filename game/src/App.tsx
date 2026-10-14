@@ -7,11 +7,12 @@ import { PortalGameBridge } from "@game/portal/PortalGameBridge";
 import { PORTAL_ORIGIN } from "@game/portal/config";
 import { sdk } from "./sdk";
 import { lifecycle } from "./sdk/lifecycle";
-import { progress } from "./sdk/progress";
 import { getDifficulty } from "@game/lib/difficulty";
 import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily";
 import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wallet";
 import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/lib/campaign";
+import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, ProfileState } from "@game/lib/profile";
+import { getScreen } from "@game/lib/ui";
 import { setLocale, toLocale } from "@game/lib/i18n";
 import { SoundToggle } from "@game/components/SoundToggle";
 
@@ -43,19 +44,23 @@ export default function App() {
 
     useEffect(() => {
         void sdk.init();
-        void progress.reload();
+        if (sdk.reportPlayerLevel) {
+            const report = sdk.reportPlayerLevel;
+            setLevelReporter((level) => report(level));
+        }
         // Виклик дня на порталі - у хмарних збереженнях гравця (серія не губиться між пристроями).
         if (sdk.loadData && sdk.saveData) {
             const load = sdk.loadData, saveData = sdk.saveData;
             void configureDailyStorage({ load: () => load<DailyState>("daily"), save: (state) => saveData("daily", state) });
             void configureWalletStorage({ load: () => load<WalletState>("wallet"), save: (state) => saveData("wallet", state) });
             void configureCampaignStorage({ load: () => load<CampaignState>("campaign"), save: (state) => saveData("campaign", state) });
+            void configureProfileStorage({ load: () => load<ProfileState>("profile"), save: (state) => saveData("profile", state) });
         }
         const unsubscribeAuth = sdk.onAuthChange?.(() => {
-            void progress.reload();
             void reloadDaily();
             void reloadWallet();
             void reloadCampaign();
+            void reloadProfile();
         });
 
         const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
@@ -77,16 +82,23 @@ export default function App() {
                 case "select_modifier":
                 case "campaign_level_started":
                 case "game_restart":
+                    // У меню вибір рівня/модифікатора - не гра; час гри рахується лише на полі.
+                    if (getScreen() !== "game") break;
                     lifecycle.setGameplay(true);
-                    sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: progress.get() });
+                    sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: getProfile().stats });
+                    break;
+                case "open_game":
+                    lifecycle.setGameplay(true);
+                    break;
+                case "open_menu":
+                    lifecycle.setGameplay(false);
+                    sdk.setGameContext?.({ screen: "menu", stats: getProfile().stats });
                     break;
                 case "game_finished":
                 case "online_game_finished": {
                     lifecycle.setGameplay(false);
                     const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
-                    void progress.record(result).then(() =>
-                        sdk.setGameContext?.({ screen: "result", mode, result, difficulty: getDifficulty(), stats: progress.get() })
-                    );
+                    sdk.setGameContext?.({ screen: "result", mode, result, difficulty: getDifficulty(), stats: getProfile().stats });
                     if (name === "game_finished") {
                         finishedCount.current += 1;
                         if (finishedCount.current % MIDGAME_AD_EVERY === 0) {
@@ -108,8 +120,8 @@ export default function App() {
     // Дошка 3×3 одразу доступна для ходу - тож після завантаження одразу йде партія.
     const handleReady = useCallback(() => {
         lifecycle.loadingStop();
-        lifecycle.setGameplay(true);
-        sdk.setGameContext?.({ screen: "game", mode: "easy", difficulty: getDifficulty(), stats: progress.get() });
+        // Гра відкривається на головному меню - геймплей стартує, коли гравець перейде до поля.
+        sdk.setGameContext?.({ screen: "menu", stats: getProfile().stats });
     }, []);
 
     const handleRoomStatus = useCallback(

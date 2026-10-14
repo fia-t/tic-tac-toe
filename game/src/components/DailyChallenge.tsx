@@ -23,6 +23,7 @@ import {
     useDailyState,
 } from "@game/lib/daily";
 import { useT } from "@game/lib/i18n";
+import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { dailyReward } from "@game/lib/wallet";
 
 // Кнопка виклику дня - у лівому верхньому куті, дзеркально до SoundToggle.
@@ -130,7 +131,9 @@ type View = { kind: "info" } | { kind: "result"; result: DailyResult } | null;
 export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShareLink }) => {
     const t = useT();
     const state = useDailyState();
-    const [view, setView] = useState<View>(null);
+    const [resultView, setView] = useState<View>(null);
+    const panelOpen = useOpenPanel() === "daily";
+    const view: View = resultView ?? (panelOpen ? { kind: "info" } : null);
     const [shareOpen, setShareOpen] = useState(false);
     const [link, setLink] = useState<string>(typeof window !== "undefined" ? window.location.origin : "");
     const [copyNote, setCopyNote] = useState("");
@@ -181,6 +184,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
 
     const start = () => {
         setView(null);
+        closePanel();
         setDifficultyOverride(template.difficulty);
         setModifierOverride(template.modifier ?? null);
         setDailyRun({ kind: "daily", id: nextRunId(), template, day, finished: false });
@@ -190,6 +194,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
 
     const closeAll = () => {
         setView(null);
+        closePanel();
         setShareOpen(false);
         setCopyNote("");
     };
@@ -223,7 +228,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
         <>
             <DailyButtonEl
                 type="button"
-                onClick={() => setView({ kind: "info" })}
+                onClick={() => openPanel("daily")}
                 aria-label={`${t("dailyBadge", { n: String(day) })}${todayResult ? "" : `, ${t("dailyNotPlayed")}`}`}
                 title={t("dailyTitle")}
             >

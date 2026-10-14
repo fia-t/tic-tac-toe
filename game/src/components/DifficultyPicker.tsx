@@ -64,7 +64,7 @@ const Chips = styled.div`
     flex-wrap: wrap;
     justify-content: center;
     gap: 6px;
-    max-width: min(92vw, 600px);
+    max-width: min(100%, 92vw, 600px);
     margin: 0 0 6px;
 
     /* Вузький iframe/телефон: один рядок з прокруткою вбік - щоб не з'їдати висоту поля. */
