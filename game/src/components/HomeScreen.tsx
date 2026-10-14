@@ -163,6 +163,11 @@ const Two = styled.div`
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
 
+    /* Картки поруч (модифікатор тижня, кампанія) - кнопки притиснуті до низу, на одному рівні. */
+    & > section > button:last-child {
+        margin-top: auto;
+    }
+
     @media (max-width: 440px) {
         grid-template-columns: 1fr;
     }
