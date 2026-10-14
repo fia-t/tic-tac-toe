@@ -14,6 +14,8 @@ import { BOARD_SIZE } from "@game/components/onlineGameLogic";
 import { trackEvent } from "@game/lib/firebase";
 import { DEFAULT_THEME } from "@game/lib/themes";
 import { GamePiece } from "@game/components/GamePiece";
+import { useT } from "@game/lib/i18n";
+import { playSound } from "@game/lib/sound";
 
 type OnlineBoardProps = {
     roomId: string;
@@ -23,6 +25,7 @@ type OnlineBoardProps = {
 };
 
 export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol, uid }) => {
+    const t = useT();
     const size = BOARD_SIZE[room.gameMode];
     const isFinished = room.status === "finished";
     const myTurn = room.status === "playing" && room.currentPlayer === mySymbol;
@@ -34,7 +37,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     };
 
     // Захист для кімнат, створених до появи імен/рахунку в документі.
-    const names = room.names ?? { X: "Гравець X", O: "Гравець O" };
+    const names = room.names ?? { X: t("playerX"), O: t("playerO") };
     const score = room.score ?? { X: 0, O: 0 };
 
     const handleCellClick = (index: number) => {
@@ -44,16 +47,28 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
 
     const resultLabel =
         room.winner === "draw"
-            ? "Нічия!"
+            ? t("onlineDraw")
             : room.winner === mySymbol
-            ? "Ви перемогли!"
+            ? t("onlineWin")
             : room.winner
-            ? "Суперник переміг!"
+            ? t("onlineLose")
             : null;
 
     const opponentSymbol: PlayerSymbol = mySymbol === "X" ? "O" : "X";
     const myRematchReady = room.rematch[mySymbol];
     const opponentRematchReady = room.rematch[opponentSymbol];
+
+    // Звук на кожну нову фішку - і свою, і суперника (вона приходить зі снапшоту
+    // Firestore). Перший рендер лише запамʼятовує дошку, щоб вхід у кімнату з уже
+    // зробленими ходами не відіграв їх усі разом.
+    const prevBoardRef = useRef<(string | null)[] | null>(null);
+    useEffect(() => {
+        const prev = prevBoardRef.current;
+        prevBoardRef.current = room.board;
+        if (!prev) return;
+        const placed = room.board.findIndex((cell, i) => cell !== null && prev[i] === null);
+        if (placed !== -1) playSound(room.board[placed] === mySymbol ? "move" : "reply");
+    }, [room.board, mySymbol]);
 
     // Трек завершення партії - лише один раз за перехід у "finished"
     // (сам room.status може ще кілька разів оновитись, поки триває реванш-очікування).
@@ -80,7 +95,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             </ScoreBoard>
 
             <TurnBanner $myTurn={isFinished ? false : myTurn}>
-                {isFinished ? resultLabel : myTurn ? "Ваш хід" : "Хід суперника"}
+                {isFinished ? resultLabel : myTurn ? t("yourTurn") : t("opponentTurn")}
             </TurnBanner>
 
             <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
@@ -105,14 +120,14 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             {isFinished && (
                 <div style={{ marginTop: 14, width: "min(92vw, 420px)", textAlign: "center" }}>
                     {myRematchReady ? (
-                        <WaitingText>Очікуємо, поки суперник погодиться...</WaitingText>
+                        <WaitingText>{t("waitingRematch")}</WaitingText>
                     ) : (
                         <PillButton type="button" onClick={() => requestRematch(roomId, mySymbol)}>
-                            Грати ще раз
+                            {t("playAgain")}
                         </PillButton>
                     )}
                     {opponentRematchReady && !myRematchReady && (
-                        <div style={{ marginTop: 6, fontSize: 13, color: "#7a5a35" }}>Суперник хоче реванш!</div>
+                        <div style={{ marginTop: 6, fontSize: 13, color: "#7a5a35" }}>{t("opponentWantsRematch")}</div>
                     )}
                 </div>
             )}

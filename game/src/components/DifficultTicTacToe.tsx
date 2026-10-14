@@ -35,6 +35,8 @@ import {
     pickHeuristicCell,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
+import { useT } from "@game/lib/i18n";
+import { playSound } from "@game/lib/sound";
 
 // Результат кожного з 9 малих полів: хто його забрав, чи нічия, чи гра в ньому ще триває.
 type MetaResult = "X" | "O" | "draw" | null;
@@ -133,6 +135,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     onRoomReady,
     onBeforeFriendOpen,
 }) => {
+    const t = useT();
     const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
     const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
@@ -181,6 +184,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         const nextActiveBoard = updatedMiniResults[targetIndex] !== null ? null : targetIndex;
 
         setBoards(boardsAfterMove);
+        playSound(mover === "player" ? "move" : "reply");
         setMiniResults(updatedMiniResults);
 
         if (metaWinner) {
@@ -261,11 +265,11 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     const scoreBoard = (
         <ScoreBoard>
-            <ScoreName>🤖 ШІ</ScoreName>
+            <ScoreName>{t("ai")}</ScoreName>
             <ScoreValue>{score.ai}</ScoreValue>
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+            <ScoreName>{humanName ?? t("player")}</ScoreName>
         </ScoreBoard>
     );
 
@@ -275,7 +279,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? "You Win!" : "AI Wins!"}
+                        {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
                 </>
             )}
@@ -284,7 +288,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        No one wins
+                        {t("resultDraw")}
                     </Popup>
                 </>
             )}
@@ -341,8 +345,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 </BoardColumn>
 
                 <ButtonContainer>
-                    <Button onClick={restartUltimateGame} aria-label="Restart">
-                        <ControlIcon src={assetUrl("images/reload.png")} alt="Restart" />
+                    <Button onClick={restartUltimateGame} aria-label={t("restart")}>
+                        <ControlIcon src={assetUrl("images/reload.png")} alt="" />
                     </Button>
                     <ButtonWithTooltip>
                         <Button
@@ -350,9 +354,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                                 trackEvent("select_mode", { mode: "easy" });
                                 setGameMode("traditional");
                             }}
-                            aria-label="Easy"
+                            aria-label={t("modeClassic")}
                         >
-                            <ControlIcon src={assetUrl("images/traditional.png")} alt="Easy" />
+                            <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
                         </Button>
                         <Tooltip>3×3</Tooltip>
                     </ButtonWithTooltip>
@@ -362,9 +366,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                                 trackEvent("select_mode", { mode: "five" });
                                 setGameMode("five");
                             }}
-                            aria-label="5x5"
+                            aria-label={t("modeFive")}
                         >
-                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="5x5" />
+                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
                         </Button>
                         <Tooltip>5×5</Tooltip>
                     </ButtonWithTooltip>
@@ -374,17 +378,17 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                                 trackEvent("select_mode", { mode: "hard" });
                                 setGameMode("difficult");
                             }}
-                            aria-label="Hard"
+                            aria-label={t("modeHard")}
                         >
-                            <ControlIcon src={assetUrl("images/difficult.png")} alt="Hard" />
+                            <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
                         </Button>
-                        <Tooltip>Hard</Tooltip>
+                        <Tooltip>{t("tooltipHard")}</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
-                        <Button onClick={handleFriendClick} aria-label="Play with a friend">
-                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="Play with a friend" />
+                        <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
+                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
                         </Button>
-                        <Tooltip>Friend</Tooltip>
+                        <Tooltip>{t("tooltipFriend")}</Tooltip>
                     </ButtonWithTooltip>
                 </ButtonContainer>
 

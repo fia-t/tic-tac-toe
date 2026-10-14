@@ -19,6 +19,7 @@ import { createRoom } from "@game/lib/onlineGame";
 import { isFirebaseConfigured } from "@game/lib/firebase";
 import { OnlineGameMode } from "@game/components/onlineGameLogic";
 import { assetUrl } from "@game/lib/assets";
+import { useT } from "@game/lib/i18n";
 
 type FriendGameModalProps = {
     onClose: () => void;
@@ -51,6 +52,7 @@ const extractRoomId = (input: string): string => {
 };
 
 export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoomReady, defaultMode }) => {
+    const t = useT();
     const [mode, setMode] = useState<OnlineGameMode>(defaultMode ?? "3x3");
     const [view, setView] = useState<"select" | "join">("select");
     const [joinInput, setJoinInput] = useState("");
@@ -59,7 +61,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
 
     const handleCreate = async () => {
         if (!isFirebaseConfigured) {
-            setError("Firebase не налаштовано. Заповніть .env.local (див. .env.local.example) і перезапустіть сервер.");
+            setError(t("errorFirebaseShort"));
             return;
         }
 
@@ -70,7 +72,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
             onRoomReady(roomId);
         } catch (err) {
             console.error("createRoom failed:", err);
-            setError("Не вдалося створити кімнату. Спробуйте ще раз.");
+            setError(t("errorCreateRoom"));
             setLoading(false);
         }
     };
@@ -78,7 +80,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
     const handleJoin = () => {
         const roomId = extractRoomId(joinInput);
         if (!roomId) {
-            setError("Вставте посилання-запрошення або код кімнати.");
+            setError(t("errorJoinEmpty"));
             return;
         }
         onRoomReady(roomId);
@@ -88,14 +90,14 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
         <>
             <Overlay onClick={onClose} />
             <ModalCard onClick={(e) => e.stopPropagation()}>
-                <ModalCloseButton onClick={onClose} aria-label="Закрити">
+                <ModalCloseButton onClick={onClose} aria-label={t("close")}>
                     ×
                 </ModalCloseButton>
 
                 {view === "select" ? (
                     <>
-                        <ModalTitle>🎮 Гра з другом</ModalTitle>
-                        <ModalSubtitle>Оберіть режим гри</ModalSubtitle>
+                        <ModalTitle>{t("friendTitle")}</ModalTitle>
+                        <ModalSubtitle>{t("chooseMode")}</ModalSubtitle>
                         <ModeOptionGroup>
                             <ModeOption type="button" $active={mode === "3x3"} onClick={() => setMode("3x3")}>
                                 <ModeOptionIcon src={assetUrl("images/traditional.png")} alt="3×3" />
@@ -112,7 +114,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                         </ModeOptionGroup>
 
                         <PillButton type="button" onClick={handleCreate} disabled={loading}>
-                            {loading ? "Створюємо..." : "Створити гру"}
+                            {loading ? t("creating") : t("createGame")}
                         </PillButton>
                         <PillButton
                             type="button"
@@ -123,19 +125,19 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                                 setView("join");
                             }}
                         >
-                            Приєднатися
+                            {t("join")}
                         </PillButton>
 
                         {error && <ErrorText>{error}</ErrorText>}
                     </>
                 ) : (
                     <>
-                        <ModalTitle>Приєднатися до гри</ModalTitle>
-                        <ModalSubtitle>Вставте посилання-запрошення або код кімнати</ModalSubtitle>
+                        <ModalTitle>{t("joinTitle")}</ModalTitle>
+                        <ModalSubtitle>{t("joinHint")}</ModalSubtitle>
                         <TextInput
                             value={joinInput}
                             onChange={(e) => setJoinInput(e.target.value)}
-                            placeholder="https://.../play/ABC123 або ABC123"
+                            placeholder={t("joinPlaceholder")}
                             autoFocus
                         />
                         {error && <ErrorText>{error}</ErrorText>}
@@ -148,10 +150,10 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                                     setView("select");
                                 }}
                             >
-                                Назад
+                                {t("back")}
                             </PillButton>
                             <PillButton type="button" onClick={handleJoin}>
-                                Приєднатися
+                                {t("join")}
                             </PillButton>
                         </ButtonRow>
                     </>

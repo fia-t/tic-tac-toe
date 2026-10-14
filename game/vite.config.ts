@@ -13,7 +13,9 @@ const TARGETS = ["portal", "crazygames", "poki", "itch"] as const;
 type Target = (typeof TARGETS)[number];
 
 const SDK_SCRIPTS: Record<Target, string> = {
-    portal: "",
+    // QSPlay SDK порталу play.quartsoft.com - https://docs-dev.quartsoft.com/sdk/intro
+    // (v1 = версія протоколу, змінюється лише при несумісних змінах).
+    portal: '<script src="https://sdk.quartsoft.com/v1/sdk.js"></script>',
     itch: "",
     // CrazyGames HTML5 v2 SDK - https://docs.crazygames.com/sdk/html5-v2/intro/
     crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v2.js"></script>',

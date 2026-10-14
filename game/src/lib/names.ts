@@ -12,6 +12,7 @@ import {
     Timestamp,
 } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
+import { getLocale } from "@game/lib/i18n";
 
 export type NameEntry = {
     id: string;
@@ -75,10 +76,37 @@ export const getActiveNames = async (): Promise<NameEntry[]> => {
     }
 };
 
+// Англомовний пул для гравців з en-локаллю: імена в адмінці (Firestore) українські,
+// перекладати їх на льоту нема як, тож для en - власний фіксований набір.
+export const DEFAULT_NAMES_EN: string[] = [
+    "Pink Hippo",
+    "Clever Hedgehog",
+    "Cosmic Hamster",
+    "Cheerful Tiger",
+    "Shy Giraffe",
+    "Amber Fox",
+    "Wandering Penguin",
+    "Brave Rabbit",
+    "Wise Owl",
+    "Dancing Rhino",
+    "Starry Raccoon",
+    "Fluffy Dragon",
+    "Nimble Dolphin",
+    "Mysterious Possum",
+    "Sunny Sloth",
+    "Fierce Gerbil",
+    "Funny Flamingo",
+    "Quiet Wolf",
+    "Bright Parrot",
+    "Strawberry Cat",
+];
+
 // Перетворює список записів (або їх відсутність) на пул рядків-імен,
 // завжди непорожній - фолбек на DEFAULT_NAMES.
-const toPool = (names: NameEntry[]): string[] =>
-    names.length > 0 ? names.map((n) => n.name) : DEFAULT_NAMES;
+const toPool = (names: NameEntry[]): string[] => {
+    if (getLocale() === "en") return DEFAULT_NAMES_EN;
+    return names.length > 0 ? names.map((n) => n.name) : DEFAULT_NAMES;
+};
 
 export const pickRandomName = (names: NameEntry[]): string => {
     const pool = toPool(names);

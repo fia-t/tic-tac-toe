@@ -29,6 +29,7 @@ import {
     RoomFullError,
     PRESENCE_TIMEOUT_MS,
 } from "@game/lib/onlineGame";
+import { useT } from "@game/lib/i18n";
 
 type PlayRoomClientProps = {
     roomId: string;
@@ -41,13 +42,25 @@ type PlayRoomClientProps = {
     // (сирий *.vercel.app), а не домен, з якого гру справді відкрив користувач.
     // Не передано - викликач не потребує кастомного домену (напр. standalone-білд).
     siteUrl?: string;
+    // Альтернативне джерело invite-лінку (напр. game.inviteLink() SDK порталу, що веде на
+    // сторінку гри на порталі). null/помилка - фолбек на `${siteUrl}/play/${roomId}`.
+    createInviteLink?: (roomId: string) => Promise<string | null>;
+    // Зміна статусу кімнати (waiting/playing/finished) - для gameplayStart/Stop у SDK.
+    onStatusChange?: (status: RoomDoc["status"]) => void;
 };
 
 const HEARTBEAT_INTERVAL_MS = 8000;
 
 type ConnectionState = "connecting" | "ready" | "not-found" | "full" | "error";
 
-export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, siteUrl }) => {
+export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
+    roomId,
+    onExit,
+    siteUrl,
+    createInviteLink,
+    onStatusChange,
+}) => {
+    const t = useT();
     const [connection, setConnection] = useState<ConnectionState>(
         isFirebaseConfigured ? "connecting" : "error"
     );
@@ -57,6 +70,25 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
     const [copied, setCopied] = useState(false);
     const [now, setNow] = useState(() => Date.now());
     const [leftBannerDismissed, setLeftBannerDismissed] = useState(false);
+    const [customInviteLink, setCustomInviteLink] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!createInviteLink) return;
+        let cancelled = false;
+        createInviteLink(roomId)
+            .then((link) => {
+                if (!cancelled) setCustomInviteLink(link);
+            })
+            .catch(() => {});
+        return () => {
+            cancelled = true;
+        };
+    }, [roomId, createInviteLink]);
+
+    const roomStatus = room?.status;
+    useEffect(() => {
+        if (roomStatus) onStatusChange?.(roomStatus);
+    }, [roomStatus, onStatusChange]);
 
     // Приєднання до кімнати (або підтвердження власної участі, якщо це творець) + підписка на живі оновлення.
     useEffect(() => {
@@ -137,7 +169,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
     }, [showOpponentLeft]);
 
     const origin = siteUrl ?? (typeof window !== "undefined" ? window.location.origin : "");
-    const inviteLink = `${origin}/play/${roomId}`;
+    const inviteLink = customInviteLink ?? `${origin}/play/${roomId}`;
 
     const handleCopy = async () => {
         try {
@@ -158,13 +190,12 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
         return (
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>Firebase не налаштовано</ModalTitle>
+                    <ModalTitle>{t("firebaseTitle")}</ModalTitle>
                     <ModalSubtitle>
-                        Заповніть NEXT_PUBLIC_FIREBASE_* змінні у .env.local (див. .env.local.example) і перезапустіть
-                        сервер, щоб онлайн-режим запрацював.
+                        {t("firebaseBody")}
                     </ModalSubtitle>
                     <PillButton type="button" onClick={onExit}>
-                        Повернутися в меню
+                        {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
             </Container>
@@ -175,8 +206,8 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
         return (
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>Підключення...</ModalTitle>
-                    <WaitingText>Заходимо в кімнату {roomId}</WaitingText>
+                    <ModalTitle>{t("connecting")}</ModalTitle>
+                    <WaitingText>{t("joiningRoom", { room: roomId })}</WaitingText>
                 </ModalCard>
             </Container>
         );
@@ -186,10 +217,10 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
         return (
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>Кімнату не знайдено</ModalTitle>
-                    <ModalSubtitle>Можливо, посилання застаріло або гра вже завершилась і кімнату очищено.</ModalSubtitle>
+                    <ModalTitle>{t("roomNotFound")}</ModalTitle>
+                    <ModalSubtitle>{t("roomNotFoundBody")}</ModalSubtitle>
                     <PillButton type="button" onClick={onExit}>
-                        Повернутися в меню
+                        {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
             </Container>
@@ -200,10 +231,10 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
         return (
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>Кімната вже заповнена</ModalTitle>
-                    <ModalSubtitle>У цій грі вже двоє гравців.</ModalSubtitle>
+                    <ModalTitle>{t("roomFull")}</ModalTitle>
+                    <ModalSubtitle>{t("roomFullBody")}</ModalSubtitle>
                     <PillButton type="button" onClick={onExit}>
-                        Повернутися в меню
+                        {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
             </Container>
@@ -214,10 +245,10 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
         return (
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>Щось пішло не так</ModalTitle>
-                    <ErrorText>Не вдалося підключитися до кімнати. Перевірте зʼєднання й спробуйте ще раз.</ErrorText>
+                    <ModalTitle>{t("errorTitle")}</ModalTitle>
+                    <ErrorText>{t("errorBody")}</ErrorText>
                     <PillButton type="button" onClick={onExit}>
-                        Повернутися в меню
+                        {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
             </Container>
@@ -229,17 +260,17 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
             <Container>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <RoomCodeBadge>{roomId}</RoomCodeBadge>
-                    <ModalTitle>Ваше запрошення</ModalTitle>
+                    <ModalTitle>{t("inviteTitle")}</ModalTitle>
                     <InviteLinkRow>
                         <InviteLinkBox>{inviteLink}</InviteLinkBox>
                         <CopyIconButton type="button" onClick={handleCopy}>
-                            📋 Копіювати
+                            {t("copy")}
                         </CopyIconButton>
                     </InviteLinkRow>
-                    {copied && <CopyFeedback>✓ Посилання скопійовано</CopyFeedback>}
-                    <WaitingText>Очікування другого гравця...</WaitingText>
+                    {copied && <CopyFeedback>{t("copied")}</CopyFeedback>}
+                    <WaitingText>{t("waitingPlayer")}</WaitingText>
                     <PillButton type="button" $variant="ghost" onClick={handleReturnToMenu}>
-                        Повернутися в меню
+                        {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
             </Container>
@@ -252,13 +283,13 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({ roomId, onExit, 
 
             {showOpponentLeft && (
                 <OpponentLeftCard>
-                    <ModalTitle style={{ paddingRight: 0 }}>Суперник покинув гру</ModalTitle>
+                    <ModalTitle style={{ paddingRight: 0 }}>{t("opponentLeft")}</ModalTitle>
                     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                         <PillButton type="button" onClick={handleReturnToMenu}>
-                            Повернутися в меню
+                            {t("backToMenu")}
                         </PillButton>
                         <PillButton type="button" $variant="ghost" onClick={() => setLeftBannerDismissed(true)}>
-                            Чекати повернення
+                            {t("waitReturn")}
                         </PillButton>
                     </div>
                 </OpponentLeftCard>

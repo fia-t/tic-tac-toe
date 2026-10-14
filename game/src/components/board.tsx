@@ -4,6 +4,7 @@ import { FriendGameModal } from "@game/components/FriendGameModal";
 import { GamePiece } from "@game/components/GamePiece";
 import { trackEvent } from "@game/lib/firebase";
 import { assetUrl } from "@game/lib/assets";
+import { useT } from "@game/lib/i18n";
 
 type BoardProps = {
     board: (string | null)[][];
@@ -26,6 +27,7 @@ export const Board: React.FC<BoardProps> = ({
     onRoomReady,
     onBeforeFriendOpen,
 }) => {
+    const t = useT();
     const [isFriendModalOpen, setIsFriendModalOpen] = useState(false);
 
     const handleFriendClick = async () => {
@@ -61,8 +63,8 @@ export const Board: React.FC<BoardProps> = ({
 
             {/* Кнопка перезапуску тепер отримує restartGame з пропсів */}
             <ButtonContainer>
-                <Button onClick={restartGame} aria-label="Restart">
-                    <ControlIcon src={assetUrl("images/reload.png")} alt="Restart" />
+                <Button onClick={restartGame} aria-label={t("restart")}>
+                    <ControlIcon src={assetUrl("images/reload.png")} alt="" />
                 </Button>
                 <ButtonWithTooltip>
                     <Button
@@ -70,9 +72,9 @@ export const Board: React.FC<BoardProps> = ({
                             trackEvent("select_mode", { mode: "easy" });
                             setGameMode("traditional");
                         }}
-                        aria-label="Easy"
+                        aria-label={t("modeClassic")}
                     >
-                        <ControlIcon src={assetUrl("images/traditional.png")} alt="Easy" />
+                        <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
                     </Button>
                     <Tooltip>3×3</Tooltip>
                 </ButtonWithTooltip>
@@ -82,9 +84,9 @@ export const Board: React.FC<BoardProps> = ({
                             trackEvent("select_mode", { mode: "five" });
                             setGameMode("five");
                         }}
-                        aria-label="5x5"
+                        aria-label={t("modeFive")}
                     >
-                        <ControlIcon src={assetUrl("images/game-5x5.png")} alt="5x5" />
+                        <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
                     </Button>
                     <Tooltip>5×5</Tooltip>
                 </ButtonWithTooltip>
@@ -94,17 +96,17 @@ export const Board: React.FC<BoardProps> = ({
                             trackEvent("select_mode", { mode: "hard" });
                             setGameMode("difficult");
                         }}
-                        aria-label="Hard"
+                        aria-label={t("modeHard")}
                     >
-                        <ControlIcon src={assetUrl("images/difficult.png")} alt="Hard" />
+                        <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
                     </Button>
-                    <Tooltip>Hard</Tooltip>
+                    <Tooltip>{t("tooltipHard")}</Tooltip>
                 </ButtonWithTooltip>
                 <ButtonWithTooltip>
-                    <Button onClick={handleFriendClick} aria-label="Play with a friend">
-                        <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="Play with a friend" />
+                    <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
+                        <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
                     </Button>
-                    <Tooltip>Friend</Tooltip>
+                    <Tooltip>{t("tooltipFriend")}</Tooltip>
                 </ButtonWithTooltip>
             </ButtonContainer>
 

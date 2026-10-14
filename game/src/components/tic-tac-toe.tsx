@@ -16,6 +16,8 @@ import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
 import { DEFAULT_THEME, Theme, getActiveThemes, pickRandomTheme, preloadThemeImages } from "@game/lib/themes";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
+import { useT } from "@game/lib/i18n";
+import { playSound } from "@game/lib/sound";
 
 const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string): [number, number] => {
     // 1. Виграти, якщо є можливість
@@ -50,9 +52,13 @@ type TicTacToeProps = {
     // лише коли проміс резолвиться true. Використовується для rewarded-ad гейта на
     // агрегаторах - на сайті не передається, і поведінка лишається безкоштовною як раніше.
     onBeforeFriendOpen?: () => Promise<boolean>;
+    // Викликається, коли теми й картинки підвантажені і дошка стає клікабельною
+    // (сигнал loadingStop для SDK агрегатора/порталу).
+    onReady?: () => void;
 };
 
-export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) => {
+export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady }: TicTacToeProps) => {
+    const t = useT();
     const [board, setBoard] = useState<Grid3>(createEmptyGrid());
     const [winner, setWinner] = useState<string | null>(null);
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
@@ -96,6 +102,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
             setAvailableThemes(themes);
             setTheme(pickRandomTheme(themes));
             setThemeReady(true);
+            onReady?.();
         });
         return () => {
             cancelled = true;
@@ -145,6 +152,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
         );
 
         setBoard(updatedPlayerBoard);
+        playSound("move");
 
         const newWinner = checkWinner(updatedPlayerBoard, playerMarker, aiMarker);
         if (newWinner) {
@@ -180,6 +188,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
             );
 
             setBoard(updatedBoardAfterAI);
+            playSound("reply");
             setIsAiTurn(false);
 
             const winnerAfterAI = checkWinner(updatedBoardAfterAI, playerMarker, aiMarker);
@@ -257,11 +266,11 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
 
     const scoreBoard = (
         <ScoreBoard>
-            <ScoreName>🤖 ШІ</ScoreName>
+            <ScoreName>{t("ai")}</ScoreName>
             <ScoreValue>{score.ai}</ScoreValue>
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+            <ScoreName>{humanName ?? t("player")}</ScoreName>
         </ScoreBoard>
     );
 
@@ -272,7 +281,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? "You Win!" : "AI Wins!"}
+                        {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
                 </>
             )}
@@ -282,7 +291,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen }: TicTacToeProps) =
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        No one wins
+                        {t("resultDraw")}
                     </Popup>
                 </>
             )}

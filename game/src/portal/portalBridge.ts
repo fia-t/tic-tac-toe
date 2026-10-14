@@ -6,6 +6,7 @@ import {
     PortalMessage,
     isPortalMessage,
 } from "./messageTypes";
+import { setSoundSuppressed } from "@game/lib/sound";
 
 // Причина, з якої гра зараз заблокована для гравця. Множина, а не один
 // boolean, - щоб portal:ad-finished/ad-error не знімали паузу, поставлену
@@ -29,6 +30,8 @@ const INCOMING_HANDLERS: Record<IncomingType, (bridge: PortalBridge) => void> = 
 };
 
 const muteAllMedia = (muted: boolean) => {
+    // WebAudio-звуки гри (lib/sound.ts) - не audio-елементи, глушимо окремо.
+    setSoundSuppressed(muted);
     // Зараз у грі немає жодного audio/video елемента - це forward-compatible
     // no-op. Якщо звук колись з'явиться, він автоматично підхопить це правило.
     document.querySelectorAll("audio, video").forEach((el) => {

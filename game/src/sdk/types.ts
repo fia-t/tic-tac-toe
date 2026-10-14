@@ -13,4 +13,25 @@ export type AggregatorSdk = {
     // false = відхилено/не вдалося показати.
     showRewardedAd: () => Promise<boolean>;
     happyTime?: () => void;
+
+    // --- Нижче - можливості, які має лише QSPlay SDK порталу (src/sdk/qsplay.ts). ---
+    // Інші адаптери їх не реалізують, тож викликач перевіряє наявність (sdk.x?.()).
+
+    // Контекст для звітів гравців про проблеми (режим, рахунок тощо).
+    setGameContext?: (context: Record<string, unknown>) => void;
+    clearGameContext?: () => void;
+    // Загальний прогрес гравця - ціле число, що лише зростає.
+    reportPlayerLevel?: (level: number) => void;
+    // Параметри, з якими гру відкрили за invite-посиланням порталу (null - звичайний візит).
+    getInviteParams?: () => Promise<Record<string, unknown> | null>;
+    // Посилання на сторінку гри на порталі, що доставить params запрошеному.
+    createInviteLink?: (params: Record<string, unknown>) => Promise<string | null>;
+    // Хмарні збереження (гість або акаунт порталу).
+    loadData?: <T>(key: string) => Promise<T | null>;
+    saveData?: (key: string, value: unknown) => Promise<void>;
+    // Мова порталу (напр. "en", "uk") і її зміна без перезавантаження; повертає відписку.
+    getLocale?: () => Promise<string | null>;
+    onLocaleChange?: (callback: (locale: string) => void) => () => void;
+    // Вхід/вихід гравця на порталі; повертає відписку.
+    onAuthChange?: (callback: () => void) => () => void;
 };

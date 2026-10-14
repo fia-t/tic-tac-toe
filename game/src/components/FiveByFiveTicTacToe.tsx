@@ -30,6 +30,8 @@ import {
     pickHeuristicCellGeneric,
 } from "@game/components/gameLogic";
 import { assetUrl } from "@game/lib/assets";
+import { useT } from "@game/lib/i18n";
+import { playSound } from "@game/lib/sound";
 
 // 5x5 - новий режим (не перейменування наявних): поле більше за класичне, тож
 // перемога - 4 фішки поспіль, а не 3 (інакше на такому полі майже завжди
@@ -79,6 +81,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     onRoomReady,
     onBeforeFriendOpen,
 }) => {
+    const t = useT();
     const [board, setBoard] = useState<Grid3>(() => createEmptyGridN(SIZE));
     const [winner, setWinner] = useState<string | null>(null);
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
@@ -105,6 +108,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             r.map((cell, cellIndex) => (rowIndex === row && cellIndex === col ? playerMarker : cell))
         );
         setBoard(updatedPlayerBoard);
+        playSound("move");
 
         const newWinner = checkWinner(updatedPlayerBoard, playerMarker, aiMarker);
         if (newWinner) {
@@ -136,6 +140,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 r.map((cell, cellIndex) => (rowIndex === aiRow && cellIndex === aiCol ? aiMarker : cell))
             );
             setBoard(updatedBoardAfterAI);
+            playSound("reply");
             setIsAiTurn(false);
 
             const winnerAfterAI = checkWinner(updatedBoardAfterAI, playerMarker, aiMarker);
@@ -175,11 +180,11 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     const scoreBoard = (
         <ScoreBoard>
-            <ScoreName>🤖 ШІ</ScoreName>
+            <ScoreName>{t("ai")}</ScoreName>
             <ScoreValue>{score.ai}</ScoreValue>
             <ScoreDivider>—</ScoreDivider>
             <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? "Гравець"}</ScoreName>
+            <ScoreName>{humanName ?? t("player")}</ScoreName>
         </ScoreBoard>
     );
 
@@ -189,7 +194,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result={winner === "X" ? "win" : "lose"} onClick={() => setShowResultPopup(false)}>
-                        {winner === "X" ? "You Win!" : "AI Wins!"}
+                        {winner === "X" ? t("resultWin") : t("resultLose")}
                     </Popup>
                 </>
             )}
@@ -198,7 +203,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 <>
                     <Overlay onClick={() => setShowResultPopup(false)} />
                     <Popup $result="draw" onClick={(e) => { e.stopPropagation(); setShowResultPopup(false); }}>
-                        No one wins
+                        {t("resultDraw")}
                     </Popup>
                 </>
             )}
@@ -226,8 +231,8 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 </BoardColumn>
 
                 <ButtonContainer>
-                    <Button onClick={restartGame} aria-label="Restart">
-                        <ControlIcon src={assetUrl("images/reload.png")} alt="Restart" />
+                    <Button onClick={restartGame} aria-label={t("restart")}>
+                        <ControlIcon src={assetUrl("images/reload.png")} alt="" />
                     </Button>
                     <ButtonWithTooltip>
                         <Button
@@ -235,9 +240,9 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                 trackEvent("select_mode", { mode: "easy" });
                                 setGameMode("traditional");
                             }}
-                            aria-label="Easy"
+                            aria-label={t("modeClassic")}
                         >
-                            <ControlIcon src={assetUrl("images/traditional.png")} alt="Easy" />
+                            <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
                         </Button>
                         <Tooltip>3×3</Tooltip>
                     </ButtonWithTooltip>
@@ -247,9 +252,9 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                 trackEvent("select_mode", { mode: "five" });
                                 setGameMode("five");
                             }}
-                            aria-label="5x5"
+                            aria-label={t("modeFive")}
                         >
-                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="5x5" />
+                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
                         </Button>
                         <Tooltip>5×5</Tooltip>
                     </ButtonWithTooltip>
@@ -259,17 +264,17 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                 trackEvent("select_mode", { mode: "hard" });
                                 setGameMode("difficult");
                             }}
-                            aria-label="Hard"
+                            aria-label={t("modeHard")}
                         >
-                            <ControlIcon src={assetUrl("images/difficult.png")} alt="Hard" />
+                            <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
                         </Button>
-                        <Tooltip>Hard</Tooltip>
+                        <Tooltip>{t("tooltipHard")}</Tooltip>
                     </ButtonWithTooltip>
                     <ButtonWithTooltip>
-                        <Button onClick={handleFriendClick} aria-label="Play with a friend">
-                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="Play with a friend" />
+                        <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
+                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
                         </Button>
-                        <Tooltip>Friend</Tooltip>
+                        <Tooltip>{t("tooltipFriend")}</Tooltip>
                     </ButtonWithTooltip>
                 </ButtonContainer>
 

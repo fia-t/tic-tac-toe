@@ -71,7 +71,21 @@ npm run game:typecheck
 
 - **`crazygames.ts`** - `window.CrazyGames.SDK` (HTML5 v2). https://docs.crazygames.com/sdk/html5-v2/
 - **`poki.ts`** - `window.PokiSDK`. https://sdk.poki.com/html5
-- **`none.ts`** - портал / itch.io: реклами з SDK немає (на порталі її показує сам
+- **`qsplay.ts`** - портал play.quartsoft.com, QSPlay SDK (`https://sdk.quartsoft.com/v1/sdk.js`).
+  https://docs-dev.quartsoft.com/sdk/intro. Обовʼязкові loading/gameplay-виклики йдуть через
+  `lifecycle.ts` (без дублів і перекриттів, gameplayStop при прихованій вкладці);
+  `progress.ts` - статистика в `data` (ключ `stats`) + `reportPlayerLevel(перемоги)`;
+  інвайти "Гри з другом" - `game.inviteLink({ roomId })` / `getInviteParams()`;
+  `setGameContext` - режим/результат для звітів гравців.
+  Перевірка локально: `npm run game:dev`, відкрити з `?sdk-mock=1&sdk-debug=1`
+  (інвайт: `&sdk-mock-invite=<base64url з inviteLink>`, вхід: `QSPlaySDK.__mock.login()` у консолі).
+  Мова: `game.getConfig().locale` + `addLocaleListener` -> `lib/i18n.ts` (uk/en, решта -> en).
+- **Локалізація** - `lib/i18n.ts`: словники uk/en, `useT()` у компонентах. Сайт завжди uk,
+  standalone-білд - мова браузера, портал - мова порталу. Для en імена гравців з
+  `DEFAULT_NAMES_EN` (імена в адмінці українські).
+- **Звук** - `lib/sound.ts`: синтез WebAudio (без файлів), кнопка `SoundToggle` (вибір у
+  localStorage `ttt-muted`), глушиться у фоновій вкладці та на паузі/рекламі порталу.
+- **`none.ts`** - itch.io: реклами з SDK немає (на порталі її показує сам
   портал через `PortalGameBridge`), `showRewardedAd()` одразу повертає `true`.
 
 Перед сабмітом на агрегатор звірте сигнатури SDK з актуальною документацією.
