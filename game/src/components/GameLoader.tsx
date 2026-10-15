@@ -1,23 +1,29 @@
 "use client";
 import React from "react";
 import styled, { keyframes } from "styled-components";
-import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
 
-// Тематичний лоадер (замість сірого спінера): логотип злегка підстрибує, під ним по черзі
-// "ставляться" хрестик, нулик, хрестик - як перші ходи партії - і підпис "Завантаження...".
+// Тематичний лоадер (замість сірого спінера): маленьке поле 3×3, на якому по черзі
+// "ставляться" хрестики й нулики - як ходи партії, - потім поле очищається й усе по колу.
+// Під полем - підпис "Завантаження...".
 
-const bob = keyframes`
-    0%, 100% { transform: translateY(0) rotate(-3deg); }
-    50% { transform: translateY(-8px) rotate(3deg); }
-`;
+// Ходи по клітинках 0-8 (зліва направо, згори вниз): хрестик, нулик, хрестик...
+const MOVES = [4, 0, 2, 6, 3];
+const CYCLE = 3.2;
+const STEP = 0.35;
 
-const place = keyframes`
-    0%, 15% { opacity: 0; transform: scale(0.3); }
-    30% { opacity: 1; transform: scale(1.15); }
-    40%, 80% { opacity: 1; transform: scale(1); }
-    100% { opacity: 0; transform: scale(0.8); }
-`;
+// Фішка з'являється у свою чергу, тримається до кінця циклу й зникає разом з усіма.
+const place = (index: number) => {
+    const at = ((index * STEP) / CYCLE) * 100;
+    return keyframes`
+        0%, ${at}% { opacity: 0; transform: scale(0.3); }
+        ${at + 5}% { opacity: 1; transform: scale(1.15); }
+        ${at + 9}%, 86% { opacity: 1; transform: scale(1); }
+        96%, 100% { opacity: 0; transform: scale(0.8); }
+    `;
+};
+
+const PLACE = MOVES.map((_, i) => place(i));
 
 const Wrap = styled.div`
     display: flex;
@@ -31,14 +37,7 @@ const Wrap = styled.div`
     font-weight: 800;
     font-size: 15px;
 
-    img {
-        width: 96px;
-        height: 96px;
-        animation: ${bob} 1.6s ease-in-out infinite;
-    }
-
     @media (prefers-reduced-motion: reduce) {
-        img,
         svg {
             animation: none !important;
             opacity: 1 !important;
@@ -46,27 +45,30 @@ const Wrap = styled.div`
     }
 `;
 
-const Pieces = styled.div`
-    display: flex;
-    gap: 10px;
-    padding: 8px 12px;
+const Board = styled.div`
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    grid-template-rows: repeat(3, 34px);
+    gap: 5px;
+    padding: 8px;
     border-radius: 16px;
-    background: rgba(255, 246, 230, 0.7);
-    box-shadow: inset 0 -3px 0 #ebcb98;
+    background: #f6d39e;
+    box-shadow: inset 0 -4px 0 #ddae6b, inset 0 3px 0 #ffebcb, 0 8px 16px rgba(120, 80, 30, 0.18);
+`;
+
+const Cell = styled.div<{ $order: number }>`
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    background: #fbe7c6;
+    box-shadow: inset 0 2px 4px rgba(160, 105, 40, 0.28);
 
     svg {
-        width: 28px;
-        height: 28px;
+        width: 24px;
+        height: 24px;
         opacity: 0;
-        animation: ${place} 1.8s ease-out infinite;
-    }
-
-    svg:nth-child(2) {
-        animation-delay: 0.3s;
-    }
-
-    svg:nth-child(3) {
-        animation-delay: 0.6s;
+        animation: ${({ $order }) => ($order >= 0 ? PLACE[$order] : "none")} ${CYCLE}s ease-out infinite;
     }
 `;
 
@@ -86,12 +88,16 @@ export const GameLoader: React.FC<{ label?: string }> = ({ label }) => {
     const t = useT();
     return (
         <Wrap role="status" aria-live="polite">
-            <img src={assetUrl("images/logo.png")} alt="" />
-            <Pieces aria-hidden="true">
-                <Cross />
-                <Ring />
-                <Cross />
-            </Pieces>
+            <Board aria-hidden="true">
+                {Array.from({ length: 9 }, (_, cell) => {
+                    const order = MOVES.indexOf(cell);
+                    return (
+                        <Cell key={cell} $order={order}>
+                            {order >= 0 && (order % 2 === 0 ? <Cross /> : <Ring />)}
+                        </Cell>
+                    );
+                })}
+            </Board>
             <span>{label ?? t("loading")}</span>
         </Wrap>
     );
