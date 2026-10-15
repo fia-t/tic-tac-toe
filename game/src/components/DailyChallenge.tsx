@@ -13,6 +13,7 @@ import {
     currentStreak,
     endDailyRun,
     dayNumber,
+    dayOfYear,
     getDailyRun,
     nextRunId,
     recordDailyResult,
@@ -119,7 +120,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     const shareRef = useRef<HTMLTextAreaElement>(null);
 
     const today = todayKey();
-    const day = dayNumber(today);
+    const day = dayOfYear(today);
     const template = templateForDay(today);
     const todayResult = state.results[today];
     const streak = currentStreak(state);
@@ -177,6 +178,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     const text = shown
         ? shareText(day, shown, Math.max(streak, 1), link, {
               title: `Tic Tac Toe · ${t("dailyTitle")}`,
+              day: t("dailyDayWord"),
               moves: t("dailyMoves"),
               streak: t("dailyStreakShort"),
           })

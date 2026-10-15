@@ -9,7 +9,7 @@ import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
-import { endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
+import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 
 // Екран партії проти бота (як у прототипі), спільний для 3×3, 5×5 і гіга-поля:
@@ -468,7 +468,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const goal = run
         ? run.kind === "campaign"
             ? `${t("campaignLevel", { n: String((run.level ?? 0) + 1) })}: ${t(`level_${run.template.id}` as Parameters<typeof t>[0])}`
-            : `${t("dailyBadge", { n: String(run.day) })}: ${t(`daily_${run.template.id}` as Parameters<typeof t>[0])}`
+            : `${t("dailyBadge", { n: String(dayOfYear()) })}: ${t(`daily_${run.template.id}` as Parameters<typeof t>[0])}`
         : "";
 
     const boosterButton = (kind: BoosterKind, enabled: boolean, onUse: () => void) => {

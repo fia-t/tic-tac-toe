@@ -11,7 +11,7 @@ import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread, TwoCol } f
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
-import { currentStreak, dayNumber, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
+import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
 import { CAMPAIGN_LEVELS, currentLevelIndex, totalStars, useCampaign } from "@game/lib/campaign";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
@@ -182,10 +182,38 @@ const ModScroll = styled(ModRow)`
     }
 `;
 
-const DayNumber = styled.div`
-    font: 800 46px/0.9 var(--font-heading);
-    color: #b32f1c;
-    font-variant-numeric: tabular-nums;
+// Листок календаря: "день" на червоній смужці і номер дня в році - виклик новий щодня.
+const DayTile = styled.div`
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 72px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #fffaf0;
+    box-shadow:
+        inset 0 -3px 0 #ebcb98,
+        0 4px 10px rgba(70, 40, 10, 0.12);
+
+    span {
+        width: 100%;
+        padding: 3px 0 2px;
+        background: #b32f1c;
+        color: #fff7e8;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    b {
+        padding: 4px 0 8px;
+        font: 800 28px/1 var(--font-heading);
+        color: #b32f1c;
+        font-variant-numeric: tabular-nums;
+    }
 `;
 
 const flash = keyframes`
@@ -379,17 +407,22 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             </Card>
 
             <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
-                <Spread>
-                    <Eyebrow>{t("homeDaily")}</Eyebrow>
+                {/* Назва картки - "Виклик дня" заголовком, як "Швидка гра" й "Онлайн"; під нею листок
+                    календаря з днем року і саме завдання. */}
+                <Spread style={{ flexWrap: "nowrap" }}>
+                    <h2 id="home-daily">{t("homeDaily")}</h2>
                     <StreakPill>
                         <Flame />
                         {t("homeStreakDays", { n: String(streak) })}
                     </StreakPill>
                 </Spread>
-                <Row style={{ alignItems: "flex-end", gap: 14, flexWrap: "nowrap" }}>
-                    <DayNumber>#{dayNumber(today)}</DayNumber>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                        <h3 id="home-daily">{t(`daily_${template.id}` as Parameters<typeof t>[0])}</h3>
+                <Row style={{ alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
+                    <DayTile role="img" aria-label={t("dailyBadge", { n: String(dayOfYear(today)) })}>
+                        <span>{t("dailyDayWord")}</span>
+                        <b>{dayOfYear(today)}</b>
+                    </DayTile>
+                    <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                        <h3>{t(`daily_${template.id}` as Parameters<typeof t>[0])}</h3>
                         <Muted>{dailyRules}</Muted>
                     </div>
                 </Row>

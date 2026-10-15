@@ -75,6 +75,13 @@ const yesterdayKey = (): string => {
 export const dayNumber = (key = todayKey()): number =>
     Math.round((Date.parse(key) - Date.parse("2026-01-01")) / 86_400_000) + 1;
 
+// Номер дня в році (1 січня = 1) - так виклик підписаний для гравця ("День 288"), щодня новий.
+// dayNumber вище лишається внутрішнім номером для ротації викликів і аналітики.
+export const dayOfYear = (key = todayKey()): number => {
+    const year = key.slice(0, 4);
+    return Math.round((Date.parse(key) - Date.parse(`${year}-01-01`)) / 86_400_000) + 1;
+};
+
 export const templateForDay = (key = todayKey()): DailyTemplate => {
     const day = dayNumber(key);
     const pool = day < MODIFIER_ROTATION_FROM_DAY ? DAILY_TEMPLATES.slice(0, LEGACY_TEMPLATE_COUNT) : DAILY_TEMPLATES;
@@ -229,11 +236,11 @@ export const useDailyRun = (): DailyRun | null =>
 
 const EMOJI: Record<string, string> = { X: "🟥", O: "🟦", D: "🟨", ".": "⬜" };
 
-export const shareText = (day: number, result: DailyResult, streak: number, link: string, labels: { title: string; moves: string; streak: string }): string => {
+export const shareText = (day: number, result: DailyResult, streak: number, link: string, labels: { title: string; day: string; moves: string; streak: string }): string => {
     const stars = "⭐".repeat(result.stars) + "☆".repeat(3 - result.stars);
     const grid = result.grid
         .split("/")
         .map((row) => [...row].map((c) => EMOJI[c] ?? "⬜").join(""))
         .join("\n");
-    return `${labels.title} #${day}\n${stars} · ${labels.moves}: ${result.moves} · ${labels.streak}: ${streak}\n${grid}\n${link}`;
+    return `${labels.title} · ${labels.day} ${day}\n${stars} · ${labels.moves}: ${result.moves} · ${labels.streak}: ${streak}\n${grid}\n${link}`;
 };
