@@ -2,7 +2,6 @@
 import { IconClose } from "@game/components/GameIcons";
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
@@ -25,27 +24,24 @@ import {
     useDailyState,
 } from "@game/lib/daily";
 import { useT } from "@game/lib/i18n";
-import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
+import { closePanel, useOpenPanel } from "@game/lib/ui";
 import { dailyReward } from "@game/lib/wallet";
 
-// Кнопка виклику дня - у лівому верхньому куті, дзеркально до шестерні налаштувань.
-const DailyButtonEl = styled.button`
-    ${gameButtonCss("sm")}
-    gap: 6px;
-`;
+// Виклик дня: картка на головній запускає партію сама (startDailyChallenge); тут - вікна
+// результату й "Поділитися" (openPanel("daily")). Серія - вогник у верхньому ряду (TopBar).
 
-// Червона крапка "ще не грав сьогодні" - у кутку кнопки: absolute рахується від внутрішнього
-// краю бортика (border-image), тож зсув назовні на його товщину (--gb-c).
-const Dot = styled.span`
-    position: absolute;
-    top: calc(-1 * var(--gb-c, 13px) - 3px);
-    right: calc(-1 * var(--gb-c, 13px) - 3px);
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #e8452f;
-    box-shadow: 0 0 0 2px #fff4e2;
-`;
+// Старт виклику дня: рівень бота й модифікатор задає виклик; дошку скидає TicTacToe за id запуску.
+export const startDailyChallenge = (onStart: (mode: DailyMode) => void): void => {
+    const today = todayKey();
+    const template = templateForDay(today);
+    const day = dayNumber(today);
+    closePanel();
+    setDifficultyOverride(template.difficulty);
+    setModifierOverride(template.modifier ?? null);
+    setDailyRun({ kind: "daily", id: nextRunId(), template, day, finished: false });
+    trackEvent("daily_started", { day, template: template.id });
+    onStart(template.mode);
+};
 
 const Stars = styled.div`
     display: flex;
@@ -167,12 +163,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
 
     const start = () => {
         setView(null);
-        closePanel();
-        setDifficultyOverride(template.difficulty);
-        setModifierOverride(template.modifier ?? null);
-        setDailyRun({ kind: "daily", id: nextRunId(), template, day, finished: false });
-        trackEvent("daily_started", { day, template: template.id });
-        onStart(template.mode);
+        startDailyChallenge(onStart);
     };
 
     const closeAll = () => {
@@ -209,19 +200,6 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
 
     return (
         <>
-            <DailyButtonEl
-                type="button"
-                onClick={() => openPanel("daily")}
-                aria-label={`${t("dailyBadge", { n: String(day) })}${todayResult ? "" : `, ${t("dailyNotPlayed")}`}`}
-                title={t("dailyTitle")}
-            >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#e8662f" aria-hidden="true">
-                    <path d="M12 2c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z" />
-                </svg>
-                <span>{streak}</span>
-                {!todayResult && <Dot aria-hidden="true" />}
-            </DailyButtonEl>
-
             {view && (
                 <>
                     <Overlay onClick={closeAll} style={{ zIndex: 1600 }} />

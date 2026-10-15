@@ -2,29 +2,15 @@
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import {
-    GameLayout,
-    BoardColumn,
-    ButtonContainer,
-    Button,
-    ControlIcon,
-    ButtonWithTooltip,
-    Tooltip,
-    ScoreBoard,
-    ScoreStatus,
-    ScoreName,
-    ScoreValue,
-    ScoreDivider,
-} from "@game/components/gameStyles";
+import { hintedCell } from "@game/components/gameStyles";
 import { OnlineBoardContainer, OnlineCell } from "@game/components/onlineStyles";
-import { FriendGameModal } from "@game/components/FriendGameModal";
+import { GameScreen } from "@game/components/GameScreen";
 import { GamePiece } from "@game/components/GamePiece";
 import { trackEvent } from "@game/lib/firebase";
 import { Theme } from "@game/lib/themes";
 import { logGameResult } from "@game/lib/gameLog";
 import {
     Grid3,
-    createEmptyGridN,
     getGenericWinner,
     isGridFull,
     findWinningCellGeneric,
@@ -33,15 +19,13 @@ import {
     encodeGrid,
     winningIndexSet,
 } from "@game/components/gameLogic";
-import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterMoveN, randomFreeCell } from "@game/components/aiLevels";
-import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
 import { EMPTY_HISTORY, ModHistory, STONE, TurnResult, createBoard, playTurn, randomLegalCell } from "@game/components/modEngine";
 import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
-import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
+import { useMoveTimer } from "@game/components/MoveTimer";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
 const StoneTile = styled.div`
@@ -55,12 +39,13 @@ const StoneTile = styled.div`
         0 4px 6px rgba(0, 0, 0, 0.2);
 `;
 
-// 5x5 - новий режим (не перейменування наявних): поле більше за класичне, тож
-// перемога - 4 фішки поспіль, а не 3 (інакше на такому полі майже завжди
-// виграє перший гравець за 2-3 ходи). Ділить генеричну win-логіку з gameLogic.ts
-// (та сама, що дозволяє довільний winLength) і той самий параметризований
-// $size-борд, що й онлайн-режими (onlineStyles.ts) - замість ще одного
-// захардкодженого 3x3 CSS-грида.
+const Cell = styled(OnlineCell)<{ $hint: boolean }>`
+    ${({ $hint }) => ($hint ? hintedCell : "")}
+`;
+
+// 5x5 - поле більше за класичне, тож перемога - 4 фішки поспіль, а не 3 (інакше на такому
+// полі майже завжди виграє перший гравець за 2-3 ходи). Ділить генеричну win-логіку з
+// gameLogic.ts і той самий параметризований $size-борд, що й онлайн-режими (onlineStyles.ts).
 const SIZE = 5;
 const WIN_LENGTH = 4;
 
@@ -68,7 +53,6 @@ type FiveByFiveProps = {
     setGameMode: (mode: "traditional" | "difficult" | "five") => void;
     theme: Theme;
     themeReady: boolean;
-    onRestart: () => void;
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
@@ -105,11 +89,12 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
     return null;
 };
 
+type Snapshot = { board: Grid3; hist: ModHistory };
+
 export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     setGameMode,
     theme,
     themeReady,
-    onRestart,
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
@@ -126,8 +111,11 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
     const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
-    const [isFriendModalOpen, setIsFriendModalOpen] = useState<boolean>(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });
+    // Бустери: позиції перед ходами гравця і клітинка-підказка; round - номер партії.
+    const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
+    const [hintCell, setHintCell] = useState<number | null>(null);
+    const [round, setRound] = useState(0);
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -146,6 +134,11 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const rules = { gravity: modifier === "gravity", misere: modifier === "misere" };
     const ruleMode = rules.gravity || rules.misere || modifier === "stones";
     const markers = { player: playerMarker, ai: aiMarker };
+
+    const pushUndo = () => {
+        setUndoStack((stack) => [...stack, { board, hist }]);
+        setHintCell(null);
+    };
 
     const finishRuleGame = (turn: TurnResult) => {
         const outcome = turn.outcome?.winner ?? "draw";
@@ -166,6 +159,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const handleRuleClick = (row: number, col: number) => {
         const turn = playTurn(board, hist, rules, WIN_LENGTH, markers, "X", { index: row * SIZE + col });
         if (!turn) return;
+        pushUndo();
         setBoard(turn.grid);
         setHist(turn.hist);
         playSound("move");
@@ -195,6 +189,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         const updatedPlayerBoard = board.map((r, rowIndex) =>
             r.map((cell, cellIndex) => (rowIndex === row && cellIndex === col ? playerMarker : cell))
         );
+        pushUndo();
         setBoard(updatedPlayerBoard);
         playSound("move");
 
@@ -266,37 +261,45 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         setIsNoWinner(false);
         setIsAiTurn(false);
         setShowResultPopup(false);
-        onRestart();
+        setUndoStack([]);
+        setHintCell(null);
+        setRound((r) => r + 1);
         trackEvent("game_restart", { mode: "five" });
     };
 
-    const handleFriendClick = async () => {
-        trackEvent("friend_modal_open", { from: "five" });
-        if (onBeforeFriendOpen) {
-            const allowed = await onBeforeFriendOpen();
-            if (!allowed) return;
+    // Бустер "Скасувати хід": позиція перед останнім ходом гравця (разом із відповіддю бота).
+    const undoMove = () => {
+        const last = undoStack[undoStack.length - 1];
+        if (!last) return;
+        setUndoStack((stack) => stack.slice(0, -1));
+        setBoard(last.board);
+        setHist(last.hist);
+        setHintCell(null);
+    };
+
+    // Бустер "Підказка": найкращий хід гравця (як порадив би Майстер).
+    const showHint = () => {
+        if (ruleMode) {
+            const turn = playTurn(board, hist, rules, WIN_LENGTH, markers, "X", { difficulty: "master" });
+            if (!turn) return;
+            const flat = board.flat();
+            const index = turn.grid.flat().findIndex((cell, i) => cell === playerMarker && flat[i] !== playerMarker);
+            setHintCell(index >= 0 ? index : null);
+            return;
         }
-        setIsFriendModalOpen(true);
+        const cell = pickMasterMoveN(board, playerMarker, aiMarker, WIN_LENGTH);
+        setHintCell(cell ? cell[0] * SIZE + cell[1] : null);
     };
 
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
         : isAiTurn ? t("aiThinking") : t("yourTurn");
-    const scoreBoard = (
-        <ScoreBoard>
-            <ScoreName>{t("ai")}</ScoreName>
-            <ScoreValue>{score.ai}</ScoreValue>
-            <ScoreDivider>—</ScoreDivider>
-            <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? t("player")}</ScoreName>
-            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
-        </ScoreBoard>
-    );
 
     const winningCells = winner ? winningIndexSet(board, WIN_LENGTH) : undefined;
+    const playerTurn = !isGameOver && !isAiTurn;
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <>
             {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
             {(winner || isNoWinner) && showResultPopup && !hideResultPopup && (
                 <ResultPopup
@@ -308,17 +311,34 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 />
             )}
 
-            <GameLayout>
-                <BoardColumn>
-                    <DifficultyPicker mode="five" leading={scoreBoard} />
-                    {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
-                    <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={480}>
+            <GameScreen
+                mode="five"
+                onSetMode={setGameMode}
+                onRestart={restartGame}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
+                score={score}
+                humanName={humanName}
+                status={statusText}
+                over={isGameOver}
+                timer={modifier === "timer" ? timerLeft : null}
+                onShowResult={() => setShowResultPopup(true)}
+                boosters={{
+                    canUndo: playerTurn && undoStack.length > 0,
+                    canHint: playerTurn,
+                    onUndo: undoMove,
+                    onHint: showHint,
+                    resetKey: round,
+                }}
+                board={
+                    <OnlineBoardContainer $size={SIZE} $backgroundUrl={theme.backgroundUrl} $maxWidth={628}>
                         {board.flat().map((cell, index) => {
                             const row = Math.floor(index / SIZE);
                             const col = index % SIZE;
                             return (
-                                <OnlineCell
+                                <Cell
                                     key={index}
+                                    $hint={hintCell === index}
                                     $disabled={!themeReady || isGameOver || isAiTurn || (cell !== null && !rules.gravity)}
                                     onClick={() => handleCellClick(row, col)}
                                 >
@@ -327,69 +347,13 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                     ) : (
                                         cell && <GamePiece src={cell} winning={winningCells?.has(index)} />
                                     )}
-                                </OnlineCell>
+                                </Cell>
                             );
                         })}
                     </OnlineBoardContainer>
-                </BoardColumn>
-
-                <ButtonContainer>
-                    <Button onClick={restartGame} aria-label={t("restart")}>
-                        <ControlIcon src={assetUrl("images/reload.png")} alt="" />
-                    </Button>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "easy" });
-                                setGameMode("traditional");
-                            }}
-                            aria-label={t("modeClassic")}
-                        >
-                            <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
-                        </Button>
-                        <Tooltip>3×3</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "five" });
-                                setGameMode("five");
-                            }}
-                            aria-label={t("modeFive")}
-                        >
-                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
-                        </Button>
-                        <Tooltip>5×5</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "hard" });
-                                setGameMode("difficult");
-                            }}
-                            aria-label={t("modeHard")}
-                        >
-                            <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
-                        </Button>
-                        <Tooltip>{t("tooltipHard")}</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
-                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
-                        </Button>
-                        <Tooltip>{t("tooltipFriend")}</Tooltip>
-                    </ButtonWithTooltip>
-                </ButtonContainer>
-
-                {isFriendModalOpen && (
-                    <FriendGameModal
-                        onClose={() => setIsFriendModalOpen(false)}
-                        onRoomReady={onRoomReady}
-                        defaultMode="5x5"
-                    />
-                )}
-            </GameLayout>
-        </div>
+                }
+            />
+        </>
     );
 };
 

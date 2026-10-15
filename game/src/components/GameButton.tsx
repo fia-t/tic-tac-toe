@@ -12,7 +12,8 @@ export type GameButtonSize = "xs" | "sm" | "md" | "lg" | "xl";
 // Кольори - та сама еталонна форма, перефарбована зі збереженням світлотіні:
 // default - кремова (звичайні кнопки, #49301F), primary - глибока бірюзова #176B78 ("Грати", головна дія),
 // wood - горіхова #80532F (вибраний варіант: рівень, модифікатор, вкладка), danger - червона, amber - золота.
-export type GameButtonTone = "default" | "primary" | "wood" | "danger" | "amber";
+// green - зелена (рівень "Легкий" у "світлофорі" складності).
+export type GameButtonTone = "default" | "primary" | "wood" | "danger" | "amber" | "green";
 
 // h - висота, c - товщина кута (скільки пікселів займає заокруглений бортик), fs - шрифт,
 // px - горизонтальний відступ тексту від краю кнопки.
@@ -36,6 +37,7 @@ const TONES: Record<GameButtonTone, { img: string; fill: string; color: string; 
     wood: { img: "button-base-wood.png", fill: "#815532", color: "#fff7e8", shadow: "0 1px 1px rgba(50, 25, 5, 0.45)" },
     danger: { img: "button-base-red.png", fill: "#cc442d", color: "#ffffff", shadow: "0 1px 1px rgba(90, 20, 5, 0.45)" },
     amber: { img: "button-base-amber.png", fill: "#f3b638", color: "#4a2c0c", shadow: "0 1px 0 rgba(255, 240, 200, 0.6)" },
+    green: { img: "button-base-green.png", fill: "#3d9548", color: "#fff7e8", shadow: "0 1px 1px rgba(10, 50, 15, 0.45)" },
 };
 
 // Колір кнопки - картинка-основа плюс колір тексту. Можна підставляти в будь-який styled-компонент.
@@ -89,6 +91,9 @@ export const gameButtonFace = css`
     }
     &[data-tone="amber"] {
         ${buttonTone("amber")}
+    }
+    &[data-tone="green"] {
+        ${buttonTone("green")}
     }
 `;
 

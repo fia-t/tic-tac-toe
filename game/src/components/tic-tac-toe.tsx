@@ -1,8 +1,9 @@
 "use client";
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import styled, { createGlobalStyle } from "styled-components";
 import { Board } from "./board";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
-import { ScoreBoard, ScoreStatus, ScoreName, ScoreValue, ScoreDivider, ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
+import { ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -19,27 +20,24 @@ import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
 import { CLASSIC_THEME, Theme, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
 import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
-import { SkinShop } from "@game/components/SkinShop";
-import { HudLeft } from "@game/components/gameStyles";
-import { CampaignMap } from "@game/components/CampaignMap";
+import { ShopPage } from "@game/components/SkinShop";
+import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeScreen } from "@game/components/HomeScreen";
-import { ProfilePanels } from "@game/components/ProfilePanels";
-import { BrandButton } from "@game/components/gameStyles";
-import { assetUrl } from "@game/lib/assets";
-import { BottomNav } from "@game/components/BottomNav";
+import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
+import { TopBar } from "@game/components/TopBar";
+import { BottomNav, NavItem } from "@game/components/BottomNav";
+import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
-import { FirstMoveHint } from "@game/components/FirstMoveHint";
-import { setScreenState } from "@game/lib/ui";
+import { closePanel, setScreenState, useOpenPanel } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
-import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
 import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
-import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
+import { useMoveTimer } from "@game/components/MoveTimer";
 import { useDailyRun } from "@game/lib/daily";
 import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
@@ -74,6 +72,34 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
     return null;
 };
 
+// Шапка меню гри - у потоці сторінки (TopBar), тож верхній відступ Container під кнопку в куті
+// не потрібен; бічні поля - як у прототипі.
+const ShellVars = createGlobalStyle`
+    :root {
+        --shell-top: 0px;
+        --shell-x: max(16px, env(safe-area-inset-left, 0px));
+    }
+`;
+
+// Одна колонка гри до 760px (як у прототипі): шапка, під нею - головна, сторінка розділу або поле.
+const AppColumn = styled.div`
+    &&& {
+        margin-block: 0;
+    }
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 760px;
+    min-height: 100%;
+    margin: 0 auto;
+    color: #4a2c0c;
+    font: 500 15px/1.45 var(--font-body);
+`;
+
+// Розділи меню - окремі екрани (як у прототипі); "game" - саме поле.
+type Screen = "home" | "game" | Exclude<NavItem, "home">;
+const PAGES: Screen[] = ["campaign", "shop", "awards", "profile"];
+
 type TicTacToeProps = {
     // Куди перейти після створення/приєднання до онлайн-кімнати "Гра з другом" - на сайті
     // це router.push(`/play/${roomId}`), у standalone-білді для агрегаторів - локальний стан.
@@ -89,9 +115,12 @@ type TicTacToeProps = {
     onReady?: () => void;
     // Посилання для шерингу результату виклику дня (портал: game.shareLink() SDK).
     getShareLink?: () => Promise<string | null>;
-    // Rewarded-реклама агрегатора - для примірки скіна на 24 год (див. SkinShop).
+    // Rewarded-реклама агрегатора - примірка скіна на 24 год, бустери після безкоштовної спроби,
+    // подвоєння монет.
     onRewardedAd?: () => Promise<boolean>;
 };
+
+type Snapshot = { board: Grid3; hist: ModHistory };
 
 export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLink, onRewardedAd }: TicTacToeProps) => {
     const t = useT();
@@ -108,12 +137,20 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const theme: Theme = availableThemes.find((item) => item.id === equippedSkinId) ?? CLASSIC_THEME;
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
-    // Гра відкривається на головному меню; "game" - саме поле.
-    const [screen, setScreen] = useState<"home" | "game">("home");
+    // Бустери 3×3: позиції перед ходами гравця (для "Скасувати хід") і клітинка-підказка.
+    const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
+    const [hintCell, setHintCell] = useState<number | null>(null);
+    // Номер партії 3×3 - нова партія знову дає безкоштовні бустери.
+    const [round, setRound] = useState(0);
+    // Гра відкривається на головному меню; "game" - саме поле, решта - розділи нижнього меню.
+    const [screen, setScreen] = useState<Screen>("home");
+    // Вогник серії в шапці - прокрутити головну до картки виклику дня.
+    const [focusDaily, setFocusDaily] = useState(0);
+    const topRef = useRef<HTMLDivElement>(null);
     const profile = useProfile();
     const profileName = profile.name;
     // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
-    // шукати, як почати гру. Меню - кнопка "Додому" зліва вгорі.
+    // шукати, як почати гру. Меню - логотип у шапці.
     const isNewPlayer = profile.stats.games === 0;
     // Перша партія новачка - на рівні "Легкий" (якщо він ще сам не обирав рівень),
     // щоб перша гра частіше закінчувалась перемогою.
@@ -124,35 +161,60 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     }, []);
     const shownName = profileName ?? humanName;
 
-    // Облік часу гри на порталі: геймплей - лише на полі, меню - пауза (App слухає ці події).
+    // Облік часу гри на порталі: геймплей - лише на полі, меню й розділи - пауза (App слухає ці події).
+    const onGameScreen = screen === "game";
     useEffect(() => {
-        setScreenState(screen);
-        trackEvent(screen === "game" ? "open_game" : "open_menu");
+        setScreenState(onGameScreen ? "game" : "home");
+        trackEvent(onGameScreen ? "open_game" : "open_menu");
+    }, [onGameScreen]);
+
+    // Новий екран - з початку сторінки.
+    useEffect(() => {
+        topRef.current?.scrollIntoView({ block: "start" });
     }, [screen]);
+
+    // Кнопки, що відкривають розділи (зірки й монети в шапці, "До карти" тощо), кличуть
+    // openPanel - розділи тут окремі екрани, тож панель перемикає екран.
+    const panel = useOpenPanel();
+    useEffect(() => {
+        if (!panel || !PAGES.includes(panel as Screen)) return;
+        closePanel();
+        endDailyRun();
+        setScreen(panel as Screen);
+    }, [panel]);
+
     const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
     const difficulty = useDifficulty();
     const modifierChoice = useModifierChoice();
     const modifier3 = effectiveModifier("traditional", modifierChoice);
     const dailyRun = useDailyRun();
     // Старт і кінець виклику дня - завжди чиста дошка (у т.ч. для 5×5/Ultimate через key),
-    // навіть якщо рівень ШІ виклику збігається з обраним гравцем. Завершення партії
+    // навіть якщо рівень бота виклику збігається з обраним гравцем. Завершення партії
     // виклику (finished) дошку НЕ скидає - щоб було видно фінальну позицію.
     const [runKey, setRunKey] = useState(0);
     const dailyActive = dailyRun !== null;
     const runId = dailyRun?.id ?? 0;
 
-    // Новий рівень ШІ - нова партія і новий рахунок (рахунок "проти Майстра" не
-    // змішується з рахунком проти легкого ШІ). 5×5/Ultimate скидаються через key нижче.
-    const prevDifficulty = useRef(difficulty);
-    useEffect(() => {
-        if (prevDifficulty.current === difficulty) return;
-        prevDifficulty.current = difficulty;
-        setBoard(createEmptyGrid());
+    // Нова партія 3×3: чиста (або задана) дошка, без бустерів і результату.
+    const resetRound = (grid: Grid3 = createEmptyGrid()) => {
+        setBoard(grid);
         setHist(EMPTY_HISTORY);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
         setShowResultPopup(false);
+        setUndoStack([]);
+        setHintCell(null);
+        setRound((r) => r + 1);
+    };
+
+    // Новий рівень бота - нова партія і новий рахунок (рахунок "проти Майстра" не
+    // змішується з рахунком проти легкого бота). 5×5/Ultimate скидаються через key нижче.
+    const prevDifficulty = useRef(difficulty);
+    useEffect(() => {
+        if (prevDifficulty.current === difficulty) return;
+        prevDifficulty.current = difficulty;
+        resetRound();
         setScore({ ai: 0, human: 0 });
     }, [difficulty]);
 
@@ -163,16 +225,11 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     useEffect(() => {
         if (prevModifier.current === settingsKey) return;
         prevModifier.current = settingsKey;
-        setBoard(createEmptyGrid());
-        setHist(EMPTY_HISTORY);
-        setWinner(null);
-        setIsNoWinner(false);
-        setIsAiTurn(false);
-        setShowResultPopup(false);
+        resetRound();
         setScore({ ai: 0, human: 0 });
     }, [settingsKey]);
 
-    // Старт виклику/рівня - останнім із ефектів скидання: зміна рівня ШІ чи модифікатора
+    // Старт виклику/рівня - останнім із ефектів скидання: зміна рівня бота чи модифікатора
     // в тому ж кадрі інакше стерла б стартову позицію головоломки.
     const prevRunId = useRef(runId);
     useEffect(() => {
@@ -183,21 +240,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         const grid = createEmptyGrid();
         preset?.X.forEach((i) => (grid[Math.floor(i / 3)][i % 3] = theme.xMarkerUrl));
         preset?.O.forEach((i) => (grid[Math.floor(i / 3)][i % 3] = theme.oMarkerUrl));
-        setBoard(grid);
-        setHist(EMPTY_HISTORY);
-        setWinner(null);
-        setIsNoWinner(false);
-        setIsAiTurn(false);
-        setShowResultPopup(false);
+        resetRound(grid);
         setRunKey((k) => k + 1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- скидаємо лише на новий старт
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- скидаємо лише на новий старт
     }, [runId]);
 
     // Модифікатор "таймер" для 3×3 (5×5 і Ultimate мають власні). Хук - до раннього
     // return нижче; сам випадковий хід підставляється пізніше через ref.
     const timeoutMoveRef = useRef<() => void>(() => {});
     const timerLeft = useMoveTimer(
-        gameMode === "traditional" && modifier3 === "timer" && themeReady && !isAiTurn && winner === null && !isNoWinner,
+        gameMode === "traditional" && onGameScreen && modifier3 === "timer" && themeReady && !isAiTurn && winner === null && !isNoWinner,
         board,
         TIMER_SECONDS,
         () => timeoutMoveRef.current()
@@ -217,18 +269,14 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     }, []);
 
     // Список активних тем завантажується один раз на все ігрове завантаження.
-    // Сама тема лишається сталою, поки триває партія - інакше вже виставлені
-    // фішки могли б лишитись зі старим скіном - але при рестарті (pickNewTheme)
-    // обирається наново з цього ж списку, без повторного походу у Firestore.
-    // До моменту завантаження дошка рендериться з DEFAULT_THEME і кліки
-    // ігноруються (themeReady нижче), щоб не вийшло гри з "напівзмішаними" скінами.
+    // До моменту завантаження замість дошки - спінер, кліки ігноруються (themeReady нижче),
+    // щоб не вийшло гри з "напівзмішаними" скінами.
     useEffect(() => {
         let cancelled = false;
         getActiveThemes().then(async (themes) => {
             if (cancelled) return;
-            // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) -
-            // рестарт (pickNewTheme) може вибрати будь-яку з них, і на той момент
-            // вона вже має бути в кеші браузера.
+            // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) - скін можна
+            // змінити в магазині, і на той момент картинки вже мають бути в кеші браузера.
             await preloadThemeImages([CLASSIC_THEME, ...themes]);
             if (cancelled) return;
             setAvailableThemes(themes);
@@ -243,25 +291,6 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Підсумок партії для вікна результату - до раннього return нижче (порядок хуків незмінний).
     const roundCells = useMemo(() => board.flat(), [board]);
     const roundSummary = useRoundSummary(roundCells, theme.xMarkerUrl);
-
-    // Поки тема ще не підвантажилась з Firestore, замість дошки з фейковим
-    // DEFAULT_THEME (фон/фішки, які за секунду підміняться на реальні) -
-    // показуємо нейтральний спінер. Це стосується всіх трьох режимів, бо
-    // gameMode завжди стартує з "traditional" ще до першого рендеру теми.
-    if (!themeReady) {
-        return (
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <ThemeLoadingBox>
-                    <Spinner />
-                </ThemeLoadingBox>
-            </div>
-        );
-    }
-
-    // Виключаємо поточну тему з вибірки, щоб рестарт ніколи не показував
-    // ту саму тему двічі поспіль (коли активних тем 2+).
-    // Раніше рестарт обирав випадкову тему; тепер тема - обраний гравцем скін, тож рестарт її не змінює.
-    const pickNewTheme = () => {};
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -299,9 +328,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         recordResult(result);
     };
 
+    // Позиція перед ходом гравця - для бустера "Скасувати хід".
+    const pushUndo = () => {
+        setUndoStack((stack) => [...stack, { board, hist }]);
+        setHintCell(null);
+    };
+
     const handleRuleClick = (row: number, col: number) => {
         const turn = playTurn(board, hist, rules3, 3, markers, "X", { index: row * 3 + col });
         if (!turn) return;
+        pushUndo();
         setBoard(turn.grid);
         setHist(turn.hist);
         playSound("move");
@@ -332,6 +368,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             )
         );
 
+        pushUndo();
         setBoard(updatedPlayerBoard);
         playSound("move");
 
@@ -353,7 +390,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             return;
         }
 
-        // Блокуємо клітинки на час "ходу" ШІ, щоб гравець не встиг клікнути двічі поспіль.
+        // Блокуємо клітинки на час "ходу" бота, щоб гравець не встиг клікнути двічі поспіль.
         setIsAiTurn(true);
         setTimeout(() => {
             const [computerRow, computerCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker, getDifficulty());
@@ -396,34 +433,39 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         handleOnClick(Math.floor(index / 3), index % 3);
     };
 
+    // Бустер "Скасувати хід": позиція перед останнім ходом гравця (разом із відповіддю бота).
+    const undoMove = () => {
+        const last = undoStack[undoStack.length - 1];
+        if (!last) return;
+        setUndoStack((stack) => stack.slice(0, -1));
+        setBoard(last.board);
+        setHist(last.hist);
+        setHintCell(null);
+    };
+
+    // Бустер "Підказка": найкращий хід гравця (як порадив би Майстер).
+    const showHint = () => {
+        if (ruleMode) {
+            const turn = playTurn(board, hist, rules3, 3, markers, "X", { difficulty: "master" });
+            if (!turn) return;
+            const index = turn.grid.flat().findIndex((cell, i) => cell === playerMarker && board.flat()[i] !== playerMarker);
+            setHintCell(index >= 0 ? index : null);
+            return;
+        }
+        const cell = pickMasterMove3(board, playerMarker, aiMarker);
+        setHintCell(cell ? cell[0] * 3 + cell[1] : null);
+    };
+
     const restartGame = () => {
-        setBoard(createEmptyGrid());
-        setHist(EMPTY_HISTORY);
-        setWinner(null);
-        setIsNoWinner(false);
-        setIsAiTurn(false);
-        setShowResultPopup(false);
-        pickNewTheme();
+        resetRound();
         trackEvent("game_restart", { mode: "easy" });
     };
 
-    // На відміну від DifficultTicTacToe/FiveByFiveTicTacToe (які повністю
-    // розмонтовуються при зміні gameMode і тому завжди монтуються заново з
-    // чистою дошкою), 3x3-гілка рендериться прямо тут, у TicTacToe - а сам
-    // TicTacToe при перемиканні режиму НЕ розмонтовується. Тож board/winner
-    // цього режиму лишались би зі старими URL фішок (записаними в клітинки
-    // під час ходів), навіть якщо тим часом у іншому режимі був рестарт і
-    // pickNewTheme() змінила спільний theme - при поверненні сюди фон був би
-    // вже новий, а фішки на дошці - зі старої теми. Тому перед переходом в
-    // інший режим скидаємо дошку 3x3 так само, як це відбувається "безкоштовно"
-    // для difficult/five через розмонтування.
+    // 3×3-гілка рендериться прямо тут, у TicTacToe, і при перемиканні режиму не розмонтовується
+    // (на відміну від 5×5/Ultimate) - тож дошку скидаємо вручну, інакше при поверненні сюди на
+    // ній лишились би фішки старої партії.
     const handleSetGameMode = (mode: "traditional" | "difficult" | "five") => {
-        setBoard(createEmptyGrid());
-        setHist(EMPTY_HISTORY);
-        setWinner(null);
-        setIsNoWinner(false);
-        setIsAiTurn(false);
-        setShowResultPopup(false);
+        resetRound();
         setGameMode(mode);
     };
 
@@ -437,129 +479,141 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setScreen("home");
     };
 
-    const daily = (
-        <>
-            <HudLeft>
-                {/* Логотип - "На головну" (у грі - вихід у меню, на головній - прокрутка вгору). */}
-                <BrandButton
-                    type="button"
-                    onClick={screen === "game" ? goToMenu : () => window.scrollTo(0, 0)}
-                    aria-label={t("nav_home")}
-                    title={t("nav_home")}
-                >
-                    <img src={assetUrl("images/logo.png")} alt="" />
-                </BrandButton>
-                <CampaignMap onStart={goToGame} />
-                <SkinShop themes={availableThemes} onRewardedAd={onRewardedAd} />
-                <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
-            </HudLeft>
-            <ProfilePanels fallbackName={humanName} />
-            {/* Під час партії нижнє меню теж видно: "Головна" - вихід у меню. */}
-            {screen === "game" && <BottomNav homeCurrent={false} onHome={goToMenu} reserveSpace />}
-        </>
-    );
+    const navigate = (item: NavItem) => {
+        if (item === "home") {
+            if (screen === "home") topRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+            else goToMenu();
+            return;
+        }
+        setScreen(item);
+    };
 
-    if (screen === "home") {
-        return (
-            <>
-                {daily}
-                <HomeScreen
-                    name={shownName}
-                    initialMode={gameMode}
-                    onPlay={goToGame}
-                    onRoomReady={onRoomReady}
-                    onBeforeFriendOpen={onBeforeFriendOpen}
-                />
-            </>
+    const openDaily = () => {
+        goToMenu();
+        setFocusDaily((n) => n + 1);
+    };
+
+    let content: React.ReactNode;
+    if (!themeReady) {
+        // Поки тема не підвантажилась - нейтральний спінер замість дошки з тимчасовим скіном.
+        content = (
+            <div style={{ display: "flex", justifyContent: "center", paddingTop: 24 }}>
+                <ThemeLoadingBox>
+                    <Spinner />
+                </ThemeLoadingBox>
+            </div>
         );
-    }
-
-    if (gameMode === "difficult") {
-        return (
-            <>
-            {daily}
+    } else if (screen === "home") {
+        content = (
+            <HomeScreen
+                name={shownName}
+                initialMode={gameMode}
+                onPlay={goToGame}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
+                focusDaily={focusDaily}
+            />
+        );
+    } else if (screen === "campaign") {
+        content = <CampaignPage onStart={goToGame} />;
+    } else if (screen === "shop") {
+        content = <ShopPage themes={availableThemes} onRewardedAd={onRewardedAd} onPlay={() => goToGame(gameMode)} />;
+    } else if (screen === "awards") {
+        content = <AwardsPage />;
+    } else if (screen === "profile") {
+        content = <ProfilePage fallbackName={humanName} />;
+    } else if (gameMode === "difficult") {
+        content = (
             <DifficultTicTacToe
                 key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
                 hideResultPopup={dailyActive}
-                setGameMode={setGameMode}
+                setGameMode={handleSetGameMode}
                 theme={theme}
                 themeReady={themeReady}
-                onRestart={pickNewTheme}
                 humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
                 onMenu={goToMenu}
             />
-            </>
         );
-    }
-
-    if (gameMode === "five") {
-        return (
-            <>
-            {daily}
+    } else if (gameMode === "five") {
+        content = (
             <FiveByFiveTicTacToe
                 key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
                 hideResultPopup={dailyActive}
-                setGameMode={setGameMode}
+                setGameMode={handleSetGameMode}
                 theme={theme}
                 themeReady={themeReady}
-                onRestart={pickNewTheme}
                 humanName={shownName}
                 onRoomReady={onRoomReady}
                 onBeforeFriendOpen={onBeforeFriendOpen}
                 onMenu={goToMenu}
             />
+        );
+    } else {
+        const statusText = isGameOver
+            ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+            : isAiTurn ? t("aiThinking") : t("yourTurn");
+        const playerTurn = !isGameOver && !isAiTurn;
+        content = (
+            <>
+                {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
+                {(winner || isNoWinner) && showResultPopup && !dailyActive && (
+                    <ResultPopup
+                        result={winner === "X" ? "win" : winner ? "lose" : "draw"}
+                        summary={roundSummary}
+                        onClose={() => setShowResultPopup(false)}
+                        onRestart={restartGame}
+                        onMenu={goToMenu}
+                    />
+                )}
+                <GameScreen
+                    mode="traditional"
+                    onSetMode={handleSetGameMode}
+                    onRestart={restartGame}
+                    onRoomReady={onRoomReady}
+                    onBeforeFriendOpen={onBeforeFriendOpen}
+                    score={score}
+                    humanName={shownName}
+                    status={statusText}
+                    firstHint={isNewPlayer && !isGameOver && board.every((row) => row.every((cell) => cell === null))}
+                    over={isGameOver}
+                    timer={modifier3 === "timer" ? timerLeft : null}
+                    onShowResult={() => setShowResultPopup(true)}
+                    boosters={{
+                        canUndo: playerTurn && undoStack.length > 0,
+                        canHint: playerTurn,
+                        onUndo: undoMove,
+                        onHint: showHint,
+                        resetKey: round,
+                    }}
+                    board={
+                        <Board
+                            board={board}
+                            handleClick={handleOnClick}
+                            backgroundUrl={theme.backgroundUrl}
+                            winningCells={winner ? winningIndexSet(board, 3) : undefined}
+                            fadingCells={isGameOver ? undefined : fadingCells(hist, rules3)}
+                            hintCell={hintCell}
+                        />
+                    }
+                />
             </>
         );
     }
 
-    const statusText = isGameOver
-        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
-        : isAiTurn ? t("aiThinking") : t("yourTurn");
-    const scoreBoard = (
-        <ScoreBoard>
-            <ScoreName>{t("ai")}</ScoreName>
-            <ScoreValue>{score.ai}</ScoreValue>
-            <ScoreDivider>—</ScoreDivider>
-            <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{shownName ?? t("player")}</ScoreName>
-            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
-        </ScoreBoard>
-    );
-
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            {daily}
-            {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
-            {(winner || isNoWinner) && showResultPopup && !dailyActive && (
-                <ResultPopup
-                    result={winner === "X" ? "win" : winner ? "lose" : "draw"}
-                    summary={roundSummary}
-                    onClose={() => setShowResultPopup(false)}
-                    onRestart={restartGame}
-                    onMenu={goToMenu}
-                />
-            )}
-
-            <Board
-                board={board}
-                handleClick={handleOnClick}
-                restartGame={restartGame}
-                setGameMode={handleSetGameMode}
-                backgroundUrl={theme.backgroundUrl}
-                scoreBoard={
-                    <>
-                        <DifficultyPicker mode="traditional" leading={scoreBoard} />
-                        {isNewPlayer && !isGameOver && board.every((row) => row.every((cell) => cell === null)) && <FirstMoveHint />}
-                        {modifier3 === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
-                    </>
-                }
-                winningCells={winner ? winningIndexSet(board, 3) : undefined}
-                fadingCells={isGameOver ? undefined : fadingCells(hist, rules3)}
-                onRoomReady={onRoomReady}
-                onBeforeFriendOpen={onBeforeFriendOpen}
-            />
-        </div>
+        <RewardedAdContext.Provider value={onRewardedAd}>
+            <ShellVars />
+            <AppColumn ref={topRef}>
+                <TopBar onHome={() => navigate("home")} onDaily={openDaily} />
+                {content}
+            </AppColumn>
+            {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
+            {screen !== "game" && <BottomNav current={screen} onNavigate={navigate} />}
+            <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
+            <CampaignResults onStart={goToGame} />
+            <ProfilePanels />
+        </RewardedAdContext.Provider>
     );
 };

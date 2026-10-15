@@ -1,14 +1,13 @@
 "use client";
-import { IconClose, IconHelp } from "@game/components/GameIcons";
+import { IconClose } from "@game/components/GameIcons";
 import React, { useState } from "react";
 import styled from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
 import { useT } from "@game/lib/i18n";
 
 // Правила Ultimate показуються самі один раз - при першому вході в режим (позначка в
-// localStorage); далі їх можна відкрити кнопкою "?" у рядку підказки над полем.
+// localStorage).
 const SEEN_KEY = "ttt-ultimate-rules-seen";
 
 const readSeen = (): boolean => {
@@ -73,43 +72,5 @@ export const UltimateRulesModal = ({ onClose }: { onClose: () => void }) => {
                 </PillButton>
             </ModalCard>
         </>
-    );
-};
-
-const HintRow = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin: 0 0 8px;
-    min-height: 36px;
-    color: #5a3a17;
-    font-size: 15px;
-    font-weight: 700;
-    text-shadow: 0 1px 0 rgba(255, 250, 235, 0.8);
-`;
-
-const HelpButton = styled.button`
-    ${gameButtonCss("sm", { square: true })}
-    flex-shrink: 0;
-`;
-
-type UltimateHintProps = {
-    // null - партія завершена, підказка не потрібна (лишається лише кнопка правил).
-    state: "any" | "active" | "ai" | null;
-    onShowRules: () => void;
-};
-
-export const UltimateHint: React.FC<UltimateHintProps> = ({ state, onShowRules }) => {
-    const t = useT();
-    const text =
-        state === "any" ? t("hintAnyBoard") : state === "active" ? t("hintActiveBoard") : state === "ai" ? t("hintAiTurn") : "";
-    return (
-        <HintRow>
-            <span aria-live="polite">{text}</span>
-            <HelpButton type="button" onClick={onShowRules} aria-label={t("rulesButton")} title={t("rulesButton")}>
-                <IconHelp size={20} />
-            </HelpButton>
-        </HintRow>
     );
 };

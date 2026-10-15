@@ -1,29 +1,19 @@
 "use client";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import React, { useState, useMemo } from "react";
+import styled from "styled-components";
 import {
-    GameLayout,
-    BoardColumn,
-    ButtonContainer,
-    Button,
-    ControlIcon,
-    ButtonWithTooltip,
-    Tooltip,
     UltimateBoardContainer,
     MiniBoardWrapper,
     MiniCell,
     MiniBoardDimOverlay,
     MiniBoardResultOverlay,
     MiniBoardDrawLabel,
-    ScoreBoard,
-    ScoreStatus,
-    ScoreName,
-    ScoreValue,
-    ScoreDivider,
+    hintedCell,
 } from "@game/components/gameStyles";
-import { FriendGameModal } from "@game/components/FriendGameModal";
+import { GameScreen } from "@game/components/GameScreen";
 import { GamePiece, WinningHighlight } from "@game/components/GamePiece";
-import { UltimateHint, UltimateRulesModal, useUltimateRules } from "@game/components/UltimateRules";
+import { UltimateRulesModal, useUltimateRules } from "@game/components/UltimateRules";
 import { trackEvent } from "@game/lib/firebase";
 import { Theme } from "@game/lib/themes";
 import { logGameResult } from "@game/lib/gameLog";
@@ -37,23 +27,27 @@ import {
     countMarker,
     winningIndexSet,
 } from "@game/components/gameLogic";
-import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterUltimatePositional, randomFreeCell } from "@game/components/aiLevels";
-import { DifficultyPicker } from "@game/components/DifficultyPicker";
 import { playSound } from "@game/lib/sound";
 import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
-import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
+import { useMoveTimer } from "@game/components/MoveTimer";
+
+const HintMiniCell = styled(MiniCell)<{ $hint: boolean }>`
+    ${({ $hint }) => ($hint ? hintedCell : "")}
+`;
 
 // Результат кожного з 9 малих полів: хто його забрав, чи нічия, чи гра в ньому ще триває.
 type MetaResult = "X" | "O" | "draw" | null;
+
+// Позиція перед ходом гравця - для бустера "Скасувати хід".
+type Snapshot = { boards: Grid3[]; miniResults: MetaResult[]; activeBoard: number | null };
 
 type DifficultProps = {
     setGameMode: (mode: "traditional" | "difficult" | "five") => void;
     theme: Theme;
     themeReady: boolean;
-    onRestart: () => void;
     humanName: string | null;
     onRoomReady: (roomId: string) => void;
     onBeforeFriendOpen?: () => Promise<boolean>;
@@ -160,7 +154,6 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     setGameMode,
     theme,
     themeReady,
-    onRestart,
     humanName,
     onRoomReady,
     onBeforeFriendOpen,
@@ -177,8 +170,11 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     const [winner, setWinner] = useState<"X" | "O" | null>(null);
     const [isDraw, setIsDraw] = useState<boolean>(false);
     const [showResultPopup, setShowResultPopup] = useState<boolean>(false);
-    const [isFriendModalOpen, setIsFriendModalOpen] = useState<boolean>(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });
+    // Бустери: позиції перед ходами гравця, клітинка-підказка (поле * 9 + клітинка), номер партії.
+    const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
+    const [hintCell, setHintCell] = useState<number | null>(null);
+    const [round, setRound] = useState(0);
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -275,6 +271,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 : mini
         );
 
+        setUndoStack((stack) => [...stack, { boards, miniResults, activeBoard }]);
+        setHintCell(null);
         finishMove(updatedBoards, miniResults, boardIndex, row, col, "player");
     };
 
@@ -302,38 +300,45 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
         setWinner(null);
         setIsDraw(false);
         setShowResultPopup(false);
-        onRestart();
+        setUndoStack([]);
+        setHintCell(null);
+        setRound((r) => r + 1);
         trackEvent("game_restart", { mode: "hard" });
     };
 
-    const handleFriendClick = async () => {
-        trackEvent("friend_modal_open", { from: "hard" });
-        if (onBeforeFriendOpen) {
-            const allowed = await onBeforeFriendOpen();
-            if (!allowed) return;
-        }
-        setIsFriendModalOpen(true);
+    // Бустер "Скасувати хід": позиція перед останнім ходом гравця (разом із відповіддю бота).
+    const undoMove = () => {
+        const last = undoStack[undoStack.length - 1];
+        if (!last) return;
+        setUndoStack((stack) => stack.slice(0, -1));
+        setBoards(last.boards);
+        setMiniResults(last.miniResults);
+        setActiveBoard(last.activeBoard);
+        setHintCell(null);
+    };
+
+    // Бустер "Підказка": хід, який зробив би Майстер на місці гравця (ролі в pickAiMove міняються
+    // місцями - разом із позначками виграних малих полів).
+    const showHint = () => {
+        const swapped = miniResults.map((result): MetaResult => (result === "X" ? "O" : result === "O" ? "X" : result));
+        const move = pickAiMove(boards, swapped, activeBoard, aiMarker, playerMarker, "master");
+        setHintCell(move ? move[0] * 9 + move[1] * 3 + move[2] : null);
     };
 
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
-        : currentTurn === "ai" ? t("aiThinking") : t("yourTurn");
-    const scoreBoard = (
-        <ScoreBoard>
-            <ScoreName>{t("ai")}</ScoreName>
-            <ScoreValue>{score.ai}</ScoreValue>
-            <ScoreDivider>—</ScoreDivider>
-            <ScoreValue>{score.human}</ScoreValue>
-            <ScoreName>{humanName ?? t("player")}</ScoreName>
-            <ScoreStatus aria-live="polite">{statusText}</ScoreStatus>
-        </ScoreBoard>
-    );
+        : currentTurn === "ai"
+        ? t("aiThinking")
+        : activeBoard === null
+        ? t("ultTurnAny")
+        : t("ultTurnActive");
 
     // Три міні-поля переможної лінії на "великому" полі - підсвічуються після перемоги.
     const metaWinningBoards = winner ? winningIndexSet(toMetaGrid(miniResults, playerMarker, aiMarker), 3) : undefined;
+    const playerTurn = !isGameOver && currentTurn === "player";
 
     return (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <>
             {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
             {(winner || isDraw) && showResultPopup && !hideResultPopup && (
                 <ResultPopup
@@ -347,121 +352,78 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
             {rules.open && <UltimateRulesModal onClose={rules.close} />}
 
-            <GameLayout>
-                <BoardColumn>
-                    <DifficultyPicker mode="difficult" leading={scoreBoard} />
-                    {modifier === "timer" && !isGameOver && <MoveTimerBar fraction={timerLeft} />}
-                    <UltimateHint
-                        state={isGameOver ? null : currentTurn === "ai" ? "ai" : activeBoard === null ? "any" : "active"}
-                        onShowRules={rules.show}
-                    />
+            <GameScreen
+                mode="difficult"
+                onSetMode={setGameMode}
+                onRestart={restartUltimateGame}
+                onRoomReady={onRoomReady}
+                onBeforeFriendOpen={onBeforeFriendOpen}
+                score={score}
+                humanName={humanName}
+                status={statusText}
+                over={isGameOver}
+                timer={modifier === "timer" ? timerLeft : null}
+                onShowResult={() => setShowResultPopup(true)}
+                boosters={{
+                    canUndo: playerTurn && undoStack.length > 0,
+                    canHint: playerTurn,
+                    onUndo: undoMove,
+                    onHint: showHint,
+                    resetKey: round,
+                }}
+                board={
                     <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
-                    {boards.map((miniGrid, boardIndex) => {
-                        const result = miniResults[boardIndex];
-                        const isActive =
-                            !isGameOver &&
-                            currentTurn === "player" &&
-                            result === null &&
-                            (activeBoard === null || activeBoard === boardIndex);
+                        {boards.map((miniGrid, boardIndex) => {
+                            const result = miniResults[boardIndex];
+                            const isActive =
+                                !isGameOver &&
+                                currentTurn === "player" &&
+                                result === null &&
+                                (activeBoard === null || activeBoard === boardIndex);
 
-                        return (
-                            <MiniBoardWrapper key={boardIndex} $isActive={isActive}>
-                                {miniGrid.flat().map((cell, cellIndex) => {
-                                    const row = Math.floor(cellIndex / 3);
-                                    const col = cellIndex % 3;
-                                    return (
-                                        <MiniCell
-                                            key={cellIndex}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleCellClick(boardIndex, row, col);
-                                            }}
-                                        >
-                                            {cell && <GamePiece src={cell} />}
-                                        </MiniCell>
-                                    );
-                                })}
-                                {result && (
-                                    <>
-                                        <MiniBoardDimOverlay />
-                                        <MiniBoardResultOverlay>
-                                            {result === "draw" ? (
-                                                <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
-                                            ) : (
-                                                <WinningHighlight $active={metaWinningBoards?.has(boardIndex) ?? false}>
-                                                    <img
-                                                        src={result === "X" ? playerMarker : aiMarker}
-                                                        alt={result}
-                                                        style={{ width: "55%", height: "55%", objectFit: "contain" }}
-                                                    />
-                                                </WinningHighlight>
-                                            )}
-                                        </MiniBoardResultOverlay>
-                                    </>
-                                )}
-                            </MiniBoardWrapper>
-                        );
-                    })}
+                            return (
+                                <MiniBoardWrapper key={boardIndex} $isActive={isActive}>
+                                    {miniGrid.flat().map((cell, cellIndex) => {
+                                        const row = Math.floor(cellIndex / 3);
+                                        const col = cellIndex % 3;
+                                        return (
+                                            <HintMiniCell
+                                                key={cellIndex}
+                                                $hint={hintCell === boardIndex * 9 + cellIndex}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleCellClick(boardIndex, row, col);
+                                                }}
+                                            >
+                                                {cell && <GamePiece src={cell} />}
+                                            </HintMiniCell>
+                                        );
+                                    })}
+                                    {result && (
+                                        <>
+                                            <MiniBoardDimOverlay />
+                                            <MiniBoardResultOverlay>
+                                                {result === "draw" ? (
+                                                    <MiniBoardDrawLabel>—</MiniBoardDrawLabel>
+                                                ) : (
+                                                    <WinningHighlight $active={metaWinningBoards?.has(boardIndex) ?? false}>
+                                                        <img
+                                                            src={result === "X" ? playerMarker : aiMarker}
+                                                            alt={result}
+                                                            style={{ width: "55%", height: "55%", objectFit: "contain" }}
+                                                        />
+                                                    </WinningHighlight>
+                                                )}
+                                            </MiniBoardResultOverlay>
+                                        </>
+                                    )}
+                                </MiniBoardWrapper>
+                            );
+                        })}
                     </UltimateBoardContainer>
-                </BoardColumn>
-
-                <ButtonContainer>
-                    <Button onClick={restartUltimateGame} aria-label={t("restart")}>
-                        <ControlIcon src={assetUrl("images/reload.png")} alt="" />
-                    </Button>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "easy" });
-                                setGameMode("traditional");
-                            }}
-                            aria-label={t("modeClassic")}
-                        >
-                            <ControlIcon src={assetUrl("images/traditional.png")} alt="" />
-                        </Button>
-                        <Tooltip>3×3</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "five" });
-                                setGameMode("five");
-                            }}
-                            aria-label={t("modeFive")}
-                        >
-                            <ControlIcon src={assetUrl("images/game-5x5.png")} alt="" />
-                        </Button>
-                        <Tooltip>5×5</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button
-                            onClick={() => {
-                                trackEvent("select_mode", { mode: "hard" });
-                                setGameMode("difficult");
-                            }}
-                            aria-label={t("modeHard")}
-                        >
-                            <ControlIcon src={assetUrl("images/difficult.png")} alt="" />
-                        </Button>
-                        <Tooltip>{t("tooltipHard")}</Tooltip>
-                    </ButtonWithTooltip>
-                    <ButtonWithTooltip>
-                        <Button onClick={handleFriendClick} aria-label={t("playWithFriend")}>
-                            <ControlIcon src={assetUrl("images/game_with_friends.png")} alt="" />
-                        </Button>
-                        <Tooltip>{t("tooltipFriend")}</Tooltip>
-                    </ButtonWithTooltip>
-                </ButtonContainer>
-
-                {isFriendModalOpen && (
-                    <FriendGameModal
-                        onClose={() => setIsFriendModalOpen(false)}
-                        onRoomReady={onRoomReady}
-                        defaultMode="9x9"
-                    />
-                )}
-            </GameLayout>
-        </div>
+                }
+            />
+        </>
     );
 };
 

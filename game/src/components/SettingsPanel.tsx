@@ -11,12 +11,25 @@ import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
 // Кнопка-шестерня в правому верхньому куті (на місці колишнього перемикача звуку) і вікно
 // налаштувань: звук і мова. Над полем, але під BlockingOverlay порталу (z-index 2000).
-const GearButton = styled.button`
+const GearButton = styled.button<{ $inline: boolean }>`
     ${gameButtonCss("sm", { square: true })}
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    z-index: 1500;
+    ${({ $inline }) =>
+        $inline
+            ? `
+        /* У верхньому ряду меню (TopBar) - того ж розміру, що й плашки поруч. */
+        --gb-c: 12px;
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+        flex-shrink: 0;
+        @media (max-width: 420px) { --gb-c: 11px; width: 40px; height: 40px; min-height: 40px; }
+    `
+            : `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 1500;
+    `}
 `;
 
 const Row = styled.div`
@@ -48,7 +61,9 @@ const LANGUAGES: { id: Locale; label: string }[] = [
     { id: "en", label: "English" },
 ];
 
-export const SettingsButton: React.FC = () => {
+// inline - кнопка у верхньому ряду меню (TopBar); без нього - закріплена в правому верхньому
+// куті (екран онлайн-кімнати).
+export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false }) => {
     const t = useT();
     const open = useOpenPanel() === "settings";
     const muted = useMuted();
@@ -56,8 +71,8 @@ export const SettingsButton: React.FC = () => {
 
     return (
         <>
-            <GearButton type="button" onClick={() => openPanel("settings")} aria-label={t("settings")} title={t("settings")}>
-                <IconSettings size={22} />
+            <GearButton type="button" $inline={inline} onClick={() => openPanel("settings")} aria-label={t("settings")} title={t("settings")}>
+                <IconSettings size={inline ? 18 : 22} />
             </GearButton>
 
             {open && (

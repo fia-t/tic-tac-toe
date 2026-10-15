@@ -169,7 +169,7 @@ export default function App() {
     return (
         <>
             <GlobalStyle />
-            <SettingsButton />
+            {/* Шестерня налаштувань - у шапці самої гри (TopBar). */}
             <PortalGameBridge origin={PORTAL_ORIGIN}>
                 <Container>
                     <TicTacToe

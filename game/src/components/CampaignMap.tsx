@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
+import { Card, Eyebrow, Muted, Page, Spread } from "@game/components/pageStyles";
 import { Star, StarRow } from "@game/components/DailyChallenge";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
 import { setDifficultyOverride } from "@game/lib/difficulty";
@@ -19,65 +20,42 @@ import {
     isChapterUnlocked,
     isLevelUnlocked,
     recordLevelStars,
-    totalStars,
     useCampaign,
 } from "@game/lib/campaign";
 import { earnCoins } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
-import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
+import { openPanel } from "@game/lib/ui";
 
-const MapButton = styled.button`
-    ${gameButtonCss("sm")}
-    gap: 6px;
-    font-variant-numeric: tabular-nums;
-`;
-
-const Chapter = styled.section`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 12px 0 4px;
-    border-top: 2px dashed rgba(139, 101, 60, 0.25);
-`;
-
-const ChapterHead = styled.div`
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    color: #4a2c0c;
-
-    h3 {
-        margin: 0;
-        font-size: 18px;
-    }
-`;
-
-const Muted = styled.p`
-    margin: 0;
-    color: #6b4a25;
-    font-size: 13px;
-    line-height: 1.4;
-`;
+// Кампанія (як у прототипі) - окрема сторінка нижнього меню: вступна картка й картка на кожен
+// розділ із сіткою рівнів. Вікно результату рівня - CampaignResults (живе поза сторінкою,
+// бо партія йде на екрані гри).
 
 const Levels = styled.div`
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 10px;
 `;
 
 const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
     ${gameButtonCss("lg")}
     width: 100%;
     height: auto;
-    min-height: 0;
     aspect-ratio: 1;
-    padding: 0;
     flex-direction: column;
     gap: 2px;
-    font-size: 20px;
+    font: 800 24px/1 var(--font-heading);
     ${({ $boss }) => ($boss ? buttonTone("amber") : "")}
     ${({ $current }) => ($current ? buttonTone("primary") : "")}
+
+    && {
+        --gb-c: 18px;
+        min-height: 0;
+        padding: 0;
+    }
+
+    &:disabled {
+        color: #8a7660;
+    }
 `;
 
 const MiniStars = styled.span`
@@ -99,24 +77,113 @@ const Lock = () => (
     </svg>
 );
 
-type Result = { level: number; result: "win" | "draw" | "lose"; stars: number; coins: number };
+// Запуск рівня: рівень бота й модифікатор задає сам рівень; дошку скидає TicTacToe за id запуску.
+export const startCampaignLevel = (index: number, onStart: (mode: DailyMode) => void): void => {
+    const level = CAMPAIGN_LEVELS[index];
+    if (!level) return;
+    setDifficultyOverride(level.difficulty);
+    setModifierOverride(level.modifier ?? null);
+    setDailyRun({ kind: "campaign", id: nextRunId(), template: level, day: 0, level: index, finished: false });
+    trackEvent("campaign_level_started", { level: level.id });
+    onStart(level.mode);
+};
 
-type CampaignMapProps = {
-    // Перемикає гру в режим рівня (скидання дошки й пресет - у TicTacToe за id запуску).
+type CampaignProps = {
     onStart: (mode: DailyMode) => void;
 };
 
-export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
+export const CampaignPage: React.FC<CampaignProps> = ({ onStart }) => {
     const t = useT();
     const progress = useCampaign();
-    const mapOpen = useOpenPanel() === "campaign";
-    const [result, setResult] = useState<Result | null>(null);
-
-    const total = totalStars(progress);
-    const maxStars = CAMPAIGN_LEVELS.length * 3;
     const current = currentLevelIndex(progress);
 
-    // Кінець партії рівня: зірки (кращий результат лишається), монети за нові зірки, картка.
+    return (
+        <Page>
+            <Card aria-labelledby="campaign-title">
+                <h2 id="campaign-title">{t("campaignTitle")}</h2>
+                <Muted>{t("campaignHint")}</Muted>
+            </Card>
+
+            {Array.from({ length: CHAPTER_COUNT }, (_, chapter) => {
+                const unlocked = isChapterUnlocked(chapter, progress);
+                const stars = chapterStars(chapter, progress);
+                const chapterLevels = CAMPAIGN_LEVELS.filter((level) => level.chapter === chapter).length;
+                return (
+                    <Card key={chapter} aria-labelledby={`chapter-${chapter}`}>
+                        <Spread>
+                            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                                <Eyebrow>{t("chapterLabel", { n: String(chapter + 1) })}</Eyebrow>
+                                <h2 id={`chapter-${chapter}`}>{t(`chapter_${chapter}` as Parameters<typeof t>[0])}</h2>
+                            </div>
+                            <Muted style={{ textAlign: "right" }}>
+                                {t(`chapterSub_${chapter}` as Parameters<typeof t>[0])}
+                                <br />
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 800 }}>
+                                    <Star on size={14} /> {stars} / {chapterLevels * 3}
+                                </span>
+                            </Muted>
+                        </Spread>
+                        {!unlocked && (
+                            <Muted>
+                                {t("chapterLocked", {
+                                    name: t(`chapter_${chapter - 1}` as Parameters<typeof t>[0]),
+                                    n: String(CHAPTER_UNLOCK_STARS),
+                                    have: String(chapterStars(chapter - 1, progress)),
+                                })}
+                            </Muted>
+                        )}
+                        <Levels>
+                            {CAMPAIGN_LEVELS.map((level, index) => {
+                                if (level.chapter !== chapter) return null;
+                                const open = isLevelUnlocked(index, progress);
+                                const levelStars = progress.stars[level.id] ?? 0;
+                                const label = open
+                                    ? t("campaignLevelStars", {
+                                          n: String(index + 1),
+                                          boss: level.boss ? `, ${t("campaignBoss")}` : "",
+                                          stars: String(levelStars),
+                                      })
+                                    : t("campaignLockedLevel", { n: String(index + 1) });
+                                return (
+                                    <LevelButton
+                                        key={level.id}
+                                        type="button"
+                                        $boss={Boolean(level.boss)}
+                                        $current={open && index === current}
+                                        disabled={!open}
+                                        onClick={() => startCampaignLevel(index, onStart)}
+                                        aria-label={label}
+                                        title={open ? t(`level_${level.id}` as Parameters<typeof t>[0]) : undefined}
+                                    >
+                                        {index + 1}
+                                        {open ? (
+                                            <MiniStars>
+                                                {[0, 1, 2].map((i) => (
+                                                    <Star key={i} on={i < levelStars} size={14} />
+                                                ))}
+                                            </MiniStars>
+                                        ) : (
+                                            <Lock />
+                                        )}
+                                    </LevelButton>
+                                );
+                            })}
+                        </Levels>
+                    </Card>
+                );
+            })}
+        </Page>
+    );
+};
+
+type Result = { level: number; result: "win" | "draw" | "lose"; stars: number; coins: number };
+
+// Кінець партії рівня: зірки (кращий результат лишається), монети за нові зірки, картка.
+export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
+    const t = useT();
+    const progress = useCampaign();
+    const [result, setResult] = useState<Result | null>(null);
+
     useEffect(
         () =>
             addGameEventListener((name, params) => {
@@ -136,153 +203,50 @@ export const CampaignMap: React.FC<CampaignMapProps> = ({ onStart }) => {
         []
     );
 
-    const start = (index: number) => {
-        const level = CAMPAIGN_LEVELS[index];
-        if (!level) return;
-        closePanel();
-        setResult(null);
-        setDifficultyOverride(level.difficulty);
-        setModifierOverride(level.modifier ?? null);
-        setDailyRun({ kind: "campaign", id: nextRunId(), template: level, day: 0, level: index, finished: false });
-        trackEvent("campaign_level_started", { level: level.id });
-        onStart(level.mode);
-    };
+    if (!result) return null;
 
-    const nextIndex = result ? result.level + 1 : -1;
-    const canGoNext = result !== null && nextIndex < CAMPAIGN_LEVELS.length && isLevelUnlocked(nextIndex, progress);
+    const start = (index: number) => {
+        setResult(null);
+        startCampaignLevel(index, onStart);
+    };
+    const nextIndex = result.level + 1;
+    const canGoNext = nextIndex < CAMPAIGN_LEVELS.length && isLevelUnlocked(nextIndex, progress);
 
     return (
         <>
-            <MapButton
-                type="button"
-                onClick={() => openPanel("campaign")}
-                aria-label={t("campaignOpen", { n: String(total), total: String(maxStars) })}
-                title={t("campaignTitle")}
-            >
-                <Star on size={20} />
-                <span>{total}</span>
-            </MapButton>
-
-            {mapOpen && (
-                <>
-                    <Overlay onClick={() => closePanel()} style={{ zIndex: 1600 }} />
-                    <ModalCard role="dialog" aria-modal="true" aria-labelledby="campaign-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                        <ModalCloseButton onClick={() => closePanel()} aria-label={t("close")}>
-                            ×
-                        </ModalCloseButton>
-                        <ModalTitle id="campaign-title">{t("campaignTitle")}</ModalTitle>
-                        <ModalSubtitle>{t("campaignStars", { n: String(total), total: String(maxStars) })}</ModalSubtitle>
-                        <Muted>{t("campaignHint")}</Muted>
-
-                        {Array.from({ length: CHAPTER_COUNT }, (_, chapter) => {
-                            const unlocked = isChapterUnlocked(chapter, progress);
-                            const stars = chapterStars(chapter, progress);
-                            const name = t(`chapter_${chapter}` as Parameters<typeof t>[0]);
-                            return (
-                                <Chapter key={chapter} aria-labelledby={`chapter-${chapter}`}>
-                                    <ChapterHead>
-                                        <h3 id={`chapter-${chapter}`}>
-                                            {chapter + 1}. {name}
-                                        </h3>
-                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 800 }}>
-                                            <Star on size={16} /> {stars} / 24
-                                        </span>
-                                    </ChapterHead>
-                                    <Muted>{t(`chapterSub_${chapter}` as Parameters<typeof t>[0])}</Muted>
-                                    {!unlocked && (
-                                        <Muted>
-                                            {t("chapterLocked", {
-                                                name: t(`chapter_${chapter - 1}` as Parameters<typeof t>[0]),
-                                                n: String(CHAPTER_UNLOCK_STARS),
-                                                have: String(chapterStars(chapter - 1, progress)),
-                                            })}
-                                        </Muted>
-                                    )}
-                                    <Levels>
-                                        {CAMPAIGN_LEVELS.map((level, index) => {
-                                            if (level.chapter !== chapter) return null;
-                                            const open = isLevelUnlocked(index, progress);
-                                            const levelStars = progress.stars[level.id] ?? 0;
-                                            const label = open
-                                                ? t("campaignLevelStars", {
-                                                      n: String(index + 1),
-                                                      boss: level.boss ? `, ${t("campaignBoss")}` : "",
-                                                      stars: String(levelStars),
-                                                  })
-                                                : t("campaignLockedLevel", { n: String(index + 1) });
-                                            return (
-                                                <LevelButton
-                                                    key={level.id}
-                                                    type="button"
-                                                    $boss={Boolean(level.boss)}
-                                                    $current={open && index === current}
-                                                    disabled={!open}
-                                                    onClick={() => start(index)}
-                                                    aria-label={label}
-                                                    title={open ? t(`level_${level.id}` as Parameters<typeof t>[0]) : undefined}
-                                                >
-                                                    {index + 1}
-                                                    {open ? (
-                                                        <MiniStars>
-                                                            {[0, 1, 2].map((i) => (
-                                                                <Star key={i} on={i < levelStars} size={13} />
-                                                            ))}
-                                                        </MiniStars>
-                                                    ) : (
-                                                        <Lock />
-                                                    )}
-                                                </LevelButton>
-                                            );
-                                        })}
-                                    </Levels>
-                                </Chapter>
-                            );
-                        })}
-
-                        <PillButton type="button" $variant="ghost" onClick={() => closePanel()}>
-                            {t("close")}
+            <Overlay onClick={() => setResult(null)} style={{ zIndex: 1600 }} />
+            <ModalCard role="dialog" aria-modal="true" aria-labelledby="level-result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
+                <ModalCloseButton onClick={() => setResult(null)} aria-label={t("close")}>
+                    ×
+                </ModalCloseButton>
+                <ModalTitle id="level-result-title">{t("campaignLevel", { n: String(result.level + 1) })}</ModalTitle>
+                <ModalSubtitle>
+                    {result.result === "win" ? t("resultWin") : result.result === "draw" ? t("resultDraw") : t("resultLose")} ·{" "}
+                    {t(`level_${CAMPAIGN_LEVELS[result.level].id}` as Parameters<typeof t>[0])}
+                </ModalSubtitle>
+                <StarRow count={result.stars} label={`${result.stars} / 3`} />
+                {result.coins > 0 && <Note>{t("campaignNewStars", { n: String(result.coins) })}</Note>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {canGoNext && (
+                        <PillButton type="button" onClick={() => start(nextIndex)}>
+                            {t("campaignNext")}
                         </PillButton>
-                    </ModalCard>
-                </>
-            )}
-
-            {result && (
-                <>
-                    <Overlay onClick={() => setResult(null)} style={{ zIndex: 1600 }} />
-                    <ModalCard role="dialog" aria-modal="true" aria-labelledby="level-result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                        <ModalCloseButton onClick={() => setResult(null)} aria-label={t("close")}>
-                            ×
-                        </ModalCloseButton>
-                        <ModalTitle id="level-result-title">{t("campaignLevel", { n: String(result.level + 1) })}</ModalTitle>
-                        <ModalSubtitle>
-                            {result.result === "win" ? t("resultWin") : result.result === "draw" ? t("resultDraw") : t("resultLose")} ·{" "}
-                            {t(`level_${CAMPAIGN_LEVELS[result.level].id}` as Parameters<typeof t>[0])}
-                        </ModalSubtitle>
-                        <StarRow count={result.stars} label={`${result.stars} / 3`} />
-                        {result.coins > 0 && <Note>{t("campaignNewStars", { n: String(result.coins) })}</Note>}
-                        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                            {canGoNext && (
-                                <PillButton type="button" onClick={() => start(nextIndex)}>
-                                    {t("campaignNext")}
-                                </PillButton>
-                            )}
-                            <PillButton type="button" $variant={canGoNext ? "ghost" : undefined} onClick={() => start(result.level)}>
-                                {t("campaignRetry")}
-                            </PillButton>
-                            <PillButton
-                                type="button"
-                                $variant="ghost"
-                                onClick={() => {
-                                    setResult(null);
-                                    openPanel("campaign");
-                                }}
-                            >
-                                {t("campaignMap")}
-                            </PillButton>
-                        </div>
-                    </ModalCard>
-                </>
-            )}
+                    )}
+                    <PillButton type="button" $variant={canGoNext ? "ghost" : undefined} onClick={() => start(result.level)}>
+                        {t("campaignRetry")}
+                    </PillButton>
+                    <PillButton
+                        type="button"
+                        $variant="ghost"
+                        onClick={() => {
+                            setResult(null);
+                            openPanel("campaign");
+                        }}
+                    >
+                        {t("campaignMap")}
+                    </PillButton>
+                </div>
+            </ModalCard>
         </>
     );
 };

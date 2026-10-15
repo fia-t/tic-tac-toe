@@ -1,38 +1,41 @@
 "use client";
 import styled, { createGlobalStyle, css, keyframes } from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
 import { assetUrl } from "@game/lib/assets";
 
 // Вигляд поля (як у прототипі й артах порталу): об'ємна плита з тінню й світлим краєм,
 // клітинки - окремі заглиблені плитки поверх фону теми, без ліній-розділювачів.
 // Один стиль для всіх режимів (3×3, 5×5, Ultimate, онлайн).
 export const boardSlab = css`
-    /* Поле - як велика PNG-кнопка режимів: пісочна рамка з товстою нижньою "губою" й тінню,
-       а фон скіна - лише у внутрішній, заглибленій зоні (content-box = без рамки --frame). */
+    /* Поле - як еталонна кнопка: тонкий кремовий обідок у її кольорах (світлий верх, тепліший низ,
+       м'яка нижня кромка), без "ящика" - піщаної рамки, канавки й важкої тіні. Обідок - звичайний
+       CSS-border з радіусом, тож текстура скіна заокруглюється разом із ним і прилягає впритул. */
     position: relative;
-    padding: var(--frame);
+    border: 8px solid transparent;
+    border-radius: 28px;
+    padding: 6px;
     background:
-        var(--board-image) center / cover no-repeat content-box,
-        linear-gradient(165deg, #fde7c2 0%, #f6d39d 55%, #eec38a 100%) border-box;
-    border-radius: 34px;
+        var(--board-image) center / cover no-repeat padding-box,
+        linear-gradient(180deg, #fff3dd 0%, #f6e2b8 45%, #e8c992 100%) border-box;
     box-shadow:
-        inset 0 3px 0 rgba(255, 255, 255, 0.75),
-        inset 0 -5px 0 rgba(176, 115, 45, 0.35),
-        0 9px 0 #d6a15c,
-        0 18px 30px rgba(90, 50, 10, 0.32);
-    margin-bottom: 9px;
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 3px 0 #dcbc86;
+    margin-bottom: 3px;
+`;
 
-    /* Внутрішній бортик ігрової зони. */
-    &::before {
-        content: "";
-        position: absolute;
-        inset: calc(var(--frame) - 3px);
-        border-radius: 22px;
-        box-shadow:
-            inset 0 4px 10px rgba(90, 50, 10, 0.35),
-            inset 0 0 0 2px rgba(150, 95, 35, 0.35);
-        pointer-events: none;
-        z-index: 2;
+const hintPulse = keyframes`
+    from { filter: brightness(1); }
+    to { filter: brightness(1.12); }
+`;
+
+// Клітинка, яку радить бустер "Підказка" - золота обвідка, що м'яко пульсує.
+export const hintedCell = css`
+    box-shadow:
+        inset 0 0 0 4px #f5b82e,
+        0 0 18px rgba(245, 184, 46, 0.8);
+    animation: ${hintPulse} 0.9s ease-in-out infinite alternate;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
     }
 `;
 
@@ -112,9 +115,10 @@ export const Container = styled.div`
     min-height: 100%;
     width: 100%;
     box-sizing: border-box;
-    /* Зверху - ряд кнопок у кутах (виклик дня, монети / звук), тому відступ 60px. */
+    /* Зверху - кнопка налаштувань у куті (екран онлайн-кімнати), тому відступ 60px. Меню гри
+       (TicTacToe) має власну шапку в потоці сторінки й обнуляє його через --shell-top. */
     /* --nav-space - місце під нижнім меню на екрані гри (BottomNav), інакше 0. */
-    padding: 60px 12px calc(12px + var(--nav-space, 0px));
+    padding: var(--shell-top, 60px) var(--shell-x, 12px) calc(12px + var(--nav-space, 0px));
     /* Якщо вміст вищий за iframe порталу - прокрутка, а не обрізання. margin-block:auto
        дитини центрує по вертикалі, коли місця вдосталь, і притискає догори, коли ні
        (на відміну від align-items:center, що обрізав би верх без прокрутки). */
@@ -132,29 +136,21 @@ export const Container = styled.div`
     --board: max(240px, min(92vw, 540px, calc(100dvh - var(--board-chrome))));
 
     @media (max-width: 640px) {
-        padding: 58px 8px calc(10px + var(--nav-space, 0px));
+        padding: var(--shell-top, 58px) var(--shell-x, 8px) calc(10px + var(--nav-space, 0px));
         --board-chrome: calc(310px + var(--nav-space, 0px));
     }
-    background-image: url('${assetUrl("images/background-image.jpg")}');
-    background-size: cover;
-    background-position: center;
+    /* Небо, що переходить у пісок (тема пляжу, але не відволікає від поля): кілька дуже блідих
+       хмаринок угорі й ледь помітні крапки. Без фото й без background-attachment: fixed. */
+    background-color: #dcedf9;
+    background-image:
+        radial-gradient(ellipse 170px 46px at 14% 70px, rgba(255, 255, 255, 0.6), transparent 70%),
+        radial-gradient(ellipse 230px 58px at 80% 46px, rgba(255, 255, 255, 0.55), transparent 70%),
+        radial-gradient(ellipse 140px 38px at 52% 150px, rgba(255, 255, 255, 0.45), transparent 70%),
+        radial-gradient(circle, rgba(73, 48, 31, 0.06) 1px, transparent 1.6px),
+        linear-gradient(180deg, #dcedf9 0%, #cfe3f3 50%, #f3e2c4 100%);
+    background-size: auto, auto, auto, 22px 22px, auto;
+    background-repeat: no-repeat, no-repeat, no-repeat, repeat, no-repeat;
     color: white;
-`;
-
-// Розташовує ігрове поле та панель кнопок: збоку одне від одного на широких
-// екранах, одне під одним - на екрані смартфона.
-export const GameLayout = styled.div`
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-
-    @media (max-width: 640px) {
-        flex-direction: column;
-        gap: 12px;
-    }
 `;
 
 // Стилі для ігрового контейнера.
@@ -187,156 +183,6 @@ export const Cell = styled.div`
     touch-action: manipulation;
 `;
 
-export const ButtonContainer = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    @media (max-width: 640px) {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        gap: 8px;
-    }
-`;
-
-// Кнопка - лише прозора рамка-обгортка: сам вигляд (пісочна плитка,
-// заокруглення, тінь, рельєф) уже намальований у PNG-іконці всередині.
-export const Button = styled.button`
-    width: 70px;
-    height: 70px;
-
-    @media (max-width: 640px) {
-        width: 56px;
-        height: 56px;
-        border-radius: 18px;
-    }
-
-    flex-shrink: 0;
-    border: none;
-    border-radius: 22px;
-    padding: 0;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-    touch-action: manipulation;
-    transition: transform 0.15s ease, filter 0.15s ease;
-
-    @media (hover: hover) {
-        &:hover:not(:disabled) {
-            transform: translateY(-1px);
-            filter: brightness(1.04) drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
-        }
-    }
-
-    &:active:not(:disabled) {
-        transform: translateY(1px) scale(0.97);
-    }
-
-    &:disabled {
-        cursor: not-allowed;
-        filter: grayscale(0.6) opacity(0.6);
-    }
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-    }
-`;
-
-// Іконки кнопок - самі PNG вже мають вигляд готової пісочної 3D-плитки,
-// тож рендеримо їх на весь розмір кнопки без додаткового фону/рамки.
-export const ControlIcon = styled.img`
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-`;
-
-// Обгортка для кнопки з тултіпом - позиціонує підказку відносно самої кнопки.
-export const ButtonWithTooltip = styled.div`
-    position: relative;
-    display: inline-flex;
-`;
-
-// Підказка виводиться праворуч від кнопки в тому ж пісочно-бежевому стилі,
-// з маленьким "хвостиком", що вказує на кнопку.
-export const Tooltip = styled.span`
-    position: absolute;
-    left: calc(100% + 12px);
-    top: 50%;
-    transform: translateY(-50%) translateX(-4px);
-    background: linear-gradient(155deg, #f5e0b6 0%, #e6c890 100%);
-    color: #6b4a25;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 10px;
-    white-space: nowrap;
-    box-shadow:
-        3px 3px 6px rgba(101, 72, 35, 0.3),
-        -1px -1px 2px rgba(255, 250, 235, 0.5);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.15s ease, transform 0.15s ease;
-    z-index: 10;
-
-    &::before {
-        content: "";
-        position: absolute;
-        right: 100%;
-        top: 50%;
-        transform: translateY(-50%);
-        border: 6px solid transparent;
-        border-right-color: #eecf9c;
-    }
-
-    ${ButtonWithTooltip}:hover & {
-        opacity: 1;
-        transform: translateY(-50%) translateX(0);
-    }
-`;
-
-// Пауза перед попапом результату - щоб гравець встиг побачити підсвічену
-// переможну лінію (GamePiece winning) до того, як дошку накриє затемнення.
-const RESULT_REVEAL_DELAY_MS = 900;
-
-const popupReveal = keyframes`
-    from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
-    to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-`;
-
-const overlayReveal = keyframes`
-    from { opacity: 0; }
-    to { opacity: 1; }
-`;
-
-export const Popup = styled.div<{ $result: string }>`
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 90vw;
-    box-sizing: border-box;
-    background: ${({ $result }) => ($result === "win" ? "#4CAF50" : $result === "lose" ? "#F44336" : "#FF9800")};
-    color: white;
-    padding: clamp(14px, 4vw, 20px);
-    border-radius: 10px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    font-size: clamp(18px, 5vw, 24px);
-    z-index: 1000;
-    cursor: pointer;
-    animation: ${popupReveal} 220ms ease-out ${RESULT_REVEAL_DELAY_MS}ms both;
-
-    @media (prefers-reduced-motion: reduce) {
-        animation-duration: 1ms;
-    }
-`;
-
 export const Overlay = styled.div`
     position: fixed;
     top: 0;
@@ -348,32 +194,7 @@ export const Overlay = styled.div`
     cursor: pointer;
 `;
 
-// Колонка "табло + поле" - гарантує, що ScoreBoard центрується САМЕ над
-// ігровим полем, а не над усім рядом (поле + панель кнопок збоку на десктопі).
-// Затемнення під попапом результату - з тією ж паузою, що й сам Popup.
-export const ResultOverlay = styled(Overlay)`
-    animation: ${overlayReveal} 220ms ease-out ${RESULT_REVEAL_DELAY_MS}ms both;
-`;
-
-export const BoardColumn = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-`;
-
-// Табло рахунку над ігровим полем - показує "ШІ: N - Ім'я: M" (vs AI)
-// або "Ім'я1: N - Ім'я2: M" (гра з другом), в тому ж пісочному стилі кнопок/тултіпів.
-// Рядок статусу ("Твій хід", "ШІ думає...") - під іменами й рахунком у тому ж табло.
-export const ScoreStatus = styled.div`
-    flex-basis: 100%;
-    margin-top: -6px;
-    text-align: center;
-    color: #0f6f8c;
-    font-size: 12px;
-    font-weight: 800;
-    line-height: 1.1;
-`;
-
+// Табло рахунку онлайн-партії ("Ім'я1: N - Ім'я2: M") у пісочному стилі кнопок.
 export const ScoreBoard = styled.div`
     display: flex;
     align-items: center;
@@ -509,53 +330,5 @@ export const Spinner = styled.div`
     border-top-color: #8B4513;
     border-radius: 50%;
     animation: ${spin} 0.8s linear infinite;
-`;
-
-// Ряд кнопок у лівому верхньому куті (виклик дня, монети) - дзеркально до шестерні налаштувань
-// справа. Висоту під нього резервує верхній відступ Container.
-export const HudLeft = styled.div`
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    z-index: 1500;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-`;
-
-// Логотип у верхньому ряду - кнопка "На головну", без підкладки-кнопки (як у прототипі).
-export const BrandButton = styled.button`
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    flex-shrink: 0;
-    touch-action: manipulation;
-    transition: transform 0.12s ease;
-
-    img {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-
-    @media (hover: hover) {
-        &:hover {
-            transform: translateY(-1px) rotate(-4deg);
-        }
-    }
-
-    &:active {
-        transform: translateY(1px) scale(0.96);
-    }
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: 2px;
-        border-radius: 12px;
-    }
 `;
 

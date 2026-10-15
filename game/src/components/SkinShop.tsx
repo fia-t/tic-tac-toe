@@ -1,51 +1,18 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
-import { gameButtonCss } from "@game/components/GameButton";
-import { Overlay } from "@game/components/gameStyles";
-import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
+import React from "react";
+import styled from "styled-components";
+import { GameButton } from "@game/components/GameButton";
+import { Card, Muted, Page } from "@game/components/pageStyles";
 import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
-import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useLastEarning, useWallet } from "@game/lib/wallet";
+import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
-import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 
-// Лічильник монет (у ряду кнопок зліва вгорі, поруч із викликом дня) і магазин скінів.
-const CoinButton = styled.button`
-    ${gameButtonCss("sm")}
-    gap: 6px;
-    font-variant-numeric: tabular-nums;
-`;
-
-const rise = keyframes`
-    0% { opacity: 0; transform: translateY(4px); }
-    15% { opacity: 1; transform: translateY(0); }
-    80% { opacity: 1; transform: translateY(-6px); }
-    100% { opacity: 0; transform: translateY(-12px); }
-`;
-
-const EarnBubble = styled.span`
-    position: absolute;
-    left: calc(100% + 6px);
-    top: 8px;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: #2f8a3e;
-    color: #ffffff;
-    font-size: 13px;
-    font-weight: 800;
-    white-space: nowrap;
-    pointer-events: none;
-    animation: ${rise} 1.8s ease-out forwards;
-
-    @media (prefers-reduced-motion: reduce) {
-        animation-duration: 1.8s;
-        animation-timing-function: steps(1, end);
-    }
-`;
+// Магазин скінів (як у прототипі) - окрема сторінка нижнього меню: вступна картка з кнопкою
+// "Грати зі скіном" і сітка карток скінів. Лічильник монет - у верхньому ряду (TopBar).
 
 // Монета: темніший край знизу, світлий обідок, внутрішнє коло й відблиск - як у прототипі.
 export const Coin = ({ size = 20 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
         <defs>
             <linearGradient id="coin-rim" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#ffe590" />
@@ -63,94 +30,78 @@ export const Coin = ({ size = 20 }: { size?: number }) => (
     </svg>
 );
 
-const Grid = styled.div`
+const Grid = styled.section`
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-    margin: 8px 0 4px;
 `;
 
-const Card = styled.div<{ $on: boolean }>`
+const SkinCard = styled.div<{ $on: boolean }>`
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     min-width: 0;
-    padding: 8px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.55);
-    box-shadow: ${({ $on }) => ($on ? "inset 0 0 0 3px #0f6f8c" : "inset 0 0 0 2px #e6c890")};
+    padding: 12px;
+    border-radius: 20px;
+    background: #ffe9c8;
+    box-shadow: ${({ $on }) => ($on ? "inset 0 0 0 3px #1fb3d9" : "inset 0 0 0 2px #ebcb98")};
+
+    h3 {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.05;
+        color: #4a2c0c;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 `;
 
+// Прев'ю - маленьке поле 3×3 у фоні скіна з кількома фішками.
 const Preview = styled.div<{ $bg: string }>`
-    position: relative;
-    aspect-ratio: 1;
-    border-radius: 12px;
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 7px;
+    border-radius: 16px;
     background: url("${({ $bg }) => $bg}") center / cover no-repeat;
-    box-shadow: inset 0 -4px 0 rgba(101, 72, 35, 0.25);
+    box-shadow: inset 0 -5px 0 rgba(176, 115, 45, 0.35);
 `;
 
-const PreviewPiece = styled.img<{ $left: string; $top: string }>`
-    position: absolute;
-    left: ${({ $left }) => $left};
-    top: ${({ $top }) => $top};
-    width: 40%;
-    height: 40%;
-    object-fit: contain;
+const PreviewCell = styled.div`
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.16);
+    box-shadow: inset 0 3px 6px rgba(120, 80, 30, 0.22);
+
+    img {
+        width: 72%;
+        height: 72%;
+        object-fit: contain;
+    }
 `;
 
-const SkinName = styled.div`
-    font-weight: 800;
-    color: #4a2c0c;
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-`;
+const SAMPLE: ("X" | "O" | null)[] = ["X", null, "O", null, "X", null, "O", null, "X"];
 
-const Note = styled.div`
-    min-height: 16px;
-    font-size: 12px;
-    color: #7a5530;
-`;
-
-const SmallButton = styled(PillButton)`
-    margin-top: 0;
-    font-size: 13px;
-`;
-
-const Hint = styled.p`
-    margin: 0;
-    color: #6b4a25;
-    font-size: 13px;
-    line-height: 1.4;
-`;
-
-type SkinShopProps = {
+type ShopPageProps = {
     // Активні теми з адмінки - предмети магазину (поруч із вбудованою "Класикою").
     themes: Theme[];
     // Rewarded-реклама агрегатора: є - можна приміряти скін на 24 год. На порталі QS Play і
     // сайті не передається (там нема rewarded-реклами в грі).
     onRewardedAd?: () => Promise<boolean>;
+    // "Грати зі скіном" - на поле.
+    onPlay: () => void;
 };
 
-export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
+export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay }) => {
     const t = useT();
     const wallet = useWallet();
-    const earning = useLastEarning();
-    const open = useOpenPanel() === "shop";
-    const [bubble, setBubble] = useState<number | null>(null);
-
-    // "+N" біля лічильника на кожне нарахування.
-    useEffect(() => {
-        if (!earning || Date.now() - earning.at > 2000) return;
-        setBubble(earning.amount);
-        const timer = setTimeout(() => setBubble(null), 1800);
-        return () => clearTimeout(timer);
-    }, [earning]);
 
     const skins = [CLASSIC_THEME, ...themes.filter((theme) => theme.id !== CLASSIC_THEME.id)];
     const equipped = getEquippedSkinId(wallet);
+    const equippedSkin = skins.find((skin) => skin.id === equipped) ?? CLASSIC_THEME;
 
     const trial = async (id: string) => {
         if (!onRewardedAd) return;
@@ -159,77 +110,73 @@ export const SkinShop: React.FC<SkinShopProps> = ({ themes, onRewardedAd }) => {
     };
 
     return (
-        <>
-            <CoinButton type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} title={t("shopTitle")}>
-                <Coin />
-                <span>{wallet.coins}</span>
-                {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
-            </CoinButton>
+        <Page>
+            <Card aria-labelledby="shop-title">
+                <h2 id="shop-title">{t("shopTitle")}</h2>
+                <Muted>{t("shopHint")}</Muted>
+                <GameButton tone="primary" size="lg" block onClick={onPlay}>
+                    {t("shopPlayWith", { name: equippedSkin.name })}
+                </GameButton>
+            </Card>
 
-            {open && (
-                <>
-                    <Overlay onClick={() => closePanel()} style={{ zIndex: 1600 }} />
-                    <ModalCard role="dialog" aria-modal="true" aria-labelledby="shop-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                        <ModalCloseButton onClick={() => closePanel()} aria-label={t("close")}>
-                            ×
-                        </ModalCloseButton>
-                        <ModalTitle id="shop-title">{t("shopTitle")}</ModalTitle>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 800, color: "#4a2c0c" }}>
-                            <Coin /> {t("shopCoins", { n: String(wallet.coins) })}
-                        </div>
-                        <Hint>{t("shopHint")}</Hint>
-                        <Grid>
-                            {skins.map((skin) => {
-                                const price = skinPrice(skin);
-                                const unlocked = isSkinUnlocked(skin.id, wallet);
-                                const owned = wallet.owned.includes(skin.id);
-                                const isOn = equipped === skin.id;
-                                const trialLeftHours = !owned && unlocked ? Math.ceil(((wallet.trials[skin.id] ?? 0) - Date.now()) / 3_600_000) : 0;
-                                const missing = price - wallet.coins;
-                                return (
-                                    <Card key={skin.id} $on={isOn}>
-                                        <Preview $bg={skin.backgroundUrl}>
-                                            <PreviewPiece src={skin.xMarkerUrl} alt="" $left="8%" $top="10%" />
-                                            <PreviewPiece src={skin.oMarkerUrl} alt="" $left="52%" $top="50%" />
-                                        </Preview>
-                                        <SkinName title={skin.name}>{skin.name}</SkinName>
-                                        <Note>
-                                            {trialLeftHours > 0
-                                                ? t("shopTrialLeft", { h: String(trialLeftHours) })
-                                                : !unlocked && price > 0 && missing > 0
-                                                ? t("shopNotEnough", { n: String(missing) })
-                                                : ""}
-                                        </Note>
-                                        {isOn ? (
-                                            <SmallButton type="button" $variant="ghost" disabled>
-                                                {t("shopEquipped")}
-                                            </SmallButton>
-                                        ) : unlocked ? (
-                                            <SmallButton type="button" onClick={() => equipSkin(skin.id)}>
-                                                {t("shopEquip")}
-                                            </SmallButton>
-                                        ) : (
+            <Grid aria-label={t("shopTitle")}>
+                {skins.map((skin) => {
+                    const price = skinPrice(skin);
+                    const unlocked = isSkinUnlocked(skin.id, wallet);
+                    const owned = wallet.owned.includes(skin.id);
+                    const isOn = equipped === skin.id;
+                    const trialLeftHours = !owned && unlocked ? Math.ceil(((wallet.trials[skin.id] ?? 0) - Date.now()) / 3_600_000) : 0;
+                    const missing = price - wallet.coins;
+                    const note =
+                        trialLeftHours > 0
+                            ? t("shopTrialLeft", { h: String(trialLeftHours) })
+                            : !unlocked && price > 0 && missing > 0
+                            ? t("shopNotEnough", { n: String(missing) })
+                            : price > 0 && !unlocked
+                            ? t("shopPremium")
+                            : "";
+                    return (
+                        <SkinCard key={skin.id} $on={isOn}>
+                            <Preview $bg={skin.backgroundUrl} aria-hidden="true">
+                                {SAMPLE.map((v, i) => (
+                                    <PreviewCell key={i}>{v && <img src={v === "X" ? skin.xMarkerUrl : skin.oMarkerUrl} alt="" />}</PreviewCell>
+                                ))}
+                            </Preview>
+                            <div>
+                                <h3 title={skin.name}>{skin.name}</h3>
+                                <Muted style={{ minHeight: 19 }}>{note}</Muted>
+                            </div>
+                            {isOn ? (
+                                <GameButton size="lg" block disabled>
+                                    {t("shopEquipped")}
+                                </GameButton>
+                            ) : unlocked ? (
+                                <GameButton tone="primary" size="lg" block onClick={() => equipSkin(skin.id)}>
+                                    {t("shopEquip")}
+                                </GameButton>
+                            ) : (
+                                <>
+                                    <GameButton tone="primary" size="lg" block disabled={missing > 0} onClick={() => buySkin(skin.id, price)}>
+                                        {price > 0 ? (
                                             <>
-                                                <SmallButton type="button" disabled={missing > 0} onClick={() => buySkin(skin.id, price)}>
-                                                    {price > 0 ? t("shopBuy", { n: String(price) }) : t("shopFree")}
-                                                </SmallButton>
-                                                {onRewardedAd && (
-                                                    <SmallButton type="button" $variant="ghost" onClick={() => void trial(skin.id)}>
-                                                        {t("shopTrial")}
-                                                    </SmallButton>
-                                                )}
+                                                <Coin size={18} />
+                                                {price}
                                             </>
+                                        ) : (
+                                            t("shopFree")
                                         )}
-                                    </Card>
-                                );
-                            })}
-                        </Grid>
-                        <PillButton type="button" $variant="ghost" onClick={() => closePanel()}>
-                            {t("close")}
-                        </PillButton>
-                    </ModalCard>
-                </>
-            )}
-        </>
+                                    </GameButton>
+                                    {onRewardedAd && (
+                                        <GameButton size="lg" block onClick={() => void trial(skin.id)}>
+                                            {t("shopTrial")}
+                                        </GameButton>
+                                    )}
+                                </>
+                            )}
+                        </SkinCard>
+                    );
+                })}
+            </Grid>
+        </Page>
     );
 };

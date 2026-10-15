@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
-import styled, { createGlobalStyle } from "styled-components";
+import styled from "styled-components";
 import { gameButtonCss } from "@game/components/GameButton";
 import { useT } from "@game/lib/i18n";
-import { openPanel, type Panel } from "@game/lib/ui";
 
-// Нижнє меню розділів - і на головній, і під час партії (тоді "Головна" - вихід у меню).
-// Підкладка напівпрозора з розмиттям: поле й небо під нею проглядають.
+// Нижнє меню розділів (як у прототипі) - на головній і сторінках розділів; на екрані партії
+// його немає (вихід у меню - логотип у шапці). Кнопки стоять прямо на фоні, без плашки й тіні,
+// а під ними - м'яке згасання в пісочний колір низу сторінки, щоб картки плавно зникали під меню.
 
 const Nav = styled.nav`
     position: fixed;
@@ -14,47 +14,84 @@ const Nav = styled.nav`
     right: 0;
     bottom: 0;
     z-index: 1400;
-    padding: 8px max(10px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
+    padding: 28px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    background: linear-gradient(to top, rgba(243, 226, 196, 0.97) 0%, rgba(243, 226, 196, 0.9) 55%, rgba(243, 226, 196, 0) 100%);
     pointer-events: none;
 
     & > div {
-        max-width: 560px;
+        max-width: 760px;
         margin: 0 auto;
         display: grid;
         grid-template-columns: repeat(5, minmax(0, 1fr));
         gap: 4px;
-        padding: 6px;
-        border-radius: 22px;
-        background: rgba(255, 246, 230, 0.55);
-        -webkit-backdrop-filter: blur(10px);
-        backdrop-filter: blur(10px);
-        box-shadow: 0 6px 18px rgba(70, 40, 10, 0.1);
         pointer-events: auto;
     }
 `;
 
-const NavButton = styled.button`
+// Колір розділу при наведенні: зірки (кампанія), монети (магазин), вогник (нагороди);
+// головна - горіховий (як вибрані кнопки), профіль - зелений (як "Легкий").
+const HOVER: Record<NavItem, string> = {
+    home: "#80532f",
+    campaign: "#0f8fb0",
+    shop: "#c98a12",
+    awards: "#e8662f",
+    profile: "#2f8a3e",
+};
+
+const NavButton = styled.button<{ $item: NavItem }>`
     ${gameButtonCss("lg")}
+    --gb-c: 16px;
     flex-direction: column;
-    gap: 2px;
+    gap: 3px;
+    min-height: 78px;
     padding: 0;
-    font-size: 11px;
+    font-size: 16px;
+    /* Кремовий верхній бортик зливався б із пісочним згасанням: тонкий теплий контур по краю
+       і ледь помітна тінь виділяють кнопку. Наведення й натискання ставлять свій filter. */
+    filter: drop-shadow(0 -1px 0 rgba(139, 101, 60, 0.45)) drop-shadow(0 0 0.5px rgba(139, 101, 60, 0.5)) drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
+    transition:
+        transform 0.12s ease,
+        filter 0.12s ease,
+        color 0.12s ease;
 
     svg {
-        width: 20px;
-        height: 20px;
+        width: 34px;
+        height: 34px;
+    }
+
+    @media (hover: hover) {
+        &:not([aria-current="page"]):hover {
+            color: ${({ $item }) => HOVER[$item]};
+            text-shadow: none;
+        }
+    }
+
+    /* Розміри - менші на телефоні, щоб «Кампанія» й «Нагороди» вміщались. */
+    @media (max-width: 640px) {
+        --gb-c: 16px;
+    }
+
+    @media (max-width: 480px) {
+        min-height: 72px;
+        font-size: 14px;
+
+        svg {
+            width: 30px;
+            height: 30px;
+        }
+    }
+
+    @media (max-width: 380px) {
+        font-size: 13px;
+
+        svg {
+            width: 28px;
+            height: 28px;
+        }
     }
 `;
 
-// На екрані гри поле не повинно ховатися під меню: резерв місця знизу для Container
-// (gameStyles.ts) - і у відступі, і в розрахунку розміру поля (--board-chrome).
-const ReserveSpace = createGlobalStyle`
-    :root {
-        --nav-space: 84px;
-    }
-`;
-
-type NavItem = "home" | "campaign" | "shop" | "awards" | "profile";
+export type NavItem = "home" | "campaign" | "shop" | "awards" | "profile";
 const ITEMS: NavItem[] = ["home", "campaign", "shop", "awards", "profile"];
 
 const NAV_ICONS: Record<NavItem, React.ReactNode> = {
@@ -76,36 +113,31 @@ const NAV_ICONS: Record<NavItem, React.ReactNode> = {
 };
 
 type BottomNavProps = {
-    // Що робить "Головна": на головній - прокрутка вгору, у грі - вихід у меню.
-    onHome: () => void;
-    // На головній "Головна" - поточна вкладка; у грі жодна не виділена.
-    homeCurrent: boolean;
-    // Резерв місця під меню (екран гри).
-    reserveSpace?: boolean;
+    // Поточний розділ - виділений.
+    current: NavItem;
+    onNavigate: (item: NavItem) => void;
 };
 
-export const BottomNav: React.FC<BottomNavProps> = ({ onHome, homeCurrent, reserveSpace }) => {
+export const BottomNav: React.FC<BottomNavProps> = ({ current, onNavigate }) => {
     const t = useT();
     return (
-        <>
-            {reserveSpace && <ReserveSpace />}
-            <Nav aria-label={t("navLabel")}>
-                <div>
-                    {ITEMS.map((item) => (
-                        <NavButton
-                            key={item}
-                            type="button"
-                            aria-current={item === "home" && homeCurrent ? "page" : undefined}
-                            onClick={() => (item === "home" ? onHome() : openPanel(item as Panel))}
-                        >
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
-                                {NAV_ICONS[item]}
-                            </svg>
-                            {t(`nav_${item}`)}
-                        </NavButton>
-                    ))}
-                </div>
-            </Nav>
-        </>
+        <Nav aria-label={t("navLabel")}>
+            <div>
+                {ITEMS.map((item) => (
+                    <NavButton
+                        key={item}
+                        type="button"
+                        $item={item}
+                        aria-current={item === current ? "page" : undefined}
+                        onClick={() => onNavigate(item)}
+                    >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">
+                            {NAV_ICONS[item]}
+                        </svg>
+                        {t(`nav_${item}`)}
+                    </NavButton>
+                ))}
+            </div>
+        </Nav>
     );
 };
