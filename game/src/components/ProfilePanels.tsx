@@ -13,7 +13,7 @@ import { useWallet } from "@game/lib/wallet";
 import { closePanel, useOpenPanel, useToasts } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
 import { LeaderboardRow, fetchLeaderboard, useMyRating } from "@game/lib/matchmaking";
-import { leagueFor } from "@game/lib/rating";
+import { START_RATING, leagueFor } from "@game/lib/rating";
 
 // Сторінки "Нагороди" й "Профіль" (як у прототипі - розділи нижнього меню), вікно лідерборду
 // й сповіщення про досягнення.
@@ -117,15 +117,21 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
         <Page>
             <Card aria-labelledby="profile-title">
                 <Eyebrow>{t("nav_profile")}</Eyebrow>
-                <h2 id="profile-title">{profile.name ?? fallbackName ?? t("player")}</h2>
-                <Row>
-                    <InfoPill>{t("profileLevel", { n: String(level) })}</InfoPill>
-                    <LeagueBadge rating={myRating.rating} withRating />
-                </Row>
+                {/* Ім'я, рівень і ліга - в одному ряду; рівень і ліга - по правому краю. */}
+                <Spread style={{ flexWrap: "nowrap" }}>
+                    <h2 id="profile-title" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {profile.name ?? fallbackName ?? t("player")}
+                    </h2>
+                    <Row style={{ flexShrink: 0, flexWrap: "nowrap", gap: 6 }}>
+                        <InfoPill>{t("profileLevel", { n: String(level) })}</InfoPill>
+                        <LeagueBadge rating={myRating.rating} withRating compact />
+                    </Row>
+                </Spread>
                 <Progress role="img" aria-label={xpText}>
                     <i style={{ width: `${((profile.xp - from) / (to - from)) * 100}%` }} />
                 </Progress>
                 <Muted>{xpText}</Muted>
+                <Muted>{t("ratingExplain", { rating: String(myRating.rating), start: String(START_RATING) })}</Muted>
             </Card>
             <Card aria-labelledby="profile-stats">
                 <h3 id="profile-stats">{t("profileStats")}</h3>

@@ -304,6 +304,7 @@ const uk = {
     homeDailyNext: "Наступний виклик - завтра. Серія триває, якщо зіграєш щодня.",
     homeDailyPlay: "Грати виклик · +{n} монет",
     homeCampaignStats: "{n} / {total} зірок · пройдено {done} з {levels}",
+    ratingExplain: "Рейтинг {rating} - лише за швидкі матчі з живими суперниками (Elo). Старт - {start}. Перемога додає очки, поразка забирає, нічия з рівним суперником майже нічого не змінює; за перемогу над сильнішим дають більше (до 32 за матч). Партії з ботом і з другом рейтинг не змінюють.",
 };
 
 type Key = keyof typeof uk;
@@ -605,6 +606,7 @@ const en: Record<Key, string> = {
     homeDailyNext: "Next challenge tomorrow. Keep the streak by playing every day.",
     homeDailyPlay: "Play the challenge · +{n} coins",
     homeCampaignStats: "{n} / {total} stars · {done} of {levels} passed",
+    ratingExplain: "Rating {rating} comes only from quick matches against real players (Elo). You start at {start}. A win adds points, a loss takes them, a draw against an equal opponent barely changes anything; beating a stronger player gives more (up to 32 per match). Games against the bot or a friend do not change it.",
 };
 
 const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };
