@@ -34,16 +34,26 @@ export const ModalCard = styled.div`
     }
 `;
 
+// Хрестик "Закрити" попапів - кругла кремова кнопка в правому верхньому куті (як у прототипі).
 export const ModalCloseButton = styled.button`
     ${gameButtonCss("xs", { square: true })}
     position: absolute;
     top: 12px;
     right: 12px;
+    z-index: 2;
+    border-radius: 50%;
+
+    && {
+        --gb-c: 11px;
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+    }
 `;
 
 export const ModalTitle = styled.h2`
     margin: 0 0 16px;
-    padding-right: 30px;
+    padding-right: 44px;
     font-size: clamp(18px, 5vw, 22px);
     font-weight: 700;
     color: #5b3f22;

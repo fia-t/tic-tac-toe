@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
+import { IconClose } from "@game/components/GameIcons";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
@@ -217,7 +218,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
             <Overlay onClick={() => setResult(null)} style={{ zIndex: 1600 }} />
             <ModalCard role="dialog" aria-modal="true" aria-labelledby="level-result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                 <ModalCloseButton onClick={() => setResult(null)} aria-label={t("close")}>
-                    ×
+                    <IconClose size={16} />
                 </ModalCloseButton>
                 <ModalTitle id="level-result-title">{t("campaignLevel", { n: String(result.level + 1) })}</ModalTitle>
                 <ModalSubtitle>

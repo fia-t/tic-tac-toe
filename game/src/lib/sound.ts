@@ -5,8 +5,9 @@ import { addGameEventListener } from "@game/lib/firebase";
 // Звуки синтезуються WebAudio на льоту - жодних аудіофайлів у білді (ліміти порталу
 // на розмір і "звук не грає, коли гра не у фокусі" виконуються самі собою).
 // move - хід гравця, reply - хід ШІ/суперника; win/lose/draw - кінець партії
-// (слухаємо game_finished/online_game_finished, що й так ідуть через trackEvent).
-export type SoundName = "move" | "reply" | "win" | "lose" | "draw";
+// (слухаємо game_finished/online_game_finished, що й так ідуть через trackEvent);
+// coin - нарахування монет у вікні результату.
+export type SoundName = "move" | "reply" | "win" | "lose" | "draw" | "coin";
 
 const STORAGE_KEY = "ttt-muted";
 
@@ -67,6 +68,10 @@ const SOUNDS: Record<SoundName, (c: AudioContext, start: number) => void> = {
     win: (c, s) => arpeggio(c, s, [523.25, 659.25, 783.99, 1046.5], 0.09, 0.22, "triangle"),
     lose: (c, s) => arpeggio(c, s, [392, 329.63, 261.63], 0.13, 0.26, "sine"),
     draw: (c, s) => arpeggio(c, s, [493.88, 440], 0.12, 0.2, "sine"),
+    coin: (c, s) => {
+        tone(c, s, 988, 0.08, { type: "square", gain: 0.06 });
+        tone(c, s + 0.08, 1319, 0.16, { type: "square", gain: 0.06 });
+    },
 };
 
 // delay - щоб фанфари кінця партії не накладались на звук останнього ходу.

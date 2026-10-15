@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
-import { ModalCard, PillButton } from "@game/components/onlineStyles";
+import { ModalCard, ModalCloseButton, PillButton } from "@game/components/onlineStyles";
+import { IconClose } from "@game/components/GameIcons";
 import { buttonTone } from "@game/components/GameButton";
 import { Coin } from "@game/components/SkinShop";
 import { useWallet } from "@game/lib/wallet";
 import { useProfile } from "@game/lib/profile";
+import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
 
 // Вікно після партії проти ШІ (як у прототипі): режим і результат по центру, нагороди -
@@ -77,6 +79,7 @@ const Rewards = styled.div`
 
 // Нагорода: іконка зліва від числа в одному рядку, підпис під ними.
 const Stat = styled.div`
+    position: relative;
     display: grid;
     grid-template-columns: auto auto;
     justify-content: center;
@@ -101,6 +104,123 @@ const Stat = styled.div`
         color: #7a5a35;
     }
 `;
+
+const iconIn = keyframes`
+    0% { opacity: 0; transform: scale(0.3); }
+    60% { opacity: 1; transform: scale(1.2); }
+    100% { opacity: 1; transform: none; }
+`;
+
+const spark = keyframes`
+    from { opacity: 1; transform: translate(0, 0) scale(1); }
+    to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
+`;
+
+// Іконка нагороди: до своєї черги прихована, потім з'являється разом із числом - виринає й пружинить.
+const StatIcon = styled.span<{ $phase: "wait" | "in" | "static" }>`
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    ${({ $phase }) => ($phase === "wait" ? "opacity: 0; transform: scale(0.3);" : "")}
+    animation: ${({ $phase }) => ($phase === "in" ? iconIn : "none")} 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+`;
+
+const Spark = styled.span`
+    position: absolute;
+    left: calc(50% - 3px);
+    top: calc(50% - 10px);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: ${spark} 0.65s ease-out forwards;
+`;
+
+const SPARK_COLORS: [string, string][] = [
+    ["#ffd04d", "#f2a818"],
+    ["#8fe3f5", "#1fb3d9"],
+    ["#e7c08a", "#b07a45"],
+];
+
+const reducedMotion = (): boolean =>
+    typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// Нагорода з ефектом: іконка з'являється по черзі, число (count) рахує від нуля, довкола
+// розлітаються іскорки; на монетах - звук. "Зменшити рух" - без ефектів, одразу підсумкове число.
+const RewardStat: React.FC<{ icon: React.ReactNode; value: number; prefix?: string; label: string; order: number; count: boolean }> = ({
+    icon,
+    value,
+    prefix = "",
+    label,
+    order,
+    count,
+}) => {
+    const [effects] = useState(() => !reducedMotion());
+    const [phase, setPhase] = useState<"wait" | "in" | "static">(effects ? "wait" : "static");
+    // null - показувати саме значення (без відліку або відлік завершено).
+    const [counted, setCounted] = useState<number | null>(effects && count ? 0 : null);
+    const [sparks, setSparks] = useState<number[]>([]);
+    const target = useRef(value);
+    target.current = value;
+
+    useEffect(() => {
+        if (!effects) return;
+        let frame = 0;
+        const start = setTimeout(() => {
+            setPhase("in");
+            const to = target.current;
+            if (to > 0 && count) {
+                setSparks(Array.from({ length: 6 }, (_, k) => k));
+                setTimeout(() => setSparks([]), 700);
+                if (order === 0) playSound("coin");
+            }
+            if (!count) return;
+            const began = performance.now();
+            const duration = Math.min(900, 300 + to * 25);
+            const step = (now: number) => {
+                const k = Math.min(1, (now - began) / duration);
+                setCounted(k < 1 ? Math.round(target.current * (1 - (1 - k) ** 3)) : null);
+                if (k < 1) frame = requestAnimationFrame(step);
+            };
+            frame = requestAnimationFrame(step);
+        }, 250 + order * 260);
+        return () => {
+            clearTimeout(start);
+            cancelAnimationFrame(frame);
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- ефект один раз, при появі вікна
+    }, []);
+
+    const [a, b] = SPARK_COLORS[order] ?? SPARK_COLORS[0];
+    return (
+        <Stat role="listitem">
+            <StatIcon $phase={phase}>{icon}</StatIcon>
+            <b>
+                {prefix}
+                {counted ?? value}
+            </b>
+            <small>{label}</small>
+            {sparks.map((k) => {
+                const angle = (Math.PI * 2 * k) / 6 + 0.3;
+                const distance = 18 + (k % 3) * 5;
+                return (
+                    <Spark
+                        key={k}
+                        aria-hidden="true"
+                        style={
+                            {
+                                background: k % 2 ? b : a,
+                                "--dx": `${Math.cos(angle) * distance}px`,
+                                "--dy": `${Math.sin(angle) * distance}px`,
+                            } as React.CSSProperties
+                        }
+                    />
+                );
+            })}
+        </Stat>
+    );
+};
 
 const XpStar = () => (
     <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
@@ -143,26 +263,17 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({ result, summary, onClo
         <>
             <Overlay onClick={onClose} style={{ zIndex: 1600 }} />
             <Card role="dialog" aria-modal="true" aria-labelledby="result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
+                <ModalCloseButton type="button" onClick={onClose} aria-label={t("close")}>
+                    <IconClose size={16} />
+                </ModalCloseButton>
                 <Eyebrow>{t("homeQuick")}</Eyebrow>
                 <Title id="result-title" $result={result}>
                     {title}
                 </Title>
                 <Rewards role="list">
-                    <Stat role="listitem">
-                        <Coin size={26} />
-                        <b>+{summary.coins}</b>
-                        <small>{t("resultCoins")}</small>
-                    </Stat>
-                    <Stat role="listitem">
-                        <XpStar />
-                        <b>+{summary.xp}</b>
-                        <small>{t("resultXp")}</small>
-                    </Stat>
-                    <Stat role="listitem">
-                        <Steps />
-                        <b>{summary.moves}</b>
-                        <small>{t("resultMoves")}</small>
-                    </Stat>
+                    <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins")} order={0} count />
+                    <RewardStat icon={<XpStar />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
+                    <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves")} order={2} count={false} />
                 </Rewards>
                 <PrimaryButton type="button" onClick={onRestart}>
                     {t("playAgain")}

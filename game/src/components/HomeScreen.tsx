@@ -337,6 +337,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 </GameButton>
             </Card>
 
+            <Card aria-labelledby="home-online">
+                <Spread>
+                    <h2 id="home-online">{t("homeOnline")}</h2>
+                    <LeagueBadge rating={myRating.rating} withRating />
+                </Spread>
+                <TwoCol>
+                    <GameButton tone="danger" size="lg" onClick={() => openPanel("match")}>
+                        {t("homeMatch")}
+                    </GameButton>
+                    <GameButton size="lg" onClick={() => void openFriend()}>
+                        {t("homeFriend")}
+                    </GameButton>
+                </TwoCol>
+                <Muted>{t("homeOnlineHint")}</Muted>
+                <GameButton size="lg" onClick={() => openPanel("leaderboard")}>
+                    {t("homeLeaderboard")}
+                </GameButton>
+            </Card>
+
             <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
                 <Spread>
                     <Eyebrow>{t("homeDaily")}</Eyebrow>
@@ -408,25 +427,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     </GameButton>
                 </Card>
             </TwoCol>
-
-            <Card aria-labelledby="home-online">
-                <Spread>
-                    <h2 id="home-online">{t("homeOnline")}</h2>
-                    <LeagueBadge rating={myRating.rating} withRating />
-                </Spread>
-                <TwoCol>
-                    <GameButton tone="danger" size="lg" onClick={() => openPanel("match")}>
-                        {t("homeMatch")}
-                    </GameButton>
-                    <GameButton size="lg" onClick={() => void openFriend()}>
-                        {t("homeFriend")}
-                    </GameButton>
-                </TwoCol>
-                <Muted>{t("homeOnlineHint")}</Muted>
-                <GameButton size="lg" onClick={() => openPanel("leaderboard")}>
-                    {t("homeLeaderboard")}
-                </GameButton>
-            </Card>
 
             {panel === "match" && <QuickMatch fallbackName={name} onMatched={onRoomReady} onPlayBot={() => play("traditional")} />}
 

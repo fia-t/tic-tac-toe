@@ -1,7 +1,7 @@
 "use client";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { GameButton, buttonTone, gameButtonCss } from "@game/components/GameButton";
+import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModButton, ModIcon, ModRow, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { MoveTimerBar } from "@game/components/MoveTimer";
@@ -308,8 +308,28 @@ const Badge = styled.span<{ $free: boolean }>`
     pointer-events: none;
 `;
 
-const ResultButton = styled(GameButton)`
-    width: var(--board-w);
+// "Результат" після кінця партії - компактна кнопка в кінці смуги над полем, по правому краю.
+const ResultButton = styled.button`
+    ${gameButtonCss("lg")}
+    ${buttonTone("primary")}
+    flex-shrink: 0;
+    margin-left: auto;
+
+    && {
+        --gb-c: 13px;
+        min-height: 52px;
+        padding: 0 6px;
+        font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+        && {
+            --gb-c: 11px;
+            min-height: 44px;
+            padding: 0 4px;
+            font-size: 13px;
+        }
+    }
 `;
 
 type BoosterKind = "undo" | "hint";
@@ -532,6 +552,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {actionButtons}
                     </>
                 )}
+                {over && quick && onShowResult && (
+                    <ResultButton type="button" onClick={onShowResult}>
+                        {t("showResult")}
+                    </ResultButton>
+                )}
             </Bar>
 
             {timer !== null && timer !== undefined && !over && (
@@ -569,12 +594,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </Boosters>
                 )}
             </BoardHolder>
-
-            {over && quick && onShowResult && (
-                <ResultButton tone="primary" size="lg" onClick={onShowResult}>
-                    {t("showResult")}
-                </ResultButton>
-            )}
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
         </Root>

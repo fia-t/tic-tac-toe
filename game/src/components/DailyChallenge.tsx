@@ -82,8 +82,8 @@ export const Star = ({ on, size = 34 }: { on: boolean; size?: number }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
         <path
             d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"
-            fill={on ? "#1fb3d9" : "#e3d3b8"}
-            stroke={on ? "#0f6f8c" : "#cdb995"}
+            fill={on ? "#1fb3d9" : "#d3edf3"}
+            stroke={on ? "#0f6f8c" : "#9fcfdc"}
             strokeWidth="1.2"
             strokeLinejoin="round"
         />
