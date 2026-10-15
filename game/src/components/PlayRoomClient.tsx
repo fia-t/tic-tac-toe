@@ -1,6 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import styled from "styled-components";
 import { Container } from "@game/components/gameStyles";
+import { AppColumn, ShellVars } from "@game/components/pageStyles";
+import { RoomTopBar } from "@game/components/TopBar";
 import {
     ModalCard,
     ModalTitle,
@@ -30,6 +33,28 @@ import {
     PRESENCE_TIMEOUT_MS,
 } from "@game/lib/onlineGame";
 import { useT } from "@game/lib/i18n";
+
+// Екран кімнати - у тій самій колонці гри до 760px, що й меню: шапка з логотипом ("На головну" -
+// вихід із кімнати) і шестернею, під нею - картка запрошення / стан підключення / поле.
+const RoomBody = styled.div`
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding-bottom: 24px;
+`;
+
+const RoomShell: React.FC<{ onHome: () => void; children: React.ReactNode }> = ({ onHome, children }) => (
+    <Container>
+        <ShellVars />
+        <AppColumn>
+            <RoomTopBar onHome={onHome} />
+            <RoomBody>{children}</RoomBody>
+        </AppColumn>
+    </Container>
+);
 
 type PlayRoomClientProps = {
     roomId: string;
@@ -190,7 +215,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
 
     if (!isFirebaseConfigured) {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>{t("firebaseTitle")}</ModalTitle>
                     <ModalSubtitle>
@@ -200,24 +225,24 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     if (connection === "connecting") {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>{t("connecting")}</ModalTitle>
                     <WaitingText>{t("joiningRoom", { room: roomId })}</WaitingText>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     if (connection === "not-found") {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>{t("roomNotFound")}</ModalTitle>
                     <ModalSubtitle>{t("roomNotFoundBody")}</ModalSubtitle>
@@ -225,13 +250,13 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     if (connection === "full") {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>{t("roomFull")}</ModalTitle>
                     <ModalSubtitle>{t("roomFullBody")}</ModalSubtitle>
@@ -239,13 +264,13 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     if (connection === "error" || !room || !mySymbol || !uid) {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <ModalTitle>{t("errorTitle")}</ModalTitle>
                     <ErrorText>{t("errorBody")}</ErrorText>
@@ -253,13 +278,13 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     if (room.status === "waiting") {
         return (
-            <Container>
+            <RoomShell onHome={handleReturnToMenu}>
                 <ModalCard style={{ position: "static", transform: "none" }}>
                     <RoomCodeBadge>{roomId}</RoomCodeBadge>
                     <ModalTitle>{t("inviteTitle")}</ModalTitle>
@@ -275,12 +300,12 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </Container>
+            </RoomShell>
         );
     }
 
     return (
-        <Container>
+        <RoomShell onHome={handleReturnToMenu}>
             <OnlineBoard roomId={roomId} room={room} mySymbol={mySymbol} uid={uid} />
 
             {showOpponentLeft && (
@@ -296,6 +321,6 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                     </div>
                 </OpponentLeftCard>
             )}
-        </Container>
+        </RoomShell>
     );
 };

@@ -1,5 +1,30 @@
 "use client";
-import styled from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
+
+// Шапка гри - у потоці сторінки (TopBar), тож верхній відступ Container під кнопку в куті
+// не потрібен; бічні поля - як у прототипі.
+export const ShellVars = createGlobalStyle`
+    :root {
+        --shell-top: 0px;
+        --shell-x: max(16px, env(safe-area-inset-left, 0px));
+    }
+`;
+
+// Одна колонка гри до 760px (як у прототипі): шапка, під нею - головна, сторінка розділу,
+// поле або екран онлайн-кімнати.
+export const AppColumn = styled.div`
+    &&& {
+        margin-block: 0;
+    }
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 760px;
+    min-height: 100%;
+    margin: 0 auto;
+    color: #4a2c0c;
+    font: 500 15px/1.45 var(--font-body);
+`;
 
 // Спільні стилі сторінок меню (головна, кампанія, магазин, нагороди, профіль) - як у прототипі:
 // кремові картки з м'якою нижньою кромкою на небі гри.

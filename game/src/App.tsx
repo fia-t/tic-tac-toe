@@ -15,7 +15,6 @@ import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, P
 import { getScreen } from "@game/lib/ui";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
-import { SettingsButton } from "@game/components/SettingsPanel";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
 // каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
@@ -152,7 +151,6 @@ export default function App() {
         return (
             <>
                 <GlobalStyle />
-                <SettingsButton />
                 <PortalGameBridge origin={PORTAL_ORIGIN}>
                     <PlayRoomClient
                         roomId={roomId}

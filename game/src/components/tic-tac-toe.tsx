@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import styled, { createGlobalStyle } from "styled-components";
+
 import { Board } from "./board";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import { ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
@@ -25,6 +25,7 @@ import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeScreen } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
+import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { endDailyRun } from "@game/lib/daily";
@@ -71,30 +72,6 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
     if (marker === aiMarker) return "O";
     return null;
 };
-
-// Шапка меню гри - у потоці сторінки (TopBar), тож верхній відступ Container під кнопку в куті
-// не потрібен; бічні поля - як у прототипі.
-const ShellVars = createGlobalStyle`
-    :root {
-        --shell-top: 0px;
-        --shell-x: max(16px, env(safe-area-inset-left, 0px));
-    }
-`;
-
-// Одна колонка гри до 760px (як у прототипі): шапка, під нею - головна, сторінка розділу або поле.
-const AppColumn = styled.div`
-    &&& {
-        margin-block: 0;
-    }
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 760px;
-    min-height: 100%;
-    margin: 0 auto;
-    color: #4a2c0c;
-    font: 500 15px/1.45 var(--font-body);
-`;
 
 // Розділи меню - окремі екрани (як у прототипі); "game" - саме поле.
 type Screen = "home" | "game" | Exclude<NavItem, "home">;

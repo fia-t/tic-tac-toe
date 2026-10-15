@@ -154,6 +154,21 @@ export const Flame = ({ size = 22 }: { size?: number }) => (
     </svg>
 );
 
+// Шапка екрана онлайн-кімнати: той самий логотип ("На головну" - вихід із кімнати) і шестерня,
+// без плашок зірок, монет і серії (їхні розділи живуть у меню гри, а не в кімнаті).
+export const RoomTopBar: React.FC<{ onHome: () => void }> = ({ onHome }) => {
+    const t = useT();
+    return (
+        <Bar>
+            <Brand type="button" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
+                <img src={assetUrl("images/logo.png")} alt="" />
+                <span>Tic Tac Toe</span>
+            </Brand>
+            <SettingsButton inline />
+        </Bar>
+    );
+};
+
 type TopBarProps = {
     // Логотип: у грі - вихід у меню, у меню - на головну (вгору).
     onHome: () => void;
