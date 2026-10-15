@@ -8,6 +8,7 @@ import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/compo
 import { setMuted, useMuted } from "@game/lib/sound";
 import { chooseLocale, useLocale, useT, type Locale } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
+import { setInvitesEnabled, useInvitesEnabled } from "@game/lib/presence";
 
 // Кнопка-шестерня в правому верхньому куті (на місці колишнього перемикача звуку) і вікно
 // налаштувань: звук і мова. Над полем, але під BlockingOverlay порталу (z-index 2000).
@@ -68,6 +69,7 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
     const open = useOpenPanel() === "settings";
     const muted = useMuted();
     const locale = useLocale();
+    const invites = useInvitesEnabled();
 
     return (
         <>
@@ -91,6 +93,18 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
                                     {t("settingsOn")}
                                 </GameButton>
                                 <GameButton size="sm" aria-pressed={muted} onClick={() => setMuted(true)}>
+                                    {t("settingsOff")}
+                                </GameButton>
+                            </Choices>
+                        </Row>
+
+                        <Row>
+                            <RowLabel>{t("settingsInvites")}</RowLabel>
+                            <Choices role="group" aria-label={t("settingsInvites")}>
+                                <GameButton size="sm" aria-pressed={invites} onClick={() => setInvitesEnabled(true)}>
+                                    {t("settingsOn")}
+                                </GameButton>
+                                <GameButton size="sm" aria-pressed={!invites} onClick={() => setInvitesEnabled(false)}>
                                     {t("settingsOff")}
                                 </GameButton>
                             </Choices>

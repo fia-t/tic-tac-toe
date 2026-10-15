@@ -28,6 +28,8 @@ import { TopBar } from "@game/components/TopBar";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
+import { MatchInvite } from "@game/components/MatchInvite";
+import { setPresence, startPresence } from "@game/lib/presence";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel } from "@game/lib/ui";
@@ -140,6 +142,14 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     // Облік часу гри на порталі: геймплей - лише на полі, меню й розділи - пауза (App слухає ці події).
     const onGameScreen = screen === "game";
+    // Присутність: хто зараз у грі й чи в партії (лічильник "онлайн" і запрошення в меню).
+    useEffect(() => {
+        void startPresence();
+    }, []);
+    useEffect(() => {
+        setPresence({ screen: onGameScreen ? "game" : "menu", name: shownName ?? "" });
+    }, [onGameScreen, shownName]);
+
     useEffect(() => {
         setScreenState(onGameScreen ? "game" : "home");
         trackEvent(onGameScreen ? "open_game" : "open_menu");
@@ -591,6 +601,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <DailyChallenge onStart={goToGame} getShareLink={getShareLink} onMenu={goToMenu} />
             <CampaignResults onStart={goToGame} onMenu={goToMenu} />
             <ProfilePanels />
+            <MatchInvite hidden={onGameScreen} />
         </RewardedAdContext.Provider>
     );
 };

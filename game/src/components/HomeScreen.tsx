@@ -19,6 +19,7 @@ import { levelForXp, useProfile } from "@game/lib/profile";
 import { dailyReward } from "@game/lib/wallet";
 import { openPanel, useOpenPanel } from "@game/lib/ui";
 import { QuickMatch } from "@game/components/QuickMatch";
+import { OnlineNow } from "@game/components/MatchInvite";
 import { useMyRating } from "@game/lib/matchmaking";
 
 // Головний екран (як у прототипі): привітання з рівнем і лігою, швидка гра, виклик дня,
@@ -393,6 +394,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     <h2 id="home-online">{t("homeOnline")}</h2>
                     <LeagueBadge rating={myRating.rating} played={myRating.played} withRating />
                 </Spread>
+                <OnlineNow />
                 <TwoCol>
                     <GameButton tone="danger" size="lg" onClick={() => openPanel("match")}>
                         {t("homeMatch")}

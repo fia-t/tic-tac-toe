@@ -6,6 +6,7 @@ import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { MatchUnavailableError, cancelQueue, joinQueue, useMyRating, watchQueue } from "@game/lib/matchmaking";
 import { displayLeague } from "@game/lib/rating";
+import { setPresence } from "@game/lib/presence";
 import { getProfile, setProfileName } from "@game/lib/profile";
 import { trackEvent } from "@game/lib/firebase";
 import { closePanel } from "@game/lib/ui";
@@ -110,6 +111,12 @@ export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched,
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps -- новий пошук лише за "Шукати далі"
     }, [searchId]);
+
+    // Поки гравець у черзі - інші гравці в меню бачать запрошення "шукає суперника" (presence.ts).
+    useEffect(() => {
+        setPresence({ searching: phase !== "unavailable" });
+        return () => setPresence({ searching: false });
+    }, [phase]);
 
     const mm = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, "0")}`;
     const close = () => closePanel();

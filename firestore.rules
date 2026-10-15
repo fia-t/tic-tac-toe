@@ -53,6 +53,24 @@ service cloud.firestore {
       allow list, write: if false;
     }
 
+    match /presence/{uid} {
+      // Хто зараз у грі й хто шукає суперника (лічильник "онлайн" і запрошення зіграти).
+      // Читати (і рахувати) може будь-який гравець з анонімним входом; писати - лише свій
+      // документ і лише очікуваної форми.
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null && request.auth.uid == uid && isValidPresence(request.resource.data);
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    function isValidPresence(data) {
+      return data.keys().hasOnly(['lastSeen', 'expiresAt', 'screen', 'searching', 'name'])
+        && data.lastSeen == request.time
+        && data.expiresAt is timestamp
+        && data.screen in ['menu', 'game']
+        && data.searching is bool
+        && data.name is string && data.name.size() <= 40;
+    }
+
     match /ratings/{playerId} {
       // Рейтинг і лідерборд: читає будь-хто, пише лише сервер після рейтингового матчу.
       allow read: if true;
