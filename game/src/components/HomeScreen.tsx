@@ -139,9 +139,9 @@ const OptGroup = styled.div<{ $fit?: boolean }>`
     }
 `;
 
-// Опис вибраного: назва жирним, далі пояснення; у модифікаторів - до двох рядків (місце під
-// другий рядок зарезервоване, щоб картка не стрибала при перемиканні).
-const OptInfo = styled.div<{ $twoLines?: boolean }>`
+// Опис вибраного: назва жирним, далі пояснення, не більше двох рядків. Місце під другий рядок
+// не резервується (як у прототипі) - так "Грати" стоїть ближче до виборів.
+const OptInfo = styled.div`
     color: #7a5530;
     font-size: 14px;
     line-height: 1.35;
@@ -150,7 +150,6 @@ const OptInfo = styled.div<{ $twoLines?: boolean }>`
     -webkit-line-clamp: 2;
     line-clamp: 2;
     overflow: hidden;
-    ${({ $twoLines }) => ($twoLines ? "min-height: calc(2 * 1.35em);" : "")}
 
     strong {
         color: #49301f;
@@ -327,7 +326,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                                 </ModButton>
                             ))}
                         </ModScroll>
-                        <OptInfo $twoLines>
+                        <OptInfo>
                             <strong>{activeModifier ? t(`modifier_${activeModifier}`) : t("modifier_none")}</strong> ·{" "}
                             {activeModifier ? t(`modifierDesc_${activeModifier}`) : t("modifierNoneDesc")}
                         </OptInfo>
