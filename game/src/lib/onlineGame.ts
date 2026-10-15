@@ -116,6 +116,9 @@ export type RoomDoc = {
     // Модифікатор гри з другом (як проти бота) і порядок ходів кожного - для зникаючих фішок.
     modifier?: Modifier | null;
     hist?: ModHistory;
+    // Реванш рейтингового матчу: коли попросили (запит живе REMATCH_WAIT_MS) і хто ходив першим.
+    rematchAt?: Timestamp | null;
+    starter?: PlayerSymbol;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком

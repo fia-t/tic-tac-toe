@@ -18,7 +18,8 @@ import { DEFAULT_THEME } from "@game/lib/themes";
 import { GamePiece } from "@game/components/GamePiece";
 import { useT } from "@game/lib/i18n";
 import { playSound } from "@game/lib/sound";
-import { ratedMove, rememberRating } from "@game/lib/matchmaking";
+import { ratedMove, ratedRematch, rememberRating } from "@game/lib/matchmaking";
+import { REMATCH_WAIT_MS } from "@game/lib/rating";
 import { TurnAlert, formatClock, useRatedTurnClock } from "@game/components/RatedTurnTimer";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
@@ -142,8 +143,21 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     };
 
     const opponentSymbol: PlayerSymbol = mySymbol === "X" ? "O" : "X";
-    const myRematchReady = room.rematch[mySymbol];
-    const opponentRematchReady = room.rematch[opponentSymbol];
+    // Реванш: у рейтинговому матчі запит живе REMATCH_WAIT_MS (далі - пропонуємо нового суперника).
+    const [now, setNow] = useState(() => Date.now());
+    const rematchAt = room.rematchAt?.toMillis?.() ?? null;
+    const rematchFresh = !room.rated || (rematchAt !== null && now - rematchAt < REMATCH_WAIT_MS);
+    useEffect(() => {
+        if (!room.rated || rematchAt === null) return;
+        const left = rematchAt + REMATCH_WAIT_MS - Date.now();
+        if (left <= 0) return;
+        const timer = setTimeout(() => setNow(Date.now()), left + 50);
+        return () => clearTimeout(timer);
+    }, [room.rated, rematchAt]);
+    const myRematchReady = room.rematch[mySymbol] && rematchFresh;
+    const opponentRematchReady = room.rematch[opponentSymbol] && rematchFresh;
+    // Суперник вийшов із кімнати або не відповів на реванш вчасно.
+    const opponentGone = Boolean(room.rated) && (room.leftPlayer === opponentSymbol || (room.rematch[mySymbol] && !rematchFresh));
 
     // Звук на кожну нову фішку - і свою, і суперника (вона приходить зі снапшоту
     // Firestore). Перший рендер лише запамʼятовує дошку, щоб вхід у кімнату з уже
@@ -184,7 +198,18 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     }, [isFinished]);
 
     const myResult: "win" | "lose" | "draw" = room.winner === "draw" ? "draw" : room.winner === mySymbol ? "win" : "lose";
-    const rematch = () => requestRematch(roomId, mySymbol);
+    const [rematchError, setRematchError] = useState(false);
+    const rematch = () => {
+        if (!room.rated) return void requestRematch(roomId, mySymbol);
+        setNow(Date.now());
+        setRematchError(false);
+        void ratedRematch(roomId).then((res) => res.error && setRematchError(true), () => setRematchError(true));
+    };
+    // Новий суперник: вийти з кімнати й одразу почати пошук швидкого матчу.
+    const newOpponent = () => {
+        openPanel("match");
+        onExit();
+    };
     const status = isFinished
         ? resultLabel ?? ""
         : turnRemaining !== null
@@ -212,11 +237,24 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     summary={summary}
                     eyebrow={room.rated ? t("homeMatch") : t("homeFriend")}
                     title={resultLabel ?? undefined}
-                    extra={ratingLine}
+                    extra={
+                        <>
+                            {ratingLine}
+                            {opponentGone ? (
+                                <div>{t("opponentGone")}</div>
+                            ) : opponentRematchReady && !myRematchReady ? (
+                                <div>{t("opponentWantsRematch")}</div>
+                            ) : null}
+                            {rematchError && <div>{t("rematchFailed")}</div>}
+                        </>
+                    }
                     onClose={() => setPopupOpen(false)}
-                    onRestart={room.rated ? () => { openPanel("match"); onExit(); } : rematch}
-                    restartLabel={room.rated ? t("homeMatch") : myRematchReady ? t("waitingRematch") : t("playAgain")}
-                    restartDisabled={!room.rated && myRematchReady}
+                    onRestart={opponentGone ? newOpponent : rematch}
+                    restartLabel={
+                        opponentGone ? t("newOpponent") : myRematchReady ? t("waitingRematch") : room.rated ? t("rematchButton") : t("playAgain")
+                    }
+                    restartDisabled={!opponentGone && myRematchReady}
+                    secondary={room.rated && !opponentGone ? { label: t("newOpponent"), onClick: newOpponent } : undefined}
                     onMenu={onExit}
                 />
             )}
@@ -233,9 +271,9 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     {status}
                 </TurnLine>
                 {isFinished &&
-                    (room.rated ? (
-                        <ResultLink type="button" onClick={() => setPopupOpen(true)}>
-                            {t("showResult")}
+                    (opponentGone ? (
+                        <ResultLink type="button" onClick={newOpponent}>
+                            {t("newOpponent")}
                         </ResultLink>
                     ) : myRematchReady ? (
                         <WaitingText style={{ margin: 0, flexShrink: 0 }}>{t("waitingRematch")}</WaitingText>
@@ -257,7 +295,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                 </div>
             )}
 
-            {isFinished && !room.rated && opponentRematchReady && !myRematchReady && (
+            {isFinished && !opponentGone && opponentRematchReady && !myRematchReady && (
                 <div style={{ width: "var(--board-w)", fontSize: 13, fontWeight: 700, color: "#7a5a35" }}>{t("opponentWantsRematch")}</div>
             )}
 

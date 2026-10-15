@@ -131,3 +131,7 @@ export const useMyRating = (): MyRating =>
         () => myRating,
         () => EMPTY
     );
+
+// Реванш у рейтинговому матчі (той самий суперник). started - обидва погодились, партія почалась.
+export const ratedRematch = (roomId: string): Promise<{ ok?: boolean; started?: boolean; error?: string }> =>
+    call("/api/match/rematch", "POST", { roomId });
