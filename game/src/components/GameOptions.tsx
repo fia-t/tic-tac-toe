@@ -125,6 +125,25 @@ export const ModButton = styled.button`
         transform: translate(-50%, -50%);
     }
 
+    /* Неактивна іконка: приглушуємо саму кнопку (світла вуаль і бліда іконка), а не через filter
+       на всій кнопці - інакше блідим ставав би й тултіп. */
+    &&:disabled {
+        filter: none;
+    }
+
+    &:disabled > svg {
+        opacity: 0.35;
+    }
+
+    &:disabled::before {
+        content: "";
+        position: absolute;
+        inset: calc(-1 * var(--gb-c, 0px));
+        border-radius: 12px;
+        background: rgba(255, 250, 240, 0.5);
+        pointer-events: none;
+    }
+
     @media (max-width: 480px) {
         && {
             width: 42px;

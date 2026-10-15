@@ -131,7 +131,9 @@ const OptGroup = styled.div<{ $fit?: boolean }>`
     flex-direction: column;
     gap: 4px;
     min-width: 0;
-    ${({ $fit }) => ($fit ? "width: min-content; max-width: 100%;" : "")}
+    /* Модифікатори займають усе місце праворуч від складності: іконки розсуваються, а опис
+       уміщається в один рядок. */
+    ${({ $fit }) => ($fit ? "flex: 1 1 320px; max-width: 100%;" : "flex: 0 0 auto;")}
 
     &:hover,
     &:focus-within {
@@ -139,17 +141,15 @@ const OptGroup = styled.div<{ $fit?: boolean }>`
     }
 `;
 
-// Опис вибраного: назва жирним, далі пояснення, не більше двох рядків. Місце під другий рядок
-// не резервується (як у прототипі) - так "Грати" стоїть ближче до виборів.
+// Опис вибраного: назва жирним, далі пояснення - в один рядок, щоб текст не перескакував і
+// "Грати" не стрибала; якщо не вміщається - три крапки, повний текст у підказці (title).
 const OptInfo = styled.div`
     color: #7a5530;
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.35;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
 
     strong {
         color: #49301f;
@@ -159,9 +159,22 @@ const OptInfo = styled.div`
 const ModScroll = styled(ModRow)`
     /* Ряд іконок прокручується вбік і обрізав би тултіп - місце під тултіп знизу. */
     overflow-x: auto;
+    justify-content: space-between;
     padding: 2px 2px 32px;
     margin: 0 0 -32px;
     scrollbar-width: none;
+
+    /* Ряд обрізає все поза собою: у крайніх кнопок тултіп - по їхньому краю, а не по центру. */
+    & > button:first-child::after {
+        left: calc(-1 * var(--gb-c, 0px));
+        transform: none;
+    }
+
+    & > button:last-child::after {
+        left: auto;
+        right: calc(-1 * var(--gb-c, 0px));
+        transform: none;
+    }
 
     @media (max-width: 480px) {
         padding-left: 0;
@@ -331,7 +344,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                                 </ModButton>
                             ))}
                         </ModScroll>
-                        <OptInfo>
+                        <OptInfo
+                            title={`${activeModifier ? t(`modifier_${activeModifier}`) : t("modifier_none")} · ${
+                                activeModifier ? t(`modifierDesc_${activeModifier}`) : t("modifierNoneDesc")
+                            }`}
+                        >
                             <strong>{activeModifier ? t(`modifier_${activeModifier}`) : t("modifier_none")}</strong> ·{" "}
                             {activeModifier ? t(`modifierDesc_${activeModifier}`) : t("modifierNoneDesc")}
                         </OptInfo>
