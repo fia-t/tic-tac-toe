@@ -12,7 +12,7 @@ import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily"
 import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wallet";
 import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/lib/campaign";
 import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, ProfileState } from "@game/lib/profile";
-import { getScreen } from "@game/lib/ui";
+import { getScreen, useOpenPanel } from "@game/lib/ui";
 import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { setPortalUserProvider } from "@game/lib/players";
@@ -43,6 +43,13 @@ export default function App() {
     // (і випадкове імʼя гравця обралось би не з того мовного пулу).
     const [startupChecked, setStartupChecked] = useState(!sdk.getInviteParams && !sdk.getLocale);
     const finishedCount = useRef(0);
+    const panel = useOpenPanel();
+
+    // Відкрите вікно поверх гри (налаштування, магазин, нагороди...) - пауза: порталу gameplayStop,
+    // після закриття - знову gameplayStart (якщо партія ще триває).
+    useEffect(() => {
+        lifecycle.setPaused("panel", panel !== null);
+    }, [panel]);
 
     useEffect(() => {
         void sdk.init();
@@ -94,6 +101,12 @@ export default function App() {
                     break;
                 case "open_game":
                     lifecycle.setGameplay(true);
+                    break;
+                case "tutorial_shown":
+                    lifecycle.setPaused("tutorial", true);
+                    break;
+                case "tutorial_closed":
+                    lifecycle.setPaused("tutorial", false);
                     break;
                 case "open_menu":
                     lifecycle.setGameplay(false);

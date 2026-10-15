@@ -135,6 +135,12 @@ export const Tutorial: React.FC<{ onDone: () => void }> = ({ onDone }) => {
         trackEvent("tutorial_step", { step: step + 1 });
     }, [step]);
 
+    // Поки відкрито туторіал - гра на паузі (App.tsx шле порталу gameplayStop/Start).
+    useEffect(() => {
+        trackEvent("tutorial_shown");
+        return () => trackEvent("tutorial_closed");
+    }, []);
+
     const finish = (how: "done" | "skip") => {
         markDone();
         trackEvent("tutorial_finished", { how, step: step + 1 });
