@@ -2,13 +2,14 @@
 import React from "react";
 import styled from "styled-components";
 import { GameButton, gameButtonCss } from "@game/components/GameButton";
-import { IconClose, IconSettings } from "@game/components/GameIcons";
+import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@game/components/GameIcons";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
 import { setMuted, useMuted } from "@game/lib/sound";
 import { chooseLocale, useLocale, useT, type Locale } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { setInvitesEnabled, useInvitesEnabled } from "@game/lib/presence";
+import { isFullscreenSupported, toggleFullscreen, useFullscreen } from "@game/lib/fullscreen";
 
 // Кнопка-шестерня в правому верхньому куті (на місці колишнього перемикача звуку) і вікно
 // налаштувань: звук і мова. Над полем, але під BlockingOverlay порталу (z-index 2000).
@@ -61,6 +62,22 @@ const LANGUAGES: { id: Locale; label: string }[] = [
     { id: "uk", label: "Українська" },
     { id: "en", label: "English" },
 ];
+
+// Кнопка повного екрана - поруч із шестернею, такого самого розміру. Де розгорнути гру
+// неможливо (напр. iPhone Safari поза порталом), її немає.
+export const FullscreenButton: React.FC = () => {
+    const t = useT();
+    const isFullscreen = useFullscreen();
+    const [supported, setSupported] = React.useState(false);
+    React.useEffect(() => setSupported(isFullscreenSupported()), []);
+    if (!supported) return null;
+    const label = isFullscreen ? t("fullscreenExit") : t("fullscreen");
+    return (
+        <GearButton type="button" $inline onClick={() => void toggleFullscreen()} aria-label={label} title={label}>
+            {isFullscreen ? <IconExitFullscreen size={18} /> : <IconFullscreen size={18} />}
+        </GearButton>
+    );
+};
 
 // inline - кнопка у верхньому ряду меню (TopBar); без нього - закріплена в правому верхньому
 // куті (екран онлайн-кімнати).

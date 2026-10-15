@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { gameButtonCss } from "@game/components/GameButton";
 import { Coin } from "@game/components/SkinShop";
-import { SettingsButton } from "@game/components/SettingsPanel";
+import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { assetUrl } from "@game/lib/assets";
 import { CAMPAIGN_LEVELS, totalStars, useCampaign } from "@game/lib/campaign";
 import { currentStreak, useDailyState } from "@game/lib/daily";
@@ -12,7 +12,7 @@ import { openPanel } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
 
 // Верхній ряд (як у прототипі): логотип із назвою - "На головну", зірки кампанії, монети,
-// серія викликів дня (вогник) і шестерня налаштувань. Стоїть у потоці сторінки, над вмістом.
+// серія викликів дня (вогник), повний екран і шестерня налаштувань. Стоїть у потоці сторінки, над вмістом.
 
 const Bar = styled.header`
     position: relative;
@@ -190,6 +190,7 @@ export const RoomTopBar: React.FC<{ onHome: () => void }> = ({ onHome }) => {
                 <img src={assetUrl("images/logo.png")} alt="" />
                 <BrandName />
             </Brand>
+            <FullscreenButton />
             <SettingsButton inline />
         </Bar>
     );
@@ -244,6 +245,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily }) => {
                 <Flame />
                 <span>{streak}</span>
             </Pill>
+            <FullscreenButton />
             <SettingsButton inline />
         </Bar>
     );

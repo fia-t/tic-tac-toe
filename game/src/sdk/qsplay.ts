@@ -100,6 +100,10 @@ export const qsplaySdk: AggregatorSdk = {
     getLocale: async () => (await safe("game.getConfig", () => api()?.game.getConfig(), null))?.locale ?? null,
     onLocaleChange: (callback) => api()?.game.addLocaleListener(({ locale }) => callback(locale)) ?? (() => {}),
 
+    requestFullscreen: () => safe("game.requestFullscreen", () => api()?.game.requestFullscreen(), undefined),
+    exitFullscreen: () => safe("game.exitFullscreen", () => api()?.game.exitFullscreen(), undefined),
+    onFullscreenChange: (callback) => api()?.game.addFullscreenListener(({ isFullscreen }) => callback(isFullscreen)) ?? (() => {}),
+
     getInviteParams: () => safe("game.getInviteParams", () => api()?.game.getInviteParams(), null),
     createInviteLink: (params) =>
         safe("game.inviteLink", () => api()?.game.inviteLink(params as Record<string, DataValue>), null),

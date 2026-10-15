@@ -41,6 +41,10 @@ export type AggregatorSdk = {
     // Мова порталу (напр. "en", "uk") і її зміна без перезавантаження; повертає відписку.
     getLocale?: () => Promise<string | null>;
     onLocaleChange?: (callback: (locale: string) => void) => () => void;
+    // Повний екран (портал розгортає iframe гри сам) і його зміна; onFullscreenChange повертає відписку.
+    requestFullscreen?: () => Promise<void>;
+    exitFullscreen?: () => Promise<void>;
+    onFullscreenChange?: (callback: (isFullscreen: boolean) => void) => () => void;
     // Вхід/вихід гравця на порталі; повертає відписку.
     onAuthChange?: (callback: () => void) => () => void;
 };
