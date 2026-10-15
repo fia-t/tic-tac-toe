@@ -38,12 +38,12 @@ const ModEdgeRow = styled(ModRow)`
     padding: 2px 0 32px;
     margin-bottom: -32px;
 
-    & > button:first-child::after {
+    & > button:nth-child(-n + 2)::after {
         left: calc(-1 * var(--gb-c, 0px));
         transform: none;
     }
 
-    & > button:last-child::after {
+    & > button:nth-last-child(-n + 2)::after {
         left: auto;
         right: calc(-1 * var(--gb-c, 0px));
         transform: none;

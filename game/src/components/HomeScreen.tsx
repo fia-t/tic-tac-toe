@@ -160,27 +160,20 @@ const OptInfo = styled.div`
 `;
 
 const ModScroll = styled(ModRow)`
-    /* Ряд іконок прокручується вбік і обрізав би тултіп - місце під тултіп знизу. */
-    overflow-x: auto;
-    padding: 2px 2px 32px;
-    margin: 0 0 -32px;
-    scrollbar-width: none;
+    /* Ряд іконок завжди вміщається (група завширшки з нього), тож без прокрутки - вона
+       обрізала б тултіпи. Довгі тултіпи (з "модифікатор тижня") у крайніх кнопок
+       вирівнюються по краю кнопки, щоб не виходили за картку. */
+    padding: 2px 0;
 
-    /* Ряд обрізає все поза собою: у крайніх кнопок тултіп - по їхньому краю, а не по центру. */
-    & > button:first-child::after {
+    & > button:nth-child(-n + 2)::after {
         left: calc(-1 * var(--gb-c, 0px));
         transform: none;
     }
 
-    & > button:last-child::after {
+    & > button:nth-last-child(-n + 2)::after {
         left: auto;
         right: calc(-1 * var(--gb-c, 0px));
         transform: none;
-    }
-
-    @media (max-width: 480px) {
-        padding-left: 0;
-        padding-right: 0;
     }
 `;
 

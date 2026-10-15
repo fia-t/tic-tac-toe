@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Container } from "@game/components/gameStyles";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { RoomTopBar } from "@game/components/TopBar";
+import { GameLoader } from "@game/components/GameLoader";
 import {
     ModalCard,
     ModalTitle,
@@ -232,10 +233,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
     if (connection === "connecting") {
         return (
             <RoomShell onHome={handleReturnToMenu}>
-                <ModalCard style={{ position: "static", transform: "none" }}>
-                    <ModalTitle>{t("connecting")}</ModalTitle>
-                    <WaitingText>{t("joiningRoom", { room: roomId })}</WaitingText>
-                </ModalCard>
+                <GameLoader label={t("joiningRoom", { room: roomId })} />
             </RoomShell>
         );
     }

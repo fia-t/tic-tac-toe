@@ -13,6 +13,7 @@ import { configureWalletStorage, reloadWallet, WalletState } from "@game/lib/wal
 import { configureCampaignStorage, reloadCampaign, CampaignState } from "@game/lib/campaign";
 import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, ProfileState } from "@game/lib/profile";
 import { getScreen } from "@game/lib/ui";
+import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 
@@ -143,7 +144,16 @@ export default function App() {
         return () => sdk.clearGameContext?.();
     }, [roomId]);
 
-    if (!startupChecked) return <GlobalStyle />;
+    // Поки з'ясовуємо мову порталу й invite - тематичний лоадер (а не порожній екран).
+    if (!startupChecked)
+        return (
+            <>
+                <GlobalStyle />
+                <Container>
+                    <GameLoader />
+                </Container>
+            </>
+        );
 
     // PlayRoomClient уже огортає власний вміст у Container (як і на сайті) - тут
     // дублювати його не треба, інакше вийде Container-у-Container.

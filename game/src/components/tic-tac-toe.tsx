@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 
 import { Board } from "./board";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
-import { ThemeLoadingBox, Spinner } from "@game/components/gameStyles";
+import { GameLoader } from "@game/components/GameLoader";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -29,6 +29,7 @@ import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
+import { Tutorial, isTutorialDone } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
@@ -142,6 +143,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     // Облік часу гри на порталі: геймплей - лише на полі, меню й розділи - пауза (App слухає ці події).
     const onGameScreen = screen === "game";
+    // Туторіал новачка - на першій партії, поки його не закрили (далі не показується).
+    const [tutorialOpen, setTutorialOpen] = useState(false);
+    useEffect(() => {
+        if (onGameScreen && themeReady && isNewPlayer && !isTutorialDone()) setTutorialOpen(true);
+    }, [onGameScreen, themeReady, isNewPlayer]);
+
     // Присутність: хто зараз у грі й чи в партії (лічильник "онлайн" і запрошення в меню).
     useEffect(() => {
         void startPresence();
@@ -482,14 +489,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     let content: React.ReactNode;
     if (!themeReady) {
-        // Поки тема не підвантажилась - нейтральний спінер замість дошки з тимчасовим скіном.
-        content = (
-            <div style={{ display: "flex", justifyContent: "center", paddingTop: 24 }}>
-                <ThemeLoadingBox>
-                    <Spinner />
-                </ThemeLoadingBox>
-            </div>
-        );
+        // Поки тема не підвантажилась - тематичний лоадер замість дошки з тимчасовим скіном.
+        content = <GameLoader />;
     } else if (screen === "home") {
         content = (
             <HomeScreen
@@ -602,6 +603,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <CampaignResults onStart={goToGame} onMenu={goToMenu} />
             <ProfilePanels />
             <MatchInvite hidden={onGameScreen} />
+            {tutorialOpen && onGameScreen && <Tutorial onDone={() => setTutorialOpen(false)} />}
         </RewardedAdContext.Provider>
     );
 };

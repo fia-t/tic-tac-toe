@@ -196,7 +196,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily }) => {
 
     return (
         <Bar>
-            <Brand type="button" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
+            <Brand type="button" data-tour="menu" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
                 <img src={assetUrl("images/logo.png")} alt="" />
                 <span>Tic Tac Toe</span>
             </Brand>

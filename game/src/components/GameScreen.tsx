@@ -495,7 +495,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     return (
         <GameRoot>
-            <Bar>
+            <Bar data-tour="bar">
                 {quick ? (
                     <>
                         {actionButtons}
@@ -586,10 +586,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 )}
             </ScoreTop>
 
-            <BoardHolder>
+            <BoardHolder data-tour="board">
                 {board}
                 {quick && (
-                    <Boosters>
+                    <Boosters data-tour="boosters">
                         {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
                         {boosterButton("hint", boosters.canHint, boosters.onHint)}
                     </Boosters>
