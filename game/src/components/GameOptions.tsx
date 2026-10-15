@@ -53,11 +53,21 @@ const DIFF_TONE = { easy: "green", medium: "amber", master: "danger" } as const;
 
 export const DiffButton = styled.button<{ $level: Difficulty }>`
     ${gameButtonCss("sm")}
-    /* && - сильніше за мобільні розміри gameButtonCss (вони в @media). */
+    /* && - сильніше за мобільні розміри gameButtonCss (вони в @media). Висота - як у кнопок
+       модифікаторів поруч (46 px, на телефоні 42), трохи ширші й з більшим текстом. */
     && {
         --gb-c: 13px;
-        min-height: 40px;
-        padding: 0 4px;
+        min-height: 46px;
+        padding: 0 8px;
+        font-size: 15px;
+    }
+
+    @media (max-width: 480px) {
+        && {
+            min-height: 42px;
+            padding: 0 5px;
+            font-size: 14px;
+        }
     }
 
     &&[aria-pressed="true"] {
