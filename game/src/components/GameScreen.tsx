@@ -308,27 +308,28 @@ const Badge = styled.span<{ $free: boolean }>`
     pointer-events: none;
 `;
 
-// "Результат" після кінця партії - компактна кнопка в кінці смуги над полем, по правому краю.
-const ResultButton = styled.button`
-    ${gameButtonCss("lg")}
-    ${buttonTone("primary")}
+// "Результат" після кінця партії - невеликий бірюзовий текст у рядку рахунку, по правому краю поля.
+const ResultLink = styled.button`
     flex-shrink: 0;
     margin-left: auto;
+    padding: 4px 2px;
+    border: none;
+    background: none;
+    color: #0f6f8c;
+    font: 800 15px/1.2 var(--font-body);
+    white-space: nowrap;
+    cursor: pointer;
 
-    && {
-        --gb-c: 13px;
-        min-height: 52px;
-        padding: 0 6px;
-        font-size: 14px;
+    @media (hover: hover) {
+        &:hover {
+            color: #0a5068;
+        }
     }
 
-    @media (max-width: 480px) {
-        && {
-            --gb-c: 11px;
-            min-height: 44px;
-            padding: 0 4px;
-            font-size: 13px;
-        }
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+        border-radius: 6px;
     }
 `;
 
@@ -552,11 +553,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {actionButtons}
                     </>
                 )}
-                {over && quick && onShowResult && (
-                    <ResultButton type="button" onClick={onShowResult}>
-                        {t("showResult")}
-                    </ResultButton>
-                )}
             </Bar>
 
             {timer !== null && timer !== undefined && !over && (
@@ -583,6 +579,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         status
                     )}
                 </TurnLine>
+                {over && quick && onShowResult && (
+                    <ResultLink type="button" onClick={onShowResult}>
+                        {t("showResult")}
+                    </ResultLink>
+                )}
             </ScoreTop>
 
             <BoardHolder>
