@@ -88,6 +88,14 @@ export const qsplaySdk: AggregatorSdk = {
             return null;
         }
     },
+    getUser: async () => {
+        try {
+            const user = await api()?.user.getUser();
+            return user ? { id: user.qsid, name: user.name } : null;
+        } catch {
+            return null;
+        }
+    },
     shareLink: () => safe("game.shareLink", () => api()?.game.shareLink(), null),
     getLocale: async () => (await safe("game.getConfig", () => api()?.game.getConfig(), null))?.locale ?? null,
     onLocaleChange: (callback) => api()?.game.addLocaleListener(({ locale }) => callback(locale)) ?? (() => {}),

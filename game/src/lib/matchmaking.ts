@@ -135,3 +135,6 @@ export const useMyRating = (): MyRating =>
 // Реванш у рейтинговому матчі (той самий суперник). started - обидва погодились, партія почалась.
 export const ratedRematch = (roomId: string): Promise<{ ok?: boolean; started?: boolean; error?: string }> =>
     call("/api/match/rematch", "POST", { roomId });
+
+// Останній відомий власний рейтинг (для картки гравця в адмінці, див. players.ts).
+export const getMyRating = (): MyRating => myRating;

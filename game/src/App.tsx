@@ -15,6 +15,7 @@ import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, P
 import { getScreen } from "@game/lib/ui";
 import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
+import { setPortalUserProvider } from "@game/lib/players";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
@@ -46,6 +47,7 @@ export default function App() {
     useEffect(() => {
         void sdk.init();
         if (sdk.getUserToken) setPortalTokenProvider(sdk.getUserToken);
+        if (sdk.getUser) setPortalUserProvider(sdk.getUser);
         if (sdk.reportPlayerLevel) {
             const report = sdk.reportPlayerLevel;
             setLevelReporter((level) => report(level));

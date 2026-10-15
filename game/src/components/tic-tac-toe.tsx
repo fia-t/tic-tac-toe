@@ -31,6 +31,7 @@ import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
 import { Tutorial, isTutorialDone } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
+import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel } from "@game/lib/ui";
@@ -152,7 +153,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Присутність: хто зараз у грі й чи в партії (лічильник "онлайн" і запрошення в меню).
     useEffect(() => {
         void startPresence();
+        startPlayerTracking();
     }, []);
+    // Ім'я для картки гравця в адмінці, якщо свого немає, - наше випадкове.
+    useEffect(() => setPlayerFallbackName(shownName), [shownName]);
     useEffect(() => {
         setPresence({ screen: onGameScreen ? "game" : "menu", name: shownName ?? "" });
     }, [onGameScreen, shownName]);

@@ -23,6 +23,7 @@ import { ThemesSection } from "@/app/admin/sections/ThemesSection";
 import { NamesSection } from "@/app/admin/sections/NamesSection";
 import { SeoSection } from "@/app/admin/sections/SeoSection";
 import { GameBuildSection } from "@/app/admin/sections/GameBuildSection";
+import { PlayersSection } from "@/app/admin/sections/PlayersSection";
 
 // Права адміна визначаються ВИКЛЮЧНО custom claim'ом `admin: true` у ID
 // token (встановлюється лише через scripts/setAdminClaim.js, Firebase Admin
@@ -35,10 +36,11 @@ type AdminAuthState =
     | { status: "admin"; user: User }
     | { status: "error"; message: string };
 
-type AdminSection = "dashboard" | "themes" | "names" | "seo" | "build";
+type AdminSection = "dashboard" | "players" | "themes" | "names" | "seo" | "build";
 
 const NAV_ITEMS: { id: AdminSection; label: string }[] = [
     { id: "dashboard", label: "Дашборд" },
+    { id: "players", label: "Гравці" },
     { id: "themes", label: "Теми" },
     { id: "names", label: "Імена" },
     { id: "seo", label: "SEO" },
@@ -204,6 +206,7 @@ export default function AdminPageRoute() {
                     </AdminHeader>
 
                     {activeSection === "dashboard" && <DashboardSection />}
+                    {activeSection === "players" && <PlayersSection />}
                     {activeSection === "themes" && <ThemesSection />}
                     {activeSection === "names" && <NamesSection />}
                     {activeSection === "seo" && <SeoSection />}

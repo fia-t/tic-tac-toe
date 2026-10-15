@@ -36,6 +36,8 @@ export type AggregatorSdk = {
     shareLink?: () => Promise<string | null>;
     // Короткоживучий токен гравця QS Play для нашого бекенду (null - гість/не увійшов).
     getUserToken?: () => Promise<string | null>;
+    // Акаунт гравця на порталі (null - гість) - для картки гравця в адмінці.
+    getUser?: () => Promise<{ id: string; name: string } | null>;
     // Мова порталу (напр. "en", "uk") і її зміна без перезавантаження; повертає відписку.
     getLocale?: () => Promise<string | null>;
     onLocaleChange?: (callback: (locale: string) => void) => () => void;

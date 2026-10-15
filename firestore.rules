@@ -71,6 +71,28 @@ service cloud.firestore {
         && data.name is string && data.name.size() <= 40;
     }
 
+    match /players/{uid} {
+      // Картка гравця для адмінки (розділ "Гравці"): пише лише сам гравець свій документ
+      // очікуваної форми, читає - він сам і адмін (список - лише адмін).
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if request.auth != null && request.auth.uid == uid && isValidPlayer(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
+    function isValidPlayer(data) {
+      return data.keys().hasOnly(['name', 'qsId', 'source', 'hosts', 'firstSeen', 'lastPlayed', 'games', 'wins', 'draws',
+          'losses', 'onlineWins', 'level', 'xp', 'coins', 'campaignStars', 'dailyStreak', 'rating', 'ratedPlayed'])
+        && data.name is string && data.name.size() <= 60
+        && (data.qsId == null || (data.qsId is string && data.qsId.size() <= 80))
+        && data.source in ['site', 'portal', 'crazygames', 'poki', 'itch']
+        && data.hosts is list && data.hosts.size() <= 30
+        && data.lastPlayed == request.time
+        && data.games is int && data.wins is int && data.draws is int && data.losses is int
+        && data.level is int && data.xp is int && data.coins is int && data.campaignStars is int
+        && data.dailyStreak is int && data.rating is number && data.ratedPlayed is bool;
+    }
+
     match /ratings/{playerId} {
       // Рейтинг і лідерборд: читає будь-хто, пише лише сервер після рейтингового матчу.
       allow read: if true;
