@@ -6,8 +6,8 @@ import { ModalCard, ModalCloseButton, PillButton } from "@game/components/online
 import { IconClose } from "@game/components/GameIcons";
 import { buttonTone } from "@game/components/GameButton";
 import { Coin } from "@game/components/SkinShop";
-import { useWallet } from "@game/lib/wallet";
-import { useProfile } from "@game/lib/profile";
+import { getWallet, useWallet } from "@game/lib/wallet";
+import { getProfile, useProfile } from "@game/lib/profile";
 import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
 
@@ -15,6 +15,16 @@ import { useT } from "@game/lib/i18n";
 // іконки з числами (не кнопки), далі "Ще раз" і "До меню". Клік поза вікном лише ховає його.
 
 export type RoundSummary = { coins: number; xp: number; moves: number };
+
+// Для вікон, що не бачать дошку (виклик дня, рівень кампанії): знімок монет і досвіду на старті
+// й підсумок відносно нього.
+export type RewardBase = { coins: number; xp: number };
+export const snapshotRewards = (): RewardBase => ({ coins: getWallet().coins, xp: getProfile().xp });
+export const rewardsSince = (base: RewardBase, moves: number): RoundSummary => ({
+    coins: Math.max(0, getWallet().coins - base.coins),
+    xp: Math.max(0, getProfile().xp - base.xp),
+    moves,
+});
 
 // Підсумок поточної партії: скільки ходів зробив гравець і скільки монет/досвіду додалось.
 // Нагороди нараховують обробники ігрових подій (wallet.ts, profile.ts) - тут різниця між
@@ -254,11 +264,62 @@ type ResultPopupProps = {
     onClose: () => void;
     onRestart: () => void;
     onMenu?: () => void;
+    // Одне вікно для всіх ігор: підпис над заголовком ("Швидка гра", "Гра з другом"...),
+    // власний заголовок результату, підпис і стан кнопки "Грати ще раз" та додатковий рядок
+    // (напр. зміна рейтингу після швидкого матчу).
+    eyebrow?: string;
+    title?: string;
+    restartLabel?: string;
+    restartDisabled?: boolean;
+    extra?: React.ReactNode;
+    // Зірки рівня кампанії / виклику дня (0-3) - під заголовком.
+    stars?: number;
+    // Друга дія між "Грати ще раз" і "Повернутися в меню" (напр. "До карти").
+    secondary?: { label: string; onClick: () => void };
 };
 
-export const ResultPopup: React.FC<ResultPopupProps> = ({ result, summary, onClose, onRestart, onMenu }) => {
+const StarsRow = styled.div`
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin: -4px 0 10px;
+`;
+
+const StarIcon = ({ on }: { on: boolean }) => (
+    <svg width="34" height="34" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+            d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"
+            fill={on ? "#1fb3d9" : "#d3edf3"}
+            stroke={on ? "#0f6f8c" : "#9fcfdc"}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+        />
+    </svg>
+);
+
+const Extra = styled.div`
+    margin: 0 0 10px;
+    color: #4a2c0c;
+    font-size: 14px;
+    font-weight: 800;
+`;
+
+export const ResultPopup: React.FC<ResultPopupProps> = ({
+    result,
+    summary,
+    onClose,
+    onRestart,
+    onMenu,
+    eyebrow,
+    title,
+    restartLabel,
+    restartDisabled = false,
+    extra,
+    stars,
+    secondary,
+}) => {
     const t = useT();
-    const title = result === "win" ? t("resultWin") : result === "lose" ? t("resultLose") : t("resultDraw");
+    const heading = title ?? (result === "win" ? t("resultWin") : result === "lose" ? t("resultLose") : t("resultDraw"));
     return (
         <>
             <Overlay onClick={onClose} style={{ zIndex: 1600 }} />
@@ -266,18 +327,31 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({ result, summary, onClo
                 <ModalCloseButton type="button" onClick={onClose} aria-label={t("close")}>
                     <IconClose size={16} />
                 </ModalCloseButton>
-                <Eyebrow>{t("homeQuick")}</Eyebrow>
+                <Eyebrow>{eyebrow ?? t("homeQuick")}</Eyebrow>
                 <Title id="result-title" $result={result}>
-                    {title}
+                    {heading}
                 </Title>
+                {stars !== undefined && (
+                    <StarsRow role="img" aria-label={`${stars} / 3`}>
+                        {[0, 1, 2].map((i) => (
+                            <StarIcon key={i} on={i < stars} />
+                        ))}
+                    </StarsRow>
+                )}
                 <Rewards role="list">
                     <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins")} order={0} count />
                     <RewardStat icon={<XpStar />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves")} order={2} count={false} />
                 </Rewards>
-                <PrimaryButton type="button" onClick={onRestart}>
-                    {t("playAgain")}
+                {extra && <Extra>{extra}</Extra>}
+                <PrimaryButton type="button" onClick={onRestart} disabled={restartDisabled}>
+                    {restartLabel ?? t("playAgain")}
                 </PrimaryButton>
+                {secondary && (
+                    <PillButton type="button" onClick={secondary.onClick}>
+                        {secondary.label}
+                    </PillButton>
+                )}
                 {onMenu && (
                     <PillButton type="button" $variant="ghost" onClick={onMenu}>
                         {t("backToMenu")}

@@ -1,12 +1,10 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { IconClose } from "@game/components/GameIcons";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import { Overlay } from "@game/components/gameStyles";
-import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
+import { ResultPopup, RewardBase, RoundSummary, rewardsSince, snapshotRewards } from "@game/components/ResultPopup";
 import { Card, Eyebrow, Muted, Page, Spread } from "@game/components/pageStyles";
-import { Star, StarRow } from "@game/components/DailyChallenge";
+import { Star } from "@game/components/DailyChallenge";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
 import { setDifficultyOverride } from "@game/lib/difficulty";
 import { setModifierOverride } from "@game/lib/modifiers";
@@ -64,12 +62,6 @@ const MiniStars = styled.span`
     gap: 1px;
 `;
 
-const Note = styled.p`
-    margin: 0 0 8px;
-    text-align: center;
-    color: #2f6b38;
-    font-weight: 800;
-`;
 
 const Lock = () => (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
@@ -91,6 +83,8 @@ export const startCampaignLevel = (index: number, onStart: (mode: DailyMode) => 
 
 type CampaignProps = {
     onStart: (mode: DailyMode) => void;
+    // "Повернутися в меню" у вікні результату рівня.
+    onMenu?: () => void;
 };
 
 export const CampaignPage: React.FC<CampaignProps> = ({ onStart }) => {
@@ -177,10 +171,13 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart }) => {
     );
 };
 
-type Result = { level: number; result: "win" | "draw" | "lose"; stars: number; coins: number };
+type Result = { level: number; result: "win" | "draw" | "lose"; stars: number; coins: number; summary: RoundSummary };
+
+// Монети й досвід на старті рівня - щоб вікно результату показало, скільки додалось за рівень.
+let levelBase: RewardBase = { coins: 0, xp: 0 };
 
 // Кінець партії рівня: зірки (кращий результат лишається), монети за нові зірки, картка.
-export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
+export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () => undefined }) => {
     const t = useT();
     const progress = useCampaign();
     const [result, setResult] = useState<Result | null>(null);
@@ -188,6 +185,8 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
     useEffect(
         () =>
             addGameEventListener((name, params) => {
+                // Старт рівня (і "Заново" на ньому) - точка відліку нагород.
+                if (name === "campaign_level_started") levelBase = snapshotRewards();
                 const run = getDailyRun();
                 if (!run || run.kind !== "campaign" || run.finished || name !== "game_finished" || run.level === undefined) return;
                 const outcome = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
@@ -199,7 +198,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
                 setDailyRun({ ...run, finished: true });
                 trackEvent("campaign_level_finished", { level: run.template.id, stars, result: outcome });
                 const level = run.level;
-                setTimeout(() => setResult({ level, result: outcome, stars, coins }), 900);
+                setTimeout(() => setResult({ level, result: outcome, stars, coins, summary: rewardsSince(levelBase, moves) }), 900);
             }),
         []
     );
@@ -213,41 +212,33 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart }) => {
     const nextIndex = result.level + 1;
     const canGoNext = nextIndex < CAMPAIGN_LEVELS.length && isLevelUnlocked(nextIndex, progress);
 
+    // Те саме вікно результату, що й у швидкій грі: зірки рівня, нагороди, далі - наступний
+    // рівень (або ще раз), карта кампанії й меню.
     return (
-        <>
-            <Overlay onClick={() => setResult(null)} style={{ zIndex: 1600 }} />
-            <ModalCard role="dialog" aria-modal="true" aria-labelledby="level-result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                <ModalCloseButton onClick={() => setResult(null)} aria-label={t("close")}>
-                    <IconClose size={16} />
-                </ModalCloseButton>
-                <ModalTitle id="level-result-title">{t("campaignLevel", { n: String(result.level + 1) })}</ModalTitle>
-                <ModalSubtitle>
-                    {result.result === "win" ? t("resultWin") : result.result === "draw" ? t("resultDraw") : t("resultLose")} ·{" "}
-                    {t(`level_${CAMPAIGN_LEVELS[result.level].id}` as Parameters<typeof t>[0])}
-                </ModalSubtitle>
-                <StarRow count={result.stars} label={`${result.stars} / 3`} />
-                {result.coins > 0 && <Note>{t("campaignNewStars", { n: String(result.coins) })}</Note>}
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    {canGoNext && (
-                        <PillButton type="button" onClick={() => start(nextIndex)}>
-                            {t("campaignNext")}
-                        </PillButton>
-                    )}
-                    <PillButton type="button" $variant={canGoNext ? "ghost" : undefined} onClick={() => start(result.level)}>
-                        {t("campaignRetry")}
-                    </PillButton>
-                    <PillButton
-                        type="button"
-                        $variant="ghost"
-                        onClick={() => {
-                            setResult(null);
-                            openPanel("campaign");
-                        }}
-                    >
-                        {t("campaignMap")}
-                    </PillButton>
-                </div>
-            </ModalCard>
-        </>
+        <ResultPopup
+            result={result.result}
+            summary={result.summary}
+            eyebrow={`${t("campaignLevel", { n: String(result.level + 1) })} · ${t(`level_${CAMPAIGN_LEVELS[result.level].id}` as Parameters<typeof t>[0])}`}
+            stars={result.stars}
+            extra={result.coins > 0 ? t("campaignNewStars", { n: String(result.coins) }) : undefined}
+            onClose={() => setResult(null)}
+            onRestart={() => start(canGoNext ? nextIndex : result.level)}
+            restartLabel={canGoNext ? t("campaignNext") : t("campaignRetry")}
+            secondary={
+                canGoNext
+                    ? { label: t("campaignRetry"), onClick: () => start(result.level) }
+                    : {
+                          label: t("campaignMap"),
+                          onClick: () => {
+                              setResult(null);
+                              openPanel("campaign");
+                          },
+                      }
+            }
+            onMenu={() => {
+                setResult(null);
+                onMenu();
+            }}
+        />
     );
 };

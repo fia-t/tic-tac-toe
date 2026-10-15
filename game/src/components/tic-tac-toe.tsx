@@ -588,8 +588,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             </AppColumn>
             {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
             {screen !== "game" && <BottomNav current={screen} onNavigate={navigate} />}
-            <DailyChallenge onStart={goToGame} getShareLink={getShareLink} />
-            <CampaignResults onStart={goToGame} />
+            <DailyChallenge onStart={goToGame} getShareLink={getShareLink} onMenu={goToMenu} />
+            <CampaignResults onStart={goToGame} onMenu={goToMenu} />
             <ProfilePanels />
         </RewardedAdContext.Provider>
     );

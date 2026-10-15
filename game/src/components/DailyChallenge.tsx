@@ -25,6 +25,7 @@ import {
     useDailyState,
 } from "@game/lib/daily";
 import { useT } from "@game/lib/i18n";
+import { ResultPopup, RewardBase, RoundSummary, rewardsSince, snapshotRewards } from "@game/components/ResultPopup";
 import { closePanel, useOpenPanel } from "@game/lib/ui";
 import { dailyReward } from "@game/lib/wallet";
 
@@ -104,11 +105,16 @@ type DailyChallengeProps = {
     onStart: (mode: DailyMode) => void;
     // Посилання для шерингу: на порталі - game.shareLink() SDK, на сайті - адреса сайту.
     getShareLink?: () => Promise<string | null>;
+    // "Повернутися в меню" у вікні результату.
+    onMenu?: () => void;
 };
 
-type View = { kind: "info" } | { kind: "result"; result: DailyResult } | null;
+type View = { kind: "info" } | { kind: "result"; result: DailyResult; summary: RoundSummary } | null;
 
-export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShareLink }) => {
+// Монети й досвід на старті виклику - щоб вікно результату показало, скільки додалось.
+let dailyBase: RewardBase = { coins: 0, xp: 0 };
+
+export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShareLink, onMenu }) => {
     const t = useT();
     const state = useDailyState();
     const [resultView, setView] = useState<View>(null);
@@ -138,6 +144,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     useEffect(
         () =>
             addGameEventListener((name, params) => {
+                if (name === "daily_started") dailyBase = snapshotRewards();
                 const run = getDailyRun();
                 if (!run) return;
                 if (name === "game_restart" || name === "select_mode") {
@@ -157,7 +164,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                 setDailyRun({ ...run, finished: true });
                 trackEvent("daily_finished", { day: run.day, template: run.template.id, stars: daily.stars, streak: currentStreak(saved) });
                 const shown = saved.results[todayKey()] ?? daily;
-                setTimeout(() => setView({ kind: "result", result: shown }), 900);
+                setTimeout(() => setView({ kind: "result", result: shown, summary: rewardsSince(dailyBase, moves) }), 900);
             }),
         []
     );
@@ -200,6 +207,34 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     const starsLabel = (n: number) => `${n} / 3`;
     const rules = template.goal === "win" ? t("dailyRuleWin", { par: String(template.par) }) : t("dailyRuleSurvive");
 
+    // Кінець виклику - те саме вікно результату, що й у швидкій грі: зірки, нагороди, серія;
+    // головна дія - "Поділитися результатом".
+    if (view?.kind === "result") {
+        return (
+            <ResultPopup
+                result={view.result.result}
+                summary={view.summary}
+                eyebrow={t("dailyBadge", { n: String(day) })}
+                stars={view.result.stars}
+                extra={view.result.stars === 0 ? t("dailyFailed") : t("dailyStreak", { n: String(Math.max(streak, 1)) })}
+                onClose={closeAll}
+                onRestart={() => {
+                    setView({ kind: "info" });
+                    setShareOpen(true);
+                }}
+                restartLabel={t("dailyShare")}
+                onMenu={
+                    onMenu
+                        ? () => {
+                              closeAll();
+                              onMenu();
+                          }
+                        : undefined
+                }
+            />
+        );
+    }
+
     return (
         <>
             {view && (
@@ -211,36 +246,20 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
                 </ModalCloseButton>
                         <ModalTitle id="daily-title">{t("dailyBadge", { n: String(day) })}</ModalTitle>
 
-                        {view.kind === "result" ? (
+                        <ModalSubtitle>{t(`daily_${template.id}` as Parameters<typeof t>[0])}</ModalSubtitle>
+                        {todayResult ? (
                             <>
-                                <ModalSubtitle>
-                                    {view.result.result === "win"
-                                        ? t("resultWin")
-                                        : view.result.result === "draw"
-                                        ? t("resultDraw")
-                                        : t("resultLose")}
-                                </ModalSubtitle>
-                                <StarRow count={view.result.stars} label={starsLabel(view.result.stars)} />
-                                <Rules>{view.result.stars === 0 ? t("dailyFailed") : t("dailyStreak", { n: String(Math.max(streak, 1)) })}</Rules>
+                                <StarRow count={todayResult.stars} label={starsLabel(todayResult.stars)} />
+                                <Rules>{t("dailyPlayed")}. {t("dailyNext")}</Rules>
                             </>
                         ) : (
                             <>
-                                <ModalSubtitle>{t(`daily_${template.id}` as Parameters<typeof t>[0])}</ModalSubtitle>
-                                {todayResult ? (
-                                    <>
-                                        <StarRow count={todayResult.stars} label={starsLabel(todayResult.stars)} />
-                                        <Rules>{t("dailyPlayed")}. {t("dailyNext")}</Rules>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Rules>{rules}</Rules>
-                                        <Rules>{t("dailySame")}</Rules>
-                                        <Rules>{t("dailyReward", { n: String(dailyReward(streak + 1)) })}</Rules>
-                                    </>
-                                )}
-                                {streak > 0 && <Rules>{t("dailyStreak", { n: String(streak) })}</Rules>}
+                                <Rules>{rules}</Rules>
+                                <Rules>{t("dailySame")}</Rules>
+                                <Rules>{t("dailyReward", { n: String(dailyReward(streak + 1)) })}</Rules>
                             </>
                         )}
+                        {streak > 0 && <Rules>{t("dailyStreak", { n: String(streak) })}</Rules>}
 
                         {shown && shareOpen && (
                             <>

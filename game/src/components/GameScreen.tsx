@@ -21,7 +21,7 @@ import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifie
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
 
-const Root = styled.div`
+export const GameRoot = styled.div`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. */
@@ -185,14 +185,14 @@ const LeaveButton = styled.button`
 `;
 
 // Рахунок - над полем; підказка - в одному ряду з ним, одразу після нього.
-const ScoreTop = styled.div`
+export const ScoreTop = styled.div`
     display: flex;
     align-items: center;
     gap: 10px;
     width: var(--board-w);
 `;
 
-const ScorePill = styled.div`
+export const ScorePill = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -231,7 +231,7 @@ const lineIn = keyframes`
 `;
 
 // Підказка-статус: статичний рядок; новий текст плавно проявляється (key = текст).
-const TurnLine = styled.div`
+export const TurnLine = styled.div`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -259,7 +259,7 @@ const Cross = () => (
 // Обгортка має ширину поля (без неї поле стискалось би до нуля); колонка бустерів висить за її
 // правим краєм - саме поле лишається по центру, на одній лінії з рядками над ним. Якщо збоку
 // місця немає (вузький екран) - бустери рядком під полем по його правому краю.
-const BoardHolder = styled.div`
+export const BoardHolder = styled.div`
     position: relative;
     width: var(--board-w);
 
@@ -309,7 +309,7 @@ const Badge = styled.span<{ $free: boolean }>`
 `;
 
 // "Результат" після кінця партії - невеликий бірюзовий текст у рядку рахунку, по правому краю поля.
-const ResultLink = styled.button`
+export const ResultLink = styled.button`
     flex-shrink: 0;
     margin-left: auto;
     padding: 4px 2px;
@@ -494,7 +494,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     return (
-        <Root>
+        <GameRoot>
             <Bar>
                 {quick ? (
                     <>
@@ -597,6 +597,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             </BoardHolder>
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
-        </Root>
+        </GameRoot>
     );
 };

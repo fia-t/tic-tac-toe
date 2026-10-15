@@ -306,7 +306,7 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
 
     return (
         <RoomShell onHome={handleReturnToMenu}>
-            <OnlineBoard roomId={roomId} room={room} mySymbol={mySymbol} uid={uid} />
+            <OnlineBoard roomId={roomId} room={room} mySymbol={mySymbol} uid={uid} onExit={handleReturnToMenu} />
 
             {showOpponentLeft && (
                 <OpponentLeftCard>
