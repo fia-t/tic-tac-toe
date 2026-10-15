@@ -191,6 +191,9 @@ const StreakPill = styled(InfoPill)`
     font-size: 16px;
 `;
 
+// Усі модифікатори в порядку прототипу.
+const ALL_MODIFIERS: Modifier[] = ["vanish", "gravity", "stones", "timer", "misere"];
+
 const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
     { id: "traditional", img: "images/traditional.png", label: "modeClassic" },
     { id: "five", img: "images/game-5x5.png", label: "modeFive" },
@@ -313,13 +316,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     <OptGroup $fit>
                         <Eyebrow id="home-mod">{t("modifierLabel")}</Eyebrow>
                         <ModScroll role="group" aria-labelledby="home-mod">
-                            {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
+                            {/* Показуємо всі модифікатори; ті, що не пасують обраному режиму, - неактивні. */}
+                            {[null, ...ALL_MODIFIERS].map((m) => (
                                 <ModButton
                                     key={m ?? "none"}
                                     type="button"
                                     aria-pressed={activeModifier === m}
                                     aria-label={modTip(m)}
                                     data-tip={modTip(m)}
+                                    disabled={m !== null && !MODIFIERS_BY_MODE[mode].includes(m)}
                                     onClick={() => pickModifier(m)}
                                 >
                                     <ModIcon id={m} />
