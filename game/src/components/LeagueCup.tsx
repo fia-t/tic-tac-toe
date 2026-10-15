@@ -2,7 +2,7 @@
 import React from "react";
 import styled from "styled-components";
 import { InfoPill } from "@game/components/pageStyles";
-import { LEAGUES, League, leagueFor } from "@game/lib/rating";
+import { LEAGUES, League, displayLeague } from "@game/lib/rating";
 import { useT } from "@game/lib/i18n";
 
 // Кубок ліги - у її кольорі [заливка, контур]; у Діаманта на чаші ще й камінець.
@@ -43,10 +43,21 @@ const Badge = styled(InfoPill)<{ $compact: boolean }>`
             : ""}
 `;
 
-// Плашка ліги: кубок і назва (за потреби - з рейтингом).
-export const LeagueBadge = ({ rating, withRating = false, compact = false }: { rating: number; withRating?: boolean; compact?: boolean }) => {
+// Плашка ліги: кубок і назва (за потреби - з рейтингом). played - чи зіграно хоч один
+// рейтинговий матч (до нього - "Дерево", див. displayLeague).
+export const LeagueBadge = ({
+    rating,
+    played = true,
+    withRating = false,
+    compact = false,
+}: {
+    rating: number;
+    played?: boolean;
+    withRating?: boolean;
+    compact?: boolean;
+}) => {
     const t = useT();
-    const league = leagueFor(rating);
+    const league = displayLeague(rating, played);
     const name = t(`league_${league}`);
     return (
         <Badge $compact={compact} title={t("leagueTitle", { league: name })}>
@@ -93,9 +104,10 @@ const LeagueItem = styled.span<{ $league: League; $got: boolean; $now: boolean }
     }
 `;
 
-export const LeagueLadder = ({ rating }: { rating: number }) => {
+export const LeagueLadder = ({ rating, played = true }: { rating: number; played?: boolean }) => {
     const t = useT();
-    const current = leagueFor(rating);
+    const current = displayLeague(rating, played);
+    const currentMin = LEAGUES.find((league) => league.id === current)?.min ?? 0;
     return (
         <LeagueList role="list">
             {LEAGUES.map((league) => (
@@ -103,7 +115,7 @@ export const LeagueLadder = ({ rating }: { rating: number }) => {
                     key={league.id}
                     role="listitem"
                     $league={league.id}
-                    $got={rating >= league.min}
+                    $got={league.min <= currentMin}
                     $now={current === league.id}
                     aria-current={current === league.id ? "true" : undefined}
                 >

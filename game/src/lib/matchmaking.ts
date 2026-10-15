@@ -36,12 +36,16 @@ const call = async <T>(path: string, method: "POST" | "DELETE", body?: unknown):
     return data;
 };
 
-export type QueueResponse = { status: "waiting" | "matched"; roomId?: string; rating?: number; playerId?: string };
+export type QueueResponse = { status: "waiting" | "matched"; roomId?: string; rating?: number; playerId?: string; games?: number };
 
 export const joinQueue = async (name: string): Promise<QueueResponse> => {
     const qsToken = portalToken ? await portalToken().catch(() => null) : null;
     const response = await call<QueueResponse>("/api/match/queue", "POST", { name, qsToken });
-    if (typeof response.rating === "number" && response.playerId) rememberRating(response.playerId, response.rating);
+    if (typeof response.rating === "number" && response.playerId) {
+        // Старий сервер без games - лишаємо те, що вже відомо.
+        const played = typeof response.games === "number" ? response.games > 0 : myRating.played;
+        rememberRating(response.playerId, response.rating, played);
+    }
     return response;
 };
 
@@ -83,26 +87,31 @@ export const fetchLeaderboard = async (size = 20): Promise<LeaderboardRow[]> => 
 
 // --- власний рейтинг (останнє відоме значення; джерело правди - колекція ratings на сервері) ---
 
-type MyRating = { playerId: string | null; rating: number };
+// played - чи зіграно хоч один рейтинговий матч: до першого гравець у лізі "Дерево",
+// хоч стартовий рейтинг і вищий за її межу (див. displayLeague у rating.ts).
+type MyRating = { playerId: string | null; rating: number; played: boolean };
 const RATING_KEY = "ttt-rating";
 
 const readRating = (): MyRating => {
     try {
         const raw = typeof localStorage !== "undefined" ? localStorage.getItem(RATING_KEY) : null;
         const parsed = raw ? (JSON.parse(raw) as Partial<MyRating>) : null;
-        return { playerId: typeof parsed?.playerId === "string" ? parsed.playerId : null, rating: typeof parsed?.rating === "number" ? parsed.rating : START_RATING };
+        const rating = typeof parsed?.rating === "number" ? parsed.rating : START_RATING;
+        // Старі записи без played: рейтинг, відмінний від стартового, - уже грав.
+        const played = typeof parsed?.played === "boolean" ? parsed.played : rating !== START_RATING;
+        return { playerId: typeof parsed?.playerId === "string" ? parsed.playerId : null, rating, played };
     } catch {
-        return { playerId: null, rating: START_RATING };
+        return { playerId: null, rating: START_RATING, played: false };
     }
 };
 
 let myRating: MyRating = readRating();
-const EMPTY: MyRating = { playerId: null, rating: START_RATING };
+const EMPTY: MyRating = { playerId: null, rating: START_RATING, played: false };
 const listeners = new Set<() => void>();
 
-export const rememberRating = (playerId: string, rating: number): void => {
-    if (myRating.playerId === playerId && myRating.rating === rating) return;
-    myRating = { playerId, rating };
+export const rememberRating = (playerId: string, rating: number, played: boolean): void => {
+    if (myRating.playerId === playerId && myRating.rating === rating && myRating.played === played) return;
+    myRating = { playerId, rating, played };
     try {
         localStorage.setItem(RATING_KEY, JSON.stringify(myRating));
     } catch {

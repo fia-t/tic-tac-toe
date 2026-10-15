@@ -124,7 +124,7 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
                     </h2>
                     <Row style={{ flexShrink: 0, flexWrap: "nowrap", gap: 6 }}>
                         <InfoPill>{t("profileLevel", { n: String(level) })}</InfoPill>
-                        <LeagueBadge rating={myRating.rating} withRating compact />
+                        <LeagueBadge rating={myRating.rating} played={myRating.played} withRating compact />
                     </Row>
                 </Spread>
                 <Progress role="img" aria-label={xpText}>
@@ -147,7 +147,7 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
             <Card aria-labelledby="profile-leagues">
                 <h3 id="profile-leagues">{t("leaguesTitle")}</h3>
                 <Muted>{t("leaguesHint")}</Muted>
-                <LeagueLadder rating={myRating.rating} />
+                <LeagueLadder rating={myRating.rating} played={myRating.played} />
             </Card>
         </Page>
     );
@@ -222,7 +222,7 @@ const LeaderboardPanel = () => {
         <Modal id="leaderboard-title" title={t("leaderboardTitle")}>
             <Muted>{t("leaderboardHint")}</Muted>
             <ModalSubtitle>
-                <LeagueBadge rating={me.rating} withRating />
+                <LeagueBadge rating={me.rating} played={me.played} withRating />
             </ModalSubtitle>
             {failed ? (
                 <Muted>{t("leaderboardError")}</Muted>

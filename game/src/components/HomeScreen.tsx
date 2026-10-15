@@ -275,7 +275,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
                 <HeroBadges>
                     <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
-                    <LeagueBadge rating={myRating.rating} compact />
+                    <LeagueBadge rating={myRating.rating} played={myRating.played} compact />
                 </HeroBadges>
             </Hero>
 
@@ -345,7 +345,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             <Card aria-labelledby="home-online">
                 <Spread>
                     <h2 id="home-online">{t("homeOnline")}</h2>
-                    <LeagueBadge rating={myRating.rating} withRating />
+                    <LeagueBadge rating={myRating.rating} played={myRating.played} withRating />
                 </Spread>
                 <TwoCol>
                     <GameButton tone="danger" size="lg" onClick={() => openPanel("match")}>

@@ -5,7 +5,7 @@ import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { MatchUnavailableError, cancelQueue, joinQueue, useMyRating, watchQueue } from "@game/lib/matchmaking";
-import { leagueFor } from "@game/lib/rating";
+import { displayLeague } from "@game/lib/rating";
 import { getProfile, setProfileName } from "@game/lib/profile";
 import { trackEvent } from "@game/lib/firebase";
 import { closePanel } from "@game/lib/ui";
@@ -54,7 +54,7 @@ type QuickMatchProps = {
 
 export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched, onPlayBot }) => {
     const t = useT();
-    const { rating } = useMyRating();
+    const { rating, played } = useMyRating();
     const [phase, setPhase] = useState<Phase>("searching");
     const [elapsed, setElapsed] = useState(0);
     const [searchId, setSearchId] = useState(0);
@@ -123,7 +123,7 @@ export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched,
                 </ModalCloseButton>
                 <ModalTitle id="match-title">{t("matchTitle")}</ModalTitle>
                 <ModalSubtitle>
-                    {t("matchRatingLine", { rating: String(rating), league: t(`league_${leagueFor(rating)}`) })}
+                    {t("matchRatingLine", { rating: String(rating), league: t(`league_${displayLeague(rating, played)}`) })}
                 </ModalSubtitle>
 
                 {phase === "unavailable" ? (

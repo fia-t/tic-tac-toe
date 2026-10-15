@@ -66,6 +66,8 @@ export const POST = (request: Request) =>
         const { db } = getMatchAdmin();
         const ratingSnap = await db.collection(RATINGS).doc(playerId).get();
         const rating = typeof ratingSnap.get("rating") === "number" ? (ratingSnap.get("rating") as number) : START_RATING;
+        // Скільки рейтингових матчів уже зіграно - клієнт до першого показує лігу "Дерево".
+        const games = typeof ratingSnap.get("games") === "number" ? (ratingSnap.get("games") as number) : 0;
         const myRef = db.collection(QUEUE).doc(uid);
 
         const result = await db.runTransaction(async (tx) => {
@@ -135,7 +137,7 @@ export const POST = (request: Request) =>
             return { status: "matched", roomId: roomRef.id };
         });
 
-        return json(request, { ...result, rating, playerId });
+        return json(request, { ...result, rating, playerId, games });
     });
 
 export const DELETE = (request: Request) =>

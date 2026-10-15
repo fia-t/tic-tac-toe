@@ -33,3 +33,7 @@ export const RATED_FIRST_TURN_MS = 40_000;
 // Запас на мережу: хід, відправлений в останню мить, ще приймається, а технічна поразка -
 // лише після цього запасу.
 export const RATED_GRACE_MS = 1_500;
+
+// Ліга, яку показуємо гравцю: до першого рейтингового матчу - "Дерево", хоч стартовий
+// рейтинг і вищий за її межу (інакше новачок, ще не зігравши, одразу був би в Бронзі).
+export const displayLeague = (rating: number, played: boolean): League => (played ? leagueFor(rating) : "wood");

@@ -65,7 +65,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
 
     // Після рейтингової партії - запам'ятати новий рейтинг (для профілю й черги).
     useEffect(() => {
-        if (room.rated && isFinished && room.playerIds && room.ratingsAfter) rememberRating(room.playerIds[mySymbol], room.ratingsAfter[mySymbol]);
+        if (room.rated && isFinished && room.playerIds && room.ratingsAfter) rememberRating(room.playerIds[mySymbol], room.ratingsAfter[mySymbol], true);
     }, [room.rated, isFinished, room.playerIds, room.ratingsAfter, mySymbol]);
 
     // Рейтинговий матч: час на хід і технічна перемога, якщо хтось не встиг.
