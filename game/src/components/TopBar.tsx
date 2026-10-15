@@ -49,14 +49,31 @@ const Brand = styled.button`
         transition: transform 0.12s ease;
     }
 
+    /* Назва гри у два рядки: "Tic Tac Toe" і менше бірюзове "Beach Battle". */
     span {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
         flex: 1;
         min-width: 0;
-        font: 700 18px/1 var(--font-heading);
-        color: #5c3317;
+    }
+
+    b,
+    small {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    b {
+        font: 700 18px/1 var(--font-heading);
+        color: #5c3317;
+    }
+
+    small {
+        font: 700 13px/1 var(--font-heading);
+        color: #1c97b8;
+        letter-spacing: 0.02em;
     }
 
     @media (hover: hover) {
@@ -154,6 +171,15 @@ export const Flame = ({ size = 22 }: { size?: number }) => (
     </svg>
 );
 
+export const GAME_TITLE = "Tic Tac Toe Beach Battle";
+
+const BrandName = () => (
+    <span>
+        <b>Tic Tac Toe</b>
+        <small>Beach Battle</small>
+    </span>
+);
+
 // Шапка екрана онлайн-кімнати: той самий логотип ("На головну" - вихід із кімнати) і шестерня,
 // без плашок зірок, монет і серії (їхні розділи живуть у меню гри, а не в кімнаті).
 export const RoomTopBar: React.FC<{ onHome: () => void }> = ({ onHome }) => {
@@ -162,7 +188,7 @@ export const RoomTopBar: React.FC<{ onHome: () => void }> = ({ onHome }) => {
         <Bar>
             <Brand type="button" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
                 <img src={assetUrl("images/logo.png")} alt="" />
-                <span>Tic Tac Toe</span>
+                <BrandName />
             </Brand>
             <SettingsButton inline />
         </Bar>
@@ -198,7 +224,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily }) => {
         <Bar>
             <Brand type="button" data-tour="menu" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
                 <img src={assetUrl("images/logo.png")} alt="" />
-                <span>Tic Tac Toe</span>
+                <BrandName />
             </Brand>
             <Pill
                 type="button"

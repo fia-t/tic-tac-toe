@@ -27,6 +27,7 @@ import {
 import { useT } from "@game/lib/i18n";
 import { ResultPopup, RewardBase, RoundSummary, rewardsSince, snapshotRewards } from "@game/components/ResultPopup";
 import { closePanel, useOpenPanel } from "@game/lib/ui";
+import { GAME_TITLE } from "@game/components/TopBar";
 import { dailyReward } from "@game/lib/wallet";
 
 // Виклик дня: картка на головній запускає партію сама (startDailyChallenge); тут - вікна
@@ -184,7 +185,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
     const shown = view?.kind === "result" ? view.result : todayResult;
     const text = shown
         ? shareText(day, shown, Math.max(streak, 1), link, {
-              title: `Tic Tac Toe · ${t("dailyTitle")}`,
+              title: `${GAME_TITLE} · ${t("dailyTitle")}`,
               day: t("dailyDayWord"),
               moves: t("dailyMoves"),
               streak: t("dailyStreakShort"),
