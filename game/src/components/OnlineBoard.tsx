@@ -6,7 +6,11 @@ import { ResultPopup } from "@game/components/ResultPopup";
 import { useWallet } from "@game/lib/wallet";
 import { useProfile } from "@game/lib/profile";
 import { openPanel } from "@game/lib/ui";
-import { RoomDoc, PlayerSymbol, makeMove, requestRematch } from "@game/lib/onlineGame";
+import styled from "styled-components";
+import { RoomDoc, PlayerSymbol, ROOM_STONE, makeMove, requestRematch, roomGrid, roomRules } from "@game/lib/onlineGame";
+import { EMPTY_HISTORY, fadingCells, randomLegalCell } from "@game/components/modEngine";
+import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
+import { TIMER_SECONDS } from "@game/lib/modifiers";
 import { BOARD_SIZE, WIN_LENGTH } from "@game/components/onlineGameLogic";
 import { winningIndexSet } from "@game/components/gameLogic";
 import { trackEvent } from "@game/lib/firebase";
@@ -16,6 +20,30 @@ import { useT } from "@game/lib/i18n";
 import { playSound } from "@game/lib/sound";
 import { ratedMove, rememberRating } from "@game/lib/matchmaking";
 import { TurnAlert, formatClock, useRatedTurnClock } from "@game/components/RatedTurnTimer";
+
+// Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
+const StoneTile = styled.div`
+    width: 70%;
+    height: 70%;
+    border-radius: 32%;
+    background: radial-gradient(circle at 35% 30%, #c2b6a4, #7f7465 70%);
+    box-shadow:
+        inset 0 -5px 0 rgba(0, 0, 0, 0.25),
+        inset 0 3px 4px rgba(255, 255, 255, 0.3),
+        0 4px 6px rgba(0, 0, 0, 0.2);
+`;
+
+// Модифікатор кімнати - під рядком рахунку.
+const ModLine = styled.div`
+    width: var(--board-w);
+    color: #7a5530;
+    font-size: 13px;
+    line-height: 1.35;
+
+    strong {
+        color: #49301f;
+    }
+`;
 
 type OnlineBoardProps = {
     roomId: string;
@@ -51,8 +79,14 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             : undefined;
 
     const [moveError, setMoveError] = useState(false);
+    // Модифікатор кімнати (як проти бота): правила рушія, зникаючі фішки, гравітація, таймер.
+    const rules = roomRules(room.modifier);
+    const gravity = Boolean(rules?.gravity);
+    const fading = rules && !isFinished ? fadingCells(room.hist ?? EMPTY_HISTORY, rules) : undefined;
+
     const handleCellClick = (index: number) => {
-        if (!myTurn || room.board[index] !== null) return;
+        // З гравітацією натискання будь-якої клітинки стовпця кидає фішку вниз.
+        if (!myTurn || (room.board[index] !== null && !gravity)) return;
         // Рейтинговий матч: хід перевіряє й записує сервер (клієнту rules дошку міняти не дають).
         if (room.rated) {
             setMoveError(false);
@@ -69,6 +103,18 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
 
     // Рейтинговий матч: час на хід і технічна перемога, якщо хтось не встиг.
     const turnRemaining = useRatedTurnClock(roomId, room);
+
+    // Модифікатор "таймер": на свій хід - TIMER_SECONDS секунд, інакше випадковий дозволений хід.
+    const timerLeft = useMoveTimer(room.modifier === "timer" && myTurn && !isFinished, room.board, TIMER_SECONDS, () => {
+        const grid = roomGrid(room.board, size);
+        const index = rules
+            ? randomLegalCell(grid, rules, { player: "X", ai: "O" })
+            : (() => {
+                  const free = room.board.flatMap((cell, i) => (cell === null ? [i] : []));
+                  return free.length ? free[Math.floor(Math.random() * free.length)] : null;
+              })();
+        if (index !== null) handleCellClick(index);
+    });
 
     const resultLabel =
         room.forfeit && room.winner && room.winner !== "draw"
@@ -200,6 +246,17 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     ))}
             </ScoreTop>
 
+            {room.modifier && (
+                <ModLine>
+                    <strong>{t(`modifier_${room.modifier}`)}</strong> · {t(`modifierDesc_${room.modifier}`)}
+                </ModLine>
+            )}
+            {room.modifier === "timer" && myTurn && !isFinished && (
+                <div style={{ width: "var(--board-w)" }}>
+                    <MoveTimerBar fraction={timerLeft} />
+                </div>
+            )}
+
             {isFinished && !room.rated && opponentRematchReady && !myRematchReady && (
                 <div style={{ width: "var(--board-w)", fontSize: 13, fontWeight: 700, color: "#7a5a35" }}>{t("opponentWantsRematch")}</div>
             )}
@@ -209,10 +266,14 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             <BoardHolder>
                 <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
                     {room.board.map((cell, index) => {
-                        const disabled = !myTurn || cell !== null || isFinished;
+                        const disabled = !myTurn || isFinished || (cell !== null && !gravity);
                         return (
                             <OnlineCell key={index} $disabled={disabled} onClick={() => handleCellClick(index)}>
-                                {cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} />}
+                                {cell === ROOM_STONE ? (
+                                    <StoneTile role="img" aria-label={t("modifier_stones")} />
+                                ) : (
+                                    cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} fading={fading?.has(index)} />
+                                )}
                             </OnlineCell>
                         );
                     })}

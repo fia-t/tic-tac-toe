@@ -87,13 +87,20 @@ export const ModeOption = styled.button<{ $active: boolean }>`
     font-weight: 800;
     color: ${({ $active }) => ($active ? "#0f6f8c" : "#5b3f22")};
 
+    /* Як на головному екрані: вибрана плитка піднята, з бірюзовим сяйвом, підпис бірюзовий. */
     img {
-        transform: ${({ $active }) => ($active ? "translateY(-3px) scale(1.04)" : "none")};
+        transform: ${({ $active }) => ($active ? "translateY(-4px) scale(1.05)" : "none")};
+        filter: ${({ $active }) => ($active ? "drop-shadow(0 0 12px rgba(31, 179, 217, 0.55))" : "none")};
         transition: transform 0.15s ease, filter 0.15s ease;
     }
 
+    & > span {
+        color: ${({ $active }) => ($active ? "#0f6f8c" : "#8a6a42")};
+        font-weight: ${({ $active }) => ($active ? 800 : 400)};
+    }
+
     @media (hover: hover) {
-        &:hover img {
+        &:not([aria-pressed="true"]):hover img {
             filter: drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
         }
     }

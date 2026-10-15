@@ -16,7 +16,50 @@ import {
     TextInput,
     ErrorText,
 } from "@game/components/onlineStyles";
-import { createRoom } from "@game/lib/onlineGame";
+import { createRoom, onlineModifiers } from "@game/lib/onlineGame";
+import styled from "styled-components";
+import { ModButton, ModIcon, ModRow } from "@game/components/GameOptions";
+import { Eyebrow } from "@game/components/pageStyles";
+import type { Modifier } from "@game/lib/modifiers";
+
+const ALL_MODIFIERS: Modifier[] = ["vanish", "gravity", "stones", "timer", "misere"];
+
+// Вибір модифікатора - як у "Швидкій грі" на головній: підпис, ряд іконок із тултіпами
+// (під кнопками) і опис вибраного; місце під два рядки опису зарезервоване.
+const ModPicker = styled.div`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: -6px 0 6px;
+`;
+
+const ModEdgeRow = styled(ModRow)`
+    padding: 2px 0 32px;
+    margin-bottom: -32px;
+
+    & > button:first-child::after {
+        left: calc(-1 * var(--gb-c, 0px));
+        transform: none;
+    }
+
+    & > button:last-child::after {
+        left: auto;
+        right: calc(-1 * var(--gb-c, 0px));
+        transform: none;
+    }
+`;
+
+const ModInfo = styled.div`
+    min-height: calc(2 * 1.35em);
+    color: #7a5530;
+    font-size: 14px;
+    line-height: 1.35;
+
+    strong {
+        color: #49301f;
+    }
+`;
 import { isFirebaseConfigured } from "@game/lib/firebase";
 import { OnlineGameMode } from "@game/components/onlineGameLogic";
 import { assetUrl } from "@game/lib/assets";
@@ -59,6 +102,11 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
     const [joinInput, setJoinInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // Модифікатор партії - як на головному екрані; ті, що не пасують режиму, неактивні.
+    const [modifier, setModifierChoice] = useState<Modifier | null>(null);
+    const allowed = onlineModifiers(mode);
+    const activeModifier = modifier && allowed.includes(modifier) ? modifier : null;
+    const modTip = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
 
     const handleCreate = async () => {
         if (!isFirebaseConfigured) {
@@ -69,7 +117,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
         setLoading(true);
         setError(null);
         try {
-            const { roomId } = await createRoom(mode);
+            const { roomId } = await createRoom(mode, activeModifier);
             onRoomReady(roomId);
         } catch (err) {
             console.error("createRoom failed:", err);
@@ -100,19 +148,42 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                         <ModalTitle>{t("friendTitle")}</ModalTitle>
                         <ModalSubtitle>{t("chooseMode")}</ModalSubtitle>
                         <ModeOptionGroup>
-                            <ModeOption type="button" $active={mode === "3x3"} onClick={() => setMode("3x3")}>
+                            <ModeOption type="button" aria-pressed={mode === "3x3"} $active={mode === "3x3"} onClick={() => setMode("3x3")}>
                                 <ModeOptionIcon src={assetUrl("images/traditional.png")} alt="3×3" />
                                 <ModeOptionHint>3×3</ModeOptionHint>
                             </ModeOption>
-                            <ModeOption type="button" $active={mode === "5x5"} onClick={() => setMode("5x5")}>
+                            <ModeOption type="button" aria-pressed={mode === "5x5"} $active={mode === "5x5"} onClick={() => setMode("5x5")}>
                                 <ModeOptionIcon src={assetUrl("images/game-5x5.png")} alt="5×5" />
                                 <ModeOptionHint>5×5</ModeOptionHint>
                             </ModeOption>
-                            <ModeOption type="button" $active={mode === "9x9"} onClick={() => setMode("9x9")}>
+                            <ModeOption type="button" aria-pressed={mode === "9x9"} $active={mode === "9x9"} onClick={() => setMode("9x9")}>
                                 <ModeOptionIcon src={assetUrl("images/difficult.png")} alt="9×9" />
                                 <ModeOptionHint>9×9</ModeOptionHint>
                             </ModeOption>
                         </ModeOptionGroup>
+
+                        <ModPicker>
+                            <Eyebrow id="friend-mod">{t("modifierLabel")}</Eyebrow>
+                            <ModEdgeRow role="group" aria-labelledby="friend-mod">
+                                {([null, ...ALL_MODIFIERS] as (Modifier | null)[]).map((m) => (
+                                    <ModButton
+                                        key={m ?? "none"}
+                                        type="button"
+                                        aria-pressed={activeModifier === m}
+                                        aria-label={modTip(m)}
+                                        data-tip={modTip(m)}
+                                        disabled={m !== null && !allowed.includes(m)}
+                                        onClick={() => setModifierChoice(m)}
+                                    >
+                                        <ModIcon id={m} />
+                                    </ModButton>
+                                ))}
+                            </ModEdgeRow>
+                            <ModInfo>
+                                <strong>{modTip(activeModifier)}</strong> ·{" "}
+                                {activeModifier ? t(`modifierDesc_${activeModifier}`) : t("modifierNoneDesc")}
+                            </ModInfo>
+                        </ModPicker>
 
                         <PillButton type="button" onClick={handleCreate} disabled={loading}>
                             {loading ? t("creating") : t("createGame")}

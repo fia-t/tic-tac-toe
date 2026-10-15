@@ -23,6 +23,32 @@ import {
     isOnlineGridFull,
 } from "@game/components/onlineGameLogic";
 import { GameMode, gameSource } from "@game/lib/gameLog";
+import { WIN_LENGTH } from "@game/components/onlineGameLogic";
+import { EMPTY_HISTORY, ModHistory, ModRules, STONE, createBoard, playTurn } from "@game/components/modEngine";
+import { GameModeKey, MODIFIERS_BY_MODE, Modifier, STONES_COUNT } from "@game/lib/modifiers";
+
+// Модифікатори гри з другом - ті самі, що й проти бота, за відповідністю режимів.
+const ONLINE_MODE_KEY: Record<OnlineGameMode, GameModeKey> = { "3x3": "traditional", "5x5": "five", "9x9": "difficult" };
+export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]];
+
+// Камінь у плоскій дошці кімнати - "#" (Firestore-документ), у рушії модифікаторів - STONE.
+export const ROOM_STONE = "#";
+
+// Правила рушія для модифікатора кімнати (таймер - лише відлік на клієнті, правил не змінює).
+export const roomRules = (modifier: Modifier | null | undefined): ModRules | null =>
+    modifier === "vanish" || modifier === "gravity" || modifier === "misere" || modifier === "stones"
+        ? { vanish: modifier === "vanish", gravity: modifier === "gravity", misere: modifier === "misere" }
+        : null;
+
+// Плоска дошка кімнати <-> сітка рушія.
+export const roomGrid = (board: (string | null)[], size: number) =>
+    Array.from({ length: size }, (_, r) => board.slice(r * size, r * size + size).map((v) => (v === ROOM_STONE ? STONE : v)));
+
+// Нова дошка: з модифікатором "каміння" - кілька клітинок зайняті камінням (не центр).
+const freshBoard = (mode: OnlineGameMode, modifier: Modifier | null): (string | null)[] =>
+    createBoard(BOARD_SIZE[mode], modifier === "stones" ? STONES_COUNT : 0)
+        .flat()
+        .map((v) => (v === STONE ? ROOM_STONE : v));
 
 // Мапа "режим кімнати" -> "рядок для gameLogs". Явна Record, а не ternary/switch без
 // exhaustiveness-перевірки - TS одразу підкаже, якщо OnlineGameMode отримає нове значення,
@@ -87,6 +113,9 @@ export type RoomDoc = {
     turnDeadline?: Timestamp | null;
     // Хто програв за часом (якщо партія закінчилась так).
     forfeit?: PlayerSymbol;
+    // Модифікатор гри з другом (як проти бота) і порядок ходів кожного - для зникаючих фішок.
+    modifier?: Modifier | null;
+    hist?: ModHistory;
 };
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком
@@ -132,7 +161,9 @@ const absoluteUrl = (url: string): string => {
     }
 };
 
-export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: string; symbol: PlayerSymbol }> => {
+export const createRoom = async (gameMode: OnlineGameMode, modifier: Modifier | null = null): Promise<{ roomId: string; symbol: PlayerSymbol }> => {
+    // Модифікатор, що не пасує режиму, не зберігаємо.
+    const roomModifier = modifier && onlineModifiers(gameMode).includes(modifier) ? modifier : null;
     const uid = await ensureAnonymousUser();
     const db = getFirebaseDb();
 
@@ -155,11 +186,12 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
         const existing = await getDoc(ref);
         if (existing.exists()) continue;
 
-        const size = BOARD_SIZE[gameMode];
         await setDoc(ref, {
             roomId,
             gameMode,
-            board: Array(size * size).fill(null),
+            board: freshBoard(gameMode, roomModifier),
+            modifier: roomModifier,
+            hist: EMPTY_HISTORY,
             currentPlayer: "X",
             players: { X: { uid, lastSeen: Timestamp.now() } },
             winner: null,
@@ -177,7 +209,7 @@ export const createRoom = async (gameMode: OnlineGameMode): Promise<{ roomId: st
             names: { X: nameX, O: nameO },
             score: { X: 0, O: 0 },
         });
-        trackEvent("online_room_created", { gameMode });
+        trackEvent("online_room_created", { gameMode, modifier: roomModifier ?? "none" });
         return { roomId, symbol: "X" };
     }
 
@@ -260,23 +292,38 @@ export const makeMove = async (
         if (room.status !== "playing") return;
         if (room.currentPlayer !== symbol) return;
         if (room.players[symbol]?.uid !== uid) return;
-        if (room.board[cellIndex] !== null) return;
-
-        const nextBoard = room.board.slice();
-        nextBoard[cellIndex] = symbol;
 
         const size = BOARD_SIZE[room.gameMode];
-        const grid = Array.from({ length: size }, (_, row) => nextBoard.slice(row * size, row * size + size));
-        const winningSymbol = getOnlineGridWinner(grid, room.gameMode);
-
+        let nextBoard: (string | null)[];
+        let nextHist: ModHistory | undefined;
         let winner: RoomDoc["winner"] = null;
         let status: RoomStatus = "playing";
-        if (winningSymbol) {
-            winner = winningSymbol as PlayerSymbol;
-            status = "finished";
-        } else if (isOnlineGridFull(grid)) {
-            winner = "draw";
-            status = "finished";
+
+        const rules = roomRules(room.modifier);
+        if (rules) {
+            // Партія з модифікатором правил - хід через той самий рушій, що й проти бота
+            // (з гравітацією натискання будь-якої клітинки стовпця кидає фішку вниз).
+            const turn = playTurn(roomGrid(room.board, size), room.hist ?? EMPTY_HISTORY, rules, WIN_LENGTH[room.gameMode], { player: "X", ai: "O" }, symbol, { index: cellIndex });
+            if (!turn) return;
+            nextBoard = turn.grid.flat().map((v) => (v === STONE ? ROOM_STONE : v));
+            nextHist = turn.hist;
+            if (turn.outcome) {
+                winner = turn.outcome.winner === "draw" ? "draw" : turn.outcome.winner;
+                status = "finished";
+            }
+        } else {
+            if (room.board[cellIndex] !== null) return;
+            nextBoard = room.board.slice();
+            nextBoard[cellIndex] = symbol;
+            const grid = Array.from({ length: size }, (_, row) => nextBoard.slice(row * size, row * size + size));
+            const winningSymbol = getOnlineGridWinner(grid, room.gameMode);
+            if (winningSymbol) {
+                winner = winningSymbol as PlayerSymbol;
+                status = "finished";
+            } else if (isOnlineGridFull(grid)) {
+                winner = "draw";
+                status = "finished";
+            }
         }
 
         const scoreUpdate =
@@ -291,6 +338,7 @@ export const makeMove = async (
             status,
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
+            ...(nextHist ? { hist: nextHist } : {}),
             ...scoreUpdate,
         });
 
@@ -322,9 +370,9 @@ export const requestRematch = async (roomId: string, symbol: PlayerSymbol): Prom
         const rematch = { ...room.rematch, [symbol]: true };
 
         if (rematch.X && rematch.O) {
-            const size = BOARD_SIZE[room.gameMode];
             tx.update(ref, {
-                board: Array(size * size).fill(null),
+                board: freshBoard(room.gameMode, room.modifier ?? null),
+                hist: EMPTY_HISTORY,
                 currentPlayer: "X",
                 winner: null,
                 status: "playing",
