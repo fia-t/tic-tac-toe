@@ -17,7 +17,7 @@ import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 import { levelForXp, useProfile } from "@game/lib/profile";
 import { dailyReward } from "@game/lib/wallet";
-import { openPanel, useOpenPanel } from "@game/lib/ui";
+import { openPanel, useOpenPanel, scrollGameTo } from "@game/lib/ui";
 import { QuickMatch } from "@game/components/QuickMatch";
 import { OnlineNow } from "@game/components/MatchInvite";
 import { useMyRating } from "@game/lib/matchmaking";
@@ -275,7 +275,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         if (!focusDaily) return;
         // Після переходу на головну TicTacToe спершу прокручує на початок сторінки - тож
         // до картки прокручуємо трохи згодом.
-        const scroll = setTimeout(() => dailyRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
+        const scroll = setTimeout(() => scrollGameTo(dailyRef.current, { block: "center", smooth: true }), 60);
         setDailyFlash(true);
         const timer = setTimeout(() => setDailyFlash(false), 1300);
         return () => {

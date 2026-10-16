@@ -34,7 +34,7 @@ import { setPresence, startPresence } from "@game/lib/presence";
 import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, useProfile } from "@game/lib/profile";
-import { closePanel, setScreenState, useOpenPanel } from "@game/lib/ui";
+import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { useT } from "@game/lib/i18n";
@@ -168,7 +168,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     // Новий екран - з початку сторінки.
     useEffect(() => {
-        topRef.current?.scrollIntoView({ block: "start" });
+        scrollGameTo(topRef.current);
     }, [screen]);
 
     // Кнопки, що відкривають розділи (зірки й монети в шапці, "До карти" тощо), кличуть
@@ -479,7 +479,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     const navigate = (item: NavItem) => {
         if (item === "home") {
-            if (screen === "home") topRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+            if (screen === "home") scrollGameTo(topRef.current, { smooth: true });
             else goToMenu();
             return;
         }

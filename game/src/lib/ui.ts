@@ -70,3 +70,18 @@ export const getScreen = (): Screen => screen;
 export const setScreenState = (value: Screen): void => {
     screen = value;
 };
+
+// --- прокрутка лише всередині гри ---
+// element.scrollIntoView() у грі, вбудованій в iframe (портал), прокручує ще й сторінку порталу -
+// при старті вона з'їжджала вниз і ховала свою шапку. Тому крутимо тільки власне вікно гри.
+export const scrollGameTo = (element: HTMLElement | null, options: { block?: "start" | "center"; smooth?: boolean } = {}): void => {
+    if (typeof window === "undefined") return;
+    const behavior: ScrollBehavior = options.smooth ? "smooth" : "auto";
+    if (!element) {
+        window.scrollTo({ top: 0, behavior });
+        return;
+    }
+    const rect = element.getBoundingClientRect();
+    const top = options.block === "center" ? window.scrollY + rect.top - (window.innerHeight - rect.height) / 2 : window.scrollY + rect.top;
+    window.scrollTo({ top: Math.max(0, top), behavior });
+};
