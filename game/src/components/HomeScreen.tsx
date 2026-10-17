@@ -30,6 +30,25 @@ import { useMyRating } from "@game/lib/matchmaking";
 // не перевантажена. "Онлайн" - гра з другом (поле й модифікатор задаються тут же) і швидкий
 // матч. Саме поле - окремий екран (GameScreen).
 
+// Між блоками головної - трохи більший відступ, ніж на інших сторінках (на телефоні - менший).
+const HomePage = styled(Page)`
+    gap: 20px;
+
+    @media (max-width: 480px) {
+        gap: 16px;
+    }
+`;
+
+const TabPanel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    @media (max-width: 480px) {
+        gap: 16px;
+    }
+`;
+
 const Hero = styled.section`
     display: flex;
     align-items: center;
@@ -714,7 +733,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const content: Record<HomeTab, React.ReactNode> = { bot: botTab, online: onlineTab, daily: dailyTab, campaign: campaignTab };
 
     return (
-        <Page>
+        <HomePage>
             <Hero>
                 <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
                 <HeroBadges>
@@ -739,13 +758,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 ))}
             </Tabs>
 
-            <div role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <TabPanel role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`}>
                 {content[tab]}
-            </div>
+            </TabPanel>
 
             {panel === "match" && <QuickMatch fallbackName={name} onMatched={onRoomReady} onPlayBot={() => play("traditional")} />}
 
             {joinOpen && <FriendGameModal onClose={() => setJoinOpen(false)} onRoomReady={onRoomReady} initialView="join" />}
-        </Page>
+        </HomePage>
     );
 };
