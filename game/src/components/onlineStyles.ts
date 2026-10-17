@@ -139,9 +139,11 @@ export const PillButton = styled.button<{ $variant?: "primary" | "ghost" }>`
     ${({ $variant }) => ($variant === "ghost" ? "" : buttonTone("primary"))}
 `;
 
+// Ряд кнопок під полем вводу чи текстом - з відступом, щоб кнопки не липли до поля.
 export const ButtonRow = styled.div`
     display: flex;
     gap: 10px;
+    margin-top: 16px;
 
     ${PillButton} {
         margin-top: 0;
