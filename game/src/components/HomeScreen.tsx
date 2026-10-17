@@ -481,7 +481,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const modDesc = (m: Modifier | null) => (m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc"));
     const modTip = (m: Modifier | null) => modName(m) + (m && m === weekly ? ` · ${t("weeklyModifierTag")}` : "");
     const dailyRules = template.goal === "win" ? t("homeDailyRulesWin", { par: String(template.par) }) : t("homeDailyRulesSurvive");
-    const dailyMode = MODES.find((m) => m.id === template.mode) ?? MODES[0];
     const weeklyMode = (MODES.find((m) => MODIFIERS_BY_MODE[m.id].includes(weekly)) ?? MODES[0]).id;
 
     const modePicker = (value: GameModeKey, onPick: (m: GameModeKey) => void, label: string) => (
@@ -593,7 +592,41 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         </>
     );
 
-    const [diffBg, diffFg] = DIFF_ICON_BG[template.difficulty];
+    // Умови партії плитками: поле (мініатюра), модифікатор (іконка), бот (у кольорі рівня) -
+    // у виклику дня й модифікаторі тижня.
+    const condTiles = (tileMode: GameModeKey, tileMod: Modifier | null, tileDiff: Difficulty, label: string) => {
+        const tile = MODES.find((m) => m.id === tileMode) ?? MODES[0];
+        const [diffBg, diffFg] = DIFF_ICON_BG[tileDiff];
+        return (
+            <Spec aria-label={label}>
+                <SpecItem>
+                    <img src={assetUrl(tile.img)} alt="" />
+                    <span>
+                        <small>{t("dailyField")}</small>
+                        <b>{t(tile.label)}</b>
+                    </span>
+                </SpecItem>
+                <SpecItem title={modDesc(tileMod)}>
+                    <SpecIcon $bg="#f6dcae" $fg="#49301f">
+                        <ModIcon id={tileMod} />
+                    </SpecIcon>
+                    <span>
+                        <small>{t("dailyModifier")}</small>
+                        <b>{tileMod ? t(`modifier_${tileMod}`) : t("dailyNoModifier")}</b>
+                    </span>
+                </SpecItem>
+                <SpecItem>
+                    <SpecIcon $bg={diffBg} $fg={diffFg}>
+                        <BotIcon />
+                    </SpecIcon>
+                    <span>
+                        <small>{t("dailyBot")}</small>
+                        <b style={{ color: DIFF_TEXT[tileDiff] }}>{t(`difficulty_${tileDiff}`)}</b>
+                    </span>
+                </SpecItem>
+            </Spec>
+        );
+    };
     const dailyTab = (
         <>
             <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
@@ -614,33 +647,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                         <Muted>{dailyRules}</Muted>
                     </div>
                 </Row>
-                <Spec aria-label={t("dailySpec")}>
-                    <SpecItem>
-                        <img src={assetUrl(dailyMode.img)} alt="" />
-                        <span>
-                            <small>{t("dailyField")}</small>
-                            <b>{t(dailyMode.label)}</b>
-                        </span>
-                    </SpecItem>
-                    <SpecItem title={modDesc(template.modifier ?? null)}>
-                        <SpecIcon $bg="#f6dcae" $fg="#49301f">
-                            <ModIcon id={template.modifier ?? null} />
-                        </SpecIcon>
-                        <span>
-                            <small>{t("dailyModifier")}</small>
-                            <b>{template.modifier ? t(`modifier_${template.modifier}`) : t("dailyNoModifier")}</b>
-                        </span>
-                    </SpecItem>
-                    <SpecItem>
-                        <SpecIcon $bg={diffBg} $fg={diffFg}>
-                            <BotIcon />
-                        </SpecIcon>
-                        <span>
-                            <small>{t("dailyBot")}</small>
-                            <b style={{ color: DIFF_TEXT[template.difficulty] }}>{t(`difficulty_${template.difficulty}`)}</b>
-                        </span>
-                    </SpecItem>
-                </Spec>
+                {condTiles(template.mode, template.modifier ?? null, template.difficulty, t("dailySpec"))}
                 {todayResult ? (
                     <>
                         <Spread>
@@ -667,6 +674,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <Eyebrow>{t("homeWeekly")}</Eyebrow>
                 <h3 id="home-weekly">{t(`modifier_${weekly}`)}</h3>
                 <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
+                {condTiles(weeklyMode, weekly, difficulty, t("weeklySpec"))}
                 <GameButton
                     tone="amber"
                     size="lg"
