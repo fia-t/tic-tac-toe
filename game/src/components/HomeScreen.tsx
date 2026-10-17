@@ -26,7 +26,7 @@ import { OnlineNow } from "@game/components/MatchInvite";
 import { useMyRating } from "@game/lib/matchmaking";
 
 // Головний екран (варіант "В" з прототипу): привітання з рівнем і лігою, під ним вкладки
-// "З ботом / Онлайн / Виклик дня / Кампанія" - на екрані завжди один розділ, тож сторінка
+// "З ботом / Онлайн / Виклики / Кампанія" - на екрані завжди один розділ, тож сторінка
 // не перевантажена. "Онлайн" - гра з другом (поле й модифікатор задаються тут же) і швидкий
 // матч. Саме поле - окремий екран (GameScreen).
 
@@ -482,6 +482,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const modTip = (m: Modifier | null) => modName(m) + (m && m === weekly ? ` · ${t("weeklyModifierTag")}` : "");
     const dailyRules = template.goal === "win" ? t("homeDailyRulesWin", { par: String(template.par) }) : t("homeDailyRulesSurvive");
     const dailyMode = MODES.find((m) => m.id === template.mode) ?? MODES[0];
+    const weeklyMode = (MODES.find((m) => MODIFIERS_BY_MODE[m.id].includes(weekly)) ?? MODES[0]).id;
 
     const modePicker = (value: GameModeKey, onPick: (m: GameModeKey) => void, label: string) => (
         <Modes role="group" aria-label={label}>
@@ -594,71 +595,91 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
     const [diffBg, diffFg] = DIFF_ICON_BG[template.difficulty];
     const dailyTab = (
-        <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
-            <Spread style={{ flexWrap: "nowrap" }}>
-                <h2 id="home-daily">{t("homeDaily")}</h2>
-                <StreakPill>
-                    <Flame />
-                    {t("homeStreakDays", { n: String(streak) })}
-                </StreakPill>
-            </Spread>
-            <Row style={{ alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
-                <DayTile role="img" aria-label={t("dailyBadge", { n: String(dayOfYear(today)) })}>
-                    <span>{t("dailyDayWord")}</span>
-                    <b>{dayOfYear(today)}</b>
-                </DayTile>
-                <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
-                    <h3>{t(`daily_${template.id}` as Parameters<typeof t>[0])}</h3>
-                    <Muted>{dailyRules}</Muted>
-                </div>
-            </Row>
-            <Spec aria-label={t("dailySpec")}>
-                <SpecItem>
-                    <img src={assetUrl(dailyMode.img)} alt="" />
-                    <span>
-                        <small>{t("dailyField")}</small>
-                        <b>{t(dailyMode.label)}</b>
-                    </span>
-                </SpecItem>
-                <SpecItem title={modDesc(template.modifier ?? null)}>
-                    <SpecIcon $bg="#f6dcae" $fg="#49301f">
-                        <ModIcon id={template.modifier ?? null} />
-                    </SpecIcon>
-                    <span>
-                        <small>{t("dailyModifier")}</small>
-                        <b>{template.modifier ? t(`modifier_${template.modifier}`) : t("dailyNoModifier")}</b>
-                    </span>
-                </SpecItem>
-                <SpecItem>
-                    <SpecIcon $bg={diffBg} $fg={diffFg}>
-                        <BotIcon />
-                    </SpecIcon>
-                    <span>
-                        <small>{t("dailyBot")}</small>
-                        <b style={{ color: DIFF_TEXT[template.difficulty] }}>{t(`difficulty_${template.difficulty}`)}</b>
-                    </span>
-                </SpecItem>
-            </Spec>
-            {todayResult ? (
-                <>
-                    <Spread>
-                        <Row style={{ gap: 6 }} role="img" aria-label={`${todayResult.stars} / 3`}>
-                            {[0, 1, 2].map((i) => (
-                                <Star key={i} on={i < todayResult.stars} size={28} />
-                            ))}
-                        </Row>
-                        <GameButton size="lg" onClick={() => openPanel("daily")}>
-                            {t("dailyShare")}
-                        </GameButton>
-                    </Spread>
-                    <Muted>{t("homeDailyNext")}</Muted>
-                </>
-            ) : (
-                <GameButton tone="primary" size="lg" block onClick={() => startDailyChallenge(onPlay)}>
-                    {t("homeDailyPlay", { n: String(dailyReward(streak + 1)) })}
+        <>
+            <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
+                <Spread style={{ flexWrap: "nowrap" }}>
+                    <h2 id="home-daily">{t("homeDaily")}</h2>
+                    <StreakPill>
+                        <Flame />
+                        {t("homeStreakDays", { n: String(streak) })}
+                    </StreakPill>
+                </Spread>
+                <Row style={{ alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
+                    <DayTile role="img" aria-label={t("dailyBadge", { n: String(dayOfYear(today)) })}>
+                        <span>{t("dailyDayWord")}</span>
+                        <b>{dayOfYear(today)}</b>
+                    </DayTile>
+                    <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: 4 }}>
+                        <h3>{t(`daily_${template.id}` as Parameters<typeof t>[0])}</h3>
+                        <Muted>{dailyRules}</Muted>
+                    </div>
+                </Row>
+                <Spec aria-label={t("dailySpec")}>
+                    <SpecItem>
+                        <img src={assetUrl(dailyMode.img)} alt="" />
+                        <span>
+                            <small>{t("dailyField")}</small>
+                            <b>{t(dailyMode.label)}</b>
+                        </span>
+                    </SpecItem>
+                    <SpecItem title={modDesc(template.modifier ?? null)}>
+                        <SpecIcon $bg="#f6dcae" $fg="#49301f">
+                            <ModIcon id={template.modifier ?? null} />
+                        </SpecIcon>
+                        <span>
+                            <small>{t("dailyModifier")}</small>
+                            <b>{template.modifier ? t(`modifier_${template.modifier}`) : t("dailyNoModifier")}</b>
+                        </span>
+                    </SpecItem>
+                    <SpecItem>
+                        <SpecIcon $bg={diffBg} $fg={diffFg}>
+                            <BotIcon />
+                        </SpecIcon>
+                        <span>
+                            <small>{t("dailyBot")}</small>
+                            <b style={{ color: DIFF_TEXT[template.difficulty] }}>{t(`difficulty_${template.difficulty}`)}</b>
+                        </span>
+                    </SpecItem>
+                </Spec>
+                {todayResult ? (
+                    <>
+                        <Spread>
+                            <Row style={{ gap: 6 }} role="img" aria-label={`${todayResult.stars} / 3`}>
+                                {[0, 1, 2].map((i) => (
+                                    <Star key={i} on={i < todayResult.stars} size={28} />
+                                ))}
+                            </Row>
+                            <GameButton size="lg" onClick={() => openPanel("daily")}>
+                                {t("dailyShare")}
+                            </GameButton>
+                        </Spread>
+                        <Muted>{t("homeDailyNext")}</Muted>
+                    </>
+                ) : (
+                    <GameButton tone="primary" size="lg" block onClick={() => startDailyChallenge(onPlay)}>
+                        {t("homeDailyPlay", { n: String(dailyReward(streak + 1)) })}
+                    </GameButton>
+                )}
+            </DailyCard>
+
+            {/* Модифікатор тижня - під викликом дня: ще одне завдання на цей тиждень. */}
+            <Card aria-labelledby="home-weekly">
+                <Eyebrow>{t("homeWeekly")}</Eyebrow>
+                <h3 id="home-weekly">{t(`modifier_${weekly}`)}</h3>
+                <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
+                <GameButton
+                    tone="amber"
+                    size="lg"
+                    block
+                    onClick={() => {
+                        setModifier(weekly);
+                        play(weeklyMode);
+                    }}
+                >
+                    {t("homeTryWeekly")}
                 </GameButton>
-            )}
-        </DailyCard>
+            </Card>
+        </>
     );
 
     const campaignTab = (
