@@ -37,6 +37,12 @@ const HomePage = styled(Page)`
     @media (max-width: 480px) {
         gap: 16px;
     }
+
+    /* Невисокий екран (напр. 375×667 чи ноутбук 1366×768): вкладка "З ботом" разом із кнопкою "Грати" має вміститися
+       над нижнім меню без прокрутки - відступи щільніші. */
+    @media (max-height: 820px) {
+        gap: 12px;
+    }
 `;
 
 const TabPanel = styled.div`
@@ -118,6 +124,11 @@ const Tab = styled.button`
     @media (max-width: 420px) {
         font-size: 12px;
     }
+
+    @media (max-height: 820px) {
+        min-height: 36px;
+        padding: 7px 4px;
+    }
 `;
 
 const Modes = styled.div`
@@ -174,6 +185,24 @@ const ModeButton = styled.button`
 
     @media (max-width: 480px) {
         font-size: 15px;
+    }
+
+    /* Невисокий екран - плитки менші, щоб "Грати" не ховалась під нижнє меню. */
+    @media (max-height: 820px) {
+        gap: 4px;
+        font-size: 14px;
+
+        img {
+            max-width: min(148px, max(76px, calc(100dvh - 640px)));
+        }
+    }
+`;
+
+// Картка гри з ботом: заголовка немає (його дає вкладка), на невисокому екрані - щільніша.
+const BotCard = styled(Card)`
+    @media (max-height: 820px) {
+        gap: 10px;
+        padding: 12px 16px 14px;
     }
 `;
 
@@ -539,8 +568,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     );
 
     const botTab = (
-        <Card aria-labelledby="home-quick">
-            <h2 id="home-quick">{t("homeQuick")}</h2>
+        <BotCard aria-label={t("homeQuick")}>
             {modePicker(mode, setMode, t("homeQuick"))}
             <OptGroup>
                 <Eyebrow id="home-diff">{t("difficultyLabel")}</Eyebrow>
@@ -569,7 +597,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             <GameButton tone="primary" size="lg" block onClick={() => play(mode)}>
                 {t("homePlay")}
             </GameButton>
-        </Card>
+        </BotCard>
     );
 
     const onlineTab = (
