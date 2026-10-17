@@ -11,8 +11,16 @@ export const FREEZE_TURNS = 3;
 export const PAUSE_SECONDS = 10;
 
 // pauseLeft - скільки секунд паузи лишилось (0 - паузи немає).
-type TimerBoostState = { paused: boolean; pauseLeft: number; frozenNow: boolean; frozenLeft: number };
-let boost: TimerBoostState = { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 };
+// expired - щойно вийшов час і хід зроблено випадково (кілька секунд показуємо це в рядку статусу).
+type TimerBoostState = { paused: boolean; pauseLeft: number; frozenNow: boolean; frozenLeft: number; expired: boolean };
+let boost: TimerBoostState = { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false };
+let expiredTimer: ReturnType<typeof setTimeout> | undefined;
+const EXPIRED_NOTICE_MS = 2500;
+const markExpired = () => {
+    clearTimeout(expiredTimer);
+    setBoost({ expired: true });
+    expiredTimer = setTimeout(() => setBoost({ expired: false }), EXPIRED_NOTICE_MS);
+};
 let pausedUntil = 0;
 const listeners = new Set<() => void>();
 const setBoost = (next: Partial<TimerBoostState>) => {
@@ -36,7 +44,8 @@ export const freezeMoveTimer = (): void => {
 // Нова партія - пауза й заморозка знімаються.
 export const resetMoveTimerBoosts = (): void => {
     pausedUntil = 0;
-    setBoost({ paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 });
+    clearTimeout(expiredTimer);
+    setBoost({ paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false });
 };
 
 export const useMoveTimerBoost = (): TimerBoostState =>
@@ -95,6 +104,7 @@ export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number
             setLeft(fraction);
             if (fraction <= 0) {
                 clearInterval(interval);
+                if (boosts) markExpired();
                 expireRef.current();
             }
         }, 100);
@@ -173,7 +183,7 @@ const Secs = styled.span<{ $state: BarState }>`
 export const MoveTimerBar = ({ fraction, seconds, boosts = false }: { fraction: number; seconds: number; boosts?: boolean }) => {
     const t = useT();
     const shared = useMoveTimerBoost();
-    const state = boosts ? shared : { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 };
+    const state = boosts ? shared : { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false };
     const secs = Math.ceil(fraction * seconds);
     const barState: BarState = state.frozenNow ? "frozen" : state.paused ? "paused" : secs <= 2 ? "urgent" : "normal";
     const label =

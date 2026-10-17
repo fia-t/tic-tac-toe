@@ -22,11 +22,12 @@ import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModif
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
 
-export const GameRoot = styled.div`
+export const GameRoot = styled.div<{ $timer?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
-       щоб колонка бустерів вміщалась у 760px. */
-    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px)));
+       щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
+    --timer-h: ${({ $timer }) => ($timer ? "38px" : "0px")};
+    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h))));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -35,7 +36,7 @@ export const GameRoot = styled.div`
     padding-bottom: 16px;
 
     @media (min-width: 800px) {
-        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px)));
+        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h))));
     }
 `;
 
@@ -525,7 +526,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     return (
-        <GameRoot>
+        <GameRoot $timer={timer !== null && timer !== undefined && !over}>
             <Bar data-tour="bar">
                 {quick ? (
                     <>
@@ -600,12 +601,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <b>{score.human}</b>
                     <span>{humanName ?? t("player")}</span>
                 </ScorePill>
-                <TurnLine key={firstHint ? "first" : status} role="status" aria-live="polite">
+                <TurnLine key={firstHint ? "first" : timerBoost.expired ? "expired" : status} role="status" aria-live="polite">
                     {firstHint ? (
                         <>
                             <Cross />
                             {t("firstMoveHint")}
                         </>
+                    ) : timerBoost.expired && !over ? (
+                        t("timerExpired")
                     ) : (
                         status
                     )}

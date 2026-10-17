@@ -230,7 +230,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     // Як у партії з ботом: рахунок ліворуч над полем, у тому ж рядку - підказка, а після кінця
     // партії праворуч - "Грати ще раз" (рейтинговий матч - "Результат").
     return (
-        <GameRoot>
+        <GameRoot $timer={room.modifier === "timer" && !isFinished}>
             {popupOpen && (
                 <ResultPopup
                     result={myResult}
