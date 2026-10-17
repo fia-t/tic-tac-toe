@@ -628,8 +628,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {boosterButton("hint", boosters.canHint, boosters.onHint)}
                         {timer !== null && timer !== undefined && (
                             <>
-                                {boosterButton("pause", boosters.canHint && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
-                                {boosterButton("freeze", boosters.canHint && !timerBoost.frozenNow, freezeMoveTimer)}
+                                {boosterButton("pause", boosters.canHint && !timerBoost.firstFree && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
+                                {boosterButton("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
                             </>
                         )}
                     </Boosters>

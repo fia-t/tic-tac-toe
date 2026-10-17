@@ -317,7 +317,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             if (index === null || index === undefined) return;
             handleCellClick(Math.floor(index / SIZE), index % SIZE);
         },
-        true
+        round
     );
 
     const restartGame = () => {

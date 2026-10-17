@@ -12,8 +12,9 @@ export const PAUSE_SECONDS = 10;
 
 // pauseLeft - скільки секунд паузи лишилось (0 - паузи немає).
 // expired - щойно вийшов час і хід зроблено випадково (кілька секунд показуємо це в рядку статусу).
-type TimerBoostState = { paused: boolean; pauseLeft: number; frozenNow: boolean; frozenLeft: number; expired: boolean };
-let boost: TimerBoostState = { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false };
+// firstFree - перший хід гравця в партії: без таймера (поле щойно відкрилось, гравець ще роздивляється).
+type TimerBoostState = { paused: boolean; pauseLeft: number; frozenNow: boolean; frozenLeft: number; expired: boolean; firstFree: boolean };
+let boost: TimerBoostState = { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false, firstFree: false };
 let expiredTimer: ReturnType<typeof setTimeout> | undefined;
 const EXPIRED_NOTICE_MS = 2500;
 const markExpired = () => {
@@ -45,6 +46,7 @@ export const freezeMoveTimer = (): void => {
 export const resetMoveTimerBoosts = (): void => {
     pausedUntil = 0;
     clearTimeout(expiredTimer);
+    // firstFree не чіпаємо - його веде сам таймер за номером партії.
     setBoost({ paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false });
 };
 
@@ -65,15 +67,36 @@ export const frozenTurns = (state: TimerBoostState) => state.frozenLeft + (state
 
 // Модифікатор "таймер": на хід гравця seconds секунд, інакше хід робиться випадково
 // (onExpire). Відлік стартує заново щоразу, коли змінюється resetKey (напр. кількість ходів).
-// boosts - партія проти бота, де діють бустери "Пауза" й "Заморозка" (в онлайні їх немає).
-export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number, onExpire: () => void, boosts = false): number => {
+// round - номер партії проти бота: там діють бустери "Пауза" й "Заморозка", а перший хід кожної
+// партії - без таймера. В онлайні round не передається (ні бустерів, ні вільного першого ходу).
+export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number, onExpire: () => void, round?: number): number => {
     const [left, setLeft] = useState(1);
     const expireRef = useRef(onExpire);
     expireRef.current = onExpire;
+    const boosts = round !== undefined;
+    // Скільки ходів гравця почалось у поточній партії.
+    const turns = useRef<{ round?: number; count: number; key: unknown }>({ round, count: 0, key: undefined });
 
     useEffect(() => {
         setLeft(1);
-        if (!active) return;
+        if (!active) {
+            if (boosts && boost.firstFree) setBoost({ firstFree: false });
+            return;
+        }
+        if (boosts) {
+            if (turns.current.round !== round) turns.current = { round, count: 0, key: undefined };
+            // Той самий хід (напр. повторний запуск ефекту без зміни поля) не рахується вдруге.
+            if (turns.current.key !== resetKey) {
+                turns.current.key = resetKey;
+                turns.current.count += 1;
+            }
+            // Перший хід партії - без відліку.
+            if (turns.current.count === 1) {
+                setBoost({ firstFree: true });
+                return;
+            }
+            if (boost.firstFree) setBoost({ firstFree: false });
+        }
         // Новий хід гравця: пауза минулого ходу знята; заморожений хід витрачає одну "заморозку".
         if (boosts && boost.paused) endPause();
         if (boosts && boost.frozenNow) setBoost({ frozenNow: boost.frozenLeft > 0, frozenLeft: Math.max(0, boost.frozenLeft - 1) });
@@ -109,7 +132,7 @@ export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number
             }
         }, 100);
         return () => clearInterval(interval);
-    }, [active, resetKey, seconds, boosts]);
+    }, [active, resetKey, seconds, boosts, round]);
 
     return active ? left : 1;
 };
@@ -183,11 +206,12 @@ const Secs = styled.span<{ $state: BarState }>`
 export const MoveTimerBar = ({ fraction, seconds, boosts = false }: { fraction: number; seconds: number; boosts?: boolean }) => {
     const t = useT();
     const shared = useMoveTimerBoost();
-    const state = boosts ? shared : { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false };
+    const state = boosts ? shared : { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0, expired: false, firstFree: false };
     const secs = Math.ceil(fraction * seconds);
-    const barState: BarState = state.frozenNow ? "frozen" : state.paused ? "paused" : secs <= 2 ? "urgent" : "normal";
-    const label =
-        barState === "frozen"
+    const barState: BarState = state.frozenNow || state.firstFree ? "frozen" : state.paused ? "paused" : secs <= 2 ? "urgent" : "normal";
+    const label = state.firstFree
+        ? t("timerFirstFree")
+        : barState === "frozen"
             ? t("timerFrozen", { n: String(frozenTurns(state)) })
             : barState === "paused"
             ? t("timerPaused", { n: String(state.pauseLeft) })
@@ -199,7 +223,7 @@ export const MoveTimerBar = ({ fraction, seconds, boosts = false }: { fraction: 
                 <Fill $state={barState} style={{ width: `${barState === "frozen" ? 100 : fraction * 100}%` }} />
             </Track>
             <Secs $state={barState} aria-hidden="true">
-                {barState === "frozen" ? "❄" : barState === "paused" ? "❚❚" : t("timerSecs", { n: String(secs) })}
+                {state.firstFree ? t("timerSecs", { n: String(seconds) }) : barState === "frozen" ? "❄" : barState === "paused" ? "❚❚" : t("timerSecs", { n: String(secs) })}
             </Secs>
         </Row>
     );

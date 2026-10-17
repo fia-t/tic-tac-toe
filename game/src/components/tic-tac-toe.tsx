@@ -251,7 +251,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         board,
         TIMER_SECONDS,
         () => timeoutMoveRef.current(),
-        true
+        round
     );
 
     // Ім'я гравця для табло рахунку - обирається один раз на все ігрове
