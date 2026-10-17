@@ -3,23 +3,41 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { useT } from "@game/lib/i18n";
 
-// Бустери таймера (як у прототипі): "Пауза" зупиняє відлік до кінця поточного ходу гравця,
-// "Заморозка" прибирає таймер на FREEZE_TURNS ходів гравця (поточний - перший з них).
+// Бустери таймера: "Пауза" зупиняє відлік на PAUSE_SECONDS секунд (або до ходу гравця, якщо
+// він походить раніше), "Заморозка" прибирає таймер на FREEZE_TURNS ходів гравця (поточний -
+// перший з них). Поки бустер діє, на його кнопці - зворотний відлік (секунди / ходи).
 // Стан спільний для всіх полів (3×3, 5×5, гіга-поле) - на екрані завжди одна партія.
 export const FREEZE_TURNS = 3;
+export const PAUSE_SECONDS = 10;
 
-type TimerBoostState = { paused: boolean; frozenNow: boolean; frozenLeft: number };
-let boost: TimerBoostState = { paused: false, frozenNow: false, frozenLeft: 0 };
+// pauseLeft - скільки секунд паузи лишилось (0 - паузи немає).
+type TimerBoostState = { paused: boolean; pauseLeft: number; frozenNow: boolean; frozenLeft: number };
+let boost: TimerBoostState = { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 };
+let pausedUntil = 0;
 const listeners = new Set<() => void>();
 const setBoost = (next: Partial<TimerBoostState>) => {
     boost = { ...boost, ...next };
     listeners.forEach((listener) => listener());
 };
 
-export const pauseMoveTimer = (): void => setBoost({ paused: true });
-export const freezeMoveTimer = (): void => setBoost({ paused: false, frozenNow: true, frozenLeft: FREEZE_TURNS - 1 });
+const endPause = () => {
+    pausedUntil = 0;
+    setBoost({ paused: false, pauseLeft: 0 });
+};
+
+export const pauseMoveTimer = (): void => {
+    pausedUntil = Date.now() + PAUSE_SECONDS * 1000;
+    setBoost({ paused: true, pauseLeft: PAUSE_SECONDS });
+};
+export const freezeMoveTimer = (): void => {
+    pausedUntil = 0;
+    setBoost({ paused: false, pauseLeft: 0, frozenNow: true, frozenLeft: FREEZE_TURNS - 1 });
+};
 // Нова партія - пауза й заморозка знімаються.
-export const resetMoveTimerBoosts = (): void => setBoost({ paused: false, frozenNow: false, frozenLeft: 0 });
+export const resetMoveTimerBoosts = (): void => {
+    pausedUntil = 0;
+    setBoost({ paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 });
+};
 
 export const useMoveTimerBoost = (): TimerBoostState =>
     useSyncExternalStore(
@@ -34,7 +52,7 @@ export const useMoveTimerBoost = (): TimerBoostState =>
     );
 
 // Скільки ходів ще без таймера (разом із поточним).
-const frozenTurns = (state: TimerBoostState) => state.frozenLeft + (state.frozenNow ? 1 : 0);
+export const frozenTurns = (state: TimerBoostState) => state.frozenLeft + (state.frozenNow ? 1 : 0);
 
 // Модифікатор "таймер": на хід гравця seconds секунд, інакше хід робиться випадково
 // (onExpire). Відлік стартує заново щоразу, коли змінюється resetKey (напр. кількість ходів).
@@ -48,14 +66,20 @@ export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number
         setLeft(1);
         if (!active) return;
         // Новий хід гравця: пауза минулого ходу знята; заморожений хід витрачає одну "заморозку".
-        if (boosts && boost.frozenNow) setBoost({ paused: false, frozenNow: boost.frozenLeft > 0, frozenLeft: Math.max(0, boost.frozenLeft - 1) });
-        else if (boosts && boost.paused) setBoost({ paused: false });
+        if (boosts && boost.paused) endPause();
+        if (boosts && boost.frozenNow) setBoost({ frozenNow: boost.frozenLeft > 0, frozenLeft: Math.max(0, boost.frozenLeft - 1) });
         let end = Date.now() + seconds * 1000;
         let last = Date.now();
         const interval = setInterval(() => {
             const now = Date.now();
             const step = now - last;
             last = now;
+            // Пауза минає сама через PAUSE_SECONDS; поки триває - щосекунди оновлюємо відлік на кнопці.
+            if (boosts && boost.paused) {
+                const secs = Math.ceil((pausedUntil - now) / 1000);
+                if (secs <= 0) endPause();
+                else if (secs !== boost.pauseLeft) setBoost({ pauseLeft: secs });
+            }
             // Вкладка у фоні, пауза або заморозка - відлік стоїть (гравець не втрачає хід).
             const paused = boosts && boost.paused;
             const frozen = boosts && boost.frozenNow;
@@ -149,14 +173,14 @@ const Secs = styled.span<{ $state: BarState }>`
 export const MoveTimerBar = ({ fraction, seconds, boosts = false }: { fraction: number; seconds: number; boosts?: boolean }) => {
     const t = useT();
     const shared = useMoveTimerBoost();
-    const state = boosts ? shared : { paused: false, frozenNow: false, frozenLeft: 0 };
+    const state = boosts ? shared : { paused: false, pauseLeft: 0, frozenNow: false, frozenLeft: 0 };
     const secs = Math.ceil(fraction * seconds);
     const barState: BarState = state.frozenNow ? "frozen" : state.paused ? "paused" : secs <= 2 ? "urgent" : "normal";
     const label =
         barState === "frozen"
             ? t("timerFrozen", { n: String(frozenTurns(state)) })
             : barState === "paused"
-            ? t("timerPaused")
+            ? t("timerPaused", { n: String(state.pauseLeft) })
             : t("timerLimit", { n: String(seconds) });
     return (
         <Row>

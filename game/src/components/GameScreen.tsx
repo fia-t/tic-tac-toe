@@ -4,7 +4,7 @@ import styled, { keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModButton, ModIcon, ModRow, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
-import { MoveTimerBar, freezeMoveTimer, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
+import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
@@ -309,6 +309,18 @@ const Badge = styled.span<{ $free: boolean }>`
     pointer-events: none;
 `;
 
+// Відлік на кнопці діючого бустера: секунди паузи (помаранчеві) або ходи заморозки (сині).
+const BoosterCount = styled.span<{ $kind: BoosterKind }>`
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font: 800 16px/1 var(--font-heading);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    color: ${({ $kind }) => ($kind === "pause" ? "#c46f0c" : "#0f6f8c")};
+`;
+
 // "Результат" після кінця партії - невеликий бірюзовий текст у рядку рахунку, по правому краю поля.
 export const ResultLink = styled.button`
     flex-shrink: 0;
@@ -478,8 +490,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         : "";
 
     const BOOSTER_NAME: Record<BoosterKind, string> = { undo: t("boosterUndo"), hint: t("boosterHint"), pause: t("boosterPause"), freeze: t("boosterFreeze") };
+    // Поки діє пауза чи заморозка - на кнопці бустера замість іконки зворотний відлік.
+    const countdown: Partial<Record<BoosterKind, string>> = {
+        pause: timerBoost.paused ? t("timerSecs", { n: String(timerBoost.pauseLeft) }) : undefined,
+        freeze: timerBoost.frozenNow ? String(frozenTurns(timerBoost)) : undefined,
+    };
     const boosterButton = (kind: BoosterKind, enabled: boolean, onUse: () => void) => {
         const name = BOOSTER_NAME[kind];
+        const running = countdown[kind];
+        if (running)
+            return (
+                <RoundButton type="button" aria-live="polite" aria-label={`${name}: ${running}`} data-tip={name}>
+                    <BoosterCount $kind={kind}>{running}</BoosterCount>
+                </RoundButton>
+            );
         const isFree = booster.free[kind];
         const available = isFree || booster.canBuy;
         return (
