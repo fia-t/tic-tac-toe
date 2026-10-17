@@ -4,19 +4,20 @@ import styled, { keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModButton, ModIcon, ModRow, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
-import { MoveTimerBar } from "@game/components/MoveTimer";
+import { MoveTimerBar, freezeMoveTimer, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
-import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
+import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 
 // Екран партії проти бота (як у прототипі), спільний для 3×3, 5×5 і гіга-поля:
 // - смуга над полем: "Заново", "Гра з другом", плитки режимів, складність ("світлофор") і
 //   модифікатори; у виклику дня чи рівні кампанії - плашка з ціллю замість виборів;
 // - рядок рахунку з підказкою ("Твій хід", "Бот думає...") одразу після нього;
-// - поле, праворуч від нього (або під ним на вузькому екрані) - бустери "Скасувати хід" і "Підказка".
+// - поле, праворуч від нього (або під ним на вузькому екрані) - бустери "Скасувати хід" і "Підказка";
+//   у партії з таймером - ще "Пауза таймера" й "Заморозка часу".
 
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
@@ -333,13 +334,17 @@ export const ResultLink = styled.button`
     }
 `;
 
-type BoosterKind = "undo" | "hint";
+type BoosterKind = "undo" | "hint" | "pause" | "freeze";
+const ALL_FREE: Record<BoosterKind, boolean> = { undo: true, hint: true, pause: true, freeze: true };
 
 // Бустери: кожен один раз за партію безкоштовно, далі - за rewarded-рекламу (якщо вона є).
 const useBoosters = (resetKey: unknown) => {
     const rewarded = useContext(RewardedAdContext);
-    const [free, setFree] = useState<Record<BoosterKind, boolean>>({ undo: true, hint: true });
-    useEffect(() => setFree({ undo: true, hint: true }), [resetKey]);
+    const [free, setFree] = useState<Record<BoosterKind, boolean>>(ALL_FREE);
+    useEffect(() => {
+        setFree(ALL_FREE);
+        resetMoveTimerBoosts();
+    }, [resetKey]);
     const use = async (kind: BoosterKind, apply: () => void) => {
         if (free[kind]) {
             setFree((f) => ({ ...f, [kind]: false }));
@@ -415,6 +420,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const weekly = weeklyModifier();
     const [friendOpen, setFriendOpen] = useState(false);
     const booster = useBoosters(boosters.resetKey);
+    const timerBoost = useMoveTimerBoost();
     const quick = run === null;
 
     const openFriend = async () => {
@@ -471,8 +477,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             : `${t("dailyBadge", { n: String(dayOfYear()) })}: ${t(`daily_${run.template.id}` as Parameters<typeof t>[0])}`
         : "";
 
+    const BOOSTER_NAME: Record<BoosterKind, string> = { undo: t("boosterUndo"), hint: t("boosterHint"), pause: t("boosterPause"), freeze: t("boosterFreeze") };
     const boosterButton = (kind: BoosterKind, enabled: boolean, onUse: () => void) => {
-        const name = kind === "undo" ? t("boosterUndo") : t("boosterHint");
+        const name = BOOSTER_NAME[kind];
         const isFree = booster.free[kind];
         const available = isFree || booster.canBuy;
         return (
@@ -557,7 +564,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
             {timer !== null && timer !== undefined && !over && (
                 <div style={{ width: "var(--board-w)" }}>
-                    <MoveTimerBar fraction={timer} />
+                    <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
                 </div>
             )}
 
@@ -592,6 +599,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <Boosters data-tour="boosters">
                         {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
                         {boosterButton("hint", boosters.canHint, boosters.onHint)}
+                        {timer !== null && timer !== undefined && (
+                            <>
+                                {boosterButton("pause", boosters.canHint && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
+                                {boosterButton("freeze", boosters.canHint && !timerBoost.frozenNow, freezeMoveTimer)}
+                            </>
+                        )}
                     </Boosters>
                 )}
             </BoardHolder>

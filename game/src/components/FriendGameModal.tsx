@@ -73,6 +73,8 @@ type FriendGameModalProps = {
     onRoomReady: (roomId: string) => void;
     // Який режим підсвітити першим - відповідно до офлайн-режиму, з якого відкрили модалку.
     defaultMode?: OnlineGameMode;
+    // "Маю код кімнати" на головній - одразу екран приєднання.
+    initialView?: "select" | "join";
 };
 
 // Приймає або "сирий" код кімнати, або повне посилання-запрошення
@@ -95,10 +97,10 @@ const extractRoomId = (input: string): string => {
     return trimmed.toUpperCase();
 };
 
-export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoomReady, defaultMode }) => {
+export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoomReady, defaultMode, initialView = "select" }) => {
     const t = useT();
     const [mode, setMode] = useState<OnlineGameMode>(defaultMode ?? "3x3");
-    const [view, setView] = useState<"select" | "join">("select");
+    const [view, setView] = useState<"select" | "join">(initialView);
     const [joinInput, setJoinInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

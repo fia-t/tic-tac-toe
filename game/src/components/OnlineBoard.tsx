@@ -291,7 +291,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             )}
             {room.modifier === "timer" && myTurn && !isFinished && (
                 <div style={{ width: "var(--board-w)" }}>
-                    <MoveTimerBar fraction={timerLeft} />
+                    <MoveTimerBar fraction={timerLeft} seconds={TIMER_SECONDS} />
                 </div>
             )}
 

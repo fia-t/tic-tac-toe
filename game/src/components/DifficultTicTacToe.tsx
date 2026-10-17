@@ -289,7 +289,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
             if (!options.length) return;
             const [b, i] = options[Math.floor(Math.random() * options.length)];
             handleCellClick(b, Math.floor(i / 3), i % 3);
-        }
+        },
+        true
     );
 
     const restartUltimateGame = () => {

@@ -1,11 +1,45 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import styled from "styled-components";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import styled, { css, keyframes } from "styled-components";
 import { useT } from "@game/lib/i18n";
 
-// Модифікатор "таймер": на хід гравця TIMER_SECONDS секунд, інакше хід робиться випадково
+// Бустери таймера (як у прототипі): "Пауза" зупиняє відлік до кінця поточного ходу гравця,
+// "Заморозка" прибирає таймер на FREEZE_TURNS ходів гравця (поточний - перший з них).
+// Стан спільний для всіх полів (3×3, 5×5, гіга-поле) - на екрані завжди одна партія.
+export const FREEZE_TURNS = 3;
+
+type TimerBoostState = { paused: boolean; frozenNow: boolean; frozenLeft: number };
+let boost: TimerBoostState = { paused: false, frozenNow: false, frozenLeft: 0 };
+const listeners = new Set<() => void>();
+const setBoost = (next: Partial<TimerBoostState>) => {
+    boost = { ...boost, ...next };
+    listeners.forEach((listener) => listener());
+};
+
+export const pauseMoveTimer = (): void => setBoost({ paused: true });
+export const freezeMoveTimer = (): void => setBoost({ paused: false, frozenNow: true, frozenLeft: FREEZE_TURNS - 1 });
+// Нова партія - пауза й заморозка знімаються.
+export const resetMoveTimerBoosts = (): void => setBoost({ paused: false, frozenNow: false, frozenLeft: 0 });
+
+export const useMoveTimerBoost = (): TimerBoostState =>
+    useSyncExternalStore(
+        (listener) => {
+            listeners.add(listener);
+            return () => {
+                listeners.delete(listener);
+            };
+        },
+        () => boost,
+        () => boost
+    );
+
+// Скільки ходів ще без таймера (разом із поточним).
+const frozenTurns = (state: TimerBoostState) => state.frozenLeft + (state.frozenNow ? 1 : 0);
+
+// Модифікатор "таймер": на хід гравця seconds секунд, інакше хід робиться випадково
 // (onExpire). Відлік стартує заново щоразу, коли змінюється resetKey (напр. кількість ходів).
-export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number, onExpire: () => void): number => {
+// boosts - партія проти бота, де діють бустери "Пауза" й "Заморозка" (в онлайні їх немає).
+export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number, onExpire: () => void, boosts = false): number => {
     const [left, setLeft] = useState(1);
     const expireRef = useRef(onExpire);
     expireRef.current = onExpire;
@@ -13,11 +47,27 @@ export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number
     useEffect(() => {
         setLeft(1);
         if (!active) return;
-        const end = Date.now() + seconds * 1000;
+        // Новий хід гравця: пауза минулого ходу знята; заморожений хід витрачає одну "заморозку".
+        if (boosts && boost.frozenNow) setBoost({ paused: false, frozenNow: boost.frozenLeft > 0, frozenLeft: Math.max(0, boost.frozenLeft - 1) });
+        else if (boosts && boost.paused) setBoost({ paused: false });
+        let end = Date.now() + seconds * 1000;
+        let last = Date.now();
         const interval = setInterval(() => {
-            // Вкладка у фоні - відлік на паузі (гравець не програє хід, поки не бачить гру).
-            if (document.hidden) return;
-            const fraction = Math.max(0, (end - Date.now()) / (seconds * 1000));
+            const now = Date.now();
+            const step = now - last;
+            last = now;
+            // Вкладка у фоні, пауза або заморозка - відлік стоїть (гравець не втрачає хід).
+            const paused = boosts && boost.paused;
+            const frozen = boosts && boost.frozenNow;
+            if (document.hidden || paused || frozen) {
+                end += step;
+                if (frozen) {
+                    end = now + seconds * 1000;
+                    setLeft(1);
+                }
+                return;
+            }
+            const fraction = Math.max(0, (end - now) / (seconds * 1000));
             setLeft(fraction);
             if (fraction <= 0) {
                 clearInterval(interval);
@@ -25,33 +75,98 @@ export const useMoveTimer = (active: boolean, resetKey: unknown, seconds: number
             }
         }, 100);
         return () => clearInterval(interval);
-    }, [active, resetKey, seconds]);
+    }, [active, resetKey, seconds, boosts]);
 
     return active ? left : 1;
 };
 
-const Track = styled.div`
+const Row = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
     width: min(92vw, 460px);
-    height: 8px;
     margin: 0 0 8px;
+    color: #7a5530;
+    font-size: 13px;
+    font-weight: 800;
+`;
+
+const Label = styled.span`
+    white-space: nowrap;
+`;
+
+const Track = styled.div`
+    flex: 1;
+    min-width: 0;
+    height: 8px;
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.65);
     box-shadow: inset 0 1px 2px rgba(101, 72, 35, 0.25);
     overflow: hidden;
 `;
 
-const Fill = styled.div<{ $urgent: boolean }>`
+type BarState = "normal" | "urgent" | "paused" | "frozen";
+
+const FILL: Record<BarState, string> = {
+    normal: "#1f9ec2",
+    urgent: "#e8452f",
+    paused: "#f2a93b",
+    frozen: "linear-gradient(90deg, #7fd3ef, #1fb3d9)",
+};
+
+const Fill = styled.div<{ $state: BarState }>`
     height: 100%;
     border-radius: inherit;
-    background: ${({ $urgent }) => ($urgent ? "#e8452f" : "#1f9ec2")};
+    background: ${({ $state }) => FILL[$state]};
     transition: width 0.1s linear;
 `;
 
-export const MoveTimerBar = ({ fraction }: { fraction: number }) => {
+const pulse = keyframes`
+    to { transform: scale(1.12); }
+`;
+
+const Secs = styled.span<{ $state: BarState }>`
+    min-width: 34px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    background: ${({ $state }) => ($state === "urgent" ? "#e8452f" : $state === "paused" ? "#d98a1c" : $state === "frozen" ? "#0f6f8c" : "rgba(255, 255, 255, 0.85)")};
+    color: ${({ $state }) => ($state === "normal" ? "#49301f" : "#fff")};
+    ${({ $state }) =>
+        $state === "urgent" &&
+        css`
+            animation: ${pulse} 0.5s ease-in-out infinite alternate;
+        `}
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
+// Рядок над полем: підпис із лімітом ("Час на хід · 5 с"), смужка й зворотний відлік секунд;
+// на останніх 2 секундах лічильник червоний і пульсує. Пауза - помаранчева смужка, заморозка - синя.
+export const MoveTimerBar = ({ fraction, seconds, boosts = false }: { fraction: number; seconds: number; boosts?: boolean }) => {
     const t = useT();
+    const shared = useMoveTimerBoost();
+    const state = boosts ? shared : { paused: false, frozenNow: false, frozenLeft: 0 };
+    const secs = Math.ceil(fraction * seconds);
+    const barState: BarState = state.frozenNow ? "frozen" : state.paused ? "paused" : secs <= 2 ? "urgent" : "normal";
+    const label =
+        barState === "frozen"
+            ? t("timerFrozen", { n: String(frozenTurns(state)) })
+            : barState === "paused"
+            ? t("timerPaused")
+            : t("timerLimit", { n: String(seconds) });
     return (
-        <Track role="progressbar" aria-label={t("timerLabel")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(fraction * 100)}>
-            <Fill $urgent={fraction < 0.35} style={{ width: `${fraction * 100}%` }} />
-        </Track>
+        <Row>
+            <Label>{label}</Label>
+            <Track role="progressbar" aria-label={t("timerLabel")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(fraction * 100)}>
+                <Fill $state={barState} style={{ width: `${barState === "frozen" ? 100 : fraction * 100}%` }} />
+            </Track>
+            <Secs $state={barState} aria-hidden="true">
+                {barState === "frozen" ? "❄" : barState === "paused" ? "❚❚" : t("timerSecs", { n: String(secs) })}
+            </Secs>
+        </Row>
     );
 };

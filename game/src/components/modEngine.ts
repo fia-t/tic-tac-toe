@@ -18,6 +18,8 @@ export const EMPTY_HISTORY: ModHistory = { X: [], O: [], moves: 0 };
 
 // Камінь у Grid3 компонента - окреме значення, яке не збігається з жодним URL фішки.
 export const STONE = "#stone";
+// Горбок крота (модифікатор "кріт") - для правил це теж "#", але тимчасовий.
+export const MOUND = "#mound";
 
 // На полі зі зникаючими фішками дошка ніколи не заповнюється - після стількох ходів нічия.
 const VANISH_MAX_MOVES = 30;
@@ -207,11 +209,14 @@ export const chooseMove = (st: State, p: "X" | "O", difficulty: Difficulty): num
 export type Markers = { player: string; ai: string };
 
 const toCells = (grid: Grid3, markers: Markers): Cell[] =>
-    grid.flat().map((v) => (v === markers.player ? "X" : v === markers.ai ? "O" : v === STONE ? "#" : null));
+    grid.flat().map((v) => (v === markers.player ? "X" : v === markers.ai ? "O" : v === STONE || v === MOUND ? "#" : null));
 
-const fromCells = (cells: Cell[], n: number, markers: Markers): Grid3 =>
+// source - поле до ходу: заблокована клітинка лишається тим, чим була (камінь чи горбок).
+const fromCells = (cells: Cell[], n: number, markers: Markers, source?: Grid3): Grid3 =>
     Array.from({ length: n }, (_, r) =>
-        cells.slice(r * n, r * n + n).map((v) => (v === "X" ? markers.player : v === "O" ? markers.ai : v === "#" ? STONE : null))
+        cells
+            .slice(r * n, r * n + n)
+            .map((v, c) => (v === "X" ? markers.player : v === "O" ? markers.ai : v === "#" ? (source?.[r]?.[c] === MOUND ? MOUND : STONE) : null))
     );
 
 export type TurnResult = { grid: Grid3; hist: ModHistory; outcome: Outcome | null };
@@ -235,7 +240,7 @@ export const playTurn = (
     else if (rules.gravity) index = legal.find((m) => m % n === (index as number) % n);
     if (index === null || index === undefined || !legal.includes(index)) return null;
     const next = applyMove(st, index, who);
-    return { grid: fromCells(next.board, n, markers), hist: next.hist, outcome: outcomeOf(next) };
+    return { grid: fromCells(next.board, n, markers, grid), hist: next.hist, outcome: outcomeOf(next) };
 };
 
 // Випадковий дозволений хід - коли гравцю вийшов час (модифікатор "таймер").
@@ -263,4 +268,52 @@ export const createBoard = (n: number, stones: number): Grid3 => {
         grid[Math.floor(i / n)][i % n] = STONE;
     }
     return grid;
+};
+
+// --- модифікатор "кріт" (5×5) ---
+// Кріт риє горбки: за хід до появи клітинка тремтить (warn), наступним ходом на ній виростає
+// горбок, який блокує клітинку, як камінь. Перший горбок - на MOLE.first-му ході, далі кожні
+// MOLE.every ходів; горбок живе MOLE.ttl ходів, одночасно - не більше MOLE.max. Кріт не риє там,
+// де хтось наступним ходом склав би лінію (рандом не "краде" перемогу), а якщо на тремтячу
+// клітинку встигли поставити фішку - не вилазить. Крок робиться лише після справжніх ходів
+// (не в переборі ШІ), бо в ньому випадковість.
+export const MOLE = { first: 3, every: 3, ttl: 4, max: 2 };
+
+export type MoleState = { mounds: { index: number; ttl: number }[]; warn: number | null; moves: number };
+export const EMPTY_MOLE: MoleState = { mounds: [], warn: null, moves: 0 };
+
+export const moleStep = (grid: Grid3, mole: MoleState, winLength: number, markers: Markers): { grid: Grid3; mole: MoleState; dug: boolean } => {
+    const n = grid.length;
+    const next = grid.map((row) => row.slice());
+    const moves = mole.moves + 1;
+    let mounds = mole.mounds.map((m) => ({ ...m, ttl: m.ttl - 1 }));
+    for (const m of mounds) if (m.ttl <= 0) next[Math.floor(m.index / n)][m.index % n] = null;
+    mounds = mounds.filter((m) => m.ttl > 0);
+
+    const cells = toCells(next, markers);
+    const winsFor = (i: number) =>
+        (["X", "O"] as const).some((p) => {
+            const board = cells.slice();
+            board[i] = p;
+            return lineOwner({ n, w: winLength, board, hist: EMPTY_HISTORY, rules: {} }) === p;
+        });
+
+    let dug = false;
+    if (mole.warn !== null) {
+        const r = Math.floor(mole.warn / n);
+        const c = mole.warn % n;
+        if (next[r][c] === null && !winsFor(mole.warn)) {
+            next[r][c] = MOUND;
+            cells[mole.warn] = "#";
+            mounds.push({ index: mole.warn, ttl: MOLE.ttl });
+            dug = true;
+        }
+    }
+
+    let warn: number | null = null;
+    if (moves >= MOLE.first - 1 && (moves - (MOLE.first - 1)) % MOLE.every === 0 && mounds.length < MOLE.max) {
+        const free = cells.flatMap((v, i) => (v === null && !winsFor(i) ? [i] : []));
+        if (free.length > 2) warn = pickRandom(free);
+    }
+    return { grid: next, mole: { mounds, warn, moves }, dug };
 };

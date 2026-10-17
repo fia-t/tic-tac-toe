@@ -106,6 +106,17 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
         </>
     ),
     misere: <path d="M7 4v15M3.5 15.5 7 19l3.5-3.5M17 20V5M13.5 8.5 17 5l3.5 3.5" />,
+    // Кріт визирає з горбка: кругла голівка, оченята, носик-трикутник і вусики.
+    mole: (
+        <>
+            <path d="M6.2 16.4A7 7 0 1 1 17.8 16.4" />
+            <path d="M2 21.5h20c-.4-2.6-2.4-4-4.8-3.8-1.5-1.1-3.2-1.6-5.2-1.6s-3.7.5-5.2 1.6C4.4 17.5 2.4 18.9 2 21.5z" />
+            <circle cx="9.3" cy="9.4" r="1.1" fill="currentColor" stroke="none" />
+            <circle cx="14.7" cy="9.4" r="1.1" fill="currentColor" stroke="none" />
+            <path d="M10.6 11.8h2.8L12 13.4z" fill="currentColor" strokeWidth="1.2" />
+            <path d="M9.4 12.6 6.4 12M9.4 13.8l-2.8.6M14.6 12.6l3-.6M14.6 13.8l2.8.6" strokeWidth="1.2" />
+        </>
+    ),
 };
 
 export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => (
@@ -199,6 +210,19 @@ const ACTION_ICONS = {
         <>
             <path d="M9 14 4 9l5-5" />
             <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+        </>
+    ),
+    pause: (
+        <>
+            <rect x="6.5" y="5" width="3.5" height="14" rx="1" />
+            <rect x="14" y="5" width="3.5" height="14" rx="1" />
+        </>
+    ),
+    // Сніжинка: шість рівних променів під 60°, на кожному - гілочка.
+    freeze: (
+        <>
+            <path d="M12 2L12 22M20.66 7L3.34 17M20.66 17L3.34 7" />
+            <path d="M14.12 19.32L12 17.2L9.88 19.32M6.72 17.5L7.5 14.6L4.6 13.82M4.6 10.18L7.5 9.4L6.72 6.5M9.88 4.68L12 6.8L14.12 4.68M17.28 6.5L16.5 9.4L19.4 10.18M19.4 13.82L16.5 14.6L17.28 17.5" strokeWidth="1.8" />
         </>
     ),
 };

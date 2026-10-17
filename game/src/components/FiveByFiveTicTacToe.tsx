@@ -1,7 +1,7 @@
 "use client";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import React, { useState, useMemo } from "react";
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { hintedCell } from "@game/components/gameStyles";
 import { OnlineBoardContainer, OnlineCell } from "@game/components/onlineStyles";
 import { GameScreen } from "@game/components/GameScreen";
@@ -23,7 +23,7 @@ import { useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterMoveN, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
-import { EMPTY_HISTORY, ModHistory, STONE, TurnResult, createBoard, playTurn, randomLegalCell } from "@game/components/modEngine";
+import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, STONE, TurnResult, createBoard, moleStep, playTurn, randomLegalCell } from "@game/components/modEngine";
 import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
 import { useMoveTimer } from "@game/components/MoveTimer";
 
@@ -39,8 +39,60 @@ const StoneTile = styled.div`
         0 4px 6px rgba(0, 0, 0, 0.2);
 `;
 
-const Cell = styled(OnlineCell)<{ $hint: boolean }>`
+// Горбок крота: земляна купка з лічильником, скільки ходів ще простоїть.
+const moundUp = keyframes`
+    from { transform: scale(0.4) translateY(30%); opacity: 0; }
+`;
+
+const MoundTile = styled.div`
+    position: relative;
+    width: 78%;
+    height: 78%;
+    background:
+        radial-gradient(ellipse 60% 48% at 50% 72%, #9a6a3c 0 55%, transparent 57%),
+        radial-gradient(ellipse 34% 26% at 50% 50%, #b98552 0 60%, transparent 62%);
+    animation: ${moundUp} 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+
+    b {
+        position: absolute;
+        top: 0;
+        right: 0;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 4px;
+        border-radius: 999px;
+        background: #5c3317;
+        color: #fff7e8;
+        font: 800 11px/18px var(--font-body);
+        text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
+// Клітинка, де наступним ходом виросте горбок: тремтить і вкривається тріщинками.
+const shake = keyframes`
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(-1.5px, 1px) rotate(-1deg); }
+    75% { transform: translate(1.5px, -1px) rotate(1deg); }
+`;
+
+const Cell = styled(OnlineCell)<{ $hint: boolean; $warn?: boolean }>`
     ${({ $hint }) => ($hint ? hintedCell : "")}
+    ${({ $warn }) =>
+        $warn &&
+        css`
+            background-image:
+                repeating-linear-gradient(35deg, transparent 0 9px, rgba(120, 75, 35, 0.35) 9px 11px),
+                repeating-linear-gradient(-55deg, transparent 0 13px, rgba(120, 75, 35, 0.25) 13px 15px);
+            animation: ${shake} 0.5s ease-in-out infinite;
+
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+            }
+        `}
 `;
 
 // 5x5 - поле більше за класичне, тож перемога - 4 фішки поспіль, а не 3 (інакше на такому
@@ -89,7 +141,7 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
     return null;
 };
 
-type Snapshot = { board: Grid3; hist: ModHistory };
+type Snapshot = { board: Grid3; hist: ModHistory; mole: MoleState };
 
 export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     setGameMode,
@@ -107,6 +159,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const stones = modifier === "stones" ? STONES_COUNT : 0;
     const [board, setBoard] = useState<Grid3>(() => createBoard(SIZE, stones));
     const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
+    const [mole, setMole] = useState<MoleState>(EMPTY_MOLE);
     const [winner, setWinner] = useState<string | null>(null);
     const [isNoWinner, setIsNoWinner] = useState<boolean>(false);
     const [isAiTurn, setIsAiTurn] = useState<boolean>(false);
@@ -132,11 +185,12 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     // --- партія з модифікатором правил (гравітація, каміння, мізер): хід через modEngine ---
     const rules = { gravity: modifier === "gravity", misere: modifier === "misere" };
-    const ruleMode = rules.gravity || rules.misere || modifier === "stones";
+    const isMole = modifier === "mole";
+    const ruleMode = rules.gravity || rules.misere || modifier === "stones" || isMole;
     const markers = { player: playerMarker, ai: aiMarker };
 
     const pushUndo = () => {
-        setUndoStack((stack) => [...stack, { board, hist }]);
+        setUndoStack((stack) => [...stack, { board, hist, mole }]);
         setHintCell(null);
     };
 
@@ -156,22 +210,33 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         recordResult(result);
     };
 
+    // Після справжнього ходу (не в переборі ШІ) - крок крота, якщо грає модифікатор "кріт".
+    const afterMove = (turn: TurnResult, state: MoleState): { turn: TurnResult; mole: MoleState } => {
+        if (!isMole || turn.outcome) return { turn, mole: state };
+        const step = moleStep(turn.grid, state, WIN_LENGTH, markers);
+        return { turn: { ...turn, grid: step.grid }, mole: step.mole };
+    };
+
     const handleRuleClick = (row: number, col: number) => {
-        const turn = playTurn(board, hist, rules, WIN_LENGTH, markers, "X", { index: row * SIZE + col });
-        if (!turn) return;
+        const played = playTurn(board, hist, rules, WIN_LENGTH, markers, "X", { index: row * SIZE + col });
+        if (!played) return;
         pushUndo();
+        const { turn, mole: moleAfter } = afterMove(played, mole);
         setBoard(turn.grid);
         setHist(turn.hist);
+        setMole(moleAfter);
         playSound("move");
         if (turn.outcome) return finishRuleGame(turn);
 
         setIsAiTurn(true);
         setTimeout(() => {
-            const reply = playTurn(turn.grid, turn.hist, rules, WIN_LENGTH, markers, "O", { difficulty: getDifficulty() });
+            const replied = playTurn(turn.grid, turn.hist, rules, WIN_LENGTH, markers, "O", { difficulty: getDifficulty() });
             setIsAiTurn(false);
-            if (!reply) return;
+            if (!replied) return;
+            const { turn: reply, mole: moleReply } = afterMove(replied, moleAfter);
             setBoard(reply.grid);
             setHist(reply.hist);
+            setMole(moleReply);
             playSound("reply");
             if (reply.outcome) finishRuleGame(reply);
         }, 500);
@@ -251,12 +316,14 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             const index = ruleMode ? randomLegalCell(board, rules, markers) : empty[Math.floor(Math.random() * empty.length)];
             if (index === null || index === undefined) return;
             handleCellClick(Math.floor(index / SIZE), index % SIZE);
-        }
+        },
+        true
     );
 
     const restartGame = () => {
         setBoard(createBoard(SIZE, stones));
         setHist(EMPTY_HISTORY);
+        setMole(EMPTY_MOLE);
         setWinner(null);
         setIsNoWinner(false);
         setIsAiTurn(false);
@@ -274,6 +341,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         setUndoStack((stack) => stack.slice(0, -1));
         setBoard(last.board);
         setHist(last.hist);
+        setMole(last.mole);
         setHintCell(null);
     };
 
@@ -339,11 +407,16 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                 <Cell
                                     key={index}
                                     $hint={hintCell === index}
+                                    $warn={isMole && !isGameOver && mole.warn === index}
                                     $disabled={!themeReady || isGameOver || isAiTurn || (cell !== null && !rules.gravity)}
                                     onClick={() => handleCellClick(row, col)}
                                 >
                                     {cell === STONE ? (
                                         <StoneTile role="img" aria-label={t("modifier_stones")} />
+                                    ) : cell === MOUND ? (
+                                        <MoundTile role="img" aria-label={t("moleMound", { n: String(mole.mounds.find((m) => m.index === index)?.ttl ?? 0) })}>
+                                            <b>{mole.mounds.find((m) => m.index === index)?.ttl}</b>
+                                        </MoundTile>
                                     ) : (
                                         cell && <GamePiece src={cell} winning={winningCells?.has(index)} />
                                     )}

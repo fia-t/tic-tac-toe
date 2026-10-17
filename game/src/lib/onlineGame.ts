@@ -29,7 +29,8 @@ import { GameModeKey, MODIFIERS_BY_MODE, Modifier, STONES_COUNT } from "@game/li
 
 // Модифікатори гри з другом - ті самі, що й проти бота, за відповідністю режимів.
 const ONLINE_MODE_KEY: Record<OnlineGameMode, GameModeKey> = { "3x3": "traditional", "5x5": "five", "9x9": "difficult" };
-export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]];
+// "Кріт" лише проти бота: його горбки випадкові, а онлайн-кімната не має спільного джерела випадковості.
+export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]].filter((m) => m !== "mole");
 
 // Камінь у плоскій дошці кімнати - "#" (Firestore-документ), у рушії модифікаторів - STONE.
 export const ROOM_STONE = "#";

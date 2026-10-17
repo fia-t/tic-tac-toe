@@ -2,13 +2,13 @@
 import { useSyncExternalStore } from "react";
 
 // Модифікатори правил офлайн-партій. Один модифікатор на партію; доступність залежить
-// від режиму (зникаючі фішки мають сенс на 3×3, гравітація й каміння - на 5×5).
-export type Modifier = "vanish" | "gravity" | "stones" | "timer" | "misere";
+// від режиму (зникаючі фішки мають сенс на 3×3, гравітація, каміння й кріт - на 5×5).
+export type Modifier = "vanish" | "gravity" | "stones" | "timer" | "misere" | "mole";
 export type GameModeKey = "traditional" | "five" | "difficult";
 
 export const MODIFIERS_BY_MODE: Record<GameModeKey, Modifier[]> = {
     traditional: ["vanish", "misere", "timer"],
-    five: ["gravity", "stones", "misere", "timer"],
+    five: ["gravity", "stones", "mole", "misere", "timer"],
     difficult: ["timer"],
 };
 
@@ -16,7 +16,9 @@ export const TIMER_SECONDS = 5;
 export const STONES_COUNT = 3;
 
 const STORAGE_KEY = "ttt-modifier";
-const ALL: Modifier[] = ["vanish", "gravity", "stones", "timer", "misere"];
+const ALL: Modifier[] = ["vanish", "gravity", "stones", "mole", "timer", "misere"];
+// Усі модифікатори в порядку показу (ряд іконок на головній і над полем).
+export const ALL_MODIFIERS: Modifier[] = ["vanish", "gravity", "stones", "mole", "timer", "misere"];
 
 const readStored = (): Modifier | null => {
     try {

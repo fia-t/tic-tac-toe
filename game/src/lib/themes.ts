@@ -28,6 +28,8 @@ export type Theme = {
     createdAt: Timestamp | null;
     // Ціна в магазині скінів (монети). Не задано в адмінці - DEFAULT_SKIN_PRICE; 0 - безкоштовно.
     price?: number;
+    // Евентовий (сезонний) скін - у магазині показується першим.
+    event?: boolean;
 };
 
 export const DEFAULT_SKIN_PRICE = 300;
@@ -63,6 +65,7 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
     order: (data.order as number) ?? 0,
     createdAt: (data.createdAt as Timestamp) ?? null,
     price: typeof data.price === "number" ? data.price : undefined,
+    event: data.event === true,
 });
 
 // Публічний список активних тем - читає будь-хто, навіть до анонімного входу
