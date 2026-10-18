@@ -7,6 +7,7 @@ import { Card, Eyebrow, InfoPill, Muted, Page, Spread } from "@game/components/p
 import { Star } from "@game/components/DailyChallenge";
 import { ModIcon } from "@game/components/GameOptions";
 import { BossPortrait } from "@game/components/CampaignArt";
+import { albumArt } from "@game/components/AlbumArt";
 import { InfoTip } from "@game/components/HomeScreen";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton } from "@game/components/onlineStyles";
@@ -350,8 +351,12 @@ export const AlbumTileView: React.FC<{ card: AlbumCard; got: boolean }> = ({ car
     const t = useT();
     const chapter = CAMPAIGN_CHAPTERS[card.chapter];
     if (!chapter) return null;
+    // Анімована сцена картки (AlbumArt.ts); для розділів з адмінки її може не бути.
+    const scene = got ? albumArt(chapter.id, card.kind) : null;
     const art = !got ? (
         <AlbumArt>?</AlbumArt>
+    ) : scene ? (
+        <AlbumArt style={{ background: "none" }} dangerouslySetInnerHTML={{ __html: scene }} />
     ) : card.kind === "boss" ? (
         <AlbumArt style={{ background: "#fff8ec" }}>
             <BossPortrait chapterId={chapter.id} size={84} />
