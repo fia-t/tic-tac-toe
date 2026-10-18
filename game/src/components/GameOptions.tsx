@@ -115,11 +115,20 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
     ),
 };
 
-export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        {MOD_ICON_PATHS[id ?? "none"]}
-    </svg>
-);
+// Малюнки іконок різні за розміром і зміщенням у квадраті 24×24 - кожну вирівнюємо до центру й
+// однакового візуального розміру (виміряно за межами малюнка); товщина лінії лишається 2.2.
+const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [2.89,-0.06,0.883], misere: [0.13,0.13,0.99] };
+
+export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => {
+    const [tx, ty, k] = MOD_FIT[id ?? "none"];
+    return (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <g transform={`translate(${tx} ${ty}) scale(${k})`} strokeWidth={(2.2 / k).toFixed(2)}>
+                {MOD_ICON_PATHS[id ?? "none"]}
+            </g>
+        </svg>
+    );
+};
 
 export const ModButton = styled.button`
     ${gameButtonCss("xs", { square: true })}
@@ -135,11 +144,12 @@ export const ModButton = styled.button`
         padding: 0;
     }
 
+    /* -1px: центр світлої частини кнопки, без нижнього бортика основи. */
     & > svg {
         position: absolute;
         left: 50%;
         top: 50%;
-        transform: translate(-50%, -50%);
+        transform: translate(-50%, calc(-50% - 1px));
     }
 
     /* Неактивна іконка: приглушуємо саму кнопку (світла вуаль і бліда іконка), а не через filter
