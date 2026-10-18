@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { DiffButton, DiffGroup, ModButton, ModIcon, ModRow } from "@game/components/GameOptions";
@@ -262,6 +263,115 @@ const ModScroll = styled(ModRow)`
         right: calc(-1 * var(--gb-c, 0px));
         transform: none;
     }
+`;
+
+// "?" біля підпису групи (поле, складність, модифікатор): натискання відкриває коротке пояснення,
+// повторне натискання, клік деінде чи прокрутка - закривають.
+const InfoButton = styled.button`
+    position: relative;
+    width: 18px;
+    height: 18px;
+    margin: -4px 0;
+    padding: 0;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 50%;
+    background: rgba(139, 101, 60, 0.18);
+    color: #49301f;
+    font: 800 12px/18px var(--font-body);
+    text-align: center;
+    cursor: pointer;
+
+    /* Більша зона натискання, ніж сам кружечок. */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -12px;
+    }
+
+    &[aria-expanded="true"],
+    &:hover {
+        background: #49301f;
+        color: #fff7e8;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
+`;
+
+const InfoPop = styled.div`
+    position: fixed;
+    z-index: 1700;
+    max-width: min(320px, calc(100vw - 24px));
+    padding: 10px 12px;
+    border-radius: 14px;
+    background: #49301f;
+    color: #fff7e8;
+    font: 600 13px/1.4 var(--font-body);
+    text-transform: none;
+    letter-spacing: 0;
+    box-shadow: 0 8px 20px rgba(60, 35, 10, 0.3);
+`;
+
+const InfoTip = ({ text }: { text: string }) => {
+    const t = useT();
+    const button = useRef<HTMLButtonElement>(null);
+    const pop = useRef<HTMLDivElement>(null);
+    const [at, setAt] = useState<{ left: number; top: number } | null>(null);
+
+    useEffect(() => {
+        if (!at) return;
+        const close = (event: Event) => {
+            const target = event.target as Node;
+            if (button.current?.contains(target) || pop.current?.contains(target)) return;
+            setAt(null);
+        };
+        const closeNow = () => setAt(null);
+        document.addEventListener("pointerdown", close);
+        window.addEventListener("scroll", closeNow, true);
+        return () => {
+            document.removeEventListener("pointerdown", close);
+            window.removeEventListener("scroll", closeNow, true);
+        };
+    }, [at]);
+
+    // Бульбашка - під кнопкою, у межах екрана.
+    useEffect(() => {
+        if (!at || !pop.current || !button.current) return;
+        const r = button.current.getBoundingClientRect();
+        const w = pop.current.offsetWidth;
+        const left = Math.max(12, Math.min(window.innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+        if (left !== at.left) setAt({ left, top: at.top });
+    }, [at]);
+
+    const toggle = () => {
+        if (at) return setAt(null);
+        const r = button.current?.getBoundingClientRect();
+        if (r) setAt({ left: r.left, top: r.bottom + 8 });
+    };
+
+    return (
+        <>
+            <InfoButton ref={button} type="button" aria-label={t("infoWhat")} aria-expanded={Boolean(at)} onClick={toggle}>
+                ?
+            </InfoButton>
+            {at &&
+                createPortal(
+                    <InfoPop ref={pop} role="tooltip" style={{ left: at.left, top: at.top }}>
+                        {text}
+                    </InfoPop>,
+                    document.body
+                )}
+        </>
+    );
+};
+
+const EyebrowInfo = styled(Eyebrow)`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 `;
 
 const Center = styled(Muted)`
@@ -542,7 +652,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     // Плитки полів із підписом "Обери поле" - як "Складність бота" й "Модифікатор" над своїми кнопками.
     const modePicker = (id: string, value: GameModeKey, onPick: (m: GameModeKey) => void) => (
         <OptGroup>
-            <Eyebrow id={id}>{t("homePickBoard")}</Eyebrow>
+            <EyebrowInfo id={id}>
+                {t("homePickBoard")}
+                <InfoTip text={t("infoBoard")} />
+            </EyebrowInfo>
             <Modes role="group" aria-labelledby={id}>
                 {MODES.map((m) => (
                     <ModeButton key={m.id} type="button" aria-pressed={value === m.id} onClick={() => onPick(m.id)}>
@@ -556,7 +669,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
     const modPicker = (id: string, active: Modifier | null, allowed: Modifier[], list: Modifier[], onPick: (m: Modifier | null) => void) => (
         <OptGroup>
-            <Eyebrow id={id}>{t("modifierLabel")}</Eyebrow>
+            <EyebrowInfo id={id}>
+                {t("modifierLabel")}
+                <InfoTip text={id === "home-friend-mod" ? t("infoModFriend") : t("infoMod")} />
+            </EyebrowInfo>
             <ModScroll role="group" aria-labelledby={id}>
                 {/* Показуємо всі модифікатори; ті, що не пасують обраному полю, - неактивні. */}
                 {[null, ...list].map((m) => (
@@ -583,7 +699,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         <BotCard aria-label={t("homeQuick")}>
             {modePicker("home-board", mode, setMode)}
             <OptGroup>
-                <Eyebrow id="home-diff">{t("difficultyLabel")}</Eyebrow>
+                <EyebrowInfo id="home-diff">
+                    {t("difficultyLabel")}
+                    <InfoTip text={t("infoDiff")} />
+                </EyebrowInfo>
                 <DiffGroup role="group" aria-labelledby="home-diff">
                     {DIFFICULTIES.map((level) => (
                         <DiffButton

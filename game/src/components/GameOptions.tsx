@@ -106,15 +106,15 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
         </>
     ),
     misere: <path d="M7 4v15M3.5 15.5 7 19l3.5-3.5M17 20V5M13.5 8.5 17 5l3.5 3.5" />,
-    // Кріт визирає з горбка: кругла голівка, оченята, носик-трикутник і вусики.
+    // Кріт у профіль: голова з видовженим носиком визирає з горбка, біля неї лапка з кігтиками.
     mole: (
         <>
-            <path d="M6.2 16.4A7 7 0 1 1 17.8 16.4" />
-            <path d="M2 21.5h20c-.4-2.6-2.4-4-4.8-3.8-1.5-1.1-3.2-1.6-5.2-1.6s-3.7.5-5.2 1.6C4.4 17.5 2.4 18.9 2 21.5z" />
-            <circle cx="9.3" cy="9.4" r="1.1" fill="currentColor" stroke="none" />
-            <circle cx="14.7" cy="9.4" r="1.1" fill="currentColor" stroke="none" />
-            <path d="M10.6 11.8h2.8L12 13.4z" fill="currentColor" strokeWidth="1.2" />
-            <path d="M9.4 12.6 6.4 12M9.4 13.8l-2.8.6M14.6 12.6l3-.6M14.6 13.8l2.8.6" strokeWidth="1.2" />
+            <path d="M2 21.5h20c-.5-2.7-2.6-4.2-5-4h-1.4c-1.3-1-2.6-1.4-4.1-1.4-1.6 0-3 .5-4.2 1.4H6.9C4.5 17.4 2.5 18.8 2 21.5z" />
+            <path d="M6.8 16.8C6.8 12.5 9.6 9.6 13.2 9.6c2.5 0 4.4 1.1 6.2 2.8.9.9 1.6 1.7 2.1 2.4" />
+            <path d="M21.5 14.8c-1 .7-2.4.9-3.8.5" />
+            <circle cx="21.6" cy="14.6" r="1.25" fill="currentColor" stroke="none" />
+            <circle cx="14" cy="12.6" r=".95" fill="currentColor" stroke="none" />
+            <path d="M16.2 16.4l.9 1.6M17.9 16l1 1.5" strokeWidth="1.4" />
         </>
     ),
 };
