@@ -19,7 +19,7 @@ export type CampaignLevelDef = {
     modifier?: Modifier | null;
     // "win" - потрібна перемога; "survive" - зараховується й нічия.
     goal: "win" | "survive";
-    // ★★★ - перемога не більше ніж за стільки ходів.
+    // ★★★ - перемога не більше ніж за стільки ходів гравця (стартові фішки головоломки не рахуються).
     par: number;
     boss?: boolean;
     // Головоломка: фішки, що вже стоять на полі (індекси клітинок).
@@ -61,7 +61,8 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         active: true,
         bossName: "Капітан Краб",
         bossLine: "На моєму пляжі фішки довго не живуть! Тримай не більше трьох - і не відволікайся.",
-        rewardCoins: 150,
+        rewardCoins: 100,
+        // Скін розділу (фон поля - арт Пляжу) - id теми, коли її додадуть у "Теми".
         rewardSkinId: "",
         levels: [
             W("Перша перемога над легким ботом", "traditional", "easy", 3),
@@ -81,14 +82,14 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         active: true,
         bossName: "Пан Кріт",
         bossLine: "Ліс - мої володіння. Де захочу, там і вирию горбок. Встигнеш оминути?",
-        rewardCoins: 250,
+        rewardCoins: 150,
         rewardSkinId: "",
         levels: [
             W("4 в ряд проти легкого бота", "five", "easy", 6),
             W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }),
+            W("Головоломка: створи подвійну загрозу й виграй за 2 ходи", "five", "medium", 2, { preset: { X: [6, 7, 8, 12], O: [3, 5, 9, 20] } }),
             W("Кріт риє горбки: виграй", "five", "medium", 8, { modifier: "mole" }),
             W("Гравітація: збери 4", "five", "medium", 8, { modifier: "gravity" }),
-            W("Таймер проти Майстра: вистій", "five", "master", 9, { modifier: "timer", goal: "survive" }),
             W("Бос: Пан Кріт", "five", "master", 10, { modifier: "mole", goal: "survive", boss: true }),
         ],
     },
@@ -101,13 +102,14 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         active: true,
         bossName: "Орел-Вершина",
         bossLine: "З гори я бачу всі дев'ять полів одразу. А ти встигнеш подумати за 5 секунд?",
-        rewardCoins: 0,
-        rewardSkinId: "night",
+        rewardCoins: 250,
+        rewardSkinId: "",
         levels: [
             W("Перше гіга-поле", "difficult", "easy", 14),
             W("Гіга-поле проти середнього бота", "difficult", "medium", 16),
             W("Гіга-поле з таймером", "difficult", "medium", 16, { modifier: "timer" }),
-            W("Швидка перемога: виграй гіга-поле за 13 ходів", "difficult", "medium", 13),
+            // Гіга-поле: індекси 0-80 (поле b, клітинка c -> b * 9 + c); виграні малі поля закриваються одразу.
+            W("Головоломка: знайди хід, що виграє все гіга-поле", "difficult", "medium", 1, { preset: { X: [0, 1, 2, 36, 37, 38, 72, 78], O: [18, 19, 20, 54, 55, 56, 80, 44] } }),
             W("Майстер на гіга-полі: не програй", "difficult", "master", 18, { goal: "survive" }),
             W("Бос: Орел-Вершина", "difficult", "master", 20, { modifier: "timer", goal: "survive", boss: true }),
         ],
