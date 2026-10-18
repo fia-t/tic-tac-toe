@@ -118,6 +118,13 @@ export const buySkin = (id: string, price: number): boolean => {
     return true;
 };
 
+// Скін-нагорода (напр. за пройдений розділ кампанії) - назавжди й безкоштовно.
+export const grantSkin = (id: string): void => {
+    if (!id || state.owned.includes(id)) return;
+    commit({ ...state, owned: [...state.owned, id] });
+    trackEvent("skin_granted", { skin: id });
+};
+
 export const equipSkin = (id: string): void => {
     if (!isSkinUnlocked(id) || state.equipped === id) return;
     commit({ ...state, equipped: id });

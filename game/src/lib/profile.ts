@@ -3,7 +3,7 @@ import { useSyncExternalStore } from "react";
 import { addGameEventListener } from "@game/lib/firebase";
 import { getDifficulty } from "@game/lib/difficulty";
 import { earnCoins, getWallet } from "@game/lib/wallet";
-import { CAMPAIGN_LEVELS, getCampaign } from "@game/lib/campaign";
+import { chapterLevels, getCampaign } from "@game/lib/campaign";
 import { t } from "@game/lib/i18n";
 import { showToast } from "@game/lib/ui";
 
@@ -61,7 +61,8 @@ const XP = { win: 20, draw: 8, lose: 3, onlineWin: 25, onlineDraw: 10, onlineLos
 
 export type Achievement = { id: string; reward: number; progress: (s: ProfileState) => [number, number] };
 
-const beachLevels = CAMPAIGN_LEVELS.filter((level) => level.chapter === 0);
+// Перший розділ кампанії (рівні можуть підвантажитись із бази - тож щоразу заново).
+const beachLevels = () => chapterLevels(0);
 
 export const ACHIEVEMENTS: Achievement[] = [
     { id: "first_win", reward: 50, progress: (s) => [s.stats.wins, 1] },
@@ -77,7 +78,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         reward: 100,
         progress: () => {
             const stars = getCampaign().stars;
-            return [beachLevels.filter((level) => (stars[level.id] ?? 0) > 0).length, beachLevels.length];
+            return [beachLevels().filter((level) => (stars[level.id] ?? 0) > 0).length, beachLevels().length];
         },
     },
 ];

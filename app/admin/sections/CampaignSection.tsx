@@ -350,7 +350,7 @@ const ChapterEditor: React.FC<{
 
             {!readOnly && (
                 <Row>
-                    <GhostButton type="button" disabled={disabled} onClick={() => setDraft((d) => ({ ...d, levels: [...d.levels, { ...NEW_LEVEL }] }))}>
+                    <GhostButton type="button" disabled={disabled} onClick={() => setDraft((d) => ({ ...d, levels: [...d.levels, { ...NEW_LEVEL, id: `${d.id}-${Date.now().toString(36)}` }] }))}>
                         + Додати рівень
                     </GhostButton>
                     <PillButton type="button" disabled={disabled || !dirty || !draft.name.trim()} style={{ marginTop: 0, width: "auto" }} onClick={() => void run("Не вдалося зберегти розділ.", () => saveCampaignChapter(draft))}>

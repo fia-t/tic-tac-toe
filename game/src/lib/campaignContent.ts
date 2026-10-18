@@ -12,6 +12,8 @@ import type { GameModeKey, Modifier } from "@game/lib/modifiers";
 // (DEFAULT_CHAPTERS) з фонами з public/images/campaign.
 
 export type CampaignLevelDef = {
+    // Стабільний id рівня - за ним зберігаються зірки гравця (не зсуваються при зміні порядку).
+    id?: string;
     // Назва-ціль рівня, як її бачить гравець ("Перемога в обхід каміння").
     title: string;
     mode: GameModeKey;
@@ -65,12 +67,12 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         // Скін розділу (фон поля - арт Пляжу) - id теми, коли її додадуть у "Теми".
         rewardSkinId: "",
         levels: [
-            W("Перша перемога над легким ботом", "traditional", "easy", 3),
-            W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }),
-            W("Зникаючі фішки: виграй", "traditional", "medium", 5, { modifier: "vanish" }),
-            W("Таймер: перемога на швидкість", "traditional", "medium", 4, { modifier: "timer" }),
-            W("Мізер проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }),
-            W("Бос: Капітан Краб", "traditional", "master", 8, { modifier: "vanish", goal: "survive", boss: true }),
+            { ...W("Перша перемога над легким ботом", "traditional", "easy", 3), id: "beach-1" },
+            { ...W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }), id: "beach-2" },
+            { ...W("Зникаючі фішки: виграй", "traditional", "medium", 5, { modifier: "vanish" }), id: "beach-3" },
+            { ...W("Таймер: перемога на швидкість", "traditional", "medium", 4, { modifier: "timer" }), id: "beach-4" },
+            { ...W("Мізер проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }), id: "beach-5" },
+            { ...W("Бос: Капітан Краб", "traditional", "master", 8, { modifier: "vanish", goal: "survive", boss: true }), id: "beach-6" },
         ],
     },
     {
@@ -85,12 +87,12 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         rewardCoins: 150,
         rewardSkinId: "",
         levels: [
-            W("4 в ряд проти легкого бота", "five", "easy", 6),
-            W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }),
-            W("Головоломка: створи подвійну загрозу й виграй за 2 ходи", "five", "medium", 2, { preset: { X: [6, 7, 8, 12], O: [3, 5, 9, 20] } }),
-            W("Кріт риє горбки: виграй", "five", "medium", 8, { modifier: "mole" }),
-            W("Гравітація: збери 4", "five", "medium", 8, { modifier: "gravity" }),
-            W("Бос: Пан Кріт", "five", "master", 10, { modifier: "mole", goal: "survive", boss: true }),
+            { ...W("4 в ряд проти легкого бота", "five", "easy", 6), id: "forest-1" },
+            { ...W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }), id: "forest-2" },
+            { ...W("Головоломка: створи подвійну загрозу й виграй за 2 ходи", "five", "medium", 2, { preset: { X: [6, 7, 8, 12], O: [3, 5, 9, 20] } }), id: "forest-3" },
+            { ...W("Кріт риє горбки: виграй", "five", "medium", 8, { modifier: "mole" }), id: "forest-4" },
+            { ...W("Гравітація: збери 4", "five", "medium", 8, { modifier: "gravity" }), id: "forest-5" },
+            { ...W("Бос: Пан Кріт", "five", "master", 10, { modifier: "mole", goal: "survive", boss: true }), id: "forest-6" },
         ],
     },
     {
@@ -105,13 +107,13 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         rewardCoins: 250,
         rewardSkinId: "",
         levels: [
-            W("Перше гіга-поле", "difficult", "easy", 14),
-            W("Гіга-поле проти середнього бота", "difficult", "medium", 16),
-            W("Гіга-поле з таймером", "difficult", "medium", 16, { modifier: "timer" }),
+            { ...W("Перше гіга-поле", "difficult", "easy", 14), id: "mountains-1" },
+            { ...W("Гіга-поле проти середнього бота", "difficult", "medium", 16), id: "mountains-2" },
+            { ...W("Гіга-поле з таймером", "difficult", "medium", 16, { modifier: "timer" }), id: "mountains-3" },
             // Гіга-поле: індекси 0-80 (поле b, клітинка c -> b * 9 + c); виграні малі поля закриваються одразу.
-            W("Головоломка: знайди хід, що виграє все гіга-поле", "difficult", "medium", 1, { preset: { X: [0, 1, 2, 36, 37, 38, 72, 78], O: [18, 19, 20, 54, 55, 56, 80, 44] } }),
-            W("Майстер на гіга-полі: не програй", "difficult", "master", 18, { goal: "survive" }),
-            W("Бос: Орел-Вершина", "difficult", "master", 20, { modifier: "timer", goal: "survive", boss: true }),
+            { ...W("Головоломка: знайди хід, що виграє все гіга-поле", "difficult", "medium", 1, { preset: { X: [0, 1, 2, 36, 37, 38, 72, 78], O: [18, 19, 20, 54, 55, 56, 80, 44] } }), id: "mountains-4" },
+            { ...W("Майстер на гіга-полі: не програй", "difficult", "master", 18, { goal: "survive" }), id: "mountains-5" },
+            { ...W("Бос: Орел-Вершина", "difficult", "master", 20, { modifier: "timer", goal: "survive", boss: true }), id: "mountains-6" },
         ],
     },
 ];
@@ -122,7 +124,8 @@ export const chapterBackground = (chapter: Pick<CampaignChapterDef, "backgroundU
 
 const COLLECTION = "campaignChapters";
 
-const toLevel = (raw: Record<string, unknown>): CampaignLevelDef => ({
+const toLevel = (raw: Record<string, unknown>, fallbackId: string): CampaignLevelDef => ({
+    id: typeof raw.id === "string" && raw.id ? raw.id : fallbackId,
     title: String(raw.title ?? ""),
     mode: (["traditional", "five", "difficult"] as const).includes(raw.mode as GameModeKey) ? (raw.mode as GameModeKey) : "traditional",
     difficulty: (["easy", "medium", "master"] as const).includes(raw.difficulty as Difficulty) ? (raw.difficulty as Difficulty) : "easy",
@@ -144,7 +147,7 @@ const toChapter = (id: string, raw: Record<string, unknown>): CampaignChapterDef
     bossLine: String(raw.bossLine ?? ""),
     rewardCoins: typeof raw.rewardCoins === "number" ? raw.rewardCoins : 0,
     rewardSkinId: String(raw.rewardSkinId ?? ""),
-    levels: Array.isArray(raw.levels) ? raw.levels.map((level) => toLevel(level as Record<string, unknown>)) : [],
+    levels: Array.isArray(raw.levels) ? raw.levels.map((level, index) => toLevel(level as Record<string, unknown>, `${id}-${index + 1}`)) : [],
 });
 
 // Для гри: активні розділи з бази, а якщо там порожньо чи помилка - стандартні.
@@ -167,7 +170,8 @@ export const getAllCampaignChapters = async (): Promise<CampaignChapterDef[]> =>
 };
 
 // Firestore не приймає undefined - прибираємо порожні необов'язкові поля рівнів.
-const cleanLevel = (level: CampaignLevelDef) => ({
+const cleanLevel = (level: CampaignLevelDef, index: number, chapterId: string) => ({
+    id: level.id || `${chapterId}-${index + 1}`,
     title: level.title,
     mode: level.mode,
     difficulty: level.difficulty,
@@ -180,7 +184,7 @@ const cleanLevel = (level: CampaignLevelDef) => ({
 
 export const saveCampaignChapter = async (chapter: CampaignChapterDef): Promise<void> => {
     const { id, ...data } = chapter;
-    await setDoc(doc(getFirebaseDb(), COLLECTION, id), { ...data, levels: data.levels.map(cleanLevel), updatedAt: serverTimestamp() });
+    await setDoc(doc(getFirebaseDb(), COLLECTION, id), { ...data, levels: data.levels.map((level, index) => cleanLevel(level, index, id)), updatedAt: serverTimestamp() });
 };
 
 export const createCampaignChapterId = (): string => doc(collection(getFirebaseDb(), COLLECTION)).id;

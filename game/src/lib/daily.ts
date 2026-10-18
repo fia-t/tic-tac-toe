@@ -19,8 +19,10 @@ export type DailyTemplate = {
     goal: "win" | "survive";
     par: number;
     modifier?: Modifier;
-    // Стартова позиція (головоломки кампанії, лише 3×3): індекси клітинок 0-8.
+    // Стартова позиція (головоломки кампанії): індекси клітинок поля (на гіга-полі 0-80).
     preset?: { X: number[]; O: number[] };
+    // Назва-ціль рівня кампанії (з адмінки).
+    title?: string;
 };
 
 export const DAILY_TEMPLATES: DailyTemplate[] = [

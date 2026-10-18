@@ -14,7 +14,7 @@ import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
-import { CAMPAIGN_LEVELS, currentLevelIndex, totalStars, useCampaign } from "@game/lib/campaign";
+import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVELS, currentLevelIndex, totalStars, useCampaign } from "@game/lib/campaign";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { ALL_MODIFIERS, GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 import { levelForXp, useProfile } from "@game/lib/profile";
@@ -316,7 +316,7 @@ const InfoPop = styled.div`
     box-shadow: 0 8px 20px rgba(60, 35, 10, 0.3);
 `;
 
-const InfoTip = ({ text }: { text: string }) => {
+export const InfoTip = ({ text }: { text: string }) => {
     const t = useT();
     const button = useRef<HTMLButtonElement>(null);
     const pop = useRef<HTMLDivElement>(null);
@@ -886,7 +886,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             <h3 id="home-campaign">
                 {t("homeCampaignNext", {
                     n: String(next + 1),
-                    name: t(`chapter_${CAMPAIGN_LEVELS[next].chapter}` as Parameters<typeof t>[0]),
+                    name: CAMPAIGN_CHAPTERS[CAMPAIGN_LEVELS[next]?.chapter ?? 0]?.name ?? "",
                 })}
             </h3>
             <Progress role="img" aria-label={t("campaignStars", { n: String(stars), total: String(maxStars) })}>

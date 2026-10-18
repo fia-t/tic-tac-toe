@@ -508,7 +508,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             />
         );
     } else if (screen === "campaign") {
-        content = <CampaignPage onStart={goToGame} />;
+        content = <CampaignPage onStart={goToGame} themes={availableThemes} />;
     } else if (screen === "shop") {
         content = <ShopPage themes={availableThemes} onRewardedAd={onRewardedAd} onPlay={() => goToGame(gameMode)} />;
     } else if (screen === "awards") {
@@ -605,7 +605,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
             {screen !== "game" && <BottomNav current={screen} onNavigate={navigate} />}
             <DailyChallenge onStart={goToGame} getShareLink={getShareLink} onMenu={goToMenu} />
-            <CampaignResults onStart={goToGame} onMenu={goToMenu} />
+            <CampaignResults onStart={goToGame} onMenu={goToMenu} themes={availableThemes} />
             <ProfilePanels />
             <MatchInvite hidden={onGameScreen} />
             {tutorialOpen && onGameScreen && <Tutorial onDone={() => setTutorialOpen(false)} />}

@@ -26,6 +26,7 @@ import { pickMasterMoveN, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
 import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, STONE, TurnResult, createBoard, moleStep, playTurn, randomLegalCell } from "@game/components/modEngine";
 import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
+import { getDailyRun } from "@game/lib/daily";
 import { useMoveTimer } from "@game/components/MoveTimer";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
@@ -107,7 +108,17 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     // Модифікатор фіксується на всю партію: його зміна перемонтовує компонент (key у TicTacToe).
     const modifier = effectiveModifier("five", useModifierChoice());
     const stones = modifier === "stones" ? STONES_COUNT : 0;
-    const [board, setBoard] = useState<Grid3>(() => createBoard(SIZE, stones));
+    // Нова партія: каміння (модифікатор) і стартові фішки головоломки кампанії, якщо рівень їх задає.
+    const newBoard = (): Grid3 => {
+        const grid = createBoard(SIZE, stones);
+        const template = getDailyRun()?.template;
+        if (template?.mode === "five" && template.preset) {
+            template.preset.X.forEach((i) => (grid[Math.floor(i / SIZE)][i % SIZE] = theme.xMarkerUrl));
+            template.preset.O.forEach((i) => (grid[Math.floor(i / SIZE)][i % SIZE] = theme.oMarkerUrl));
+        }
+        return grid;
+    };
+    const [board, setBoard] = useState<Grid3>(newBoard);
     const [hist, setHist] = useState<ModHistory>(EMPTY_HISTORY);
     const [mole, setMole] = useState<MoleState>(EMPTY_MOLE);
     const [winner, setWinner] = useState<string | null>(null);
@@ -271,7 +282,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     );
 
     const restartGame = () => {
-        setBoard(createBoard(SIZE, stones));
+        setBoard(newBoard());
         setHist(EMPTY_HISTORY);
         setMole(EMPTY_MOLE);
         setWinner(null);

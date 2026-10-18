@@ -1,0 +1,20 @@
+"use client";
+// Портрети босів кампанії (з прототипу) - за id розділу; для розділів, доданих в адмінці, -
+// загальний портрет-корона. Статичні SVG-рядки без даних користувача.
+const BOSS_ART: Record<string, string> = {
+    "beach": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"48\" fill=\"#bfe9f4\"/><path d=\"M2 66h96v32H2z\" fill=\"#f6d39e\"/><g stroke=\"#b8301f\" stroke-width=\"5\" stroke-linecap=\"round\" fill=\"none\"><path d=\"M26 62l-12 6M26 70l-12 10M74 62l12 6M74 70l12 10\"/></g><path d=\"M18 40c-8-2-12-12-6-18 2 6 8 8 12 6-4-6 0-14 6-14-2 8 2 16-2 22z\" fill=\"#e8452f\"/><path d=\"M82 40c8-2 12-12 6-18-2 6-8 8-12 6 4-6 0-14-6-14 2 8-2 16 2 22z\" fill=\"#e8452f\"/><ellipse cx=\"50\" cy=\"60\" rx=\"28\" ry=\"20\" fill=\"#e8452f\"/><ellipse cx=\"50\" cy=\"56\" rx=\"20\" ry=\"11\" fill=\"#f26b52\"/><path d=\"M40 40v-8M60 40v-8\" stroke=\"#b8301f\" stroke-width=\"4\" stroke-linecap=\"round\"/><circle cx=\"40\" cy=\"30\" r=\"6\" fill=\"#fff\"/><circle cx=\"60\" cy=\"30\" r=\"6\" fill=\"#fff\"/><circle cx=\"41\" cy=\"31\" r=\"3\" fill=\"#2a1a10\"/><circle cx=\"59\" cy=\"31\" r=\"3\" fill=\"#2a1a10\"/><path d=\"M42 66q8 6 16 0\" stroke=\"#7a1d10\" stroke-width=\"3\" fill=\"none\" stroke-linecap=\"round\"/><path d=\"M33 22l17-8 17 8-3 5H36z\" fill=\"#2a3b55\"/><path d=\"M45 18h10\" stroke=\"#ffd34f\" stroke-width=\"3\"/></svg>",
+    "forest": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"48\" fill=\"#cfe8b8\"/><path d=\"M8 50l12-24 12 24zM70 46l12-26 12 26z\" fill=\"#4f8a3a\"/><path d=\"M2 74c14-10 30-12 48-12s34 2 48 12v24H2z\" fill=\"#9a6a3c\"/><ellipse cx=\"50\" cy=\"62\" rx=\"26\" ry=\"22\" fill=\"#5c4033\"/><path d=\"M50 40c-4 6-6 12-6 16h12c0-4-2-10-6-16z\" fill=\"#f2a5a0\"/><circle cx=\"50\" cy=\"40\" r=\"4\" fill=\"#d9706a\"/><circle cx=\"39\" cy=\"52\" r=\"3\" fill=\"#1a1008\"/><circle cx=\"61\" cy=\"52\" r=\"3\" fill=\"#1a1008\"/><g fill=\"#f2c9a0\"><ellipse cx=\"26\" cy=\"76\" rx=\"9\" ry=\"6\"/><ellipse cx=\"74\" cy=\"76\" rx=\"9\" ry=\"6\"/></g><g stroke=\"#f2c9a0\" stroke-width=\"2.5\" stroke-linecap=\"round\"><path d=\"M18 74l-5-3M18 78l-6 1M19 81l-4 4M82 74l5-3M82 78l6 1M81 81l4 4\"/></g><path d=\"M34 38c4-8 28-8 32 0\" stroke=\"#2a1a10\" stroke-width=\"3\" fill=\"none\"/><rect x=\"36\" y=\"22\" width=\"28\" height=\"14\" rx=\"3\" fill=\"#2a1a10\"/><rect x=\"30\" y=\"34\" width=\"40\" height=\"4\" rx=\"2\" fill=\"#2a1a10\"/></svg>",
+    "mountains": "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"48\" fill=\"#d6e6f5\"/><path d=\"M4 86l26-40 14 18 16-30 36 52z\" fill=\"#8aa1b8\"/><path d=\"M60 34l9 14-6-2-5 6-4-7z\" fill=\"#fff\"/><path d=\"M18 52c10-14 22-20 32-20s22 6 32 20c-12-4-20-2-26 4h-12c-6-6-14-8-26-4z\" fill=\"#6b4423\"/><ellipse cx=\"50\" cy=\"56\" rx=\"14\" ry=\"16\" fill=\"#7a5030\"/><path d=\"M38 40c2-10 22-10 24 0v8H38z\" fill=\"#fff8ec\"/><circle cx=\"44\" cy=\"44\" r=\"2.6\" fill=\"#1a1008\"/><circle cx=\"56\" cy=\"44\" r=\"2.6\" fill=\"#1a1008\"/><path d=\"M47 48h6l-3 8z\" fill=\"#f2a516\"/><path d=\"M42 39l5 2M58 39l-5 2\" stroke=\"#1a1008\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg>"
+};
+
+const GENERIC_BOSS = "<svg viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"48\" fill=\"#ffe3a3\"/><path d=\"M26 64l-4-30 16 14 12-22 12 22 16-14-4 30z\" fill=\"#f5b82e\" stroke=\"#c7850f\" stroke-width=\"3\" stroke-linejoin=\"round\"/><rect x=\"26\" y=\"64\" width=\"48\" height=\"10\" rx=\"3\" fill=\"#e8a020\"/><circle cx=\"50\" cy=\"40\" r=\"5\" fill=\"#e8452f\"/></svg>";
+
+export const bossArt = (chapterId: string): string => BOSS_ART[chapterId] ?? GENERIC_BOSS;
+
+export const BossPortrait = ({ chapterId, size = 40 }: { chapterId: string; size?: number }) => (
+    <span
+        aria-hidden="true"
+        style={{ display: "inline-block", width: size, height: size, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}
+        dangerouslySetInnerHTML={{ __html: bossArt(chapterId).replace("<svg ", `<svg width="${size}" height="${size}" `) }}
+    />
+);

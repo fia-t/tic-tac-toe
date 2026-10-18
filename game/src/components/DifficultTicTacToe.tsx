@@ -32,6 +32,7 @@ import { Difficulty, getDifficulty, shouldBlunder } from "@game/lib/difficulty";
 import { pickMasterUltimatePositional, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
 import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
+import { getDailyRun } from "@game/lib/daily";
 import { useMoveTimer } from "@game/components/MoveTimer";
 
 const HintMiniCell = styled(MiniCell)<{ $hint: boolean }>`
@@ -163,8 +164,24 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     const t = useT();
     const modifierChoice = useModifierChoice();
     const rules = useUltimateRules();
-    const [boards, setBoards] = useState<Grid3[]>(() => Array.from({ length: 9 }, createEmptyGrid));
-    const [miniResults, setMiniResults] = useState<MetaResult[]>(() => Array(9).fill(null));
+    // Нова партія; головоломка кампанії - зі стартовими фішками (індекс 0-80 = поле * 9 + клітинка),
+    // малі поля, які вони вже виграли, - одразу закриті.
+    const newGame = (): { boards: Grid3[]; mini: MetaResult[] } => {
+        const boards = Array.from({ length: 9 }, createEmptyGrid);
+        const template = getDailyRun()?.template;
+        if (template?.mode !== "difficult" || !template.preset) return { boards, mini: Array(9).fill(null) };
+        const put = (i: number, marker: string) => (boards[Math.floor(i / 9)][Math.floor((i % 9) / 3)][i % 3] = marker);
+        template.preset.X.forEach((i) => put(i, theme.xMarkerUrl));
+        template.preset.O.forEach((i) => put(i, theme.oMarkerUrl));
+        const mini = boards.map((grid): MetaResult => {
+            const owner = getGridWinner(grid);
+            return owner === theme.xMarkerUrl ? "X" : owner ? "O" : isGridFull(grid) ? "draw" : null;
+        });
+        return { boards, mini };
+    };
+    const [initial] = useState(newGame);
+    const [boards, setBoards] = useState<Grid3[]>(initial.boards);
+    const [miniResults, setMiniResults] = useState<MetaResult[]>(initial.mini);
     const [activeBoard, setActiveBoard] = useState<number | null>(null);
     const [currentTurn, setCurrentTurn] = useState<"player" | "ai">("player");
     const [winner, setWinner] = useState<"X" | "O" | null>(null);
@@ -294,8 +311,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     );
 
     const restartUltimateGame = () => {
-        setBoards(Array.from({ length: 9 }, createEmptyGrid));
-        setMiniResults(Array(9).fill(null));
+        const fresh = newGame();
+        setBoards(fresh.boards);
+        setMiniResults(fresh.mini);
         setActiveBoard(null);
         setCurrentTurn("player");
         setWinner(null);

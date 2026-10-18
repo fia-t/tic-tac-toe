@@ -486,7 +486,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     const goal = run
         ? run.kind === "campaign"
-            ? `${t("campaignLevel", { n: String((run.level ?? 0) + 1) })}: ${t(`level_${run.template.id}` as Parameters<typeof t>[0])}`
+            ? `${t("campaignLevel", { n: String((run.level ?? 0) + 1) })}: ${run.template.title ?? ""}`
             : `${t("dailyBadge", { n: String(dayOfYear()) })}: ${t(`daily_${run.template.id}` as Parameters<typeof t>[0])}`
         : "";
 
