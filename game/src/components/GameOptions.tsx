@@ -106,15 +106,11 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
         </>
     ),
     misere: <path d="M7 4v15M3.5 15.5 7 19l3.5-3.5M17 20V5M13.5 8.5 17 5l3.5 3.5" />,
-    // Кріт - лапа з кігтями: контурна подушечка, чотири пальці й кігтики.
+    // Кріт - передня лапа крота: широка долоня й віяло з п'яти довгих кігтів.
     mole: (
         <>
-            <path d="M8 19.8c-1.7-1-1.9-3.5-.4-5.2 1.1-1.3 2.6-2 4.4-2s3.3.7 4.4 2c1.5 1.7 1.3 4.2-.4 5.2-1.2.7-2.6 1-4 1s-2.8-.3-4-1z" />
-            <circle cx="5.4" cy="11.7" r="1.7" fill="currentColor" stroke="none" />
-            <circle cx="9.2" cy="8.6" r="1.8" fill="currentColor" stroke="none" />
-            <circle cx="14.8" cy="8.6" r="1.8" fill="currentColor" stroke="none" />
-            <circle cx="18.6" cy="11.7" r="1.7" fill="currentColor" stroke="none" />
-            <path d="M4.4 9.8 3.5 7.8M8.7 6.7 8.3 4.3M15.3 6.7l.4-2.4M19.6 9.8l.9-2" strokeWidth="1.7" />
+            <ellipse cx="8" cy="16" rx="5.8" ry="4.5" transform="rotate(-38 8 16)" fill="currentColor" />
+            <path d="M8.28 11.28L5.92 4.18L6.12 11.66zM10.18 11.8L10.9 4.36L8.05 11.27zM11.7 13.05L15.39 6.54L9.97 11.7zM12.58 14.81L18.6 10.37L11.55 12.87zM12.67 16.78L19.97 15.16L12.51 14.58z" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
         </>
     ),
 };
