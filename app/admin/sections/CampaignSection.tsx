@@ -12,26 +12,20 @@ import {
     saveCampaignChapter,
     uploadChapterBackground,
 } from "@game/lib/campaignContent";
-import { MODIFIERS_BY_MODE, type GameModeKey, type Modifier } from "@game/lib/modifiers";
+import { MODIFIERS_BY_MODE, type GameModeKey } from "@game/lib/modifiers";
+import { DEFAULT_MODIFIER_SETTINGS, getModifierSettings, type ModifierSettings } from "@game/lib/modifierSettings";
+import { ModIcon } from "@game/components/GameOptions";
 import type { Difficulty } from "@game/lib/difficulty";
 import { CAMPAIGN_THEMES, getAllThemes } from "@game/lib/themes";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
+import { MODE_LABEL, modName } from "@/app/admin/sections/ModifiersSection";
 import { Section, SectionTitle, SmallLabel, FileInput, CheckboxLabel, DangerButton, GhostButton, AddThemeRow, EmptyState } from "@/app/admin/adminStyles";
 
 // Розділ адмінки "Кампанія": розділи (фон, назва, бос, нагорода) і їхні рівні. Поки в базі
 // нічого немає, гра бере стандартні розділи - їх можна одним натиском занести в базу й далі
 // редагувати.
 
-const MODE_LABEL: Record<GameModeKey, string> = { traditional: "3×3", five: "5×5", difficult: "Гіга-поле" };
 const DIFF_LABEL: Record<Difficulty, string> = { easy: "Легкий", medium: "Середній", master: "Майстер" };
-const MOD_LABEL: Record<Modifier, string> = {
-    vanish: "Зникаючі фішки",
-    gravity: "Гравітація",
-    stones: "Каміння",
-    mole: "Кріт",
-    timer: "Таймер",
-    misere: "Мізер",
-};
 
 const ChapterCard = styled.div<{ $active: boolean }>`
     display: flex;
@@ -134,6 +128,53 @@ const Tag = styled.span`
     font-weight: 700;
 `;
 
+// Галерея фонів: мініатюри-кнопки, вибрана - з зеленою рамкою.
+const Gallery = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+`;
+
+const GalleryItem = styled.button<{ $src: string; $selected: boolean }>`
+    width: 72px;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    border-radius: 8px;
+    cursor: pointer;
+    background: url("${({ $src }) => $src}") center/cover no-repeat;
+    border: 3px solid ${({ $selected }) => ($selected ? "#2f8a3e" : "transparent")};
+    box-shadow: 0 0 0 1px rgba(139, 101, 60, 0.25);
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.6;
+    }
+`;
+
+// Вибір модифікатора рівня - ряд іконок (як у грі), назва в підказці.
+const ModPick = styled.div`
+    display: flex;
+    gap: 4px;
+`;
+
+const ModPickButton = styled.button<{ $selected: boolean; $warn?: boolean }>`
+    display: grid;
+    place-items: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 9px;
+    cursor: pointer;
+    color: ${({ $selected }) => ($selected ? "#fff7e8" : "#49301f")};
+    background: ${({ $selected, $warn }) => ($selected ? ($warn ? "#b8382a" : "#0f6f8c") : "#f6dcae")};
+    border: none;
+
+    &:disabled {
+        cursor: default;
+        opacity: ${({ $selected }) => ($selected ? 1 : 0.5)};
+    }
+`;
+
 const describeError = (fallback: string, err: unknown): string => {
     const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : null;
     console.error(fallback, err);
@@ -145,8 +186,11 @@ const NEW_LEVEL: CampaignLevelDef = { title: "Новий рівень", mode: "t
 const ChapterEditor: React.FC<{
     chapter: CampaignChapterDef;
     onSaved: () => Promise<void>;
+    // Фони, з яких можна вибрати: вбудовані арти + завантажені для інших розділів.
+    gallery: string[];
+    modSettings: ModifierSettings;
     readOnly?: boolean;
-}> = ({ chapter, onSaved, readOnly = false }) => {
+}> = ({ chapter, onSaved, gallery, modSettings, readOnly = false }) => {
     const [draft, setDraft] = useState<CampaignChapterDef>(chapter);
     // Скіни для нагороди: вбудовані скіни кампанії + теми з розділу "Теми".
     const [skins, setSkins] = useState<{ id: string; name: string }[]>(CAMPAIGN_THEMES);
@@ -194,8 +238,26 @@ const ChapterEditor: React.FC<{
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <Cover $src={draft.backgroundUrl ? chapterBackground(draft) : ""} title="Фон розділу" />
                     {!readOnly && (
+                        <SmallLabel as="div">
+                            Картинка розділу - вибрати з наявних
+                            <Gallery>
+                                {gallery.map((url) => (
+                                    <GalleryItem
+                                        key={url}
+                                        type="button"
+                                        $src={chapterBackground({ backgroundUrl: url })}
+                                        $selected={draft.backgroundUrl === url}
+                                        disabled={disabled}
+                                        title={url.startsWith("images/") ? url.replace(/^.*\//, "") : "Завантажена картинка"}
+                                        onClick={() => set("backgroundUrl", url)}
+                                    />
+                                ))}
+                            </Gallery>
+                        </SmallLabel>
+                    )}
+                    {!readOnly && (
                         <SmallLabel>
-                            Фон розділу (16:9, напр. 1600×900)
+                            Або завантажити нову (16:9, напр. 1600×900)
                             <FileInput
                                 type="file"
                                 accept="image/*"
@@ -227,7 +289,7 @@ const ChapterEditor: React.FC<{
                         <TextInput value={draft.subtitle} disabled={disabled} onChange={(e) => set("subtitle", e.target.value)} />
                     </Wide>
                     <SmallLabel>
-                        Бос - ім'я
+                        Бос - імʼя
                         <TextInput value={draft.bossName} disabled={disabled} onChange={(e) => set("bossName", e.target.value)} />
                     </SmallLabel>
                     <SmallLabel>
@@ -266,7 +328,7 @@ const ChapterEditor: React.FC<{
                             <th style={{ minWidth: 220 }}>Назва-ціль</th>
                             <th>Поле</th>
                             <th>Бот</th>
-                            <th>Модифікатор</th>
+                            <th title="Список модифікаторів для кампанії налаштовується в розділі «Модифікатори»">Модифікатор</th>
                             <th>Зарахування</th>
                             <th title="★★★ - перемога не більше ніж за стільки ходів">Ходів на ★★★</th>
                             <th>Бос</th>
@@ -317,14 +379,28 @@ const ChapterEditor: React.FC<{
                                     </Select>
                                 </td>
                                 <td>
-                                    <Select value={level.modifier ?? ""} disabled={disabled} onChange={(e) => setLevel(index, { modifier: (e.target.value || null) as Modifier | null })}>
-                                        <option value="">Без модифікатора</option>
-                                        {MODIFIERS_BY_MODE[level.mode].map((m) => (
-                                            <option key={m} value={m}>
-                                                {MOD_LABEL[m]}
-                                            </option>
-                                        ))}
-                                    </Select>
+                                    <ModPick role="radiogroup" aria-label="Модифікатор рівня">
+                                        {[null, ...MODIFIERS_BY_MODE[level.mode].filter((m) => modSettings[m].campaign || m === level.modifier)].map((m) => {
+                                            // Модифікатор вимкнено для кампанії в розділі "Модифікатори", але на рівні він уже стоїть.
+                                            const off = m !== null && !modSettings[m].campaign;
+                                            return (
+                                                <ModPickButton
+                                                    key={m ?? "none"}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={level.modifier === m || (!level.modifier && m === null)}
+                                                    $selected={level.modifier === m || (!level.modifier && m === null)}
+                                                    $warn={off}
+                                                    disabled={disabled}
+                                                    title={modName(m) + (off ? " (вимкнено для кампанії)" : "")}
+                                                    onClick={() => setLevel(index, { modifier: m })}
+                                                >
+                                                    <ModIcon id={m} size={18} />
+                                                </ModPickButton>
+                                            );
+                                        })}
+                                    </ModPick>
+                                    <div style={{ fontSize: 11, color: "#8b653c", marginTop: 2, whiteSpace: "nowrap" }}>{modName(level.modifier ?? null)}</div>
                                 </td>
                                 <td>
                                     <Select value={level.goal} disabled={disabled} onChange={(e) => setLevel(index, { goal: e.target.value as "win" | "survive" })}>
@@ -400,6 +476,7 @@ export const CampaignSection: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [newName, setNewName] = useState("");
     const [busy, setBusy] = useState(false);
+    const [modSettings, setModSettings] = useState<ModifierSettings>(DEFAULT_MODIFIER_SETTINGS);
 
     const refresh = async () => {
         setError(null);
@@ -413,7 +490,13 @@ export const CampaignSection: React.FC = () => {
 
     useEffect(() => {
         void refresh();
+        getModifierSettings()
+            .then(setModSettings)
+            .catch(() => undefined);
     }, []);
+
+    // Вбудовані арти розділів + усі фони, вже завантажені для розділів у базі.
+    const gallery = Array.from(new Set([...DEFAULT_CHAPTERS.map((c) => c.backgroundUrl), ...(chapters ?? []).map((c) => c.backgroundUrl)].filter(Boolean)));
 
     const importDefaults = async () => {
         setBusy(true);
@@ -490,11 +573,11 @@ export const CampaignSection: React.FC = () => {
                             {busy ? "Додаємо..." : "Додати стандартні розділи в базу"}
                         </PillButton>
                         {DEFAULT_CHAPTERS.map((chapter) => (
-                            <ChapterEditor key={chapter.id} chapter={chapter} onSaved={refresh} readOnly />
+                            <ChapterEditor key={chapter.id} chapter={chapter} onSaved={refresh} gallery={gallery} modSettings={modSettings} readOnly />
                         ))}
                     </>
                 ) : (
-                    chapters.map((chapter) => <ChapterEditor key={chapter.id} chapter={chapter} onSaved={refresh} />)
+                    chapters.map((chapter) => <ChapterEditor key={chapter.id} chapter={chapter} onSaved={refresh} gallery={gallery} modSettings={modSettings} />)
                 )}
             </Section>
         </>
