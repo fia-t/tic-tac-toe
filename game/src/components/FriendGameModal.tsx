@@ -20,9 +20,8 @@ import { createRoom, onlineModifiers } from "@game/lib/onlineGame";
 import styled from "styled-components";
 import { ModButton, ModIcon, ModRow } from "@game/components/GameOptions";
 import { Eyebrow } from "@game/components/pageStyles";
-import type { Modifier } from "@game/lib/modifiers";
+import { ALL_MODIFIERS, type Modifier } from "@game/lib/modifiers";
 
-const ALL_MODIFIERS: Modifier[] = ["vanish", "gravity", "stones", "timer", "misere"];
 
 // Вибір модифікатора - як у "Швидкій грі" на головній: підпис, ряд іконок із тултіпами
 // (під кнопками) і опис вибраного; місце під два рядки опису зарезервоване.

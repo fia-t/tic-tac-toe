@@ -742,7 +742,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     "home-friend-mod",
                     friendModifier,
                     friendAllowed,
-                    ALL_MODIFIERS.filter((m) => m !== "mole"),
+                    ALL_MODIFIERS,
                     setFriendMod
                 )}
                 <GameButton tone="primary" size="lg" block disabled={friendBusy} onClick={() => void playFriend()}>

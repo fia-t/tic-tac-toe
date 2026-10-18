@@ -24,26 +24,31 @@ import {
 } from "@game/components/onlineGameLogic";
 import { GameMode, gameSource } from "@game/lib/gameLog";
 import { WIN_LENGTH } from "@game/components/onlineGameLogic";
-import { EMPTY_HISTORY, ModHistory, ModRules, STONE, createBoard, playTurn } from "@game/components/modEngine";
+import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, ModRules, STONE, createBoard, moleStep, playTurn } from "@game/components/modEngine";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, STONES_COUNT } from "@game/lib/modifiers";
 
 // Модифікатори гри з другом - ті самі, що й проти бота, за відповідністю режимів.
 const ONLINE_MODE_KEY: Record<OnlineGameMode, GameModeKey> = { "3x3": "traditional", "5x5": "five", "9x9": "difficult" };
-// "Кріт" лише проти бота: його горбки випадкові, а онлайн-кімната не має спільного джерела випадковості.
-export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]].filter((m) => m !== "mole");
+// "Кріт" теж: його випадковий крок робить клієнт, що ходить, у тій самій транзакції, що й хід, -
+// горбки й попередження записуються в кімнату, тож обидва гравці бачать однакове поле.
+export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]];
 
 // Камінь у плоскій дошці кімнати - "#" (Firestore-документ), у рушії модифікаторів - STONE.
 export const ROOM_STONE = "#";
+// Горбок крота в дошці кімнати - "^", у рушії - MOUND.
+export const ROOM_MOUND = "^";
 
 // Правила рушія для модифікатора кімнати (таймер - лише відлік на клієнті, правил не змінює).
 export const roomRules = (modifier: Modifier | null | undefined): ModRules | null =>
-    modifier === "vanish" || modifier === "gravity" || modifier === "misere" || modifier === "stones"
+    modifier === "vanish" || modifier === "gravity" || modifier === "misere" || modifier === "stones" || modifier === "mole"
         ? { vanish: modifier === "vanish", gravity: modifier === "gravity", misere: modifier === "misere" }
         : null;
 
 // Плоска дошка кімнати <-> сітка рушія.
 export const roomGrid = (board: (string | null)[], size: number) =>
-    Array.from({ length: size }, (_, r) => board.slice(r * size, r * size + size).map((v) => (v === ROOM_STONE ? STONE : v)));
+    Array.from({ length: size }, (_, r) => board.slice(r * size, r * size + size).map((v) => (v === ROOM_STONE ? STONE : v === ROOM_MOUND ? MOUND : v)));
+
+const toRoomBoard = (grid: (string | null)[][]): (string | null)[] => grid.flat().map((v) => (v === STONE ? ROOM_STONE : v === MOUND ? ROOM_MOUND : v));
 
 // Нова дошка: з модифікатором "каміння" - кілька клітинок зайняті камінням (не центр).
 const freshBoard = (mode: OnlineGameMode, modifier: Modifier | null): (string | null)[] =>
@@ -117,6 +122,8 @@ export type RoomDoc = {
     // Модифікатор гри з другом (як проти бота) і порядок ходів кожного - для зникаючих фішок.
     modifier?: Modifier | null;
     hist?: ModHistory;
+    // Модифікатор "кріт": горбки з часом життя і клітинка, де кріт вилізе наступним ходом.
+    mole?: MoleState;
     // Реванш рейтингового матчу: коли попросили (запит живе REMATCH_WAIT_MS) і хто ходив першим.
     rematchAt?: Timestamp | null;
     starter?: PlayerSymbol;
@@ -196,6 +203,7 @@ export const createRoom = async (gameMode: OnlineGameMode, modifier: Modifier | 
             board: freshBoard(gameMode, roomModifier),
             modifier: roomModifier,
             hist: EMPTY_HISTORY,
+            mole: EMPTY_MOLE,
             currentPlayer: "X",
             players: { X: { uid, lastSeen: Timestamp.now() } },
             winner: null,
@@ -300,6 +308,7 @@ export const makeMove = async (
         const size = BOARD_SIZE[room.gameMode];
         let nextBoard: (string | null)[];
         let nextHist: ModHistory | undefined;
+        let nextMole: MoleState | undefined;
         let winner: RoomDoc["winner"] = null;
         let status: RoomStatus = "playing";
 
@@ -309,10 +318,21 @@ export const makeMove = async (
             // (з гравітацією натискання будь-якої клітинки стовпця кидає фішку вниз).
             const turn = playTurn(roomGrid(room.board, size), room.hist ?? EMPTY_HISTORY, rules, WIN_LENGTH[room.gameMode], { player: "X", ai: "O" }, symbol, { index: cellIndex });
             if (!turn) return;
-            nextBoard = turn.grid.flat().map((v) => (v === STONE ? ROOM_STONE : v));
+            let grid = turn.grid;
+            // Кріт: крок після справжнього ходу (як проти бота), якщо партія не скінчилась.
+            if (room.modifier === "mole" && !turn.outcome) {
+                const step = moleStep(grid, room.mole ?? EMPTY_MOLE, WIN_LENGTH[room.gameMode], { player: "X", ai: "O" });
+                grid = step.grid;
+                nextMole = step.mole;
+            }
+            nextBoard = toRoomBoard(grid);
             nextHist = turn.hist;
             if (turn.outcome) {
                 winner = turn.outcome.winner === "draw" ? "draw" : turn.outcome.winner;
+                status = "finished";
+            } else if (nextMole && !grid.flat().some((v) => v === null)) {
+                // Горбки зайняли останні вільні клітинки - нічия.
+                winner = "draw";
                 status = "finished";
             }
         } else {
@@ -343,6 +363,7 @@ export const makeMove = async (
             lastActivity: serverTimestamp(),
             expiresAt: expiresAtTimestamp(),
             ...(nextHist ? { hist: nextHist } : {}),
+            ...(nextMole ? { mole: nextMole } : {}),
             ...scoreUpdate,
         });
 
@@ -377,6 +398,7 @@ export const requestRematch = async (roomId: string, symbol: PlayerSymbol): Prom
             tx.update(ref, {
                 board: freshBoard(room.gameMode, room.modifier ?? null),
                 hist: EMPTY_HISTORY,
+                mole: EMPTY_MOLE,
                 currentPlayer: "X",
                 winner: null,
                 status: "playing",

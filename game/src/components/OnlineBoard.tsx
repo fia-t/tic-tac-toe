@@ -7,7 +7,8 @@ import { useWallet } from "@game/lib/wallet";
 import { useProfile } from "@game/lib/profile";
 import { openPanel } from "@game/lib/ui";
 import styled from "styled-components";
-import { RoomDoc, PlayerSymbol, ROOM_STONE, makeMove, requestRematch, roomGrid, roomRules } from "@game/lib/onlineGame";
+import { RoomDoc, PlayerSymbol, ROOM_MOUND, ROOM_STONE, makeMove, requestRematch, roomGrid, roomRules } from "@game/lib/onlineGame";
+import { MoundTile, moleWarnCss } from "@game/components/MoleTiles";
 import { EMPTY_HISTORY, fadingCells, randomLegalCell } from "@game/components/modEngine";
 import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
 import { TIMER_SECONDS } from "@game/lib/modifiers";
@@ -23,6 +24,11 @@ import { REMATCH_WAIT_MS } from "@game/lib/rating";
 import { TurnAlert, formatClock, useRatedTurnClock } from "@game/components/RatedTurnTimer";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
+// Клітинка онлайн-поля; з модифікатором "кріт" - тремтить там, де наступним ходом виросте горбок.
+const MoleCell = styled(OnlineCell)<{ $warn?: boolean }>`
+    ${({ $warn }) => ($warn ? moleWarnCss : "")}
+`;
+
 const StoneTile = styled.div`
     width: 70%;
     height: 70%;
@@ -306,13 +312,17 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     {room.board.map((cell, index) => {
                         const disabled = !myTurn || isFinished || (cell !== null && !gravity);
                         return (
-                            <OnlineCell key={index} $disabled={disabled} onClick={() => handleCellClick(index)}>
+                            <MoleCell key={index} $disabled={disabled} $warn={room.modifier === "mole" && !isFinished && room.mole?.warn === index} onClick={() => handleCellClick(index)}>
                                 {cell === ROOM_STONE ? (
                                     <StoneTile role="img" aria-label={t("modifier_stones")} />
+                                ) : cell === ROOM_MOUND ? (
+                                    <MoundTile role="img" aria-label={t("moleMound", { n: String(room.mole?.mounds.find((m) => m.index === index)?.ttl ?? 0) })}>
+                                        <b>{room.mole?.mounds.find((m) => m.index === index)?.ttl}</b>
+                                    </MoundTile>
                                 ) : (
                                     cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} fading={fading?.has(index)} />
                                 )}
-                            </OnlineCell>
+                            </MoleCell>
                         );
                     })}
                 </OnlineBoardContainer>
