@@ -15,6 +15,9 @@ import {
 import { MODIFIERS_BY_MODE, type GameModeKey } from "@game/lib/modifiers";
 import { DEFAULT_MODIFIER_SETTINGS, getModifierSettings, type ModifierSettings } from "@game/lib/modifierSettings";
 import { ModIcon } from "@game/components/GameOptions";
+import { albumArt } from "@game/components/AlbumArt";
+import { BossPortrait } from "@game/components/CampaignArt";
+import { t } from "@game/lib/i18n";
 import type { Difficulty } from "@game/lib/difficulty";
 import { CAMPAIGN_THEMES, getAllThemes } from "@game/lib/themes";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
@@ -174,6 +177,75 @@ const ModPickButton = styled.button<{ $selected: boolean; $warn?: boolean }>`
         opacity: ${({ $selected }) => ($selected ? 1 : 0.5)};
     }
 `;
+
+// Превʼю карток альбому розділу - так, як їх бачить гравець, коли картку отримано.
+const AlbumRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+`;
+
+const AlbumTile = styled.div<{ $gold: boolean }>`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 124px;
+    padding: 8px 8px 10px;
+    border-radius: 16px;
+    text-align: center;
+    color: #49301f;
+    background: ${({ $gold }) => ($gold ? "linear-gradient(160deg, #ffe7a0, #f5c04a)" : "#fff2dc")};
+    box-shadow: ${({ $gold }) => ($gold ? "inset 0 0 0 2px #d9a12a" : "inset 0 0 0 2px #ebcb98")};
+
+    b {
+        font-size: 13px;
+        line-height: 1.1;
+    }
+
+    small {
+        font-size: 11px;
+        line-height: 1.2;
+        color: #8b653c;
+    }
+`;
+
+const AlbumArtBox = styled.div<{ $src?: string }>`
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    background: ${({ $src }) => ($src ? `url("${$src}") center / cover no-repeat` : "#fff8ec")};
+`;
+
+const ALBUM_KINDS = ["done", "boss", "gold"] as const;
+
+const AlbumPreview: React.FC<{ chapter: CampaignChapterDef }> = ({ chapter }) => (
+    <AlbumRow>
+        {ALBUM_KINDS.map((kind) => {
+            // Як у грі (CampaignMap): анімована сцена, а для розділів без неї - фон розділу чи портрет боса.
+            const scene = albumArt(chapter.id, kind);
+            const name = kind === "boss" ? chapter.bossName || t("campaignBoss") : kind === "gold" ? t("albumGold", { name: chapter.name }) : chapter.name;
+            return (
+                <AlbumTile key={kind} $gold={kind === "gold"}>
+                    {scene ? (
+                        <AlbumArtBox dangerouslySetInnerHTML={{ __html: scene }} />
+                    ) : kind === "boss" ? (
+                        <AlbumArtBox>
+                            <BossPortrait chapterId={chapter.id} size={84} />
+                        </AlbumArtBox>
+                    ) : (
+                        <AlbumArtBox $src={chapter.backgroundUrl ? chapterBackground(chapter) : ""} />
+                    )}
+                    <b>{name || "Без назви"}</b>
+                    <small>{t(`albumNeed_${kind}`)}</small>
+                </AlbumTile>
+            );
+        })}
+    </AlbumRow>
+);
 
 const describeError = (fallback: string, err: unknown): string => {
     const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : null;
@@ -438,6 +510,11 @@ const ChapterEditor: React.FC<{
                     </tbody>
                 </LevelTable>
             </TableScroll>
+
+            <SmallLabel as="div">
+                Картки альбому (так їх бачить гравець, коли отримає)
+                <AlbumPreview chapter={draft} />
+            </SmallLabel>
 
             {error && <ErrorText style={{ margin: 0 }}>{error}</ErrorText>}
 
