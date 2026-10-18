@@ -809,7 +809,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         <>
             <DailyCard ref={dailyRef} $tone="daily" data-flash={dailyFlash} aria-labelledby="home-daily">
                 <Spread style={{ flexWrap: "nowrap" }}>
-                    <h2 id="home-daily">{t("homeDaily")}</h2>
+                    <h2 id="home-daily" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            {t("homeDaily")}
+                            <InfoTip text={t("infoDaily")} />
+                        </h2>
                     <StreakPill>
                         <Flame />
                         {t("homeStreakDays", { n: String(streak) })}
@@ -849,7 +852,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
             {/* Модифікатор тижня - під викликом дня: ще одне завдання на цей тиждень. */}
             <Card aria-labelledby="home-weekly">
-                <Eyebrow>{t("homeWeekly")}</Eyebrow>
+                <EyebrowInfo>
+                    {t("homeWeekly")}
+                    <InfoTip text={t("infoWeekly")} />
+                </EyebrowInfo>
                 <h3 id="home-weekly">{t(`modifier_${weekly}`)}</h3>
                 <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
                 {condTiles(weeklyMode, weekly, difficulty, t("weeklySpec"))}
