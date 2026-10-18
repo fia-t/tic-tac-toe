@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import {
     CampaignChapterDef,
@@ -220,6 +220,131 @@ const AlbumArtBox = styled.div<{ $src?: string }>`
     background: ${({ $src }) => ($src ? `url("${$src}") center / cover no-repeat` : "#fff8ec")};
 `;
 
+// Дії з рівнем (вище / нижче / видалити) - у випадному меню "⋯". Меню з position: fixed, бо
+// таблиця рівнів прокручується вбік і обрізала б звичайний випадний список.
+const ActionsButton = styled.button`
+    width: 34px;
+    height: 32px;
+    border: none;
+    border-radius: 9px;
+    background: rgba(139, 101, 60, 0.12);
+    color: #5b3f22;
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+
+    &[aria-expanded="true"],
+    &:hover {
+        background: rgba(139, 101, 60, 0.25);
+    }
+`;
+
+const ActionsMenu = styled.div`
+    position: fixed;
+    z-index: 50;
+    min-width: 170px;
+    padding: 6px;
+    border-radius: 12px;
+    background: #fffaf0;
+    box-shadow: 0 8px 22px rgba(70, 40, 10, 0.22);
+    display: flex;
+    flex-direction: column;
+
+    button {
+        padding: 8px 10px;
+        border: none;
+        border-radius: 8px;
+        background: transparent;
+        color: #5b3f22;
+        font-size: 14px;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+        background: rgba(139, 101, 60, 0.12);
+    }
+
+    button:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+
+    button[data-danger] {
+        color: #b8382a;
+    }
+`;
+
+const LevelActions: React.FC<{ disabled: boolean; first: boolean; last: boolean; onUp: () => void; onDown: () => void; onDelete: () => void }> = ({
+    disabled,
+    first,
+    last,
+    onUp,
+    onDown,
+    onDelete,
+}) => {
+    const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+    const buttonRef = useRef<HTMLButtonElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!pos) return;
+        const close = () => setPos(null);
+        const onPointer = (e: PointerEvent) => {
+            const target = e.target as Node;
+            if (!menuRef.current?.contains(target) && !buttonRef.current?.contains(target)) close();
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                close();
+                buttonRef.current?.focus();
+            }
+        };
+        document.addEventListener("pointerdown", onPointer);
+        document.addEventListener("keydown", onKey);
+        window.addEventListener("scroll", close, true);
+        window.addEventListener("resize", close);
+        return () => {
+            document.removeEventListener("pointerdown", onPointer);
+            document.removeEventListener("keydown", onKey);
+            window.removeEventListener("scroll", close, true);
+            window.removeEventListener("resize", close);
+        };
+    }, [pos]);
+
+    const toggle = () => {
+        if (pos) return setPos(null);
+        const rect = buttonRef.current?.getBoundingClientRect();
+        if (rect) setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    };
+    const act = (action: () => void) => () => {
+        setPos(null);
+        action();
+    };
+
+    return (
+        <>
+            <ActionsButton ref={buttonRef} type="button" disabled={disabled} aria-haspopup="menu" aria-expanded={Boolean(pos)} aria-label="Дії з рівнем" title="Дії" onClick={toggle}>
+                ⋯
+            </ActionsButton>
+            {pos && (
+                <ActionsMenu ref={menuRef} role="menu" style={{ top: pos.top, right: pos.right }}>
+                    <button type="button" role="menuitem" disabled={first} onClick={act(onUp)}>
+                        ↑ Перемістити вище
+                    </button>
+                    <button type="button" role="menuitem" disabled={last} onClick={act(onDown)}>
+                        ↓ Перемістити нижче
+                    </button>
+                    <button type="button" role="menuitem" data-danger onClick={act(onDelete)}>
+                        ✕ Видалити рівень
+                    </button>
+                </ActionsMenu>
+            )}
+        </>
+    );
+};
+
 const ALBUM_KINDS = ["done", "boss", "gold"] as const;
 
 const AlbumPreview: React.FC<{ chapter: CampaignChapterDef }> = ({ chapter }) => (
@@ -404,7 +529,7 @@ const ChapterEditor: React.FC<{
                             <th>Зарахування</th>
                             <th title="★★★ - перемога не більше ніж за стільки ходів">Ходів на ★★★</th>
                             <th>Бос</th>
-                            <th />
+                            <th aria-label="Дії" />
                         </tr>
                     </thead>
                     <tbody>
@@ -486,23 +611,16 @@ const ChapterEditor: React.FC<{
                                 <td>
                                     <input type="checkbox" checked={Boolean(level.boss)} disabled={disabled} onChange={() => setLevel(index, { boss: !level.boss })} />
                                 </td>
-                                <td style={{ whiteSpace: "nowrap" }}>
+                                <td>
                                     {!readOnly && (
-                                        <>
-                                            <GhostButton type="button" disabled={disabled || index === 0} onClick={() => moveLevel(index, -1)} aria-label="Вище">
-                                                ↑
-                                            </GhostButton>
-                                            <GhostButton type="button" disabled={disabled || index === draft.levels.length - 1} onClick={() => moveLevel(index, 1)} aria-label="Нижче">
-                                                ↓
-                                            </GhostButton>
-                                            <DangerButton
-                                                type="button"
-                                                disabled={disabled}
-                                                onClick={() => setDraft((d) => ({ ...d, levels: d.levels.filter((_, i) => i !== index) }))}
-                                            >
-                                                ✕
-                                            </DangerButton>
-                                        </>
+                                        <LevelActions
+                                            disabled={disabled}
+                                            first={index === 0}
+                                            last={index === draft.levels.length - 1}
+                                            onUp={() => moveLevel(index, -1)}
+                                            onDown={() => moveLevel(index, 1)}
+                                            onDelete={() => setDraft((d) => ({ ...d, levels: d.levels.filter((_, i) => i !== index) }))}
+                                        />
                                     )}
                                 </td>
                             </tr>
