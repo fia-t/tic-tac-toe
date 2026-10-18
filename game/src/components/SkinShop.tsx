@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { Card, Muted, Page } from "@game/components/pageStyles";
 import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
+import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
 
@@ -119,6 +120,7 @@ type ShopPageProps = {
 export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay }) => {
     const t = useT();
     const wallet = useWallet();
+    useCampaign();
 
     // Відлік пробних скінів оновлюється щохвилини; коли час вийшов - картка повертається до ціни.
     const [now, setNow] = useState(() => Date.now());
@@ -156,6 +158,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
             <Grid aria-label={t("shopTitle")}>
                 {skins.map((skin) => {
                     const price = skinPrice(skin);
+                    const rewardOf = CAMPAIGN_CHAPTERS.find((chapter) => chapter.rewardSkinId === skin.id);
                     const unlocked = isSkinUnlocked(skin.id, wallet);
                     const owned = wallet.owned.includes(skin.id);
                     const isOn = equipped === skin.id;
@@ -163,6 +166,8 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                     const missing = price - wallet.coins;
                     const note = isOn
                         ? `✓ ${t("shopEquipped")}`
+                        : rewardOf && !owned
+                        ? t("shopCampaignReward", { name: rewardOf.name })
                         : !unlocked && price > 0 && missing > 0
                             ? t("shopNotEnough", { n: String(missing) })
                             : price > 0 && !unlocked
@@ -195,6 +200,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                 </>
                             ) : (
                                 <>
+                                    {rewardOf ? (
+                                        <GameButton size="lg" block disabled>
+                                            {t("shopCampaignLocked")}
+                                        </GameButton>
+                                    ) : (
                                     <GameButton tone="primary" size="lg" block disabled={missing > 0} onClick={() => buySkin(skin.id, price)}>
                                         {price > 0 ? (
                                             <>
@@ -205,6 +215,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                             t("shopFree")
                                         )}
                                     </GameButton>
+                                    )}
                                     {onRewardedAd && (
                                         <GameButton size="lg" block onClick={() => void trial(skin.id)}>
                                             {t("shopTrial")}

@@ -14,6 +14,7 @@ import {
 } from "@game/lib/campaignContent";
 import { MODIFIERS_BY_MODE, type GameModeKey, type Modifier } from "@game/lib/modifiers";
 import type { Difficulty } from "@game/lib/difficulty";
+import { CAMPAIGN_THEMES, getAllThemes } from "@game/lib/themes";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import { Section, SectionTitle, SmallLabel, FileInput, CheckboxLabel, DangerButton, GhostButton, AddThemeRow, EmptyState } from "@/app/admin/adminStyles";
 
@@ -147,6 +148,13 @@ const ChapterEditor: React.FC<{
     readOnly?: boolean;
 }> = ({ chapter, onSaved, readOnly = false }) => {
     const [draft, setDraft] = useState<CampaignChapterDef>(chapter);
+    // Скіни для нагороди: вбудовані скіни кампанії + теми з розділу "Теми".
+    const [skins, setSkins] = useState<{ id: string; name: string }[]>(CAMPAIGN_THEMES);
+    useEffect(() => {
+        getAllThemes()
+            .then((themes) => setSkins([...CAMPAIGN_THEMES, ...themes.filter((theme) => !CAMPAIGN_THEMES.some((item) => item.id === theme.id))]))
+            .catch(() => undefined);
+    }, []);
     const [busy, setBusy] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const dirty = JSON.stringify(draft) !== JSON.stringify(chapter);
@@ -231,8 +239,17 @@ const ChapterEditor: React.FC<{
                         <TextInput value={draft.bossLine} disabled={disabled} onChange={(e) => set("bossLine", e.target.value)} />
                     </Wide>
                     <SmallLabel>
-                        Нагорода: скін (id теми, порожньо - без скіна)
-                        <TextInput value={draft.rewardSkinId} disabled={disabled} onChange={(e) => set("rewardSkinId", e.target.value.trim())} />
+                        Нагорода: скін
+                        <Select value={draft.rewardSkinId} disabled={disabled} onChange={(e) => set("rewardSkinId", e.target.value)}>
+                            <option value="">Без скіна</option>
+                            {skins.map((skin) => (
+                                <option key={skin.id} value={skin.id}>
+                                    {skin.name || skin.id}
+                                    {CAMPAIGN_THEMES.some((item) => item.id === skin.id) ? " (скін кампанії)" : ""}
+                                </option>
+                            ))}
+                            {draft.rewardSkinId && !skins.some((skin) => skin.id === draft.rewardSkinId) && <option value={draft.rewardSkinId}>{draft.rewardSkinId} (немає такої теми)</option>}
+                        </Select>
                     </SmallLabel>
                     <CheckboxLabel style={{ alignSelf: "end" }}>
                         <input type="checkbox" checked={draft.active} disabled={disabled} onChange={() => set("active", !draft.active)} />

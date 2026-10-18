@@ -53,6 +53,27 @@ export const CLASSIC_THEME: Theme = {
 
 export const DEFAULT_THEME: Theme = CLASSIC_THEME;
 
+// Вбудовані скіни-нагороди кампанії: фон поля - арт розділу, фішки - SVG у public/images/themes.
+// Не купуються - відкриваються за проходження розділу (rewardSkinId у розділі кампанії).
+const campaignTheme = (id: string, name: string, art: string, order: number): Theme => ({
+    id,
+    name,
+    backgroundUrl: assetUrl(`images/campaign/${art}.jpg`),
+    xMarkerUrl: assetUrl(`images/themes/${id}-x.svg`),
+    oMarkerUrl: assetUrl(`images/themes/${id}-o.svg`),
+    active: true,
+    order,
+    createdAt: null,
+    price: 0,
+});
+export const CAMPAIGN_THEMES: Theme[] = [
+    campaignTheme("sea", "Морський бриз", "beach", 1000),
+    campaignTheme("forest", "Лісовий", "forest", 1001),
+    campaignTheme("peak", "Гірський", "mountains", 1002),
+];
+// Теми з бази + вбудовані скіни кампанії (тема з бази з тим самим id має пріоритет).
+const withCampaignThemes = (themes: Theme[]): Theme[] => [...themes, ...CAMPAIGN_THEMES.filter((theme) => !themes.some((item) => item.id === theme.id))];
+
 const themesCollection = "themes";
 
 const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
@@ -72,19 +93,21 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
 // (потрібно гравцю ще до старту гри). Тиха відмова на будь-яку помилку -
 // відсутність тем ніколи не повинна ламати гру, лише вмикати DEFAULT_THEME.
 export const getActiveThemes = async (): Promise<Theme[]> => {
-    if (!isFirebaseConfigured) return [];
+    if (!isFirebaseConfigured) return CAMPAIGN_THEMES;
     try {
         const db = getFirebaseDb();
         // Сортування "order" - на клієнті, а не через Firestore orderBy, щоб не
         // вимагати композитний індекс (equality + orderBy на різних полях).
         const q = query(collection(db, themesCollection), where("active", "==", true));
         const snap = await getDocs(q);
-        return snap.docs
-            .map((d) => toTheme(d.id, d.data()))
-            .filter((theme) => theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl)
-            .sort((a, b) => a.order - b.order);
+        return withCampaignThemes(
+            snap.docs
+                .map((d) => toTheme(d.id, d.data()))
+                .filter((theme) => theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl)
+                .sort((a, b) => a.order - b.order)
+        );
     } catch {
-        return [];
+        return CAMPAIGN_THEMES;
     }
 };
 

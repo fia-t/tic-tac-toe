@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ff7d5e"/>
+      <stop offset="0.55" stop-color="#e8452f"/>
+      <stop offset="1" stop-color="#a82a18"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#5a2a10" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <g transform="rotate(45 100 100)">
+      <rect x="18" y="73" width="164" height="54" rx="27" fill="url(#body)"/>
+      <rect x="34" y="79" width="132" height="17" rx="8.5" fill="url(#shine)"/>
+    </g>
+    <g transform="rotate(-45 100 100)">
+      <rect x="18" y="73" width="164" height="54" rx="27" fill="url(#body)"/>
+      <rect x="34" y="79" width="132" height="17" rx="8.5" fill="url(#shine)"/>
+    </g>
+  </g>
+</svg>

@@ -64,8 +64,8 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         bossName: "Капітан Краб",
         bossLine: "На моєму пляжі фішки довго не живуть! Тримай не більше трьох - і не відволікайся.",
         rewardCoins: 100,
-        // Скін розділу (фон поля - арт Пляжу) - id теми, коли її додадуть у "Теми".
-        rewardSkinId: "",
+        // Вбудований скін-нагорода (CAMPAIGN_THEMES): фон поля - арт розділу.
+        rewardSkinId: "sea",
         levels: [
             { ...W("Перша перемога над легким ботом", "traditional", "easy", 3), id: "beach-1" },
             { ...W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }), id: "beach-2" },
@@ -85,7 +85,7 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         bossName: "Пан Кріт",
         bossLine: "Ліс - мої володіння. Де захочу, там і вирию горбок. Встигнеш оминути?",
         rewardCoins: 150,
-        rewardSkinId: "",
+        rewardSkinId: "forest",
         levels: [
             { ...W("4 в ряд проти легкого бота", "five", "easy", 6), id: "forest-1" },
             { ...W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }), id: "forest-2" },
@@ -105,7 +105,7 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         bossName: "Орел-Вершина",
         bossLine: "З гори я бачу всі дев'ять полів одразу. А ти встигнеш подумати за 5 секунд?",
         rewardCoins: 250,
-        rewardSkinId: "",
+        rewardSkinId: "peak",
         levels: [
             { ...W("Перше гіга-поле", "difficult", "easy", 14), id: "mountains-1" },
             { ...W("Гіга-поле проти середнього бота", "difficult", "medium", 16), id: "mountains-2" },
