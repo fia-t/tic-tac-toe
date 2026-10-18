@@ -106,26 +106,25 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
         </>
     ),
     misere: <path d="M7 4v15M3.5 15.5 7 19l3.5-3.5M17 20V5M13.5 8.5 17 5l3.5 3.5" />,
-    // Кріт - силует згори: видовжене тіло з носиком, передні лапи віялом кігтів, задні лапки, хвостик.
+    // Кріт - контурний силует згори (як "Каміння"): тіло з носиком, кігті віялом, задні лапки, хвостик.
     mole: (
         <>
-            <path d="M12 2.4c-.8 1.3-1.3 2.8-1.6 4.2C8.3 7.6 7 10.2 7 13.6c0 3.9 2.1 7 5 7s5-3.1 5-7c0-3.4-1.3-6-3.4-7-.3-1.4-.8-2.9-1.6-4.2z" fill="currentColor" stroke="none" />
-            <circle cx="8.6" cy="10.9" r="1.5" fill="currentColor" stroke="none" />
-            <circle cx="15.4" cy="10.9" r="1.5" fill="currentColor" stroke="none" />
-            <path d="M7.35 10.25L3.82 11.17L7.45 11.45zM7.58 10.07L3.94 9.71L7.27 11.22zM7.85 9.96L4.56 8.39L7.16 10.95zM8.15 9.96L5.59 7.36L7.16 10.65zM16.84 10.65L18.41 7.36L15.85 9.96zM16.84 10.95L19.44 8.39L16.15 9.96zM16.73 11.22L20.06 9.71L16.42 10.07zM16.55 11.45L20.18 11.17L16.65 10.25zM7.25 17.07L5.36 18.29L7.6 18.01zM7.45 16.87L5.21 17.17L7.36 17.86zM7.7 16.77L5.55 16.1L7.2 17.63zM16.8 17.63L18.45 16.1L16.3 16.77zM16.64 17.86L18.79 17.17L16.55 16.87zM16.4 18.01L18.64 18.29L16.75 17.07z" fill="currentColor" stroke="currentColor" strokeWidth=".8" strokeLinejoin="round" />
-            <path d="M12 20.4c0 1.1-.4 1.9-1.2 2.4" strokeWidth="1.5" />
+            <path d="M12 3c-.8 1.3-1.3 2.7-1.6 4C8.5 8 7.3 10.5 7.3 13.7c0 3.8 2 6.6 4.7 6.6s4.7-2.8 4.7-6.6c0-3.2-1.2-5.7-3.1-6.7C13.3 5.7 12.8 4.3 12 3z" />
+            <path d="M7.8 9.3l-3.11 -2.18M7.5 10.2l-3.72 -0.79M7.35 11.1l-3.74 0.66M7.3 12l-3.22 2.01M16.2 9.3l3.11 -2.18M16.5 10.2l3.72 -0.79M16.65 11.1l3.74 0.66M16.7 12l3.22 2.01" strokeWidth="1.4" />
+            <path d="M7.5 16.4l-2.25 0.4M7.8 17.3l-1.93 1.21M8.3 18.1l-1.31 1.87M16.5 16.4l2.25 0.4M16.2 17.3l1.93 1.21M15.7 18.1l1.31 1.87" strokeWidth="1.4" />
+            <path d="M12 20.3c0 .7-.3 1.3-.9 1.6" strokeWidth="1.7" />
         </>
     ),
 };
 
 // Малюнки іконок різні за розміром і зміщенням у квадраті 24×24 - кожну вирівнюємо до центру й
 // однакового візуального розміру (виміряно за межами малюнка); товщина лінії лишається 2.2.
-const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [-0.6,-1.23,1.05], misere: [0.13,0.13,0.99] };
+const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [-1.44,-1.94,1.12], misere: [0.13,0.13,0.99] };
 
 export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => {
     const [tx, ty, k] = MOD_FIT[id ?? "none"];
     return (
-        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" overflow="visible">
             <g transform={`translate(${tx} ${ty}) scale(${k})`} strokeWidth={(2.2 / k).toFixed(2)}>
                 {MOD_ICON_PATHS[id ?? "none"]}
             </g>
