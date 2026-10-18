@@ -18,6 +18,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /campaignChapters/{chapterId} {
+      // Розділи й рівні кампанії - публічні на читання (гра підвантажує їх до входу),
+      // редагуються лише з адмінки (розділ "Кампанія").
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /names/{nameId} {
       // Пул "цікавих" імен для рахунку над полем гри - так само публічний на
       // читання, як і теми, і так само редагується лише з адмінки.

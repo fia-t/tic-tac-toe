@@ -14,6 +14,12 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    // Фони розділів кампанії (адмінка, розділ "Кампанія").
+    match /campaign/{chapterId}/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Зібрані білди гри (ZIP для порталу + розпакована копія, яку віддає /game
     // на сайті). Сама гра й так публічна, тож читання відкрите; пише лише
     // GitHub Actions через Admin SDK, з клієнта - ніхто.
