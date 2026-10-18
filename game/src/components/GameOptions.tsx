@@ -106,18 +106,21 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
         </>
     ),
     misere: <path d="M7 4v15M3.5 15.5 7 19l3.5-3.5M17 20V5M13.5 8.5 17 5l3.5 3.5" />,
-    // Кріт - передня лапа крота: широка долоня й віяло з п'яти довгих кігтів.
+    // Кріт - силует згори: видовжене тіло з носиком, передні лапи віялом кігтів, задні лапки, хвостик.
     mole: (
         <>
-            <ellipse cx="8" cy="16" rx="5.8" ry="4.5" transform="rotate(-38 8 16)" fill="currentColor" />
-            <path d="M8.28 11.28L5.92 4.18L6.12 11.66zM10.18 11.8L10.9 4.36L8.05 11.27zM11.7 13.05L15.39 6.54L9.97 11.7zM12.58 14.81L18.6 10.37L11.55 12.87zM12.67 16.78L19.97 15.16L12.51 14.58z" fill="currentColor" stroke="currentColor" strokeWidth="1" strokeLinejoin="round" />
+            <path d="M12 2.4c-.8 1.3-1.3 2.8-1.6 4.2C8.3 7.6 7 10.2 7 13.6c0 3.9 2.1 7 5 7s5-3.1 5-7c0-3.4-1.3-6-3.4-7-.3-1.4-.8-2.9-1.6-4.2z" fill="currentColor" stroke="none" />
+            <circle cx="8.6" cy="10.9" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="15.4" cy="10.9" r="1.5" fill="currentColor" stroke="none" />
+            <path d="M7.35 10.25L3.82 11.17L7.45 11.45zM7.58 10.07L3.94 9.71L7.27 11.22zM7.85 9.96L4.56 8.39L7.16 10.95zM8.15 9.96L5.59 7.36L7.16 10.65zM16.84 10.65L18.41 7.36L15.85 9.96zM16.84 10.95L19.44 8.39L16.15 9.96zM16.73 11.22L20.06 9.71L16.42 10.07zM16.55 11.45L20.18 11.17L16.65 10.25zM7.25 17.07L5.36 18.29L7.6 18.01zM7.45 16.87L5.21 17.17L7.36 17.86zM7.7 16.77L5.55 16.1L7.2 17.63zM16.8 17.63L18.45 16.1L16.3 16.77zM16.64 17.86L18.79 17.17L16.55 16.87zM16.4 18.01L18.64 18.29L16.75 17.07z" fill="currentColor" stroke="currentColor" strokeWidth=".8" strokeLinejoin="round" />
+            <path d="M12 20.4c0 1.1-.4 1.9-1.2 2.4" strokeWidth="1.5" />
         </>
     ),
 };
 
 // Малюнки іконок різні за розміром і зміщенням у квадраті 24×24 - кожну вирівнюємо до центру й
 // однакового візуального розміру (виміряно за межами малюнка); товщина лінії лишається 2.2.
-const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [2.89,-0.06,0.883], misere: [0.13,0.13,0.99] };
+const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [-0.6,-1.23,1.05], misere: [0.13,0.13,0.99] };
 
 export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => {
     const [tx, ty, k] = MOD_FIT[id ?? "none"];
