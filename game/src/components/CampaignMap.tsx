@@ -8,7 +8,7 @@ import { Star } from "@game/components/DailyChallenge";
 import { ModIcon } from "@game/components/GameOptions";
 import { BossPortrait } from "@game/components/CampaignArt";
 import { albumArt } from "@game/components/AlbumArt";
-import { InfoTip } from "@game/components/HomeScreen";
+import { InfoTip, Tab, Tabs } from "@game/components/HomeScreen";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
@@ -128,6 +128,11 @@ const Reward = styled.div<{ $got: boolean }>`
     b {
         color: inherit;
     }
+`;
+
+// Вміст вкладки - картки лягають прямо в сторінку, з її відступами.
+const TabBody = styled.div`
+    display: contents;
 `;
 
 const Album = styled.div`
@@ -467,6 +472,9 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
     const progress = useCampaign();
     const current = currentLevelIndex(progress);
     const [info, setInfo] = useState<number | null>(null);
+    // Розділи з рівнями й альбом - дві вкладки екрана кампанії.
+    const [tab, setTab] = useState<"chapters" | "album">("chapters");
+    const cardsGot = progress.cards.filter((id) => albumCards().some((card) => card.id === id)).length;
     const total = CAMPAIGN_LEVELS.reduce((sum, level) => sum + (progress.stars[level.id] ?? 0), 0);
 
     // Картки й нагороди за вже зароблене (напр. після оновлення гри) - без окремого вікна.
@@ -480,97 +488,114 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
 
     return (
         <Page>
-            <Card aria-labelledby="campaign-title">
-                <Spread>
-                    <h2 id="campaign-title" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                        {t("campaignTitle")}
-                        <InfoTip text={t("campaignInfo", { levels: String(CAMPAIGN_LEVELS.length), chapters: String(CAMPAIGN_CHAPTERS.length) })} />
-                    </h2>
-                    <InfoPill>
-                        <Star on size={18} /> {total} / {CAMPAIGN_LEVELS.length * 3}
-                    </InfoPill>
-                </Spread>
-                <Muted>{t("campaignIntro")}</Muted>
-            </Card>
+            <Tabs $cols={2} role="tablist" aria-label={t("campaignTitle")}>
+                {(["chapters", "album"] as const).map((id) => (
+                    <Tab key={id} type="button" role="tab" id={`campaign-tab-${id}`} aria-selected={tab === id} aria-controls="campaign-tabpanel" onClick={() => setTab(id)}>
+                        {id === "chapters" ? t("campaignTabChapters") : `${t("albumTitle")} · ${cardsGot} / ${albumCards().length}`}
+                    </Tab>
+                ))}
+            </Tabs>
 
-            {CAMPAIGN_CHAPTERS.map((chapter, ci) => {
-                const levels = chapterLevels(ci);
-                const done = isChapterDone(ci, progress);
-                const reward = rewardText(chapter, themes, t);
-                return (
-                    <Card key={chapter.id} aria-labelledby={`chapter-${chapter.id}`}>
-                        <ChapterHead>
-                            <ChapterArt $src={chapterBackground(chapter)} aria-hidden="true" />
-                            <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
-                                <Eyebrow>
-                                    {t("chapterLabel", { n: String(ci + 1) })} · {chapterStars(ci, progress)} / {levels.length * 3} ★
-                                </Eyebrow>
-                                <h2 id={`chapter-${chapter.id}`}>{chapter.name}</h2>
-                                {chapter.subtitle && <Muted>{chapter.subtitle}</Muted>}
-                            </div>
-                        </ChapterHead>
-                        <Levels>
-                            {levels.map((level) => {
-                                const index = CAMPAIGN_LEVELS.indexOf(level);
-                                const open = isLevelUnlocked(index, progress);
-                                const levelStars = progress.stars[level.id] ?? 0;
-                                const label = open
-                                    ? t("campaignLevelStars", { n: String(index + 1), boss: level.boss ? `, ${t("campaignBoss")}` : "", stars: String(levelStars) })
-                                    : t("campaignLockedLevel", { n: String(index + 1) });
-                                return (
-                                    <LevelButton
-                                        key={level.id}
-                                        type="button"
-                                        $boss={Boolean(level.boss)}
-                                        $current={open && index === current}
-                                        disabled={!open}
-                                        onClick={() => setInfo(index)}
-                                        aria-label={label}
-                                        title={open ? level.title : undefined}
-                                    >
-                                        {level.boss ? <BossPortrait chapterId={chapter.id} size={34} /> : index + 1}
-                                        {!level.boss && <LevelIcon>{level.preset ? <PuzzleIcon /> : <ModIcon id={level.modifier ?? null} size={18} />}</LevelIcon>}
-                                        {open ? (
-                                            <MiniStars>
-                                                {[0, 1, 2].map((i) => (
-                                                    <Star key={i} on={i < levelStars} size={13} />
-                                                ))}
-                                            </MiniStars>
-                                        ) : (
-                                            <Lock />
-                                        )}
-                                    </LevelButton>
-                                );
-                            })}
-                        </Levels>
-                        {reward && (
-                            <Reward $got={done}>
-                                <GiftIcon />
-                                <span>
-                                    {done ? t("campaignRewardGot") : t("campaignReward")} <b>{reward}</b>
-                                </span>
-                            </Reward>
-                        )}
+            {tab === "chapters" && (
+                <TabBody role="tabpanel" id="campaign-tabpanel" aria-labelledby="campaign-tab-chapters">
+                    <Card aria-labelledby="campaign-title">
+                        <Spread>
+                            <h2 id="campaign-title" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                                {t("campaignTitle")}
+                                <InfoTip text={t("campaignInfo", { levels: String(CAMPAIGN_LEVELS.length), chapters: String(CAMPAIGN_CHAPTERS.length) })} />
+                            </h2>
+                            <InfoPill>
+                                <Star on size={18} /> {total} / {CAMPAIGN_LEVELS.length * 3}
+                            </InfoPill>
+                        </Spread>
+                        <Muted>{t("campaignIntro")}</Muted>
                     </Card>
-                );
-            })}
 
-            <Card aria-labelledby="album-title">
-                <Spread>
-                    <h2 id="album-title" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                        {t("albumTitle")}
-                        <InfoTip text={t("albumInfo")} />
-                    </h2>
-                    <InfoPill>
-                        {progress.cards.filter((id) => albumCards().some((card) => card.id === id)).length} / {albumCards().length}
-                    </InfoPill>
-                </Spread>
-                <Album>
-                    {albumCards().map((card) => (
-                        <AlbumTileView key={card.id} card={card} got={progress.cards.includes(card.id)} />
-                    ))}
-                </Album>
-            </Card>
+                    {CAMPAIGN_CHAPTERS.map((chapter, ci) => {
+                        const levels = chapterLevels(ci);
+                        const done = isChapterDone(ci, progress);
+                        const reward = rewardText(chapter, themes, t);
+                        return (
+                            <Card key={chapter.id} aria-labelledby={`chapter-${chapter.id}`}>
+                                <ChapterHead>
+                                    <ChapterArt $src={chapterBackground(chapter)} aria-hidden="true" />
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 0 }}>
+                                        <Eyebrow>
+                                            {t("chapterLabel", { n: String(ci + 1) })} · {chapterStars(ci, progress)} / {levels.length * 3} ★
+                                        </Eyebrow>
+                                        <h2 id={`chapter-${chapter.id}`}>{chapter.name}</h2>
+                                        {chapter.subtitle && <Muted>{chapter.subtitle}</Muted>}
+                                    </div>
+                                </ChapterHead>
+                                <Levels>
+                                    {levels.map((level) => {
+                                        const index = CAMPAIGN_LEVELS.indexOf(level);
+                                        const open = isLevelUnlocked(index, progress);
+                                        const levelStars = progress.stars[level.id] ?? 0;
+                                        const label = open
+                                            ? t("campaignLevelStars", { n: String(index + 1), boss: level.boss ? `, ${t("campaignBoss")}` : "", stars: String(levelStars) })
+                                            : t("campaignLockedLevel", { n: String(index + 1) });
+                                        return (
+                                            <LevelButton
+                                                key={level.id}
+                                                type="button"
+                                                $boss={Boolean(level.boss)}
+                                                $current={open && index === current}
+                                                disabled={!open}
+                                                onClick={() => setInfo(index)}
+                                                aria-label={label}
+                                                title={open ? level.title : undefined}
+                                            >
+                                                {level.boss ? <BossPortrait chapterId={chapter.id} size={34} /> : index + 1}
+                                                {!level.boss && <LevelIcon>{level.preset ? <PuzzleIcon /> : <ModIcon id={level.modifier ?? null} size={18} />}</LevelIcon>}
+                                                {open ? (
+                                                    <MiniStars>
+                                                        {[0, 1, 2].map((i) => (
+                                                            <Star key={i} on={i < levelStars} size={13} />
+                                                        ))}
+                                                    </MiniStars>
+                                                ) : (
+                                                    <Lock />
+                                                )}
+                                            </LevelButton>
+                                        );
+                                    })}
+                                </Levels>
+                                {reward && (
+                                    <Reward $got={done}>
+                                        <GiftIcon />
+                                        <span>
+                                            {done ? t("campaignRewardGot") : t("campaignReward")} <b>{reward}</b>
+                                        </span>
+                                    </Reward>
+                                )}
+                            </Card>
+                        );
+                    })}
+
+                </TabBody>
+            )}
+
+            {tab === "album" && (
+                <TabBody role="tabpanel" id="campaign-tabpanel" aria-labelledby="campaign-tab-album">
+                    <Card aria-labelledby="album-title">
+                        <Spread>
+                            <h2 id="album-title" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                                {t("albumTitle")}
+                                <InfoTip text={t("albumInfo")} />
+                            </h2>
+                            <InfoPill>
+                                {cardsGot} / {albumCards().length}
+                            </InfoPill>
+                        </Spread>
+                        <Album>
+                            {albumCards().map((card) => (
+                                <AlbumTileView key={card.id} card={card} got={progress.cards.includes(card.id)} />
+                            ))}
+                        </Album>
+                    </Card>
+                </TabBody>
+            )}
 
             {info !== null && <LevelInfo index={info} onClose={() => setInfo(null)} onStart={onStart} />}
         </Page>

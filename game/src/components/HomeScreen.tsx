@@ -89,10 +89,11 @@ const HeroBadges = styled.div`
     margin-left: auto;
 `;
 
-// Вкладки розділів - як перемикач складності: вибрана - горіхова.
-const Tabs = styled.div`
+// Вкладки розділів - як перемикач складності: вибрана - горіхова. Також на екрані кампанії
+// (розділи / альбом) - там їх дві, тож кількість колонок задається $cols.
+export const Tabs = styled.div<{ $cols?: number }>`
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(${({ $cols = 4 }) => $cols}, minmax(0, 1fr));
     gap: 4px;
     padding: 4px;
     border-radius: 18px;
@@ -100,7 +101,7 @@ const Tabs = styled.div`
     box-shadow: inset 0 -3px 0 #ebcb98;
 `;
 
-const Tab = styled.button`
+export const Tab = styled.button`
     min-height: 42px;
     padding: 9px 4px;
     border: none;
