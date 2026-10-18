@@ -119,7 +119,8 @@ const MOD_ICON_PATHS: Record<Modifier | "none", React.ReactNode> = {
 
 // Малюнки іконок різні за розміром і зміщенням у квадраті 24×24 - кожну вирівнюємо до центру й
 // однакового візуального розміру (виміряно за межами малюнка); товщина лінії лишається 2.2.
-const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [0.71,0.71,0.941], vanish: [-0.53,-0.53,1.044], gravity: [0.71,0.71,0.941], stones: [0.18,-1.69,0.987], timer: [0.99,1.21,0.918], mole: [-1.44,-1.94,1.12], misere: [0.13,0.13,0.99] };
+// Усі, крім стрілок (гравітація, мізер), ще на 15% більші - так краще читаються на кнопці.
+const MOD_FIT: Record<Modifier | "none", [number, number, number]> = { none: [-0.98,-0.98,1.082], vanish: [-2.41,-2.41,1.201], gravity: [0.71,0.71,0.941], stones: [-1.59,-3.74,1.135], timer: [-0.66,-0.41,1.056], mole: [-3.46,-4.03,1.288], misere: [0.13,0.13,0.99] };
 
 export const ModIcon = ({ id, size = 22 }: { id: Modifier | null; size?: number }) => {
     const [tx, ty, k] = MOD_FIT[id ?? "none"];
