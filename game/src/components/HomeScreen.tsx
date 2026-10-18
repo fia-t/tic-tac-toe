@@ -269,6 +269,7 @@ const ModScroll = styled(ModRow)`
 // повторне натискання, клік деінде чи прокрутка - закривають.
 const InfoButton = styled.button`
     position: relative;
+    z-index: 2;
     width: 18px;
     height: 18px;
     margin: -4px 0;
@@ -652,7 +653,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     // Плитки полів із підписом "Обери поле" - як "Складність бота" й "Модифікатор" над своїми кнопками.
     const modePicker = (id: string, value: GameModeKey, onPick: (m: GameModeKey) => void) => (
         <OptGroup>
-            <EyebrowInfo id={id}>
+            {/* Вибрана плитка піднята й збільшена - відступ, щоб не налазила на підпис і "?". */}
+            <EyebrowInfo id={id} style={{ marginBottom: 10 }}>
                 {t("homePickBoard")}
                 <InfoTip text={t("infoBoard")} />
             </EyebrowInfo>
