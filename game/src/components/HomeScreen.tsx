@@ -757,7 +757,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
             <Card aria-labelledby="home-match">
                 <Spread>
-                    <h2 id="home-match">{t("homeMatch")}</h2>
+                    <h2 id="home-match" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                        {t("homeMatch")}
+                        <InfoTip text={t("infoMatch")} />
+                    </h2>
                     <LeagueBadge rating={myRating.rating} played={myRating.played} withRating />
                 </Spread>
                 <OnlineNow />
@@ -854,11 +857,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
             {/* Модифікатор тижня - під викликом дня: ще одне завдання на цей тиждень. */}
             <Card aria-labelledby="home-weekly">
-                <EyebrowInfo>
+                {/* Заголовок - як "Виклик дня" у картці над нею. */}
+                <h2 id="home-weekly" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
                     {t("homeWeekly")}
                     <InfoTip text={t("infoWeekly")} />
-                </EyebrowInfo>
-                <h3 id="home-weekly">{t(`modifier_${weekly}`)}</h3>
+                </h2>
+                <h3>{t(`modifier_${weekly}`)}</h3>
                 <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
                 {condTiles(weeklyMode, weekly, difficulty, t("weeklySpec"))}
                 <GameButton
