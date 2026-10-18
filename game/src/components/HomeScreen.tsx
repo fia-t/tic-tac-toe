@@ -8,13 +8,12 @@ import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
 import { LeagueBadge } from "@game/components/LeagueCup";
-import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
+import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread } from "@game/components/pageStyles";
 import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
-import { CAMPAIGN_CHAPTERS, CAMPAIGN_LEVELS, currentLevelIndex, totalStars, useCampaign } from "@game/lib/campaign";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { ALL_MODIFIERS, GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 import { levelForXp, useProfile } from "@game/lib/profile";
@@ -540,12 +539,14 @@ const TABS: { id: HomeTab; label: "homeTabBot" | "homeTabOnline" | "homeTabDaily
     { id: "daily", label: "homeTabDaily" },
     { id: "campaign", label: "homeTabCampaign" },
 ];
+// "Кампанія" - не вкладка з карткою, а перехід одразу на екран кампанії (список розділів).
+type PanelTab = Exclude<HomeTab, "campaign">;
 const TAB_KEY = "ttt-home-tab";
 
-const readTab = (): HomeTab => {
+const readTab = (): PanelTab => {
     try {
         const value = localStorage.getItem(TAB_KEY);
-        return TABS.some((tab) => tab.id === value) ? (value as HomeTab) : "bot";
+        return TABS.some((tab) => tab.id === value) && value !== "campaign" ? (value as PanelTab) : "bot";
     } catch {
         return "bot";
     }
@@ -563,7 +564,7 @@ type HomeScreenProps = {
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPlay, onRoomReady, onBeforeFriendOpen, focusDaily }) => {
     const t = useT();
-    const [tab, setTabState] = useState<HomeTab>(readTab);
+    const [tab, setTabState] = useState<PanelTab>(readTab);
     const [mode, setMode] = useState<GameModeKey>(initialMode);
     // Гра з другом - свій вибір поля й модифікатора, не чіпає налаштувань гри з ботом.
     const [friendMode, setFriendMode] = useState<GameModeKey>(initialMode);
@@ -574,7 +575,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const [dailyFlash, setDailyFlash] = useState(false);
     const dailyRef = useRef<HTMLElement>(null);
     const daily = useDailyState();
-    const campaign = useCampaign();
     const profile = useProfile();
     const myRating = useMyRating();
     const panel = useOpenPanel();
@@ -589,14 +589,14 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const todayResult = daily.results[today];
     const streak = currentStreak(daily);
     const weekly = weeklyModifier();
-    const stars = totalStars(campaign);
-    const maxStars = CAMPAIGN_LEVELS.length * 3;
-    const next = currentLevelIndex(campaign);
-    const passed = CAMPAIGN_LEVELS.filter((level) => (campaign.stars[level.id] ?? 0) > 0).length;
 
     const setTab = (value: HomeTab) => {
-        setTabState(value);
         trackEvent("home_tab", { tab: value });
+        if (value === "campaign") {
+            openPanel("campaign");
+            return;
+        }
+        setTabState(value);
         try {
             localStorage.setItem(TAB_KEY, value);
         } catch {
@@ -880,28 +880,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         </>
     );
 
-    const campaignTab = (
-        <Card aria-labelledby="home-campaign">
-            <Eyebrow>{t("homeCampaign")}</Eyebrow>
-            <h3 id="home-campaign">
-                {t("homeCampaignNext", {
-                    n: String(next + 1),
-                    name: CAMPAIGN_CHAPTERS[CAMPAIGN_LEVELS[next]?.chapter ?? 0]?.name ?? "",
-                })}
-            </h3>
-            <Progress role="img" aria-label={t("campaignStars", { n: String(stars), total: String(maxStars) })}>
-                <i style={{ width: `${(stars / maxStars) * 100}%` }} />
-            </Progress>
-            <Muted>
-                {t("homeCampaignStats", { n: String(stars), total: String(maxStars), done: String(passed), levels: String(CAMPAIGN_LEVELS.length) })}
-            </Muted>
-            <GameButton tone="primary" size="lg" block onClick={() => openPanel("campaign")}>
-                {t("homeToMap")}
-            </GameButton>
-        </Card>
-    );
-
-    const content: Record<HomeTab, React.ReactNode> = { bot: botTab, online: onlineTab, daily: dailyTab, campaign: campaignTab };
+    const content: Record<PanelTab, React.ReactNode> = { bot: botTab, online: onlineTab, daily: dailyTab };
 
     return (
         <HomePage>
