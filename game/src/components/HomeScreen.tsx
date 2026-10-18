@@ -193,7 +193,15 @@ const ModeButton = styled.button`
         font-size: 14px;
 
         img {
-            max-width: min(148px, max(76px, calc(100dvh - 640px)));
+            max-width: min(148px, max(72px, calc(100dvh - 660px)));
+        }
+    }
+
+    @media (max-height: 700px) {
+        font-size: 13px;
+
+        img {
+            max-width: 64px;
         }
     }
 `;
@@ -531,15 +539,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const dailyRules = template.goal === "win" ? t("homeDailyRulesWin", { par: String(template.par) }) : t("homeDailyRulesSurvive");
     const weeklyMode = (MODES.find((m) => MODIFIERS_BY_MODE[m.id].includes(weekly)) ?? MODES[0]).id;
 
-    const modePicker = (value: GameModeKey, onPick: (m: GameModeKey) => void, label: string) => (
-        <Modes role="group" aria-label={label}>
-            {MODES.map((m) => (
-                <ModeButton key={m.id} type="button" aria-pressed={value === m.id} onClick={() => onPick(m.id)}>
-                    <img src={assetUrl(m.img)} alt="" />
-                    <span>{t(m.label)}</span>
-                </ModeButton>
-            ))}
-        </Modes>
+    // Плитки полів із підписом "Обери поле" - як "Складність бота" й "Модифікатор" над своїми кнопками.
+    const modePicker = (id: string, value: GameModeKey, onPick: (m: GameModeKey) => void) => (
+        <OptGroup>
+            <Eyebrow id={id}>{t("homePickBoard")}</Eyebrow>
+            <Modes role="group" aria-labelledby={id}>
+                {MODES.map((m) => (
+                    <ModeButton key={m.id} type="button" aria-pressed={value === m.id} onClick={() => onPick(m.id)}>
+                        <img src={assetUrl(m.img)} alt="" />
+                        <span>{t(m.label)}</span>
+                    </ModeButton>
+                ))}
+            </Modes>
+        </OptGroup>
     );
 
     const modPicker = (id: string, active: Modifier | null, allowed: Modifier[], list: Modifier[], onPick: (m: Modifier | null) => void) => (
@@ -569,7 +581,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
     const botTab = (
         <BotCard aria-label={t("homeQuick")}>
-            {modePicker(mode, setMode, t("homeQuick"))}
+            {modePicker("home-board", mode, setMode)}
             <OptGroup>
                 <Eyebrow id="home-diff">{t("difficultyLabel")}</Eyebrow>
                 <DiffGroup role="group" aria-labelledby="home-diff">
@@ -604,7 +616,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         <>
             <Card aria-labelledby="home-friend">
                 <h2 id="home-friend">{t("homeFriendOnline")}</h2>
-                {modePicker(friendMode, setFriendMode, t("homeFriendOnline"))}
+                {modePicker("home-friend-board", friendMode, setFriendMode)}
                 {modPicker(
                     "home-friend-mod",
                     friendModifier,
