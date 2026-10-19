@@ -4,6 +4,7 @@ import styled, { keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModButton, ModIcon, ModRow, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
+import { InfoTip } from "@game/components/HomeScreen";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
@@ -41,29 +42,73 @@ export const GameRoot = styled.div<{ $timer?: boolean }>`
 `;
 
 // Смуга над полем - один рядок; на вузькому екрані прокручується вбік.
+// Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
+// Кнопки вирівняні по низу (у груп над ними підпис); що не влазить - переноситься рядком нижче.
 const Bar = styled.div`
     position: relative;
     z-index: 25;
     display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 6px;
     width: 100%;
     min-width: 0;
 
     @media (max-width: 480px) {
-        gap: 4px;
-        overflow-x: auto;
-        scrollbar-width: none;
+        gap: 6px 4px;
     }
+`;
+
+const BarGroup = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+`;
+
+const BarGroupRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    @media (max-width: 480px) {
+        gap: 4px;
+    }
+`;
+
+const BarLabel = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 18px;
+    font: 800 11px/1 var(--font-body);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7a5530;
+    white-space: nowrap;
 `;
 
 const PushRight = styled.div`
     margin-left: auto;
     display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 8px 10px;
+    min-width: 0;
+
+    /* Іконки модифікаторів щільніше - щоб на широкому екрані вся смуга вміщалась в один рядок. */
+    ${ModRow} {
+        gap: 4px;
+    }
+
+    /* Коли смуга не вміщається в рядок, "Бот" і "Модифікатор" ідуть другим рядком - від лівого краю. */
+    @media (max-width: 760px) {
+        margin-left: 0;
+    }
+
+    @media (max-width: 480px) {
+        gap: 6px 10px;
+    }
 `;
 
 const ModeTile = styled.button`
@@ -530,48 +575,68 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <Bar data-tour="bar">
                 {quick ? (
                     <>
-                        {actionButtons}
-                        {MODE_TILES.map((tile) => (
-                            <ModeTile
-                                key={tile.id}
-                                type="button"
-                                aria-pressed={mode === tile.id}
-                                aria-label={t(tile.label)}
-                                data-tip={t(tile.label)}
-                                onClick={() => pickMode(tile.id)}
-                            >
-                                <img src={assetUrl(tile.img)} alt="" />
-                            </ModeTile>
-                        ))}
+                        <BarGroupRow>{actionButtons}</BarGroupRow>
+                        <BarGroup>
+                            <BarLabel id="bar-board">
+                                {t("barBoard")}
+                                <InfoTip text={t("infoBoard")} />
+                            </BarLabel>
+                            <BarGroupRow role="group" aria-labelledby="bar-board">
+                                {MODE_TILES.map((tile) => (
+                                    <ModeTile
+                                        key={tile.id}
+                                        type="button"
+                                        aria-pressed={mode === tile.id}
+                                        aria-label={t(tile.label)}
+                                        data-tip={t(tile.label)}
+                                        onClick={() => pickMode(tile.id)}
+                                    >
+                                        <img src={assetUrl(tile.img)} alt="" />
+                                    </ModeTile>
+                                ))}
+                            </BarGroupRow>
+                        </BarGroup>
                         <PushRight>
-                            <DiffGroup role="group" aria-label={t("difficultyLabel")}>
-                                {DIFFICULTIES.map((level) => (
-                                    <BarDiff
-                                        key={level}
-                                        type="button"
-                                        $level={level}
-                                        aria-pressed={difficulty === level}
-                                        data-tip={t(`diffNote_${level}`)}
-                                        onClick={() => pickDifficulty(level)}
-                                    >
-                                        {t(`difficulty_${level}`)}
-                                    </BarDiff>
-                                ))}
-                            </DiffGroup>
-                            <ModRow role="group" aria-label={t("modifierLabel")}>
-                                {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
-                                    <BarMod
-                                        key={m ?? "none"}
-                                        type="button"
-                                        aria-pressed={activeModifier === m}
-                                        aria-label={modTip(m)}
-                                        data-tip={modTip(m)}
-                                        onClick={() => pickModifier(m)}
-                                    >
-                                        <ModIcon id={m} />
-                                    </BarMod>
-                                ))}
-                            </ModRow>
+                            <BarGroup>
+                                <BarLabel id="bar-bot">
+                                    {t("barBot")}
+                                    <InfoTip text={t("infoDiff")} />
+                                </BarLabel>
+                                <DiffGroup role="group" aria-labelledby="bar-bot">
+                                    {DIFFICULTIES.map((level) => (
+                                        <BarDiff
+                                            key={level}
+                                            type="button"
+                                            $level={level}
+                                            aria-pressed={difficulty === level}
+                                            data-tip={t(`diffNote_${level}`)}
+                                            onClick={() => pickDifficulty(level)}
+                                        >
+                                            {t(`difficulty_${level}`)}
+                                        </BarDiff>
+                                    ))}
+                                </DiffGroup>
+                            </BarGroup>
+                            <BarGroup>
+                                <BarLabel id="bar-mod">
+                                    {t("modifierLabel")}
+                                    <InfoTip text={t("infoModGame")} />
+                                </BarLabel>
+                                <ModRow role="group" aria-labelledby="bar-mod">
+                                    {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
+                                        <BarMod
+                                            key={m ?? "none"}
+                                            type="button"
+                                            aria-pressed={activeModifier === m}
+                                            aria-label={modTip(m)}
+                                            data-tip={modTip(m)}
+                                            onClick={() => pickModifier(m)}
+                                        >
+                                            <ModIcon id={m} />
+                                        </BarMod>
+                                    ))}
+                                </ModRow>
+                            </BarGroup>
                         </PushRight>
                     </>
                 ) : (
