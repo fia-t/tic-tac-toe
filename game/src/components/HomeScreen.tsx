@@ -541,10 +541,11 @@ const TABS: { id: HomeTab; label: "homeTabBot" | "homeTabOnline" | "homeTabDaily
     { id: "campaign", label: "homeTabCampaign" },
 ];
 // "Кампанія" - не вкладка з карткою, а перехід одразу на екран кампанії (список розділів).
-type PanelTab = Exclude<HomeTab, "campaign">;
+export type PanelTab = Exclude<HomeTab, "campaign">;
 const TAB_KEY = "ttt-home-tab";
 
-const readTab = (): PanelTab => {
+// Остання відкрита вкладка головної (для шапки під час партії - "звідки прийшли").
+export const readTab = (): PanelTab => {
     try {
         const value = localStorage.getItem(TAB_KEY);
         return TABS.some((tab) => tab.id === value) && value !== "campaign" ? (value as PanelTab) : "bot";

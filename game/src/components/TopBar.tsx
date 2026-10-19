@@ -28,11 +28,11 @@ const Bar = styled.header`
     }
 `;
 
-const Brand = styled.button`
+const Brand = styled.button<{ $compact?: boolean }>`
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 1;
+    flex: ${({ $compact }) => ($compact ? "0 1 auto" : "1")};
     min-width: 44px;
     padding: 0;
     border: none;
@@ -100,6 +100,63 @@ const Brand = styled.button`
         span {
             display: none;
         }
+    }
+
+    /* Під час партії на вузькому екрані місце між назвою й плашками - для "Назад до ..." без логотипа. */
+    @media (max-width: 420px) {
+        ${({ $compact }) => ($compact ? "display: none;" : "")}
+    }
+`;
+
+// Під час партії - таб, з якого прийшли (натискання повертає туди), як у прототипі.
+const CrumbSlot = styled.div`
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+`;
+
+const Crumb = styled.button`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 34px;
+    padding: 0 12px 0 8px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 247, 232, 0.72);
+    box-shadow: inset 0 0 0 1.5px rgba(139, 101, 60, 0.22);
+    color: #0f6f8c;
+    font: 800 15px/1 var(--font-body);
+    cursor: pointer;
+    white-space: nowrap;
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    svg {
+        flex-shrink: 0;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background: #fff7e8;
+            color: #0a5068;
+        }
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 420px) {
+        font-size: 13px;
+        padding: 0 8px 0 4px;
+        min-height: 32px;
     }
 `;
 
@@ -201,9 +258,11 @@ type TopBarProps = {
     onHome: () => void;
     // Вогник серії - на головну до картки виклику дня.
     onDaily: () => void;
+    // Під час партії: назва таба, з якого прийшли, і повернення туди.
+    crumb?: { label: string; onClick: () => void } | null;
 };
 
-export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily }) => {
+export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily, crumb }) => {
     const t = useT();
     const campaign = useCampaign();
     const wallet = useWallet();
@@ -223,10 +282,20 @@ export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily }) => {
 
     return (
         <Bar>
-            <Brand type="button" data-tour="menu" onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
+            <Brand type="button" data-tour="menu" $compact={Boolean(crumb)} onClick={onHome} aria-label={t("nav_home")} title={t("nav_home")}>
                 <img src={assetUrl("images/logo.png")} alt="" />
                 <BrandName />
             </Brand>
+            {crumb && (
+                <CrumbSlot>
+                    <Crumb type="button" onClick={crumb.onClick} aria-label={`${t("back")}: ${crumb.label}`} title={`${t("back")}: ${crumb.label}`}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M15 5l-7 7 7 7" />
+                        </svg>
+                        <span>{crumb.label}</span>
+                    </Crumb>
+                </CrumbSlot>
+            )}
             <Pill
                 type="button"
                 onClick={() => openPanel("campaign")}

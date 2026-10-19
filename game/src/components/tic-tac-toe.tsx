@@ -22,7 +22,7 @@ import { CLASSIC_THEME, Theme, getActiveThemes, preloadThemeImages } from "@game
 import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
 import { ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
-import { HomeScreen } from "@game/components/HomeScreen";
+import { HomeScreen, readTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
@@ -170,6 +170,27 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     useEffect(() => {
         scrollGameTo(topRef.current);
     }, [screen]);
+
+    // Звідки прийшли в партію (розділ меню, а на головній - її вкладка): у шапці під час гри
+    // кнопка "Назад до ..." з його назвою, як у прототипі.
+    const [origin, setOrigin] = useState<{ screen: Exclude<Screen, "game">; homeTab: PanelTab } | null>(null);
+    const prevScreen = useRef<Screen>(screen);
+    useEffect(() => {
+        const prev = prevScreen.current;
+        prevScreen.current = screen;
+        if (screen === "game" && prev !== "game") setOrigin({ screen: prev, homeTab: readTab() });
+    }, [screen]);
+    const HOME_TAB_LABEL = { bot: "homeTabBot", online: "homeTabOnline", daily: "homeTabDaily" } as const;
+    const crumb =
+        screen === "game" && origin
+            ? {
+                  label: origin.screen === "home" ? t(HOME_TAB_LABEL[origin.homeTab]) : t(`nav_${origin.screen}`),
+                  onClick: () => {
+                      endDailyRun();
+                      setScreen(origin.screen);
+                  },
+              }
+            : null;
 
     // Кнопки, що відкривають розділи (зірки й монети в шапці, "До карти" тощо), кличуть
     // openPanel - розділи тут окремі екрани, тож панель перемикає екран.
@@ -599,7 +620,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         <RewardedAdContext.Provider value={onRewardedAd}>
             <ShellVars />
             <AppColumn ref={topRef}>
-                <TopBar onHome={() => navigate("home")} onDaily={openDaily} />
+                <TopBar onHome={() => navigate("home")} onDaily={openDaily} crumb={crumb} />
                 {content}
             </AppColumn>
             {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
