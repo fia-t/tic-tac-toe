@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { buttonTone, gameButtonCss, GameButton } from "@game/components/GameButton";
 import { ResultPopup, RewardBase, RoundSummary, rewardsSince, snapshotRewards } from "@game/components/ResultPopup";
@@ -34,7 +34,7 @@ import {
 } from "@game/lib/campaign";
 import { CampaignChapterDef, chapterBackground } from "@game/lib/campaignContent";
 import { earnCoins, grantSkin } from "@game/lib/wallet";
-import type { Theme } from "@game/lib/themes";
+import { CAMPAIGN_THEMES, type Theme } from "@game/lib/themes";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
 import { openPanel } from "@game/lib/ui";
@@ -277,15 +277,64 @@ const NewCards = styled.div`
     gap: 6px;
 `;
 
+// Нова картка - нагорода у вікні результату: велика, вилітає з поворотом і світиться.
 const NewCardRow = styled.div`
     display: flex;
-    gap: 10px;
+    width: 100%;
+    gap: 8px;
     justify-content: center;
 
     & > div {
-        width: 110px;
+        width: min(180px, 46vw);
+        animation: card-in 0.7s cubic-bezier(0.3, 1.5, 0.5, 1) both, card-glow 2.4s ease-in-out 0.7s infinite;
+    }
+
+    /* Дві-три картки за раз (напр. розділ, бос і золото) - ділять ширину вікна порівну. */
+    & > div:not(:only-child) {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        max-width: 150px;
+    }
+
+    & > div:nth-child(2) {
+        animation-delay: 0.15s, 0.85s;
+    }
+
+    & > div:nth-child(3) {
+        animation-delay: 0.3s, 1s;
+    }
+
+    @keyframes card-in {
+        from {
+            opacity: 0;
+            transform: scale(0.4) rotate(-12deg) translateY(20px);
+        }
+    }
+
+    @keyframes card-glow {
+        0%,
+        100% {
+            filter: drop-shadow(0 0 0 rgba(245, 184, 46, 0));
+        }
+        50% {
+            filter: drop-shadow(0 0 14px rgba(245, 184, 46, 0.75));
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        & > div {
+            animation: none;
+        }
     }
 `;
+
+// Відкрити кампанію одразу на вкладці "Альбом" (з вікна результату з новою карткою).
+let albumRequested = false;
+export const openAlbum = (): void => {
+    albumRequested = true;
+    openPanel("campaign");
+};
 
 const DIFF_COLOR: Record<string, [string, string, string]> = {
     easy: ["#2f8a3e", "#fff7e8", "#2f8a3e"],
@@ -341,7 +390,7 @@ type CampaignProps = {
 
 const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t: ReturnType<typeof useT>): string => {
     const parts: string[] = [];
-    if (chapter.rewardSkinId) parts.push(t("campaignRewardSkin", { name: themes?.find((theme) => theme.id === chapter.rewardSkinId)?.name ?? chapter.rewardSkinId }));
+    if (chapter.rewardSkinId) parts.push(t("campaignRewardSkin", { name: [...(themes ?? []), ...CAMPAIGN_THEMES].find((theme) => theme.id === chapter.rewardSkinId)?.name ?? chapter.rewardSkinId }));
     if (chapter.rewardCoins > 0) parts.push(t("campaignRewardCoins", { n: String(chapter.rewardCoins) }));
     return parts.join(" + ");
 };
@@ -473,7 +522,11 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
     const current = currentLevelIndex(progress);
     const [info, setInfo] = useState<number | null>(null);
     // Розділи з рівнями й альбом - дві вкладки екрана кампанії.
-    const [tab, setTab] = useState<"chapters" | "album">("chapters");
+    const [tab, setTab] = useState<"chapters" | "album">(() => {
+        const album = albumRequested;
+        albumRequested = false;
+        return album ? "album" : "chapters";
+    });
     const cardsGot = progress.cards.filter((id) => albumCards().some((card) => card.id === id)).length;
     const total = CAMPAIGN_LEVELS.reduce((sum, level) => sum + (progress.stars[level.id] ?? 0), 0);
 
@@ -621,6 +674,9 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
     const t = useT();
     const progress = useCampaign();
     const [result, setResult] = useState<Result | null>(null);
+    // Підписка на події одна на весь час життя, а теми довантажуються пізніше - беремо актуальні.
+    const themesRef = useRef(themes);
+    themesRef.current = themes;
 
     useEffect(
         () =>
@@ -654,7 +710,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
                             coins,
                             summary: rewardsSince(levelBase, moves),
                             cards: got.cards,
-                            chapters: got.chapters.map((chapter) => t("campaignChapterDone", { name: chapter.name, reward: rewardText(chapter, themes, t) })),
+                            chapters: got.chapters.map((chapter) => t("campaignChapterDone", { name: chapter.name, reward: rewardText(chapter, themesRef.current, t) })),
                         }),
                     900
                 );
@@ -672,6 +728,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
     const nextIndex = result.level + 1;
     const canGoNext = nextIndex < CAMPAIGN_LEVELS.length && isLevelUnlocked(nextIndex, progress);
     const level = CAMPAIGN_LEVELS[result.level];
+    const gotCards = result.cards.length > 0;
 
     const extra =
         result.coins > 0 || result.cards.length || result.chapters.length ? (
@@ -702,11 +759,23 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
             eyebrow={`${t("campaignLevel", { n: String(result.level + 1) })} · ${level?.title ?? ""}`}
             stars={result.stars}
             extra={extra}
-            onClose={() => setResult(null)}
+            onClose={() => {
+                // Нова картка - нагорода: після закриття вікна ведемо в альбом подивитись на неї.
+                setResult(null);
+                if (gotCards) openAlbum();
+            }}
             onRestart={() => start(canGoNext ? nextIndex : result.level)}
             restartLabel={canGoNext ? t("campaignNext") : t("campaignRetry")}
             secondary={
-                canGoNext
+                gotCards
+                    ? {
+                          label: t("albumOpen"),
+                          onClick: () => {
+                              setResult(null);
+                              openAlbum();
+                          },
+                      }
+                    : canGoNext
                     ? { label: t("campaignRetry"), onClick: () => start(result.level) }
                     : {
                           label: t("campaignMap"),
