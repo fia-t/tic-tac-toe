@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { Card, Muted, Page } from "@game/components/pageStyles";
-import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventStatus, shortDate, skinPrice } from "@game/lib/themes";
+import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice } from "@game/lib/themes";
 import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
@@ -58,6 +58,36 @@ const SkinCard = styled.div<{ $on: boolean }>`
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+`;
+
+// Термін івенту - плашка на прев'ю (і в тих, у кого скін уже є: видно, скільки ще триває колекція).
+const PreviewWrap = styled.div`
+    position: relative;
+`;
+
+const EventTag = styled.span<{ $soon: boolean }>`
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    z-index: 1;
+    max-width: calc(100% - 16px);
+    padding: 4px 9px;
+    border-radius: 999px;
+    background: ${({ $soon }) => ($soon ? "#f2b53a" : "#e8452f")};
+    color: ${({ $soon }) => ($soon ? "#4a2c0c" : "#fff8ec")};
+    font: 800 12px/1.15 var(--font-body);
+    box-shadow: 0 3px 8px rgba(90, 30, 10, 0.25);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+`;
+
+const EventTerm = styled.div<{ $soon: boolean }>`
+    margin-top: 2px;
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: ${({ $soon }) => ($soon ? "#b8730c" : "#c8382a")};
 `;
 
 // Прев'ю - маленьке поле 3×3 у фоні скіна з кількома фішками.
@@ -144,6 +174,20 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
         equipSkin(id);
         onPlay();
     };
+    // "до 01.11 · ще 13 днів" (останній день - "останній день").
+    const eventTerm = (skin: Theme): string => {
+        const status = eventStatus(skin, nowDate);
+        if (status === "soon") return t("shopEventSoon", { date: shortDate(skin.eventStart ?? "") });
+        if (status !== "live") return "";
+        const left = eventDaysLeft(skin, nowDate);
+        if (left === null) return t("shopEventLive");
+        const n = left % 100;
+        const days =
+            left === 1
+                ? t("shopEventLastDay")
+                : t(n % 10 === 1 && n !== 11 ? "shopEventDays_one" : n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14) ? "shopEventDays_few" : "shopEventDays_many", { n: String(left) });
+        return `${t("shopEventUntil", { date: shortDate(skin.eventEnd ?? "") })} · ${days}`;
+    };
     const termLeft = (until: number) => {
         const minutes = Math.max(0, Math.ceil((until - now) / 60_000));
         return t("shopTermLeft", { h: String(Math.floor(minutes / 60)), m: String(minutes % 60) });
@@ -173,18 +217,9 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                     const missing = price - wallet.coins;
                     const status = eventStatus(skin, nowDate);
                     const soon = status === "soon" && !unlocked;
-                    const eventNote =
-                        status === "soon"
-                            ? t("shopEventSoon", { date: shortDate(skin.eventStart ?? "") })
-                            : status === "live"
-                            ? skin.eventEnd
-                                ? t("shopEventUntil", { date: shortDate(skin.eventEnd) })
-                                : t("shopEventLive")
-                            : "";
+                    const term = eventTerm(skin);
                     const note = isOn
                         ? `✓ ${t("shopEquipped")}`
-                        : eventNote && !owned
-                        ? eventNote
                         : rewardOf && !owned
                         ? t("shopCampaignReward", { name: rewardOf.name })
                         : !unlocked && price > 0 && missing > 0
@@ -194,13 +229,17 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                             : "";
                     return (
                         <SkinCard key={skin.id} $on={isOn}>
-                            <Preview $bg={skin.backgroundUrl} aria-hidden="true">
-                                {SAMPLE.map((v, i) => (
-                                    <PreviewCell key={i}>{v && <img src={v === "X" ? skin.xMarkerUrl : skin.oMarkerUrl} alt="" />}</PreviewCell>
-                                ))}
-                            </Preview>
+                            <PreviewWrap>
+                                {term && <EventTag $soon={status === "soon"}>{status === "soon" ? t("shopSoon") : t("shopEventLive")}</EventTag>}
+                                <Preview $bg={skin.backgroundUrl} aria-hidden="true">
+                                    {SAMPLE.map((v, i) => (
+                                        <PreviewCell key={i}>{v && <img src={v === "X" ? skin.xMarkerUrl : skin.oMarkerUrl} alt="" />}</PreviewCell>
+                                    ))}
+                                </Preview>
+                            </PreviewWrap>
                             <div>
                                 <h3 title={skin.name}>{skin.name}</h3>
+                                {term && <EventTerm $soon={status === "soon"}>{term}</EventTerm>}
                                 <Muted style={{ minHeight: 19, color: isOn ? "#0f6f8c" : undefined, fontWeight: isOn ? 800 : undefined }}>{note}</Muted>
                             </div>
                             {unlocked ? (

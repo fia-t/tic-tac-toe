@@ -50,6 +50,15 @@ export const eventStatus = (theme: Theme, now: Date = new Date()): EventStatus =
     return "live";
 };
 
+// Скільки днів івенту лишилось, включно з сьогоднішнім (1 - останній день); null - без дати кінця.
+export const eventDaysLeft = (theme: Theme, now: Date = new Date()): number | null => {
+    if (!theme.eventEnd || !DATE_RE.test(theme.eventEnd)) return null;
+    const [y, m, d] = theme.eventEnd.split("-").map(Number);
+    const end = Date.UTC(y, m - 1, d);
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((end - today) / 86_400_000) + 1;
+};
+
 // "2026-10-24" -> "24.10"
 export const shortDate = (value: string): string => (DATE_RE.test(value) ? `${value.slice(8, 10)}.${value.slice(5, 7)}` : value);
 
