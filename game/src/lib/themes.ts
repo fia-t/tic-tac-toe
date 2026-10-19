@@ -28,9 +28,30 @@ export type Theme = {
     createdAt: Timestamp | null;
     // Ціна в магазині скінів (монети). Не задано в адмінці - DEFAULT_SKIN_PRICE; 0 - безкоштовно.
     price?: number;
-    // Евентовий (сезонний) скін - у магазині показується першим.
+    // Евентовий (сезонний) скін - у магазині показується першим, купується лише в дати івенту.
     event?: boolean;
+    // Дати івенту "YYYY-MM-DD" (включно, за часом гравця). До старту - "Скоро", після кінця
+    // скін зникає з магазину (у кого він уже є - лишається). Порожньо - без обмеження з того боку.
+    eventStart?: string;
+    eventEnd?: string;
 };
+
+export type EventStatus = "none" | "soon" | "live" | "ended";
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const localDay = (date: Date): string =>
+    `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+export const eventStatus = (theme: Theme, now: Date = new Date()): EventStatus => {
+    if (!theme.event) return "none";
+    const today = localDay(now);
+    if (theme.eventStart && today < theme.eventStart) return "soon";
+    if (theme.eventEnd && today > theme.eventEnd) return "ended";
+    return "live";
+};
+
+// "2026-10-24" -> "24.10"
+export const shortDate = (value: string): string => (DATE_RE.test(value) ? `${value.slice(8, 10)}.${value.slice(5, 7)}` : value);
 
 export const DEFAULT_SKIN_PRICE = 300;
 export const skinPrice = (theme: Theme): number =>
@@ -87,6 +108,8 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
     createdAt: (data.createdAt as Timestamp) ?? null,
     price: typeof data.price === "number" ? data.price : undefined,
     event: data.event === true,
+    eventStart: typeof data.eventStart === "string" && DATE_RE.test(data.eventStart) ? data.eventStart : undefined,
+    eventEnd: typeof data.eventEnd === "string" && DATE_RE.test(data.eventEnd) ? data.eventEnd : undefined,
 });
 
 // Публічний список активних тем - читає будь-хто, навіть до анонімного входу

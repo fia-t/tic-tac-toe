@@ -9,8 +9,12 @@ import {
     deleteTheme,
     uploadThemeImage,
     DEFAULT_SKIN_PRICE,
+    eventStatus,
+    shortDate,
+    type EventStatus,
 } from "@game/lib/themes";
 import { deleteField } from "firebase/firestore";
+import styled from "styled-components";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
 import {
     Section,
@@ -44,6 +48,41 @@ const describeError = (fallback: string, err: unknown): string => {
     const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code: unknown }).code) : null;
     console.error(fallback, err);
     return code ? `${fallback} (${code})` : fallback;
+};
+
+// Івентова тема: у магазині першою, купується лише в дати івенту; до старту - "Скоро",
+// після кінця зникає з магазину (у кого вже є - лишається).
+const EventBox = styled.div<{ $on: boolean }>`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px;
+    border-radius: 12px;
+    background: ${({ $on }) => ($on ? "rgba(232, 69, 47, 0.08)" : "transparent")};
+    border: 1px dashed ${({ $on }) => ($on ? "rgba(232, 69, 47, 0.45)" : "rgba(139, 101, 60, 0.25)")};
+`;
+
+const DateRow = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+`;
+
+const EventChip = styled.span<{ $status: EventStatus }>`
+    margin-left: auto;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: ${({ $status }) => ($status === "live" ? "#dcefd9" : $status === "soon" ? "rgba(245, 184, 46, 0.25)" : "rgba(139, 101, 60, 0.12)")};
+    color: ${({ $status }) => ($status === "live" ? "#2f8a3e" : $status === "soon" ? "#8a5a0a" : "#8b653c")};
+`;
+
+const EVENT_LABEL: Record<EventStatus, (theme: Theme) => string> = {
+    none: () => "",
+    soon: (theme) => `Скоро · з ${shortDate(theme.eventStart ?? "")}`,
+    live: (theme) => (theme.eventEnd ? `Іде · до ${shortDate(theme.eventEnd)}` : "Іде"),
+    ended: (theme) => `Завершено ${shortDate(theme.eventEnd ?? "")}`,
 };
 
 // Управління каталогом тем (фон + скіни X/O) - без змін у логіці, лише
@@ -124,6 +163,29 @@ export const ThemesSection: React.FC = () => {
             await refreshThemes();
         } catch (err) {
             setThemesError(describeError("Не вдалося зберегти ціну.", err));
+        } finally {
+            setBusyThemeId(null);
+        }
+    };
+
+    // Івент: позначка й дати "YYYY-MM-DD" (порожня дата - поле прибирається з документа).
+    const handleEventSave = async (theme: Theme, patch: { event?: boolean; eventStart?: string; eventEnd?: string }) => {
+        const next = { event: theme.event ?? false, eventStart: theme.eventStart ?? "", eventEnd: theme.eventEnd ?? "", ...patch };
+        if (next.eventStart && next.eventEnd && next.eventStart > next.eventEnd) {
+            setThemesError("Дата початку івенту пізніша за дату кінця.");
+            return;
+        }
+        setBusyThemeId(theme.id);
+        setThemesError(null);
+        try {
+            await updateTheme(theme.id, {
+                event: next.event,
+                eventStart: next.eventStart || deleteField(),
+                eventEnd: next.eventEnd || deleteField(),
+            } as Partial<Theme>);
+            await refreshThemes();
+        } catch (err) {
+            setThemesError(describeError("Не вдалося зберегти івент.", err));
         } finally {
             setBusyThemeId(null);
         }
@@ -211,6 +273,38 @@ export const ThemesSection: React.FC = () => {
                                             onBlur={(e) => void handlePriceSave(theme, e.target.value)}
                                         />
                                     </SmallLabel>
+
+                                    <EventBox $on={Boolean(theme.event)}>
+                                        <CheckboxLabel>
+                                            <input type="checkbox" checked={Boolean(theme.event)} disabled={busy} onChange={() => void handleEventSave(theme, { event: !theme.event })} />
+                                            Івентова тема
+                                            {theme.event && <EventChip $status={eventStatus(theme)}>{EVENT_LABEL[eventStatus(theme)](theme)}</EventChip>}
+                                        </CheckboxLabel>
+                                        {theme.event && (
+                                            <DateRow>
+                                                <SmallLabel>
+                                                    З
+                                                    <TextInput
+                                                        type="date"
+                                                        value={theme.eventStart ?? ""}
+                                                        max={theme.eventEnd || undefined}
+                                                        disabled={busy}
+                                                        onChange={(e) => void handleEventSave(theme, { eventStart: e.target.value })}
+                                                    />
+                                                </SmallLabel>
+                                                <SmallLabel>
+                                                    По (включно)
+                                                    <TextInput
+                                                        type="date"
+                                                        value={theme.eventEnd ?? ""}
+                                                        min={theme.eventStart || undefined}
+                                                        disabled={busy}
+                                                        onChange={(e) => void handleEventSave(theme, { eventEnd: e.target.value })}
+                                                    />
+                                                </SmallLabel>
+                                            </DateRow>
+                                        )}
+                                    </EventBox>
 
                                     {!complete && <ErrorText style={{ margin: 0 }}>Додайте всі 3 зображення, щоб тема стала доступною в грі.</ErrorText>}
 

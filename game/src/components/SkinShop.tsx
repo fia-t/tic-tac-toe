@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { Card, Muted, Page } from "@game/components/pageStyles";
-import { CLASSIC_THEME, Theme, skinPrice } from "@game/lib/themes";
+import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventStatus, shortDate, skinPrice } from "@game/lib/themes";
 import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
@@ -129,8 +129,15 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
         return () => clearInterval(timer);
     }, []);
 
-    // Евентові (сезонні) скіни - на початку списку.
-    const skins = [CLASSIC_THEME, ...themes.filter((theme) => theme.id !== CLASSIC_THEME.id)].sort((a, b) => Number(Boolean(b.event)) - Number(Boolean(a.event)));
+    // Скіни-нагороди кампанії не продаються - у магазині лише ті, що гравець уже отримав (щоб
+    // обрати). Евентові: до старту - "Скоро", після кінця - лише в тих, у кого вже є.
+    // Порядок: живі івенти, майбутні івенти, решта.
+    const nowDate = new Date(now);
+    const isReward = (skin: Theme) => CAMPAIGN_THEMES.some((item) => item.id === skin.id) || CAMPAIGN_CHAPTERS.some((chapter) => chapter.rewardSkinId === skin.id);
+    const rank = (skin: Theme) => ({ live: 0, soon: 1, none: 2, ended: 2 })[eventStatus(skin, nowDate)];
+    const skins = [CLASSIC_THEME, ...themes.filter((theme) => theme.id !== CLASSIC_THEME.id)]
+        .filter((skin) => (isReward(skin) || eventStatus(skin, nowDate) === "ended" ? isSkinUnlocked(skin.id, wallet) : true))
+        .sort((a, b) => rank(a) - rank(b));
     const equipped = getEquippedSkinId(wallet);
 
     const play = (id: string) => {
@@ -164,8 +171,20 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                     const isOn = equipped === skin.id;
                     const trialUntil = !owned && unlocked ? wallet.trials[skin.id] ?? 0 : 0;
                     const missing = price - wallet.coins;
+                    const status = eventStatus(skin, nowDate);
+                    const soon = status === "soon" && !unlocked;
+                    const eventNote =
+                        status === "soon"
+                            ? t("shopEventSoon", { date: shortDate(skin.eventStart ?? "") })
+                            : status === "live"
+                            ? skin.eventEnd
+                                ? t("shopEventUntil", { date: shortDate(skin.eventEnd) })
+                                : t("shopEventLive")
+                            : "";
                     const note = isOn
                         ? `✓ ${t("shopEquipped")}`
+                        : eventNote && !owned
+                        ? eventNote
                         : rewardOf && !owned
                         ? t("shopCampaignReward", { name: rewardOf.name })
                         : !unlocked && price > 0 && missing > 0
@@ -200,7 +219,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                 </>
                             ) : (
                                 <>
-                                    {rewardOf ? (
+                                    {soon ? (
+                                        <GameButton size="lg" block disabled>
+                                            {t("shopSoon")}
+                                        </GameButton>
+                                    ) : rewardOf ? (
                                         <GameButton size="lg" block disabled>
                                             {t("shopCampaignLocked")}
                                         </GameButton>
@@ -216,7 +239,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                         )}
                                     </GameButton>
                                     )}
-                                    {onRewardedAd && (
+                                    {onRewardedAd && !soon && !rewardOf && (
                                         <GameButton size="lg" block onClick={() => void trial(skin.id)}>
                                             {t("shopTrial")}
                                         </GameButton>
