@@ -1,8 +1,8 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import styled, { css, keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import { ActionIcon, DiffButton, DiffGroup, ModButton, ModIcon, ModRow, RoundButton, tipCss } from "@game/components/GameOptions";
+import { ActionIcon, DiffButton, DiffGroup, ModIcon, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { InfoTip } from "@game/components/HomeScreen";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
@@ -97,10 +97,6 @@ const BarActions = styled(BarGroupRow)`
     }
 `;
 
-// Найбільше іконок модифікаторів серед полів (+ "без модифікатора") - під них резервується
-// ширина ряду, щоб при перемиканні поля смуга не стрибала.
-const MAX_MODS = 1 + Math.max(...Object.values(MODIFIERS_BY_MODE).map((list) => list.length));
-
 const BarLabel = styled.div`
     display: inline-flex;
     align-items: center;
@@ -121,22 +117,11 @@ const PushRight = styled.div`
     gap: 8px 10px;
     min-width: 0;
 
-    /* Іконки модифікаторів щільніше - щоб на широкому екрані вся смуга вміщалась в один рядок. */
-    ${ModRow} {
-        gap: 4px;
-        min-width: calc(${MAX_MODS} * 40px + ${MAX_MODS - 1} * 4px);
-    }
-
     @media (max-width: 760px) {
         flex-basis: 100%;
         margin-left: 0;
     }
 
-    @media (max-width: 480px) {
-        ${ModRow} {
-            min-width: calc(${MAX_MODS} * 36px + ${MAX_MODS - 1} * 4px);
-        }
-    }
 
     @media (max-width: 480px) {
         gap: 6px 10px;
@@ -208,28 +193,153 @@ const BarDiff = styled(DiffButton)`
     }
 `;
 
-const BarMod = styled(ModButton)`
+// Модифікатор - одна кнопка з поточним (іконка + назва) і список під нею. Ширина кнопки стала,
+// тож смуга не змінюється ні від вибору, ні від поля (у полів різна кількість модифікаторів).
+const ModPicker = styled.div`
+    position: relative;
+`;
+
+const ModToggle = styled.button`
+    ${gameButtonCss("sm")}
+
     && {
         --gb-c: 12px;
-        width: 40px;
-        height: 40px;
+        justify-content: flex-start;
+        gap: 6px;
+        width: 204px;
         min-height: 40px;
+        padding: 0 4px;
+        font-size: 14px;
+    }
+
+    & > span {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    & > svg:last-child {
+        transition: transform 0.15s ease;
+    }
+
+    &[aria-expanded="true"] > svg:last-child {
+        transform: rotate(180deg);
     }
 
     @media (max-width: 480px) {
         && {
             --gb-c: 11px;
-            width: 36px;
-            height: 36px;
+            width: 188px;
             min-height: 36px;
-        }
-
-        & > svg {
-            width: 18px;
-            height: 18px;
+            font-size: 13px;
         }
     }
 `;
+
+const ModMenu = styled.div`
+    position: absolute;
+    top: calc(100% + 18px);
+    right: -12px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: min(300px, calc(100vw - 32px));
+    padding: 6px;
+    border-radius: 16px;
+    background: #fff7e8;
+    box-shadow:
+        inset 0 0 0 2px #ebcb98,
+        0 14px 30px rgba(73, 48, 31, 0.25);
+
+    /* Коли "Модифікатор" іде окремим рядком від лівого краю - список теж від лівого краю. */
+    @media (max-width: 760px) {
+        right: auto;
+        left: -12px;
+    }
+`;
+
+const ModOption = styled.button`
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    align-items: center;
+    column-gap: 10px;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 11px;
+    background: transparent;
+    color: #49301f;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    & > i {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #f6e2b8;
+        box-shadow: inset 0 -2px 0 #ebcb98;
+    }
+
+    b {
+        display: block;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    small {
+        display: block;
+        margin-top: 2px;
+        color: #7a5530;
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+    em {
+        margin-left: 6px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #ffe3a3;
+        color: #7a4a0c;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background: #fbeccd;
+        }
+    }
+
+    &[aria-checked="true"] {
+        background: #f3dcae;
+    }
+
+    &[aria-checked="true"] > i {
+        background: #815532;
+        box-shadow: none;
+        color: #fff7e8;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: -3px;
+    }
+`;
+
+const Chevron = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 9l7 7 7-7" />
+    </svg>
+);
+
 
 // Ціль виклику дня / рівня кампанії і кнопка "Звичайна гра".
 const GoalBanner = styled.div`
@@ -309,14 +419,21 @@ const lineIn = keyframes`
     to { opacity: 1; transform: none; }
 `;
 
+const turnPulse = keyframes`
+    0%, 100% { box-shadow: 0 0 0 0 rgba(15, 111, 140, 0.4); }
+    50% { box-shadow: 0 0 0 6px rgba(15, 111, 140, 0); }
+`;
+
 // Підказка-статус: статичний рядок; новий текст плавно проявляється (key = текст).
-export const TurnLine = styled.div`
+// Хід гравця ($mine) - бірюзова плашка з легкою пульсацією, щоб "Твій хід" було видно одразу.
+// Висота однакова з плашкою і без - рядок рахунку не стрибає.
+export const TurnLine = styled.div<{ $mine?: boolean }>`
     display: flex;
     align-items: center;
     gap: 8px;
     flex: 1 1 auto;
     min-width: 0;
-    min-height: 22px;
+    min-height: 32px;
     color: #0f6f8c;
     font-size: 16px;
     font-weight: 800;
@@ -324,9 +441,40 @@ export const TurnLine = styled.div`
     text-shadow: 0 1px 0 rgba(255, 250, 235, 0.8);
     animation: ${lineIn} 0.35s ease both;
 
+    ${({ $mine }) =>
+        $mine &&
+        css`
+            flex: 0 1 auto;
+            padding: 3px 14px 3px 4px;
+            border-radius: 18px;
+            background: linear-gradient(180deg, #1a8aa8, #0f6f8c);
+            color: #fff7e8;
+            text-shadow: 0 1px 1px rgba(5, 40, 45, 0.35);
+            animation:
+                ${lineIn} 0.35s ease both,
+                ${turnPulse} 1.8s ease-in-out 0.35s infinite;
+        `}
+
+    ${({ $mine }) =>
+        !$mine &&
+        css`
+            color: #8a6a48;
+        `}
+
     @media (prefers-reduced-motion: reduce) {
         animation: none;
     }
+`;
+
+// Значок фішки гравця в плашці "Твій хід".
+const TurnMark = styled.span`
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff7e8;
 `;
 
 const Cross = () => (
@@ -469,6 +617,8 @@ type GameScreenProps = {
     score: { ai: number; human: number };
     humanName: string | null;
     status: string;
+    // Зараз хід гравця - статус показується помітною плашкою.
+    myTurn?: boolean;
     // Підказка новачку замість статусу (перша партія, ще жодного ходу).
     firstHint?: boolean;
     over: boolean;
@@ -495,6 +645,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     score,
     humanName,
     status,
+    myTurn = false,
     firstHint = false,
     over,
     timer,
@@ -512,6 +663,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const booster = useBoosters(boosters.resetKey);
     const timerBoost = useMoveTimerBoost();
     const quick = run === null;
+    const [modOpen, setModOpen] = useState(false);
+    const modRef = useRef<HTMLDivElement>(null);
+
+    // Список модифікаторів закривається кліком поза ним і Escape.
+    useEffect(() => {
+        if (!modOpen) return;
+        const onDown = (event: PointerEvent) => {
+            if (!modRef.current?.contains(event.target as Node)) setModOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setModOpen(false);
+        };
+        document.addEventListener("pointerdown", onDown);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("pointerdown", onDown);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [modOpen]);
 
     const openFriend = async () => {
         trackEvent("friend_modal_open", { from: mode });
@@ -559,7 +729,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </>
     );
 
-    const modTip = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none")) + (m && m === weekly ? ` · ${t("weeklyModifierTag")}` : "");
+    const modName = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
 
     const goal = run
         ? run.kind === "campaign"
@@ -654,20 +824,47 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     {t("modifierLabel")}
                                     <InfoTip text={t("infoModGame")} />
                                 </BarLabel>
-                                <ModRow role="group" aria-labelledby="bar-mod">
-                                    {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
-                                        <BarMod
-                                            key={m ?? "none"}
-                                            type="button"
-                                            aria-pressed={activeModifier === m}
-                                            aria-label={modTip(m)}
-                                            data-tip={modTip(m)}
-                                            onClick={() => pickModifier(m)}
-                                        >
-                                            <ModIcon id={m} />
-                                        </BarMod>
-                                    ))}
-                                </ModRow>
+                                <ModPicker ref={modRef}>
+                                    <ModToggle
+                                        type="button"
+                                        aria-haspopup="menu"
+                                        aria-expanded={modOpen}
+                                        aria-labelledby="bar-mod bar-mod-value"
+                                        data-selected={activeModifier !== null}
+                                        onClick={() => setModOpen((open) => !open)}
+                                    >
+                                        <ModIcon id={activeModifier} size={20} />
+                                        <span id="bar-mod-value">{modName(activeModifier)}</span>
+                                        <Chevron />
+                                    </ModToggle>
+                                    {modOpen && (
+                                        <ModMenu role="menu" aria-labelledby="bar-mod">
+                                            {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
+                                                <ModOption
+                                                    key={m ?? "none"}
+                                                    type="button"
+                                                    role="menuitemradio"
+                                                    aria-checked={activeModifier === m}
+                                                    onClick={() => {
+                                                        pickModifier(m);
+                                                        setModOpen(false);
+                                                    }}
+                                                >
+                                                    <i>
+                                                        <ModIcon id={m} size={20} />
+                                                    </i>
+                                                    <span>
+                                                        <b>
+                                                            {modName(m)}
+                                                            {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
+                                                        </b>
+                                                        <small>{m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc")}</small>
+                                                    </span>
+                                                </ModOption>
+                                            ))}
+                                        </ModMenu>
+                                    )}
+                                </ModPicker>
                             </BarGroup>
                         </PushRight>
                     </>
@@ -698,12 +895,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <b>{score.human}</b>
                     <span>{humanName ?? t("player")}</span>
                 </ScorePill>
-                <TurnLine key={firstHint ? "first" : timerBoost.expired ? "expired" : status} role="status" aria-live="polite">
-                    {firstHint ? (
-                        <>
+                <TurnLine
+                    key={firstHint ? "first" : timerBoost.expired ? "expired" : status}
+                    $mine={myTurn && !over && !timerBoost.expired}
+                    role="status"
+                    aria-live="polite"
+                >
+                    {myTurn && !over && !timerBoost.expired && (
+                        <TurnMark>
                             <Cross />
-                            {t("firstMoveHint")}
-                        </>
+                        </TurnMark>
+                    )}
+                    {firstHint ? (
+                        t("firstMoveHint")
                     ) : timerBoost.expired && !over ? (
                         t("timerExpired")
                     ) : (

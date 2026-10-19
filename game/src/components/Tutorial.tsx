@@ -37,9 +37,12 @@ const STEPS: Step[] = [
     { target: "menu", title: "tutorialTitle4", text: "tutorialText4" },
 ];
 
+// Нейтральне сяйво - кремове кільце з тонким темним контуром і м'яким світлим ореолом:
+// пасує до будь-якого скіна поля і видно і на світлому, і на темному фоні.
+const RING = "0 0 0 2px rgba(73, 48, 31, 0.55), 0 0 0 5px rgba(255, 250, 238, 0.95)";
 const pulse = keyframes`
-    0%, 100% { box-shadow: 0 0 0 3px rgba(31, 179, 217, 0.9), 0 0 0 7px rgba(31, 179, 217, 0.25); }
-    50% { box-shadow: 0 0 0 3px rgba(31, 179, 217, 0.9), 0 0 0 12px rgba(31, 179, 217, 0.1); }
+    0%, 100% { box-shadow: ${RING}, 0 0 12px 7px rgba(255, 250, 238, 0.75); }
+    50% { box-shadow: ${RING}, 0 0 20px 13px rgba(255, 250, 238, 0.35); }
 `;
 
 // Підсвітка поточного місця - на елементі з data-tour="..." (GameScreen, TopBar).
@@ -52,7 +55,7 @@ const Highlight = createGlobalStyle<{ $target: string }>`
     @media (prefers-reduced-motion: reduce) {
         [data-tour="${({ $target }) => $target}"] {
             animation: none;
-            box-shadow: 0 0 0 3px rgba(31, 179, 217, 0.9);
+            box-shadow: ${RING};
         }
     }
 `;

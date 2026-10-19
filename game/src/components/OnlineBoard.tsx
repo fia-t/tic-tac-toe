@@ -273,7 +273,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     <b>{score.O}</b>
                     <span>{names.O}</span>
                 </ScorePill>
-                <TurnLine key={status} role="status" aria-live="polite">
+                <TurnLine key={status} $mine={myTurn && !isFinished} role="status" aria-live="polite">
                     {status}
                 </TurnLine>
                 {isFinished &&

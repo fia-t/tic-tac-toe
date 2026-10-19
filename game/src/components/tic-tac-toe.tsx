@@ -592,6 +592,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                     score={score}
                     humanName={shownName}
                     status={statusText}
+                    myTurn={playerTurn}
                     firstHint={isNewPlayer && !isGameOver && board.every((row) => row.every((cell) => cell === null))}
                     over={isGameOver}
                     timer={modifier3 === "timer" ? timerLeft : null}
