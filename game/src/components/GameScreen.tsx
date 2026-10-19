@@ -41,18 +41,22 @@ export const GameRoot = styled.div<{ $timer?: boolean }>`
     }
 `;
 
-// Смуга над полем - один рядок; на вузькому екрані прокручується вбік.
 // Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
-// Кнопки вирівняні по низу (у груп над ними підпис); що не влазить - переноситься рядком нижче.
+// Кнопки вирівняні по низу (у груп над ними підпис). На широкому екрані - один рядок; від 760px
+// і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
 const Bar = styled.div`
     position: relative;
     z-index: 25;
     display: flex;
     align-items: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px 6px;
     width: 100%;
     min-width: 0;
+
+    @media (max-width: 760px) {
+        flex-wrap: wrap;
+    }
 
     @media (max-width: 480px) {
         gap: 6px 4px;
@@ -75,6 +79,27 @@ const BarGroupRow = styled.div`
         gap: 4px;
     }
 `;
+
+// "Заново" і "Гра з другом" у смузі - менші за бустери біля поля.
+const BarActions = styled(BarGroupRow)`
+    && ${RoundButton} {
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
+    }
+
+    @media (max-width: 480px) {
+        && ${RoundButton} {
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+        }
+    }
+`;
+
+// Найбільше іконок модифікаторів серед полів (+ "без модифікатора") - під них резервується
+// ширина ряду, щоб при перемиканні поля смуга не стрибала.
+const MAX_MODS = 1 + Math.max(...Object.values(MODIFIERS_BY_MODE).map((list) => list.length));
 
 const BarLabel = styled.div`
     display: inline-flex;
@@ -99,11 +124,18 @@ const PushRight = styled.div`
     /* Іконки модифікаторів щільніше - щоб на широкому екрані вся смуга вміщалась в один рядок. */
     ${ModRow} {
         gap: 4px;
+        min-width: calc(${MAX_MODS} * 40px + ${MAX_MODS - 1} * 4px);
     }
 
-    /* Коли смуга не вміщається в рядок, "Бот" і "Модифікатор" ідуть другим рядком - від лівого краю. */
     @media (max-width: 760px) {
+        flex-basis: 100%;
         margin-left: 0;
+    }
+
+    @media (max-width: 480px) {
+        ${ModRow} {
+            min-width: calc(${MAX_MODS} * 36px + ${MAX_MODS - 1} * 4px);
+        }
     }
 
     @media (max-width: 480px) {
@@ -114,8 +146,8 @@ const PushRight = styled.div`
 const ModeTile = styled.button`
     position: relative;
     flex-shrink: 0;
-    width: 52px;
-    height: 52px;
+    width: 46px;
+    height: 46px;
     padding: 0;
     border: none;
     background: transparent;
@@ -575,7 +607,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <Bar data-tour="bar">
                 {quick ? (
                     <>
-                        <BarGroupRow>{actionButtons}</BarGroupRow>
+                        <BarActions>{actionButtons}</BarActions>
                         <BarGroup>
                             <BarLabel id="bar-board">
                                 {t("barBoard")}
