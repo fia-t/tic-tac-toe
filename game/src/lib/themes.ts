@@ -59,6 +59,17 @@ export const eventDaysLeft = (theme: Theme, now: Date = new Date()): number | nu
     return Math.round((end - today) / 86_400_000) + 1;
 };
 
+// Для гаманця: живий івент (перший за порядком) - до кінця якого дня діє, і ті, що вже скінчились.
+export const eventSkinsOf = (themes: Theme[], now: Date = new Date()): { live: { id: string; until: number } | null; ended: string[] } => {
+    const live = themes.find((theme) => eventStatus(theme, now) === "live");
+    const until = (() => {
+        if (!live?.eventEnd) return now.getTime() + 365 * 86_400_000;
+        const [y, m, d] = live.eventEnd.split("-").map(Number);
+        return new Date(y, m - 1, d + 1).getTime();
+    })();
+    return { live: live ? { id: live.id, until } : null, ended: themes.filter((theme) => eventStatus(theme, now) === "ended").map((theme) => theme.id) };
+};
+
 // "2026-10-24" -> "24.10"
 export const shortDate = (value: string): string => (DATE_RE.test(value) ? `${value.slice(8, 10)}.${value.slice(5, 7)}` : value);
 

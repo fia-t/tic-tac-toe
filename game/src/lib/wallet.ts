@@ -11,8 +11,12 @@ export type WalletState = {
     coins: number;
     owned: string[];
     equipped: string;
-    // Пробні скіни (за rewarded-рекламу): id -> до якого моменту (ms) діє.
+    // Пробні скіни (за rewarded-рекламу): id -> до якого моменту (ms) діє. Івентовий скін теж
+    // лежить тут - безкоштовно до кінця івенту.
     trials: Record<string, number>;
+    // Івентові скіни, які гра вже обрала гравцеві ("on") і вже повернула на "Класику" після
+    // кінця ("off") - щоб робити це лише раз і не перебивати власний вибір гравця.
+    events: Record<string, "on" | "off">;
 };
 
 export const FREE_SKIN_ID = "classic";
@@ -30,7 +34,7 @@ const REWARDS = {
     dailyStreakCap: 7,
 };
 
-const startState = (): WalletState => ({ coins: START_COINS, owned: [FREE_SKIN_ID], equipped: FREE_SKIN_ID, trials: {} });
+const startState = (): WalletState => ({ coins: START_COINS, owned: [FREE_SKIN_ID], equipped: FREE_SKIN_ID, trials: {}, events: {} });
 const EMPTY = startState();
 
 const sanitize = (raw: unknown): WalletState => {
@@ -42,6 +46,7 @@ const sanitize = (raw: unknown): WalletState => {
         owned: owned.includes(FREE_SKIN_ID) ? owned : [FREE_SKIN_ID, ...owned],
         equipped: typeof r.equipped === "string" ? r.equipped : FREE_SKIN_ID,
         trials: r.trials && typeof r.trials === "object" ? (r.trials as Record<string, number>) : {},
+        events: r.events && typeof r.events === "object" ? (r.events as Record<string, "on" | "off">) : {},
     };
 };
 
@@ -74,6 +79,7 @@ const notify = () => listeners.forEach((listener) => listener());
 const reload = async () => {
     state = sanitize(await backend.load());
     notify();
+    applyEventSkins();
 };
 if (typeof window !== "undefined") void reload();
 
@@ -129,6 +135,34 @@ export const equipSkin = (id: string): void => {
     if (!isSkinUnlocked(id) || state.equipped === id) return;
     commit({ ...state, equipped: id });
     trackEvent("skin_equipped", { skin: id });
+};
+
+// --- івентові скіни ---
+// Поки іде івент, його скін обраний у всіх (у всіх іграх - усе бере getEquippedSkinId) і доступний
+// безкоштовно до кінця івенту. Після кінця, якщо він досі обраний, - назад "Класика".
+export type EventSkins = { live: { id: string; until: number } | null; ended: string[] };
+let eventSkins: EventSkins | null = null;
+
+const applyEventSkins = () => {
+    if (!eventSkins) return;
+    let next = state;
+    for (const id of eventSkins.ended) {
+        if (next.events[id] === "off") continue;
+        next = { ...next, events: { ...next.events, [id]: "off" }, equipped: next.equipped === id ? FREE_SKIN_ID : next.equipped };
+    }
+    const live = eventSkins.live;
+    if (live && !next.events[live.id]) {
+        const trials = next.owned.includes(live.id) ? next.trials : { ...next.trials, [live.id]: Math.max(next.trials[live.id] ?? 0, live.until) };
+        next = { ...next, trials, equipped: live.id, events: { ...next.events, [live.id]: "on" } };
+        trackEvent("event_skin_applied", { skin: live.id });
+    }
+    if (next !== state) commit(next);
+};
+
+// Викликається, щойно завантажено каталог тем (і повторно застосовується після завантаження гаманця).
+export const setEventSkins = (value: EventSkins): void => {
+    eventSkins = value;
+    applyEventSkins();
 };
 
 export const startSkinTrial = (id: string): void => {

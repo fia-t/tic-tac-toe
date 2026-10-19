@@ -18,8 +18,8 @@ import {
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
-import { CLASSIC_THEME, Theme, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
-import { getEquippedSkinId, useWallet } from "@game/lib/wallet";
+import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
+import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
 import { ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeScreen, readTab, type PanelTab } from "@game/components/HomeScreen";
@@ -300,6 +300,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             await preloadThemeImages([CLASSIC_THEME, ...themes]);
             if (cancelled) return;
             setAvailableThemes(themes);
+            // Івентовий скін - одразу обраний у всіх іграх; після кінця івенту - "Класика".
+            setEventSkins(eventSkinsOf(themes));
             setThemeReady(true);
             onReady?.();
         });

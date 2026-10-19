@@ -247,7 +247,8 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                     <GameButton tone="primary" size="lg" block onClick={() => play(skin.id)}>
                                         {t("homePlay")}
                                     </GameButton>
-                                    {trialUntil > now ? (
+                                    {/* Івентовий скін діє до кінця івенту - термін уже під назвою, без відліку годин. */}
+                                    {trialUntil > now && status !== "live" ? (
                                         <Term>
                                             <Clock />
                                             {termLeft(trialUntil)}
