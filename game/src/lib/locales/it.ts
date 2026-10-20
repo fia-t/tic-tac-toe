@@ -407,6 +407,7 @@ const pack: LocalePack = {
         albumNeed_gold: "Raccogli tutte le stelle del capitolo",
         halloweenWin: "Le caramelle sono tue!",
         halloweenLose: "Bu! Un fantasma ti ha rubato le caramelle",
+        halloweenDraw: "Pareggio! Dividiamo le caramelle",
     },
     names: [
         "Ippopotamo Rosa",

@@ -408,6 +408,7 @@ const pack: LocalePack = {
         albumNeed_gold: "Zbierz wszystkie gwiazdki rozdziału",
         halloweenWin: "Cukierki są twoje!",
         halloweenLose: "Bu! Duch ukradł ci cukierki",
+        halloweenDraw: "Remis! Dzielimy się cukierkami",
     },
     names: [
         "Różowy Hipopotam",

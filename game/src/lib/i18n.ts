@@ -425,6 +425,7 @@ const uk = {
     albumNeed_gold: "Збери всі зірки розділу",
     halloweenWin: "Цукерки твої!",
     halloweenLose: "Бу! Привид поцупив твої цукерки",
+    halloweenDraw: "Нічия! Ділимо цукерки навпіл",
 };
 
 export type Key = keyof typeof uk;
@@ -834,6 +835,7 @@ const en: Record<Key, string> = {
     albumNeed_gold: "Collect all stars of the chapter",
     halloweenWin: "Treats are yours!",
     halloweenLose: "Boo! A ghost stole your candy",
+    halloweenDraw: "A draw! Let's split the treats",
 };
 
 const dictionaries: Partial<Record<Locale, Record<Key, string>>> = { uk, en };

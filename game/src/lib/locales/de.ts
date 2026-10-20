@@ -407,6 +407,7 @@ const pack: LocalePack = {
         albumNeed_gold: "Sammle alle Sterne des Kapitels",
         halloweenWin: "Die Süßigkeiten gehören dir!",
         halloweenLose: "Buh! Ein Geist hat deine Süßigkeiten geklaut",
+        halloweenDraw: "Unentschieden! Wir teilen die Süßigkeiten",
     },
     names: [
         "Rosa Nilpferd",

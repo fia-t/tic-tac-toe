@@ -10,7 +10,8 @@ import { useT } from "@game/lib/i18n";
 
 // Результат партії у вбудованій грі (iframe у новині): без монет, досвіду й "До меню" - лише
 // заголовок і "Грати ще раз". Для хелловінського скіна - анімація на весь екран: за перемогу
-// в гарбуз-кошик сиплються цукерки, за програш привид з павуком влаштовують капость.
+// в гарбуз-кошик сиплються цукерки, за програш привид з павуком влаштовують капость, за нічию
+// два усміхнені гарбузи перекидають одне одному цукерку.
 
 type Result = "win" | "lose" | "draw";
 
@@ -36,7 +37,8 @@ const Title = styled.h2<{ $result: Result; $spooky?: boolean }>`
     margin: 4px 0 14px;
     font-size: clamp(24px, 7vw, 32px);
     font-weight: 900;
-    color: ${({ $result, $spooky }) => ($spooky ? ($result === "win" ? "#d9620f" : "#5b2a86") : $result === "win" ? "#0f6f8c" : $result === "lose" ? "#b32f1c" : "#49301f")};
+    color: ${({ $result, $spooky }) =>
+        $spooky ? ($result === "lose" ? "#5b2a86" : "#d9620f") : $result === "win" ? "#0f6f8c" : $result === "lose" ? "#b32f1c" : "#49301f"};
 `;
 
 const PrimaryButton = styled(PillButton)`
@@ -308,15 +310,91 @@ const Prank = () => {
     );
 };
 
+// --- нічия: гарбузи-друзі по боках над вікном і цукерка, що перелітає між ними ---
+
+const hop = keyframes`
+    0%, 100% { transform: translateY(0) scaleY(1); }
+    40% { transform: translateY(-18px) scaleY(1.04); }
+    55% { transform: translateY(0) scaleY(0.92); }
+`;
+
+const Buddy = styled.div<{ $side: "left" | "right" }>`
+    position: absolute;
+    bottom: calc(214px + env(safe-area-inset-bottom, 0px));
+    ${({ $side }) => ($side === "left" ? "left: 10%;" : "right: 10%;")}
+    width: 92px;
+    animation: ${hop} 1.4s ease-in-out ${({ $side }) => ($side === "left" ? "0s" : "0.7s")} infinite;
+    ${reduced}
+`;
+
+// Цукерка летить по дузі: зовнішній шар - рух уздовж (туди-назад), внутрішній - вгору-вниз удвічі
+// частіше, тож разом виходить параболя від гарбуза до гарбуза.
+const across = keyframes`
+    from { transform: translateX(0); }
+    to { transform: translateX(calc(80vw - 92px)); }
+`;
+
+const arc = keyframes`
+    from { transform: translateY(0) rotate(0deg); }
+    to { transform: translateY(-130px) rotate(200deg); }
+`;
+
+const Toss = styled.div`
+    position: absolute;
+    left: calc(10% + 24px);
+    bottom: calc(290px + env(safe-area-inset-bottom, 0px));
+    width: 44px;
+    animation: ${across} 1.4s linear infinite alternate;
+    ${reduced}
+
+    & > div {
+        animation: ${arc} 0.7s ease-out infinite alternate;
+        ${reduced}
+    }
+`;
+
+const FriendlyPumpkin = () => (
+    <svg viewBox="0 0 100 92" aria-hidden="true">
+        <path d="M50 14c2-8 8-12 14-12" stroke="#4d7a2a" strokeWidth="6" fill="none" strokeLinecap="round" />
+        <ellipse cx="50" cy="56" rx="46" ry="34" fill="#f07a14" />
+        <path d="M50 22c-7 10-7 58 0 68M50 22c7 10 7 58 0 68M28 26c-10 12-10 48 0 60M72 26c10 12 10 48 0 60" stroke="#c95a0a" strokeWidth="3" fill="none" />
+        <ellipse cx="35" cy="50" rx="6" ry="8" fill="#3b1a05" />
+        <ellipse cx="65" cy="50" rx="6" ry="8" fill="#3b1a05" />
+        <circle cx="37" cy="47" r="2" fill="#fff4dc" />
+        <circle cx="67" cy="47" r="2" fill="#fff4dc" />
+        <path d="M34 66c8 10 24 10 32 0" stroke="#3b1a05" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <ellipse cx="24" cy="64" rx="6" ry="4" fill="#ff9f6b" opacity="0.7" />
+        <ellipse cx="76" cy="64" rx="6" ry="4" fill="#ff9f6b" opacity="0.7" />
+    </svg>
+);
+
+const CandyShare = () => (
+    <Stage $tint="radial-gradient(circle at 50% 45%, rgba(255, 190, 90, 0.2), rgba(60, 25, 70, 0.4))">
+        <Buddy $side="left">
+            <FriendlyPumpkin />
+        </Buddy>
+        <Buddy $side="right">
+            <FriendlyPumpkin />
+        </Buddy>
+        <Toss>
+            <div>
+                <WrappedCandy color="#8e44ad" />
+            </div>
+        </Toss>
+    </Stage>
+);
+
 type EmbedResultProps = { result: Result; onClose: () => void; onRestart: () => void };
 
 export const EmbedResult: React.FC<EmbedResultProps> = ({ result, onClose, onRestart }) => {
     const t = useT();
-    const spooky = isHalloweenEmbed() && result !== "draw";
+    const spooky = isHalloweenEmbed();
     const heading = spooky
         ? result === "win"
             ? t("halloweenWin")
-            : t("halloweenLose")
+            : result === "lose"
+              ? t("halloweenLose")
+              : t("halloweenDraw")
         : result === "win"
           ? t("resultWin")
           : result === "lose"
@@ -324,7 +402,15 @@ export const EmbedResult: React.FC<EmbedResultProps> = ({ result, onClose, onRes
             : t("resultDraw");
     return (
         <>
-            {spooky ? result === "win" ? <CandyRain /> : <Prank /> : <Overlay onClick={onClose} style={{ zIndex: 1600 }} />}
+            {!spooky ? (
+                <Overlay onClick={onClose} style={{ zIndex: 1600 }} />
+            ) : result === "win" ? (
+                <CandyRain />
+            ) : result === "lose" ? (
+                <Prank />
+            ) : (
+                <CandyShare />
+            )}
             <Card $low={spooky} role="dialog" aria-modal="true" aria-labelledby="result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                 <ModalCloseButton type="button" onClick={onClose} aria-label={t("close")}>
                     <IconClose size={16} />

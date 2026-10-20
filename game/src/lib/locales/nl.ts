@@ -407,6 +407,7 @@ const pack: LocalePack = {
         albumNeed_gold: "Verzamel alle sterren van het hoofdstuk",
         halloweenWin: "Het snoep is van jou!",
         halloweenLose: "Boe! Een spook heeft je snoep gepikt",
+        halloweenDraw: "Gelijkspel! We delen het snoep",
     },
     names: [
         "Roze Nijlpaard",
