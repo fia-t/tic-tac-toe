@@ -9,7 +9,8 @@ import { levelTitle } from "@game/lib/campaignContent";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
-import { isEmbed } from "@game/lib/embed";
+import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
+import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
@@ -303,6 +304,7 @@ export const ScoreTop = styled.div<{ $wide?: boolean }>`
 `;
 
 export const ScorePill = styled.div`
+    position: relative;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -785,6 +787,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
             <ScoreTop $wide={isEmbed()}>
                 <ScorePill>
+                    {isHalloweenEmbed() && <ScoreCobweb />}
                     <span>{t("ai")}</span>
                     <b>{score.ai}</b>
                     <span>—</span>

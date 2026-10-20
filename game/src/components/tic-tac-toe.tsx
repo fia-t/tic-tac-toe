@@ -5,6 +5,7 @@ import { Board } from "./board";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import { GameLoader } from "@game/components/GameLoader";
 import { HalloweenBackdrop } from "@game/components/HalloweenBackdrop";
+import { HalloweenBats } from "@game/components/HalloweenDecor";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -659,7 +660,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         return (
             <RewardedAdContext.Provider value={undefined}>
                 <ShellVars />
-                {isHalloweenEmbed() && <HalloweenBackdrop />}
+                {isHalloweenEmbed() && (
+                    <>
+                        <HalloweenBackdrop />
+                        <HalloweenBats />
+                    </>
+                )}
                 {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
                 {themeReady ? <AppColumn ref={topRef}>{content}</AppColumn> : content}
             </RewardedAdContext.Provider>

@@ -1,9 +1,10 @@
 "use client";
 import { createGlobalStyle } from "styled-components";
 import { Container } from "@game/components/gameStyles";
+import { AppColumn } from "@game/components/pageStyles";
 
 // Хелловінська атмосфера гри в новині (осінній скін): замість пляжного неба - сутінки з
-// місяцем, зорями й кажанами, внизу - купки опалого листя; на полі поверх трави - листочки.
+// місяцем і зорями, внизу - купки опалого листя; на полі поверх трави - листочки.
 
 const svg = (body: string, viewBox: string) =>
     `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='${viewBox}'>${body}</svg>`)}")`;
@@ -36,11 +37,6 @@ const groundLeaves = svg(
     "0 0 200 50"
 );
 
-// Кажани біля місяця.
-const bat = (x: number, y: number, s: number) =>
-    `<path transform='translate(${x} ${y}) scale(${s})' fill='#1a1024' d='M0 0c-2-3-6-4-10-3 2 1 3 3 2 5-2-1-5-1-7 1 3 0 5 2 6 4 2-2 6-3 9-2 1-2 0-4 0-5zm0 0c2-3 6-4 10-3-2 1-3 3-2 5 2-1 5-1 7 1-3 0-5 2-6 4-2-2-6-3-9-2-1-2 0-4 0-5z'/>`;
-const bats = svg(bat(30, 30, 1) + bat(70, 18, 0.7) + bat(95, 42, 0.55), "0 0 120 60");
-
 export const HalloweenBackdrop = createGlobalStyle`
     :root {
         --board-overlay: ${boardLeaves};
@@ -53,21 +49,26 @@ export const HalloweenBackdrop = createGlobalStyle`
         --score-bg: #fff6e6;
     }
 
+    /* Вміст гри - над кажанами, що літають позаду (HalloweenBats). */
+    ${AppColumn} {
+        position: relative;
+        z-index: 1;
+    }
+
     /* Подвійний клас - сильніше за власний фон контейнера незалежно від порядку стилів. */
     ${Container}${Container} {
         background-color: #2a1a3e;
         background-image:
             ${groundLeaves},
-            ${bats},
             radial-gradient(circle at calc(100% - 70px) 70px, #fff4d6 0 30px, rgba(255, 228, 170, 0.28) 32px, transparent 84px),
             radial-gradient(circle, rgba(255, 244, 214, 0.5) 1px, transparent 1.6px),
             radial-gradient(circle, rgba(255, 244, 214, 0.35) 1px, transparent 1.6px),
             linear-gradient(180deg, #1f1433 0%, #34204a 40%, #6b3550 72%, #b8582a 100%);
-        background-size: 400px 100px, 220px 110px, auto, 53px 47px, 71px 67px, auto;
-        background-position: left bottom, right 12px top 110px, 0 0, 0 0, 20px 30px, 0 0;
-        background-repeat: repeat-x, no-repeat, no-repeat, repeat, repeat, no-repeat;
+        background-size: 400px 100px, auto, 53px 47px, 71px 67px, auto;
+        background-position: left bottom, 0 0, 0 0, 20px 30px, 0 0;
+        background-repeat: repeat-x, no-repeat, repeat, repeat, no-repeat;
 
-        /* Телефон: смуга керування на всю ширину - місяць лише виглядає з кута, кажанів немає. */
+        /* Телефон: смуга керування на всю ширину - місяць лише виглядає з кута. */
         @media (max-width: 760px) {
             background-image:
                 ${groundLeaves},
