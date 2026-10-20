@@ -381,6 +381,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 humanName={humanName}
                 status={statusText}
                 myTurn={playerTurn}
+                turnMarker={playerMarker}
                 over={isGameOver}
                 timer={modifier === "timer" ? timerLeft : null}
                 onShowResult={() => setShowResultPopup(true)}

@@ -350,6 +350,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 humanName={humanName}
                 status={statusText}
                 myTurn={playerTurn}
+                turnMarker={playerMarker}
                 over={isGameOver}
                 timer={modifier === "timer" ? timerLeft : null}
                 onShowResult={() => setShowResultPopup(true)}

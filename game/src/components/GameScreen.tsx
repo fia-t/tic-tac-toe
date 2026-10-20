@@ -466,8 +466,8 @@ export const TurnLine = styled.div<{ $mine?: boolean }>`
     }
 `;
 
-// Значок фішки гравця в плашці "Твій хід".
-const TurnMark = styled.span`
+// Значок фішки гравця (з поточного скіна) в плашці "Твій хід".
+export const TurnMark = styled.span`
     display: grid;
     place-items: center;
     flex-shrink: 0;
@@ -475,6 +475,12 @@ const TurnMark = styled.span`
     height: 26px;
     border-radius: 50%;
     background: #fff7e8;
+
+    img {
+        width: 21px;
+        height: 21px;
+        object-fit: contain;
+    }
 `;
 
 const Cross = () => (
@@ -619,6 +625,8 @@ type GameScreenProps = {
     status: string;
     // Зараз хід гравця - статус показується помітною плашкою.
     myTurn?: boolean;
+    // Фішка гравця в поточному скіні - для плашки "Твій хід" (без неї - класичний хрестик).
+    turnMarker?: string;
     // Підказка новачку замість статусу (перша партія, ще жодного ходу).
     firstHint?: boolean;
     over: boolean;
@@ -646,6 +654,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     humanName,
     status,
     myTurn = false,
+    turnMarker,
     firstHint = false,
     over,
     timer,
@@ -902,9 +911,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     aria-live="polite"
                 >
                     {myTurn && !over && !timerBoost.expired && (
-                        <TurnMark>
-                            <Cross />
-                        </TurnMark>
+                        <TurnMark>{turnMarker ? <img src={turnMarker} alt="" /> : <Cross />}</TurnMark>
                     )}
                     {firstHint ? (
                         t("firstMoveHint")

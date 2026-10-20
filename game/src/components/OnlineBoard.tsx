@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { OnlineBoardContainer, OnlineCell, WaitingText } from "@game/components/onlineStyles";
-import { BoardHolder, GameRoot, ResultLink, ScorePill, ScoreTop, TurnLine } from "@game/components/GameScreen";
+import { BoardHolder, GameRoot, ResultLink, ScorePill, ScoreTop, TurnLine, TurnMark } from "@game/components/GameScreen";
 import { ResultPopup } from "@game/components/ResultPopup";
 import { useWallet } from "@game/lib/wallet";
 import { useProfile } from "@game/lib/profile";
@@ -274,6 +274,11 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     <span>{names.O}</span>
                 </ScorePill>
                 <TurnLine key={status} $mine={myTurn && !isFinished} role="status" aria-live="polite">
+                    {myTurn && !isFinished && (
+                        <TurnMark>
+                            <img src={markerSrc[mySymbol]} alt="" />
+                        </TurnMark>
+                    )}
                     {status}
                 </TurnLine>
                 {isFinished &&
