@@ -22,7 +22,7 @@ import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages
 import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
 import { ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
-import { HomeScreen, readTab, type PanelTab } from "@game/components/HomeScreen";
+import { HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
@@ -33,7 +33,7 @@ import { Tutorial, isTutorialDone } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
 import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
-import { getProfile, useProfile } from "@game/lib/profile";
+import { getProfile, setProfileName, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
@@ -275,13 +275,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         round
     );
 
-    // Ім'я гравця для табло рахунку - обирається один раз на все ігрове
-    // завантаження (не на кожну партію), щоб рахунок під час гри лишався
-    // прив'язаним до того самого "імені".
+    // Ім'я гравця - випадкове лише перший раз, далі зберігається в профілі (змінюється в "Профілі"),
+    // щоб привітання на головній і табло не показували щоразу нове ім'я.
     useEffect(() => {
         let cancelled = false;
         getActiveNames().then((names) => {
-            if (!cancelled) setHumanName(pickRandomName(names));
+            if (cancelled) return;
+            const picked = pickRandomName(names);
+            setHumanName(picked);
+            if (!getProfile().name) setProfileName(picked);
         });
         return () => {
             cancelled = true;
@@ -531,7 +533,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             />
         );
     } else if (screen === "campaign") {
-        content = <CampaignPage onStart={goToGame} themes={availableThemes} />;
+        content = (
+            <CampaignPage
+                onStart={goToGame}
+                themes={availableThemes}
+                onHomeTab={(tab) => {
+                    saveTab(tab);
+                    goToMenu();
+                }}
+            />
+        );
     } else if (screen === "shop") {
         content = <ShopPage themes={availableThemes} onRewardedAd={onRewardedAd} onPlay={() => goToGame(gameMode)} />;
     } else if (screen === "awards") {

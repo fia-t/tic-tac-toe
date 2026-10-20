@@ -32,6 +32,13 @@ export const IconExitFullscreen = (p: IconProps) => (
     </Svg>
 );
 
+export const IconEdit = (p: IconProps) => (
+    <Svg {...p}>
+        <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+        <path d="M13.5 6.5l4 4" />
+    </Svg>
+);
+
 export const IconClose = (p: IconProps) => (
     <Svg {...p} strokeWidth={2.8}>
         <path d="M6 6l12 12M18 6 6 18" />

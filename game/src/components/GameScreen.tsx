@@ -256,10 +256,11 @@ export const ScoreTop = styled.div`
     gap: 10px;
     width: var(--board-w);
 
-    /* На телефоні статус - окремим рядком під рахунком: довга підказка не тисне рахунок. */
+    /* На телефоні рахунок і статус - в одному рядку сталої висоти (до двох рядків підказки),
+       щоб поле стояло вище й не стрибало, коли статус змінюється. */
     @media (max-width: 560px) {
-        flex-wrap: wrap;
-        row-gap: 6px;
+        gap: 8px;
+        min-height: 40px;
     }
 `;
 
@@ -293,6 +294,15 @@ export const ScorePill = styled.div`
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+
+    /* На телефоні довге ім'я обрізається, щоб статусу лишалось місце в тому ж рядку. */
+    @media (max-width: 560px) {
+        flex-shrink: 1;
+        min-width: 0;
+        max-width: 48%;
+        gap: 6px;
+        padding: 4px 10px;
     }
 `;
 
@@ -338,8 +348,8 @@ export const TurnLine = styled.div<{ $mine?: boolean }>`
         `}
 
     @media (max-width: 560px) {
-        order: 3;
-        flex-basis: 100%;
+        font-size: 14px;
+        line-height: 1.15;
     }
 
     ${({ $mine }) =>

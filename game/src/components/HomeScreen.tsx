@@ -558,7 +558,7 @@ const MODES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" |
 
 const ONLINE_MODE: Record<GameModeKey, OnlineGameMode> = { traditional: "3x3", five: "5x5", difficult: "9x9" };
 
-type HomeTab = "bot" | "online" | "daily" | "campaign";
+export type HomeTab = "bot" | "online" | "daily" | "campaign";
 const TABS: { id: HomeTab; label: "homeTabBot" | "homeTabOnline" | "homeTabDaily" | "homeTabCampaign" }[] = [
     { id: "bot", label: "homeTabBot" },
     { id: "online", label: "homeTabOnline" },
@@ -577,6 +577,40 @@ export const readTab = (): PanelTab => {
     } catch {
         return "bot";
     }
+};
+
+// Запам'ятати вкладку головної (відкриється при наступному поверненні на головну).
+export const saveTab = (value: PanelTab): void => {
+    try {
+        localStorage.setItem(TAB_KEY, value);
+    } catch {
+        // Сховище недоступне - вкладка запамʼятовується до перезавантаження.
+    }
+};
+
+// Вкладки головної - і на самій головній, і над екраном кампанії (щоб звідти було видно, як повернутись).
+export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => void }> = ({ active, onSelect }) => {
+    const t = useT();
+    return (
+        <Tabs role="tablist" aria-label={t("homeTabs")}>
+            {TABS.map((item) => (
+                <Tab
+                    key={item.id}
+                    type="button"
+                    role="tab"
+                    id={`home-tab-${item.id}`}
+                    aria-selected={active === item.id}
+                    aria-controls={item.id === "campaign" ? undefined : "home-tabpanel"}
+                    onClick={() => {
+                        trackEvent("home_tab", { tab: item.id });
+                        onSelect(item.id);
+                    }}
+                >
+                    {t(item.label)}
+                </Tab>
+            ))}
+        </Tabs>
+    );
 };
 
 type HomeScreenProps = {
@@ -618,17 +652,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const weekly = weeklyModifier();
 
     const setTab = (value: HomeTab) => {
-        trackEvent("home_tab", { tab: value });
         if (value === "campaign") {
             openPanel("campaign");
             return;
         }
         setTabState(value);
-        try {
-            localStorage.setItem(TAB_KEY, value);
-        } catch {
-            // Сховище недоступне - вкладка запамʼятовується до перезавантаження.
-        }
+        saveTab(value);
     };
 
     useEffect(() => {
@@ -911,21 +940,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 </HeroBadges>
             </Hero>
 
-            <Tabs role="tablist" aria-label={t("homeTabs")}>
-                {TABS.map((item) => (
-                    <Tab
-                        key={item.id}
-                        type="button"
-                        role="tab"
-                        id={`home-tab-${item.id}`}
-                        aria-selected={tab === item.id}
-                        aria-controls="home-tabpanel"
-                        onClick={() => setTab(item.id)}
-                    >
-                        {t(item.label)}
-                    </Tab>
-                ))}
-            </Tabs>
+            <HomeTabs active={tab} onSelect={setTab} />
 
             <TabPanel role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`}>
                 {content[tab]}

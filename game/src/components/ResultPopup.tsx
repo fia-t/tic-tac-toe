@@ -339,9 +339,9 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                     </StarsRow>
                 )}
                 <Rewards role="list">
-                    <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins")} order={0} count />
+                    <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
                     <RewardStat icon={<XpStar />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
-                    <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves")} order={2} count={false} />
+                    <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}
                 <PrimaryButton type="button" onClick={onRestart} disabled={restartDisabled}>

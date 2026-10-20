@@ -8,7 +8,7 @@ import { Star } from "@game/components/DailyChallenge";
 import { ModIcon } from "@game/components/GameOptions";
 import { BossPortrait } from "@game/components/CampaignArt";
 import { albumArt } from "@game/components/AlbumArt";
-import { InfoTip, Tab, Tabs } from "@game/components/HomeScreen";
+import { HomeTabs, InfoTip, Tab, Tabs, type PanelTab } from "@game/components/HomeScreen";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
@@ -441,6 +441,8 @@ type CampaignProps = {
     onMenu?: () => void;
     // Активні теми - щоб назвати скін-нагороду розділу.
     themes?: Theme[];
+    // Вкладка головної, обрана над екраном кампанії (З ботом / Онлайн / Виклики).
+    onHomeTab?: (tab: PanelTab) => void;
 };
 
 const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t: ReturnType<typeof useT>): string => {
@@ -450,7 +452,8 @@ const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t:
         parts.push(t("campaignRewardSkin", { name: skin ? themeName(skin) : chapter.rewardSkinId }));
     }
     if (chapter.rewardCoins > 0) parts.push(t("campaignRewardCoins", { n: String(chapter.rewardCoins) }));
-    return parts.join(" + ");
+    // "+ 100 монет" не розривається між рядками (нерозривні пробіли), перенос - лише перед "+".
+    return parts.join(" +\u00a0");
 };
 
 const cardName = (card: AlbumCard, t: ReturnType<typeof useT>): string => {
@@ -577,7 +580,7 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
     );
 };
 
-export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
+export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeTab }) => {
     const t = useT();
     const progress = useCampaign();
     const current = currentLevelIndex(progress);
@@ -602,6 +605,8 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
 
     return (
         <Page>
+            {/* Вкладки головної згори - кампанія одна з них, звідси ж повертаються до гри з ботом, онлайну чи викликів. */}
+            {onHomeTab && <HomeTabs active="campaign" onSelect={(id) => id !== "campaign" && onHomeTab(id)} />}
             <Tabs $cols={2} role="tablist" aria-label={t("campaignTitle")}>
                 {(["chapters", "album"] as const).map((id) => (
                     <Tab key={id} type="button" role="tab" id={`campaign-tab-${id}`} aria-selected={tab === id} aria-controls="campaign-tabpanel" onClick={() => setTab(id)}>
