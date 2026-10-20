@@ -39,6 +39,7 @@ import { findNameKey, getActiveNames, nameIn, pickRandomEntry, playerName } from
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
 import { getEmbed } from "@game/lib/embed";
+import { FullscreenButton } from "@game/components/SettingsPanel";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -537,7 +538,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     let content: React.ReactNode;
     if (!themeReady) {
         // Поки тема не підвантажилась - тематичний лоадер замість дошки з тимчасовим скіном.
-        content = <GameLoader />;
+        // Лоадер - по центру екрана (не під шапкою), кліки проходять крізь обгортку до шапки й меню.
+        content = (
+            <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center", pointerEvents: "none" }}>
+                <GameLoader />
+            </div>
+        );
     } else if (screen === "home") {
         content = (
             <HomeScreen
@@ -655,9 +661,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 <ShellVars />
                 {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
                 {themeReady ? (
-                    <AppColumn ref={topRef}>{content}</AppColumn>
+                    <>
+                        <AppColumn ref={topRef}>{content}</AppColumn>
+                        {/* Розгорнути гру з новини на весь екран (кнопка є, лише якщо iframe це дозволяє). */}
+                        <div style={{ position: "fixed", right: 12, bottom: 12, zIndex: 50 }}>
+                            <FullscreenButton />
+                        </div>
+                    </>
                 ) : (
-                    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center" }}>{content}</div>
+                    content
                 )}
             </RewardedAdContext.Provider>
         );

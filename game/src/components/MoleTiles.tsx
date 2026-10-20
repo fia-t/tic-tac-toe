@@ -8,14 +8,22 @@ const moundUp = keyframes`
     from { transform: scale(0.4) translateY(30%); opacity: 0; }
 `;
 
-// Горбок крота: земляна купка з лічильником, скільки ходів ще простоїть.
+// Нора крота: ямка (темний отвір у кільці розритої землі) з лічильником, скільки ходів ще простоїть.
 export const MoundTile = styled.div`
     position: relative;
     width: 78%;
     height: 78%;
     background:
-        radial-gradient(ellipse 60% 48% at 50% 72%, #9a6a3c 0 55%, transparent 57%),
-        radial-gradient(ellipse 34% 26% at 50% 50%, #b98552 0 60%, transparent 62%);
+        /* темний отвір із тінню від верхнього краю */
+        radial-gradient(ellipse 38% 26% at 50% 56%, #1f1208 0 55%, #3a2412 70%, transparent 72%),
+        /* світліший верхній край ями */
+        radial-gradient(ellipse 45% 31% at 50% 53%, #c9955e 0 74%, transparent 76%),
+        /* кільце розритої землі */
+        radial-gradient(ellipse 58% 41% at 50% 57%, #8a5a2e 0 70%, transparent 72%),
+        /* розсипані грудочки */
+        radial-gradient(circle at 10% 76%, #8a5a2e 0 5%, transparent 6%),
+        radial-gradient(circle at 90% 72%, #7a4e26 0 4%, transparent 5%),
+        radial-gradient(circle at 76% 92%, #8a5a2e 0 3.5%, transparent 4.5%);
     animation: ${moundUp} 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
 
     b {
