@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { EmbedEntry } from "@/app/components/EmbedEntry";
+import { Container } from "@game/components/gameStyles";
 
 // Гра для iframe на сторінці новини: /embed?skin=<id теми>. Посилання копіюється в адмінці
 // ("Теми" → "Посилання для новин"); вбудовувати дозволено лише доменам із frame-ancestors (next.config.ts).
@@ -14,5 +15,12 @@ type EmbedPageProps = {
 
 export default async function EmbedPage({ searchParams }: EmbedPageProps) {
     const { skin } = await searchParams;
-    return <EmbedEntry skinId={skin ?? "classic"} />;
+    // Той самий ігровий контейнер (фон-пляж, висота екрана), що й на головній (app/page.tsx).
+    return (
+        <main style={{ height: "100%" }}>
+            <Container>
+                <EmbedEntry skinId={skin ?? "classic"} />
+            </Container>
+        </main>
+    );
 }
