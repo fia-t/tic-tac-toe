@@ -45,7 +45,7 @@ export const GameRoot = styled.div<{ $timer?: boolean }>`
 // Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
 // Кнопки вирівняні по низу (у груп над ними підпис). На широкому екрані - один рядок; від 760px
 // і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
-const Bar = styled.div<{ $quick?: boolean }>`
+const Bar = styled.div`
     position: relative;
     z-index: 25;
     display: flex;
@@ -57,17 +57,6 @@ const Bar = styled.div<{ $quick?: boolean }>`
 
     @media (max-width: 760px) {
         flex-wrap: wrap;
-    }
-
-    /* Звичайна гра на широкому екрані: смуга від лівого краю поля до правого краю колонки бустерів
-       (66 px = відступ 14 + кнопка 52). Ніколи не вужча за свій вміст (один рядок): коли поле мале
-       (невисокий екран), смуга зсувається лівіше, щоб не вийти за правий край
-       (694 px - ширина вмісту українською, найширшого). */
-    @media (min-width: 800px) {
-        ${({ $quick }) =>
-            $quick
-                ? "align-self: flex-start; width: calc(var(--board-w) + 66px); min-width: max-content; margin-left: max(0px, min(calc((100% - var(--board-w)) / 2), calc(100% - 694px)));"
-                : ""}
     }
 
     @media (max-width: 480px) {
@@ -129,9 +118,15 @@ const PushRight = styled.div`
     gap: 8px 10px;
     min-width: 0;
 
-    /* Широкий екран - завжди одним рядком із рештою смуги. */
+    /* Широкий екран: смуга на всю ширину (від логотипа до шестерні), один рядок. "Бот" і
+       "Модифікатор" стають прямими елементами смуги з margin-left: auto - вільне місце ділиться
+       порівну між проміжками поле-бот і бот-модифікатор, модифікатор - по правому краю. */
     @media (min-width: 761px) {
-        flex-wrap: nowrap;
+        display: contents;
+
+        & > ${BarGroup} {
+            margin-left: auto;
+        }
     }
 
     @media (max-width: 760px) {
@@ -654,7 +649,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over}>
-            <Bar data-tour="bar" $quick={quick}>
+            <Bar data-tour="bar">
                 {quick ? (
                     <>
                         <BarActions>{actionButtons}</BarActions>
