@@ -60,7 +60,7 @@ export const HalloweenBackdrop = createGlobalStyle`
         background-color: #2a1a3e;
         background-image:
             ${groundLeaves},
-            radial-gradient(circle at calc(100% - 70px) 70px, #fff4d6 0 30px, rgba(255, 228, 170, 0.28) 32px, transparent 84px),
+            radial-gradient(circle at calc(100% - 70px) 105px, #fff4d6 0 30px, rgba(255, 228, 170, 0.28) 32px, transparent 84px),
             radial-gradient(circle, rgba(255, 244, 214, 0.5) 1px, transparent 1.6px),
             radial-gradient(circle, rgba(255, 244, 214, 0.35) 1px, transparent 1.6px),
             linear-gradient(180deg, #1f1433 0%, #34204a 40%, #6b3550 72%, #b8582a 100%);

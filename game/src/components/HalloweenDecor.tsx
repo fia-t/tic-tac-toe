@@ -26,7 +26,7 @@ const BatSky = styled.div`
     right: 0;
     width: 460px;
     max-width: 100vw;
-    height: 190px;
+    height: 210px;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
@@ -51,6 +51,8 @@ const BatBob = styled.div<{ $size: number }>`
         display: block;
         width: 100%;
         height: auto;
+        /* Ледь помітний місячний ореол - видно на темному небі, але не відволікає від гри. */
+        filter: drop-shadow(0 0 3px rgba(246, 231, 200, 0.35));
     }
 
     .wing {
@@ -69,11 +71,12 @@ const BatShape = () => (
     </svg>
 );
 
-// Траєкторії: перша проходить просто через місяць (центр - 70px від правого краю й згори).
+// Траєкторії - нижче смуги керування (кнопки "Модифікатор"); перша проходить просто через
+// місяць (центр - 70px від правого краю, 105px згори).
 const FLIGHTS = [
-    { top: 50, dur: 11, delay: 0, size: 62 },
-    { top: 112, dur: 14, delay: 4, size: 44 },
-    { top: 18, dur: 17, delay: 8, size: 34 },
+    { top: 86, dur: 11, delay: 0, size: 62 },
+    { top: 140, dur: 14, delay: 4, size: 44 },
+    { top: 112, dur: 17, delay: 8, size: 34 },
 ];
 
 export const HalloweenBats = () => (
