@@ -43,6 +43,7 @@ const uk = {
     fullscreenExit: "Вийти з повного екрана",
     firstMoveHint: "Ти граєш хрестиками. Торкнись будь-якої клітинки!",
     settingsSound: "Звук",
+    settingsLanguage: "Мова",
     settingsOn: "Увімк.",
     settingsOff: "Вимк.",
     close: "Закрити",
@@ -453,6 +454,7 @@ const en: Record<Key, string> = {
     fullscreenExit: "Exit fullscreen",
     firstMoveHint: "You play crosses. Tap any cell!",
     settingsSound: "Sound",
+    settingsLanguage: "Language",
     settingsOn: "On",
     settingsOff: "Off",
     close: "Close",
@@ -942,12 +944,34 @@ export const setLocale = (locale: Locale): Promise<void> => {
     return ready;
 };
 
-// Мова браузера - один раз на старті гри; повертає обіцянку готовності текстів.
+// Мова, яку гравець сам обрав у налаштуваннях, - має перевагу над мовою браузера й порталу.
+const SAVED_LOCALE_KEY = "ttt-locale";
+export const getSavedLocale = (): Locale | null => {
+    try {
+        const raw = typeof localStorage !== "undefined" ? localStorage.getItem(SAVED_LOCALE_KEY) : null;
+        return LOCALES.find((locale) => locale === raw) ?? null;
+    } catch {
+        return null;
+    }
+};
+
+// Вибір мови в налаштуваннях: застосувати й запам'ятати.
+export const chooseLocale = (locale: Locale): void => {
+    try {
+        localStorage.setItem(SAVED_LOCALE_KEY, locale);
+    } catch {
+        // Сховище недоступне (приватний режим) - мова діє до кінця сесії.
+    }
+    void setLocale(locale);
+};
+
+// Мова на старті гри (обрана в налаштуваннях або мова браузера) - один раз; повертає обіцянку
+// готовності текстів.
 let initialized = false;
 export const initLocale = (): Promise<void> => {
     if (!initialized) {
         initialized = true;
-        void setLocale(browserLocale());
+        void setLocale(getSavedLocale() ?? browserLocale());
     }
     return ready;
 };

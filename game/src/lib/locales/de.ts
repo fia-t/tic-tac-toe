@@ -25,6 +25,7 @@ const pack: LocalePack = {
         fullscreenExit: "Vollbild beenden",
         firstMoveHint: "Du spielst Kreuze. Tippe auf ein Feld!",
         settingsSound: "Ton",
+        settingsLanguage: "Sprache",
         settingsOn: "An",
         settingsOff: "Aus",
         close: "Schließen",

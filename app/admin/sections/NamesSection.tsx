@@ -9,6 +9,8 @@ import {
     seedDefaultNames,
 } from "@game/lib/names";
 import { PillButton, TextInput, ErrorText } from "@game/components/onlineStyles";
+import { LOCALES, LOCALE_NAMES, type Locale } from "@game/lib/i18n";
+import styled from "styled-components";
 import {
     Section,
     SectionTitle,
@@ -30,6 +32,35 @@ const describeError = (fallback: string, err: unknown): string => {
 
 const MAX_NAMES = 20;
 
+// Мови перекладу імені (українською - саме ім'я).
+const NAME_LOCALES = LOCALES.filter((locale) => locale !== "uk");
+
+const TranslationsGrid = styled.div`
+    flex-basis: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 8px;
+    padding-top: 6px;
+
+    label {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a5a35;
+    }
+
+    input {
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(139, 101, 60, 0.25);
+        background: #fffdf8;
+        color: #4a2c0c;
+        font-size: 14px;
+    }
+`;
+
 // Керування пулом "цікавих" імен для табло рахунку (vs AI та гра з другом).
 // Порожня колекція автоматично засівається стартовим набором із 20 імен
 // при першому відкритті цього розділу.
@@ -42,6 +73,36 @@ export const NamesSection: React.FC = () => {
     const [creating, setCreating] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingValue, setEditingValue] = useState("");
+    // Відкриті переклади одного імені й чернетка до збереження.
+    const [translatingId, setTranslatingId] = useState<string | null>(null);
+    const [draft, setDraft] = useState<Partial<Record<Locale, string>>>({});
+
+    const toggleTranslations = (entry: NameEntry) => {
+        if (translatingId === entry.id) {
+            setTranslatingId(null);
+            return;
+        }
+        setTranslatingId(entry.id);
+        setDraft(entry.translations);
+    };
+
+    const saveTranslations = async (entry: NameEntry) => {
+        setBusyId(entry.id);
+        try {
+            const translations = Object.fromEntries(
+                Object.entries(draft)
+                    .map(([locale, value]) => [locale, (value ?? "").trim()])
+                    .filter(([, value]) => value)
+            ) as Partial<Record<Locale, string>>;
+            await updateName(entry.id, { translations });
+            setTranslatingId(null);
+            await refresh();
+        } catch (err) {
+            setError(describeError("Не вдалося зберегти переклади.", err));
+        } finally {
+            setBusyId(null);
+        }
+    };
 
     const refresh = async () => {
         setLoading(true);
@@ -216,10 +277,35 @@ export const NamesSection: React.FC = () => {
                                             </GhostButton>
                                         )}
 
+                                        <GhostButton type="button" disabled={busy} aria-expanded={translatingId === entry.id} onClick={() => toggleTranslations(entry)}>
+                                            Переклади ({NAME_LOCALES.filter((locale) => entry.translations[locale]).length}/{NAME_LOCALES.length})
+                                        </GhostButton>
+
                                         <DangerButton type="button" disabled={busy} onClick={() => void handleDelete(entry)}>
                                             Видалити
                                         </DangerButton>
                                     </InlineActions>
+
+                                    {translatingId === entry.id && (
+                                        <TranslationsGrid>
+                                            {NAME_LOCALES.map((locale) => (
+                                                <label key={locale}>
+                                                    {LOCALE_NAMES[locale]}
+                                                    <input
+                                                        lang={locale}
+                                                        value={draft[locale] ?? ""}
+                                                        placeholder={entry.translations.en ?? entry.name}
+                                                        onChange={(e) => setDraft((prev) => ({ ...prev, [locale]: e.target.value }))}
+                                                    />
+                                                </label>
+                                            ))}
+                                            <InlineActions style={{ alignSelf: "end" }}>
+                                                <GhostButton type="button" disabled={busy} onClick={() => void saveTranslations(entry)}>
+                                                    Зберегти переклади
+                                                </GhostButton>
+                                            </InlineActions>
+                                        </TranslationsGrid>
+                                    )}
                                 </NameRow>
                             );
                         })}

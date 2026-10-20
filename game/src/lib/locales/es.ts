@@ -25,6 +25,7 @@ const pack: LocalePack = {
         fullscreenExit: "Salir de pantalla completa",
         firstMoveHint: "Juegas con las cruces. ¡Toca cualquier casilla!",
         settingsSound: "Sonido",
+        settingsLanguage: "Idioma",
         settingsOn: "Sí",
         settingsOff: "No",
         close: "Cerrar",

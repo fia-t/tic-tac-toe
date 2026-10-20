@@ -28,6 +28,8 @@ export type ProfileStats = {
 
 export type ProfileState = {
     name: string | null;
+    // Випадкове ім'я з пулу (id запису в "Іменах") - показується мовою гри; null - ім'я своє.
+    nameKey: string | null;
     xp: number;
     stats: ProfileStats;
     // id досягнення -> коли отримано (ms).
@@ -47,7 +49,7 @@ const emptyStats = (): ProfileStats => ({
     onlineWins: 0,
     bestDailyStreak: 0,
 });
-const emptyProfile = (): ProfileState => ({ name: null, xp: 0, stats: emptyStats(), achieved: {} });
+const emptyProfile = (): ProfileState => ({ name: null, nameKey: null, xp: 0, stats: emptyStats(), achieved: {} });
 const EMPTY = emptyProfile();
 
 // --- рівень ---
@@ -98,6 +100,7 @@ const sanitize = (raw: unknown): ProfileState => {
     }
     return {
         name: typeof r.name === "string" && r.name.trim() ? r.name.slice(0, 40) : null,
+        nameKey: typeof r.nameKey === "string" && r.nameKey ? r.nameKey : null,
         xp: typeof r.xp === "number" && r.xp >= 0 ? Math.floor(r.xp) : 0,
         stats,
         achieved: r.achieved && typeof r.achieved === "object" ? (r.achieved as Record<string, number>) : {},
@@ -161,10 +164,17 @@ const commit = (next: ProfileState) => {
 
 export const getProfile = (): ProfileState => state;
 
+// Своє ім'я (змінене в профілі) - більше не перекладається.
 export const setProfileName = (name: string): void => {
     const trimmed = name.trim().slice(0, 40);
-    if (!trimmed || trimmed === state.name) return;
-    commit({ ...state, name: trimmed });
+    if (!trimmed || (trimmed === state.name && !state.nameKey)) return;
+    commit({ ...state, name: trimmed, nameKey: null });
+};
+
+// Випадкове ім'я з пулу: зберігаємо і текст (для порталу й адмінки), і ключ (для перекладу).
+export const setAutoName = (nameKey: string, name: string): void => {
+    if (state.nameKey === nameKey && state.name === name) return;
+    commit({ ...state, name: name.slice(0, 40), nameKey });
 };
 
 // Нові досягнення: нагорода монетами й сповіщення. Викликається після кожної зміни прогресу.

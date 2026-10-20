@@ -17,7 +17,7 @@ import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
-import { setLocale, toLocale } from "@game/lib/i18n";
+import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
 // каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
@@ -79,10 +79,11 @@ export default function App() {
             void reloadProfile();
         });
 
-        // Мова з порталу (якщо гра її знає) - замість мови браузера.
+        // Мова з порталу (якщо гра її знає) - замість мови браузера, але не замість обраної
+        // гравцем у налаштуваннях.
         const applyPortalLocale = (raw: string | null | undefined) => {
             const locale = toLocale(raw);
-            if (locale) void setLocale(locale);
+            if (locale && !getSavedLocale()) void setLocale(locale);
         };
         const unsubscribeLocale = sdk.onLocaleChange?.(applyPortalLocale);
         if (sdk.getInviteParams || sdk.getLocale) {

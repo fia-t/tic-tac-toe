@@ -33,9 +33,9 @@ import { Tutorial, isTutorialDone } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
 import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
-import { getProfile, setProfileName, useProfile } from "@game/lib/profile";
+import { getProfile, setAutoName, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/lib/ui";
-import { getActiveNames, pickRandomName } from "@game/lib/names";
+import { findNameKey, getActiveNames, nameIn, pickRandomEntry, playerName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
 import { getEmbed } from "@game/lib/embed";
@@ -121,7 +121,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const equippedSkinId = getEquippedSkinId(useWallet());
     const skinId = embed?.skinId ?? equippedSkinId;
     const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
-    const [humanName, setHumanName] = useState<string | null>(null);
+    // Пул імен завантажено - ім'я гравця з пулу можна показати мовою гри.
+    const [, setNamesLoaded] = useState(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });
     // Бустери 3×3: позиції перед ходами гравця (для "Скасувати хід") і клітинка-підказка.
     const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
@@ -134,7 +135,6 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [focusDaily, setFocusDaily] = useState(0);
     const topRef = useRef<HTMLDivElement>(null);
     const profile = useProfile();
-    const profileName = profile.name;
     // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
     // шукати, як почати гру. Меню - логотип у шапці.
     const isNewPlayer = profile.stats.games === 0;
@@ -145,7 +145,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setScreen("game");
         if (!hasStoredDifficulty()) setDifficulty("easy");
     }, []);
-    const shownName = profileName ?? humanName;
+    const shownName = playerName(profile);
 
     // Облік часу гри на порталі: геймплей - лише на полі, меню й розділи - пауза (App слухає ці події).
     const onGameScreen = screen === "game";
@@ -291,9 +291,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             .then(() => getActiveNames())
             .then((names) => {
                 if (cancelled) return;
-                const picked = pickRandomName(names);
-                setHumanName(picked);
-                if (!getProfile().name) setProfileName(picked);
+                const current = getProfile();
+                if (!current.name) {
+                    const picked = pickRandomEntry(names);
+                    setAutoName(picked.id, nameIn(picked));
+                } else if (!current.nameKey) {
+                    // Ім'я з пулу, збережене до перекладу імен, - теж показуватиметься мовою гри.
+                    const key = findNameKey(current.name);
+                    if (key) setAutoName(key, current.name);
+                }
+                setNamesLoaded(true);
             });
         return () => {
             cancelled = true;
@@ -558,7 +565,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     } else if (screen === "awards") {
         content = <AwardsPage />;
     } else if (screen === "profile") {
-        content = <ProfilePage fallbackName={humanName} />;
+        content = <ProfilePage fallbackName={shownName} />;
     } else if (gameMode === "difficult") {
         content = (
             <DifficultTicTacToe

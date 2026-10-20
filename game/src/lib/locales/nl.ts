@@ -25,6 +25,7 @@ const pack: LocalePack = {
         fullscreenExit: "Volledig scherm sluiten",
         firstMoveHint: "Jij speelt kruisjes. Tik op een vakje!",
         settingsSound: "Geluid",
+        settingsLanguage: "Taal",
         settingsOn: "Aan",
         settingsOff: "Uit",
         close: "Sluiten",

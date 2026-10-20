@@ -25,6 +25,7 @@ const pack: LocalePack = {
         fullscreenExit: "Sair da tela cheia",
         firstMoveHint: "Você joga com X. Toque em qualquer casa!",
         settingsSound: "Som",
+        settingsLanguage: "Idioma",
         settingsOn: "Ligado",
         settingsOff: "Desligado",
         close: "Fechar",

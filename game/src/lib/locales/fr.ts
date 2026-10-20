@@ -25,6 +25,7 @@ const pack: LocalePack = {
         fullscreenExit: "Quitter le plein écran",
         firstMoveHint: "Tu joues les croix. Touche une case !",
         settingsSound: "Son",
+        settingsLanguage: "Langue",
         settingsOn: "Oui",
         settingsOff: "Non",
         close: "Fermer",

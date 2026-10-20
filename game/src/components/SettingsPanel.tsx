@@ -6,7 +6,7 @@ import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@ga
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle } from "@game/components/onlineStyles";
 import { setMuted, useMuted } from "@game/lib/sound";
-import { useT } from "@game/lib/i18n";
+import { LOCALES, LOCALE_NAMES, chooseLocale, useLocale, useT, type Locale } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { setInvitesEnabled, useInvitesEnabled } from "@game/lib/presence";
 import { isFullscreenSupported, toggleFullscreen, useFullscreen } from "@game/lib/fullscreen";
@@ -53,6 +53,31 @@ const RowLabel = styled.span`
     color: #49301f;
 `;
 
+// Мов дев'ять - список, а не ряд кнопок.
+const LanguageSelect = styled.select`
+    min-width: 0;
+    height: 40px;
+    padding: 0 34px 0 12px;
+    border: 0;
+    border-radius: 12px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2349301f' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 9l7 7 7-7'/%3E%3C/svg%3E")
+            right 12px center no-repeat,
+        #f6e2b8;
+    box-shadow: inset 0 -3px 0 #ebcb98;
+    color: #49301f;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    appearance: none;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
+`;
+
 const Choices = styled.div`
     display: flex;
     gap: 6px;
@@ -81,6 +106,7 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
     const open = useOpenPanel() === "settings";
     const muted = useMuted();
     const invites = useInvitesEnabled();
+    const locale = useLocale();
 
     return (
         <>
@@ -121,6 +147,16 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
                             </Choices>
                         </Row>
 
+                        <Row>
+                            <RowLabel id="settings-language">{t("settingsLanguage")}</RowLabel>
+                            <LanguageSelect aria-labelledby="settings-language" value={locale} onChange={(e) => chooseLocale(e.target.value as Locale)}>
+                                {LOCALES.map((item) => (
+                                    <option key={item} value={item} lang={item}>
+                                        {LOCALE_NAMES[item]}
+                                    </option>
+                                ))}
+                            </LanguageSelect>
+                        </Row>
                     </ModalCard>
                 </>
             )}

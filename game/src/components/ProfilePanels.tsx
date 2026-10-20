@@ -13,6 +13,7 @@ import { useCampaign } from "@game/lib/campaign";
 import { useWallet } from "@game/lib/wallet";
 import { closePanel, useOpenPanel, useToasts } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
+import { playerName } from "@game/lib/names";
 import { LeaderboardRow, fetchLeaderboard, useMyRating } from "@game/lib/matchmaking";
 import { START_RATING, leagueFor } from "@game/lib/rating";
 
@@ -190,7 +191,7 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
         ["stat_masterDraws", s.masterDraws],
         ["stat_onlineWins", s.onlineWins],
     ];
-    const shownName = profile.name ?? fallbackName ?? t("player");
+    const shownName = playerName(profile) ?? fallbackName ?? t("player");
     const [editing, setEditing] = useState(false);
     const [draft, setDraft] = useState("");
     const startEdit = () => {

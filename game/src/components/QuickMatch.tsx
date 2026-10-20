@@ -8,6 +8,7 @@ import { MatchUnavailableError, cancelQueue, joinQueue, useMyRating, watchQueue 
 import { displayLeague } from "@game/lib/rating";
 import { setPresence } from "@game/lib/presence";
 import { getProfile, setProfileName } from "@game/lib/profile";
+import { playerName } from "@game/lib/names";
 import { trackEvent } from "@game/lib/firebase";
 import { closePanel } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
@@ -82,7 +83,7 @@ export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched,
             onMatched(roomId);
         };
 
-        const name = getProfile().name ?? fallbackName ?? "Player";
+        const name = playerName(getProfile()) ?? fallbackName ?? "Player";
         // Ім'я в лідерборді має бути сталим - фіксуємо його в профілі при першому матчі.
         if (!getProfile().name && fallbackName) setProfileName(fallbackName);
 

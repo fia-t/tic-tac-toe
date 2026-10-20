@@ -26,6 +26,7 @@ const pack: LocalePack = {
         fullscreenExit: "Zamknij pełny ekran",
         firstMoveHint: "Grasz krzyżykami. Dotknij dowolnego pola!",
         settingsSound: "Dźwięk",
+        settingsLanguage: "Język",
         settingsOn: "Wł.",
         settingsOff: "Wył.",
         close: "Zamknij",
