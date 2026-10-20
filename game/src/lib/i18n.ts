@@ -23,6 +23,8 @@ export const LOCALE_NAMES: Record<Locale, string> = {
 const uk = {
     ai: "Бот",
     player: "Гравець",
+    // Гравець у рахунку гри з новини (імені там немає).
+    you: "Ти",
     resultWin: "Перемога!",
     resultCoins: "{n:монета|монети|монет}",
     resultXp: "досвіду",
@@ -434,6 +436,7 @@ export type Key = keyof typeof uk;
 const en: Record<Key, string> = {
     ai: "Bot",
     player: "Player",
+    you: "You",
     resultWin: "You win!",
     resultCoins: "{n:coin|coins}",
     resultXp: "XP",

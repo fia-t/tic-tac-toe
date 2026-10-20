@@ -2,6 +2,7 @@
 import React from "react";
 import styled, { css, keyframes } from "styled-components";
 import { GameButton, gameButtonCss } from "@game/components/GameButton";
+import { RoundButton } from "@game/components/GameOptions";
 import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@game/components/GameIcons";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle } from "@game/components/onlineStyles";
@@ -91,8 +92,7 @@ const nudgePulse = keyframes`
     50% { transform: scale(1.25); box-shadow: 0 0 0 14px rgba(242, 140, 27, 0); }
 `;
 
-const NudgeButton = styled(GearButton)<{ $nudge: boolean }>`
-    ${({ $nudge }) =>
+const nudgeCss = ({ $nudge }: { $nudge: boolean }) =>
         $nudge &&
         css`
             animation: ${nudgePulse} 1s ease-in-out 3;
@@ -100,7 +100,15 @@ const NudgeButton = styled(GearButton)<{ $nudge: boolean }>`
                 animation: none;
                 outline: 3px solid #f28c1b;
             }
-        `}
+        `;
+
+const NudgeButton = styled(GearButton)<{ $nudge: boolean }>`
+    ${nudgeCss}
+`;
+
+// Той самий вигляд, що в бустерів біля поля (гра в новині: кнопка стоїть у їхньому ряду).
+const NudgeRound = styled(RoundButton)<{ $nudge: boolean }>`
+    ${nudgeCss}
 `;
 
 // Перша підказка - одразу, далі - повтор, поки гравець так і не розгорнув гру.
@@ -108,7 +116,8 @@ const NUDGE_MS = 3000;
 const NUDGE_REPEAT_MS = 40000;
 
 // nudge - рекомендувати повний екран (великі поля в грі з новини): 3 с пульсації, потім пауза й знову.
-export const FullscreenButton: React.FC<{ nudge?: boolean }> = ({ nudge = false }) => {
+// round - кругла кнопка як у бустерів (ряд скасування й підказки).
+export const FullscreenButton: React.FC<{ nudge?: boolean; round?: boolean }> = ({ nudge = false, round = false }) => {
     const t = useT();
     const isFullscreen = useFullscreen();
     const [supported, setSupported] = React.useState(false);
@@ -136,6 +145,13 @@ export const FullscreenButton: React.FC<{ nudge?: boolean }> = ({ nudge = false 
     }, [supported, nudge, isFullscreen]);
     if (!supported) return null;
     const label = isFullscreen ? t("fullscreenExit") : t("fullscreen");
+    const icon = isFullscreen ? <IconExitFullscreen size={20} /> : <IconFullscreen size={20} />;
+    if (round)
+        return (
+            <NudgeRound type="button" $nudge={pulsing} onClick={() => void toggleFullscreen()} aria-label={label} data-tip={label}>
+                {icon}
+            </NudgeRound>
+        );
     return (
         <NudgeButton type="button" $inline $nudge={pulsing} onClick={() => void toggleFullscreen()} aria-label={label} title={label}>
             {isFullscreen ? <IconExitFullscreen size={18} /> : <IconFullscreen size={18} />}

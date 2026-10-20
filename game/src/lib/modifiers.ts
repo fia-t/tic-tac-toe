@@ -1,5 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
+import { isEmbed } from "@game/lib/embed";
 
 // Модифікатори правил офлайн-партій. Один модифікатор на партію; доступність залежить
 // від режиму (зникаючі фішки мають сенс на 3×3, гравітація, каміння й кріт - на 5×5).
@@ -44,6 +45,11 @@ export const effectiveModifier = (mode: GameModeKey, choice: Modifier | null = g
 export const setModifier = (value: Modifier | null): void => {
     if (value === current) return;
     current = value;
+    // Гра в новині не пам'ятає вибір: кожен відвідувач починає без модифікатора.
+    if (isEmbed()) {
+        notify();
+        return;
+    }
     try {
         if (value) localStorage.setItem(STORAGE_KEY, value);
         else localStorage.removeItem(STORAGE_KEY);

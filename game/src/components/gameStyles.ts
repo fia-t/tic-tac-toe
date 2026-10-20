@@ -13,7 +13,9 @@ export const boardSlab = css`
     border: 8px solid transparent;
     border-radius: 28px;
     padding: 6px;
+    /* --board-overlay - прикраса поверх текстури скіна (листя в хелловінській грі з новини). */
     background:
+        var(--board-overlay, none) center / cover no-repeat padding-box,
         var(--board-image) center / cover no-repeat padding-box,
         linear-gradient(180deg, #fff3dd 0%, #f6e2b8 45%, #e8c992 100%) border-box;
     box-shadow:

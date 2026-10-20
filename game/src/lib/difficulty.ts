@@ -1,5 +1,6 @@
 "use client";
 import { useSyncExternalStore } from "react";
+import { isEmbed } from "@game/lib/embed";
 
 // Рівень ШІ для офлайн-режимів (3×3, 5×5, Ultimate). medium - поведінка, що була в
 // грі до появи рівнів, тож це і дефолт. Вибір - зручність одного гравця, тому
@@ -44,6 +45,11 @@ export const setDifficultyOverride = (value: Difficulty | null): void => {
 export const setDifficulty = (value: Difficulty): void => {
     if (value === current) return;
     current = value;
+    // Гра в новині не пам'ятає вибір: кожен відвідувач починає з легкого бота.
+    if (isEmbed()) {
+        listeners.forEach((listener) => listener());
+        return;
+    }
     try {
         localStorage.setItem(STORAGE_KEY, value);
     } catch {

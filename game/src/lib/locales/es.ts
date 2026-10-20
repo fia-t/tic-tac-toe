@@ -5,6 +5,7 @@ const pack: LocalePack = {
     strings: {
         ai: "Bot",
         player: "Jugador",
+        you: "Tú",
         resultWin: "¡Victoria!",
         resultCoins: "{n:moneda|monedas}",
         resultXp: "XP",

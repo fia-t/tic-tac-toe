@@ -302,8 +302,8 @@ const InfoButton = styled.button`
     flex-shrink: 0;
     border: none;
     border-radius: 50%;
-    background: rgba(139, 101, 60, 0.18);
-    color: #49301f;
+    background: var(--info-bg, rgba(139, 101, 60, 0.18));
+    color: var(--info-ink, #49301f);
     font: 800 12px/18px var(--font-body);
     text-align: center;
     cursor: pointer;

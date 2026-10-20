@@ -33,7 +33,7 @@ const Wrap = styled.div`
     gap: 14px;
     min-height: 260px;
     padding: 24px 0;
-    color: #7a5530;
+    color: var(--loader-ink, #7a5530);
     font-weight: 800;
     font-size: 15px;
 

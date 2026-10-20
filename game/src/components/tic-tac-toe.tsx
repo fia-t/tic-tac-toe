@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Board } from "./board";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
 import { GameLoader } from "@game/components/GameLoader";
+import { HalloweenBackdrop } from "@game/components/HalloweenBackdrop";
 import { trackEvent } from "@game/lib/firebase";
 import {
     Grid3,
@@ -38,8 +39,7 @@ import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/li
 import { findNameKey, getActiveNames, nameIn, pickRandomEntry, playerName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
-import { getEmbed } from "@game/lib/embed";
-import { FullscreenButton } from "@game/components/SettingsPanel";
+import { getEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -659,19 +659,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         return (
             <RewardedAdContext.Provider value={undefined}>
                 <ShellVars />
+                {isHalloweenEmbed() && <HalloweenBackdrop />}
                 {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
-                {themeReady ? (
-                    <>
-                        <AppColumn ref={topRef}>{content}</AppColumn>
-                        {/* Розгорнути гру з новини на весь екран (кнопка є, лише якщо iframe це дозволяє);
-                            на 5×5 і гіга-полі кнопка час від часу пульсує - так поле буде більшим. */}
-                        <div style={{ position: "fixed", right: 12, bottom: 12, zIndex: 50 }}>
-                            <FullscreenButton nudge={gameMode !== "traditional"} />
-                        </div>
-                    </>
-                ) : (
-                    content
-                )}
+                {themeReady ? <AppColumn ref={topRef}>{content}</AppColumn> : content}
             </RewardedAdContext.Provider>
         );
     }

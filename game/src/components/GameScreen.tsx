@@ -10,6 +10,7 @@ import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTi
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed } from "@game/lib/embed";
+import { FullscreenButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
@@ -58,7 +59,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
 // Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
 // Кнопки вирівняні по низу (у груп над ними підпис). На широкому екрані - один рядок; від 760px
 // і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
-const Bar = styled.div`
+const Bar = styled.div<{ $embed?: boolean }>`
     position: relative;
     z-index: 25;
     display: flex;
@@ -75,6 +76,15 @@ const Bar = styled.div`
     @media (max-width: 480px) {
         gap: 6px 4px;
     }
+
+    /* Гра в новині: смуга не на всю ширину iframe, а компактно по центру над полем. */
+    ${({ $embed }) =>
+        $embed &&
+        css`
+            @media (min-width: 761px) {
+                width: auto;
+            }
+        `}
 `;
 
 const BarGroup = styled.div`
@@ -119,11 +129,11 @@ const BarLabel = styled.div`
     font: 800 11px/1 var(--font-body);
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: #7a5530;
+    color: var(--bar-ink, #7a5530);
     white-space: nowrap;
 `;
 
-const PushRight = styled.div`
+const PushRight = styled.div<{ $embed?: boolean }>`
     margin-left: auto;
     display: flex;
     align-items: flex-end;
@@ -138,7 +148,7 @@ const PushRight = styled.div`
         display: contents;
 
         & > ${BarGroup} {
-            margin-left: auto;
+            margin-left: ${({ $embed }) => ($embed ? "28px" : "auto")};
         }
     }
 
@@ -304,7 +314,7 @@ export const ScorePill = styled.div`
     box-shadow:
         inset 2px 2px 4px rgba(101, 72, 35, 0.35),
         inset -1px -1px 2px rgba(255, 255, 255, 0.35);
-    background: rgba(255, 246, 230, 0.55);
+    background: var(--score-bg, rgba(255, 246, 230, 0.55));
     color: #5b3f22;
     font-size: 14px;
     font-weight: 800;
@@ -594,6 +604,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const activeModifier = effectiveModifier(mode, choice);
     // У грі з новини акції "модифікатор тижня" немає - мітку в списку не показуємо.
     const weekly = isEmbed() ? undefined : weeklyModifier();
+    // У новині замість довгої підказки першого ходу - короткий статус "Твій хід" (у вузькому iframe - один рядок).
+    const showFirstHint = firstHint && !isEmbed();
     const [friendOpen, setFriendOpen] = useState(false);
     const booster = useBoosters(boosters.resetKey);
     const timerBoost = useMoveTimerBoost();
@@ -691,7 +703,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={isEmbed()}>
-            <Bar data-tour="bar">
+            <Bar data-tour="bar" $embed={isEmbed()}>
                 {quick ? (
                     <>
                         <BarActions>{actionButtons}</BarActions>
@@ -715,7 +727,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 ))}
                             </BarGroupRow>
                         </BarGroup>
-                        <PushRight>
+                        <PushRight $embed={isEmbed()}>
                             <BarGroup>
                                 <BarLabel id="bar-bot">
                                     {t("barBot")}
@@ -777,10 +789,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <b>{score.ai}</b>
                     <span>—</span>
                     <b>{score.human}</b>
-                    <span>{humanName ?? t("player")}</span>
+                    <span>{isEmbed() ? t("you") : (humanName ?? t("player"))}</span>
                 </ScorePill>
                 <TurnLine
-                    key={firstHint ? "first" : timerBoost.expired ? "expired" : status}
+                    key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
                     $mine={myTurn && !over && !timerBoost.expired}
                     role="status"
                     aria-live="polite"
@@ -788,7 +800,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     {myTurn && !over && !timerBoost.expired && (
                         <TurnMark>{turnMarker ? <img src={turnMarker} alt="" /> : <Cross />}</TurnMark>
                     )}
-                    {firstHint ? (
+                    {showFirstHint ? (
                         t("firstMoveHint")
                     ) : timerBoost.expired && !over ? (
                         t("timerExpired")
@@ -809,6 +821,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <Boosters data-tour="boosters">
                         {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
                         {boosterButton("hint", boosters.canHint, boosters.onHint)}
+                        {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
+                        {isEmbed() && <FullscreenButton round nudge={mode !== "traditional"} />}
                         {timer !== null && timer !== undefined && (
                             <>
                                 {boosterButton("pause", boosters.canHint && !timerBoost.firstFree && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
