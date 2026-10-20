@@ -35,7 +35,7 @@ app/
     seo/          - site-config.ts (домен/бренд), metadata.ts (генератор Metadata),
                      json-ld.tsx (Organization/WebApplication/VideoGame/Breadcrumb/Article)
     blog/posts.ts - дані статей блогу
-    i18n/         - locales.ts, get-dictionary.ts, dictionaries/{en,uk,de,es,fr,it}.ts
+    i18n/         - locales.ts, get-dictionary.ts, dictionaries/{en,uk,de,es,fr,it,pt,nl,pl}.ts
   components/
     layout/        - SiteHeader, SiteFooter
     ads/AdsManager.tsx        - рекламні слоти (AdSense/NitroPay/Setupad/Mediavine)
@@ -102,9 +102,14 @@ i18n зараз - це **готова структура з активною л�
 непередбачувану якість без професійного перекладу).
 
 Що вже є (`app/lib/i18n/`):
-- `locales.ts` - список з 6 мов (`en`, `uk`, `de`, `es`, `fr`, `it`), `en` - дефолтна.
+- `locales.ts` - список з 9 мов (`en`, `uk`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `pl`), `en` - дефолтна.
 - `dictionaries/{locale}.ts` - короткі UI-рядки (навігація, футер, спільні
-  кнопки) вже перекладені для всіх 6 мов.
+  кнопки) вже перекладені для всіх 9 мов.
+- SEO-тексти сторінок усіма 9 мовами - `app/lib/seo/translations.ts` (правки - в адмінці, "Переклади" → SEO).
+
+Гра (`game/src/lib/i18n.ts` + `locales/*.ts`) уже працює всіма 9 мовами: мова береться з браузера
+гравця (на порталі - з SDK), невідома мова - англійська. Правки текстів з адмінки ("Переклади")
+лежать у Firestore `translations/{locale}` поверх вбудованих перекладів.
 - `get-dictionary.ts` - `getDictionary(locale)` асинхронно завантажує потрібний словник.
 
 Щоб перевести конкретну мову з "заготовки" в реально доступну (напр. `/uk/...`):
@@ -186,7 +191,7 @@ NitroPay). Якщо ви приберете styled-components або захоч�
 
 - `/daily-challenge` і `/leaderboard` - це SEO-сторінки з описом функціоналу
   "Coming Soon", без реального бекенду (немає fake-даних, щоб не вводити в оману).
-- i18n активний лише для English (структура для 5 інших мов готова, контент - ні).
+- Сторінки сайту лише англійською (гра - 9 мовами за мовою браузера; SEO-переклади готові, мовних адрес ще немає).
 - CSP/іконки/контактний email - production-ready каркас, але з
   placeholder-значеннями, які треба замінити реальними перед публікацією.
 - Service worker кешує лише статичну "оболонку" - онлайн-мультиплеєр завжди

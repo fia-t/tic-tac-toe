@@ -1,11 +1,24 @@
 "use client";
 import { useSyncExternalStore } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
 
-// Мова інтерфейсу гри: uk або en. Сайт (Next.js) завжди стартує з uk - там немає
-// GAME_TARGET; standalone-білд бере мову браузера, а на порталі її далі виставляє
-// SDK (game.getConfig().locale + addLocaleListener, див. App.tsx). Будь-яка мова,
-// крім української, показується англійською.
-export type Locale = "uk" | "en";
+// Мова інтерфейсу гри - мова браузера гравця (initLocale), якщо гра її знає, інакше англійська;
+// на порталі її далі виставляє SDK (див. App.tsx). uk й en - тут, решта - у locales/*.ts.
+// Правки текстів з адмінки (розділ "Переклади") лежать у Firestore translations/{locale}.
+export type Locale = "en" | "uk" | "fr" | "de" | "pt" | "it" | "es" | "nl" | "pl";
+export const LOCALES: Locale[] = ["en", "uk", "fr", "de", "pt", "it", "es", "nl", "pl"];
+export const LOCALE_NAMES: Record<Locale, string> = {
+    en: "English",
+    uk: "Українська",
+    fr: "Français",
+    de: "Deutsch",
+    pt: "Português",
+    it: "Italiano",
+    es: "Español",
+    nl: "Nederlands",
+    pl: "Polski",
+};
 
 const uk = {
     ai: "Бот",
@@ -30,7 +43,6 @@ const uk = {
     fullscreenExit: "Вийти з повного екрана",
     firstMoveHint: "Ти граєш хрестиками. Торкнись будь-якої клітинки!",
     settingsSound: "Звук",
-    settingsLanguage: "Мова",
     settingsOn: "Увімк.",
     settingsOff: "Вимк.",
     close: "Закрити",
@@ -152,9 +164,7 @@ const uk = {
     shopEventLive: "Івент",
     shopEventSoon: "Скоро · з {date}",
     shopSoon: "Скоро",
-    shopEventDays_one: "ще {n} день",
-    shopEventDays_few: "ще {n} дні",
-    shopEventDays_many: "ще {n} днів",
+    shopEventDays: "ще {n} {n:день|дні|днів}",
     shopEventLastDay: "останній день",
     shopTrial: "24 год за рекламу",
     shopTrialLeft: "Пробний: ще {h} год",
@@ -398,10 +408,7 @@ const uk = {
     campaignStarRules: "Зірки",
     campaignRuleDraw: "Нічия",
     campaignRuleWin: "Перемога",
-    campaignRuleFast: "Перемога не більше ніж за {n} {moves}",
-    movesOne: "хід",
-    movesFew: "ходи",
-    movesMany: "ходів",
+    campaignRuleFast: "Перемога не більше ніж за {n} {n:хід|ходи|ходів}",
     campaignRuleSurvive: "Нічия або перемога",
     campaignReplay: "Грати ще раз",
     campaignFight: "До бою",
@@ -418,7 +425,7 @@ const uk = {
     albumNeed_gold: "Збери всі зірки розділу",
 };
 
-type Key = keyof typeof uk;
+export type Key = keyof typeof uk;
 
 const en: Record<Key, string> = {
     ai: "Bot",
@@ -443,7 +450,6 @@ const en: Record<Key, string> = {
     fullscreenExit: "Exit fullscreen",
     firstMoveHint: "You play crosses. Tap any cell!",
     settingsSound: "Sound",
-    settingsLanguage: "Language",
     settingsOn: "On",
     settingsOff: "Off",
     close: "Close",
@@ -565,9 +571,7 @@ const en: Record<Key, string> = {
     shopEventLive: "Event",
     shopEventSoon: "Coming {date}",
     shopSoon: "Coming soon",
-    shopEventDays_one: "{n} day left",
-    shopEventDays_few: "{n} days left",
-    shopEventDays_many: "{n} days left",
+    shopEventDays: "{n} {n:day|days} left",
     shopEventLastDay: "last day",
     shopTrial: "24 h for an ad",
     shopTrialLeft: "Trial: {h} h left",
@@ -811,10 +815,7 @@ const en: Record<Key, string> = {
     campaignStarRules: "Stars",
     campaignRuleDraw: "Draw",
     campaignRuleWin: "Win",
-    campaignRuleFast: "Win in {n} {moves} or fewer",
-    movesOne: "move",
-    movesFew: "moves",
-    movesMany: "moves",
+    campaignRuleFast: "Win in {n} {n:move|moves} or fewer",
     campaignRuleSurvive: "Draw or win",
     campaignReplay: "Play again",
     campaignFight: "Fight",
@@ -831,53 +832,119 @@ const en: Record<Key, string> = {
     albumNeed_gold: "Collect all stars of the chapter",
 };
 
-const dictionaries: Record<Locale, Record<Key, string>> = { uk, en };
+const dictionaries: Partial<Record<Locale, Record<Key, string>>> = { uk, en };
+// Імена й назви з бази (розділи, рівні, боси, скіни) іншими мовами - з файлу мови (locales/*.ts).
+const packNames: Partial<Record<Locale, string[]>> = {};
+const packContent: Partial<Record<Locale, Record<string, string>>> = {};
 
-export const toLocale = (raw: string | null | undefined): Locale =>
-    raw?.toLowerCase().startsWith("uk") ? "uk" : "en";
+// Вбудовані словники для адмінки (розділ "Переклади") - еталон, з яким порівнюються правки.
+export const UK_STRINGS: Record<Key, string> = uk;
+export const EN_STRINGS: Record<Key, string> = en;
 
-// Мова, яку гравець сам обрав у налаштуваннях, - має перевагу над мовою браузера й порталу на старті.
-const SAVED_LOCALE_KEY = "ttt-locale";
-export const getSavedLocale = (): Locale | null => {
+// Файл мови: тексти інтерфейсу, імена гравців і переклад контенту з бази
+// (ключі "chapter:<id>:name|subtitle|bossName|bossLine", "level:<id>:title", "theme:<id>:name").
+export type LocalePack = { strings: Record<Key, string>; names: string[]; content: Record<string, string> };
+
+// Мови, крім uk/en, - окремими чанками: гравець завантажує лише свою.
+const LOADERS: Record<Exclude<Locale, "uk" | "en">, () => Promise<{ default: LocalePack }>> = {
+    fr: () => import("@game/lib/locales/fr"),
+    de: () => import("@game/lib/locales/de"),
+    pt: () => import("@game/lib/locales/pt"),
+    it: () => import("@game/lib/locales/it"),
+    es: () => import("@game/lib/locales/es"),
+    nl: () => import("@game/lib/locales/nl"),
+    pl: () => import("@game/lib/locales/pl"),
+};
+
+export const loadLocalePack = async (locale: Locale): Promise<LocalePack> => {
+    if (locale === "uk") return { strings: uk, names: [], content: {} };
+    if (locale === "en") return { strings: en, names: [], content: {} };
+    return (await LOADERS[locale]()).default;
+};
+
+// Правки з адмінки (Firestore translations/{locale}) - поверх вбудованих текстів.
+export type TranslationOverrides = { strings?: Partial<Record<Key, string>>; content?: Record<string, string>; seo?: Record<string, string> };
+export const TRANSLATIONS_COLLECTION = "translations";
+const overrides: Partial<Record<Locale, TranslationOverrides>> = {};
+
+const loadOverrides = async (locale: Locale): Promise<void> => {
+    if (overrides[locale] || !isFirebaseConfigured) return;
     try {
-        const raw = typeof localStorage !== "undefined" ? localStorage.getItem(SAVED_LOCALE_KEY) : null;
-        return raw === "uk" || raw === "en" ? raw : null;
+        const snap = await getDoc(doc(getFirebaseDb(), TRANSLATIONS_COLLECTION, locale));
+        overrides[locale] = snap.exists() ? (snap.data() as TranslationOverrides) : {};
     } catch {
-        return null;
+        // Без правок з адмінки гра працює на вбудованих текстах.
+        overrides[locale] = {};
     }
 };
 
-let current: Locale =
-    getSavedLocale() ?? (process.env.GAME_TARGET && typeof navigator !== "undefined" ? toLocale(navigator.language) : "uk");
-const listeners = new Set<() => void>();
+export const toLocale = (raw: string | null | undefined): Locale | null => {
+    const code = raw?.toLowerCase().slice(0, 2);
+    return LOCALES.find((locale) => locale === code) ?? null;
+};
 
-// Мова сторінки з самого старту - від неї залежить шрифт заголовків.
-if (typeof document !== "undefined") document.documentElement.dataset.lang = current;
-
-export const getLocale = (): Locale => current;
-
-export const setLocale = (locale: Locale): void => {
-    if (locale === current) return;
-    current = locale;
-    if (typeof document !== "undefined") {
-        document.documentElement.lang = locale;
-        // Шрифт заголовків залежить від мови (gameStyles.ts: html[data-lang="uk"]).
-        document.documentElement.dataset.lang = locale;
+// Перша мова браузера, яку знає гра; інакше - англійська.
+export const browserLocale = (): Locale => {
+    if (typeof navigator === "undefined") return "en";
+    const list = navigator.languages?.length ? navigator.languages : [navigator.language];
+    for (const raw of list) {
+        const locale = toLocale(raw);
+        if (locale) return locale;
     }
+    return "en";
+};
+
+// Стартова мова - англійська і на сервері, і в браузері до initLocale (гідратація не розходиться);
+// мову браузера застосовує initLocale з кореня гри.
+let current: Locale = "en";
+// Лічильник змін (мова, підвантажений файл мови, правки з адмінки) - для перемальовування.
+let version = 0;
+let ready: Promise<void> = Promise.resolve();
+const listeners = new Set<() => void>();
+const notify = () => {
+    version += 1;
     listeners.forEach((listener) => listener());
 };
 
-// Вибір мови в налаштуваннях: застосувати й запам'ятати.
-export const chooseLocale = (locale: Locale): void => {
-    try {
-        localStorage.setItem(SAVED_LOCALE_KEY, locale);
-    } catch {
-        // Сховище недоступне (приватний режим) - мова діє до кінця сесії.
+export const getLocale = (): Locale => current;
+
+export const setLocale = (locale: Locale): Promise<void> => {
+    if (locale !== current) {
+        current = locale;
+        if (typeof document !== "undefined") {
+            document.documentElement.lang = locale;
+            // Шрифт заголовків залежить від мови (gameStyles.ts: html[data-lang="uk"]).
+            document.documentElement.dataset.lang = locale;
+        }
+        notify();
     }
-    setLocale(locale);
+    const loadPack =
+        dictionaries[locale] || locale === "uk" || locale === "en"
+            ? Promise.resolve()
+            : loadLocalePack(locale)
+                  .then((pack) => {
+                      dictionaries[locale] = pack.strings;
+                      packNames[locale] = pack.names;
+                      packContent[locale] = pack.content;
+                  })
+                  .catch(() => {
+                      // Чанк не завантажився (мережа) - лишаються англійські тексти.
+                  });
+    ready = Promise.all([loadPack, loadOverrides(locale)]).then(() => {
+        if (locale === current) notify();
+    });
+    return ready;
 };
 
-export const useLocale = (): Locale => useSyncExternalStore(subscribe, getLocale, () => "uk" as Locale);
+// Мова браузера - один раз на старті гри; повертає обіцянку готовності текстів.
+let initialized = false;
+export const initLocale = (): Promise<void> => {
+    if (!initialized) {
+        initialized = true;
+        void setLocale(browserLocale());
+    }
+    return ready;
+};
 
 const subscribe = (listener: () => void) => {
     listeners.add(listener);
@@ -886,33 +953,50 @@ const subscribe = (listener: () => void) => {
     };
 };
 
-// Форма слова за числом: uk - [1, 2-4, 5+] ("монета|монети|монет"), en - [1, інше] ("coin|coins").
-const pluralIndex = (n: number): number => {
-    if (current === "en") return n === 1 ? 0 : 1;
-    const ones = n % 10;
-    const tens = n % 100;
-    if (ones === 1 && tens !== 11) return 0;
-    if (ones >= 2 && ones <= 4 && (tens < 12 || tens > 14)) return 1;
-    return 2;
+export const useLocale = (): Locale => useSyncExternalStore(subscribe, getLocale, () => "en" as Locale);
+
+// Імена гравців поточною мовою (для uk/en - з names.ts), null - ще не завантажено.
+export const localeNames = (): string[] | null => packNames[current] ?? null;
+
+// Текст з бази поточною мовою: uk - як у базі, en - англійське поле, інші - переклад з адмінки
+// або з файлу мови, далі англійською.
+export const contentText = (key: string, ukText: string, enText?: string): string => {
+    if (current === "uk") return ukText;
+    const english = enText?.trim() ? enText : ukText;
+    if (current === "en") return english;
+    return overrides[current]?.content?.[key] || packContent[current]?.[key] || english;
+};
+
+// Форма слова за числом за правилами мови (Intl.PluralRules): {n:one|few|many} для uk/pl,
+// {n:one|other} для решти.
+const pluralRules: Partial<Record<Locale, Intl.PluralRules>> = {};
+const pluralIndex = (n: number, forms: number): number => {
+    const rules = (pluralRules[current] ??= new Intl.PluralRules(current));
+    const category = rules.select(n);
+    const index = category === "one" ? 0 : category === "few" ? 1 : category === "many" ? 2 : forms - 1;
+    return Math.min(index, forms - 1);
 };
 
 // У рядках {n} - значення параметра, {n:форма|форми|форм} - слово, узгоджене з числом n.
 export const t = (key: Key, params?: Record<string, string>): string => {
-    let text = dictionaries[current][key];
+    let text = overrides[current]?.strings?.[key] || dictionaries[current]?.[key] || en[key];
     if (params) {
         text = text.replace(/\{(\w+):([^}]+)\}/g, (whole, name: string, forms: string) => {
             if (!(name in params)) return whole;
             const list = forms.split("|");
-            return list[Math.min(pluralIndex(Math.abs(Number(params[name])) || 0), list.length - 1)];
+            return list[pluralIndex(Math.abs(Number(params[name])) || 0, list.length)];
         });
         for (const [name, value] of Object.entries(params)) text = text.replace(`{${name}}`, value);
     }
     return text;
 };
 
-// Перемальовує компонент при зміні мови (напр. гравець перемкнув мову порталу).
-// Серверний знімок - uk, як і стартова мова сайту, тож гідратація не розходиться.
+// Перемальовує компонент при зміні мови або коли довантажились тексти.
 export const useT = (): typeof t => {
-    useSyncExternalStore(subscribe, getLocale, () => "uk" as Locale);
+    useSyncExternalStore(
+        subscribe,
+        () => version,
+        () => 0
+    );
     return t;
 };

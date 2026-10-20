@@ -6,7 +6,7 @@ import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@ga
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle } from "@game/components/onlineStyles";
 import { setMuted, useMuted } from "@game/lib/sound";
-import { chooseLocale, useLocale, useT, type Locale } from "@game/lib/i18n";
+import { useT } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { setInvitesEnabled, useInvitesEnabled } from "@game/lib/presence";
 import { isFullscreenSupported, toggleFullscreen, useFullscreen } from "@game/lib/fullscreen";
@@ -58,11 +58,6 @@ const Choices = styled.div`
     gap: 6px;
 `;
 
-const LANGUAGES: { id: Locale; label: string }[] = [
-    { id: "uk", label: "Українська" },
-    { id: "en", label: "English" },
-];
-
 // Кнопка повного екрана - поруч із шестернею, такого самого розміру. Де розгорнути гру
 // неможливо (напр. iPhone Safari поза порталом), її немає.
 export const FullscreenButton: React.FC = () => {
@@ -85,7 +80,6 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
     const t = useT();
     const open = useOpenPanel() === "settings";
     const muted = useMuted();
-    const locale = useLocale();
     const invites = useInvitesEnabled();
 
     return (
@@ -124,17 +118,6 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
                                 <GameButton size="sm" aria-pressed={!invites} onClick={() => setInvitesEnabled(false)}>
                                     {t("settingsOff")}
                                 </GameButton>
-                            </Choices>
-                        </Row>
-
-                        <Row>
-                            <RowLabel>{t("settingsLanguage")}</RowLabel>
-                            <Choices role="group" aria-label={t("settingsLanguage")}>
-                                {LANGUAGES.map((item) => (
-                                    <GameButton key={item.id} size="sm" lang={item.id} aria-pressed={locale === item.id} onClick={() => chooseLocale(item.id)}>
-                                        {item.label}
-                                    </GameButton>
-                                ))}
                             </Choices>
                         </Row>
 

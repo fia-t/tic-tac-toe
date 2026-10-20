@@ -3,7 +3,7 @@ import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from "fi
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { getFirebaseDb, getFirebaseStorage, isFirebaseConfigured } from "@game/lib/firebase";
 import { assetUrl } from "@game/lib/assets";
-import { getLocale } from "@game/lib/i18n";
+import { contentText } from "@game/lib/i18n";
 import type { Difficulty } from "@game/lib/difficulty";
 import type { GameModeKey, Modifier } from "@game/lib/modifiers";
 
@@ -139,14 +139,18 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
 ];
 
 // Назва й підзаголовок розділу мовою гри.
-export const chapterName = (chapter: Pick<CampaignChapterDef, "name" | "nameEn">): string => (getLocale() === "en" && chapter.nameEn) || chapter.name;
-export const chapterSubtitle = (chapter: Pick<CampaignChapterDef, "subtitle" | "subtitleEn">): string =>
-    (getLocale() === "en" && chapter.subtitleEn) || chapter.subtitle;
+export const chapterName = (chapter: Pick<CampaignChapterDef, "id" | "name" | "nameEn">): string =>
+    contentText(`chapter:${chapter.id}:name`, chapter.name, chapter.nameEn);
+export const chapterSubtitle = (chapter: Pick<CampaignChapterDef, "id" | "subtitle" | "subtitleEn">): string =>
+    contentText(`chapter:${chapter.id}:subtitle`, chapter.subtitle, chapter.subtitleEn);
 
 // Ім'я й фраза боса, назва рівня - мовою гри.
-export const bossName = (chapter: Pick<CampaignChapterDef, "bossName" | "bossNameEn">): string => (getLocale() === "en" && chapter.bossNameEn) || chapter.bossName;
-export const bossLine = (chapter: Pick<CampaignChapterDef, "bossLine" | "bossLineEn">): string => (getLocale() === "en" && chapter.bossLineEn) || chapter.bossLine;
-export const levelTitle = (level: { title?: string; titleEn?: string }): string => (getLocale() === "en" && level.titleEn) || level.title || "";
+export const bossName = (chapter: Pick<CampaignChapterDef, "id" | "bossName" | "bossNameEn">): string =>
+    contentText(`chapter:${chapter.id}:bossName`, chapter.bossName, chapter.bossNameEn);
+export const bossLine = (chapter: Pick<CampaignChapterDef, "id" | "bossLine" | "bossLineEn">): string =>
+    contentText(`chapter:${chapter.id}:bossLine`, chapter.bossLine, chapter.bossLineEn);
+export const levelTitle = (level: { id: string; title?: string; titleEn?: string }): string =>
+    contentText(`level:${level.id}:title`, level.title ?? "", level.titleEn);
 
 // Фон для <img>/CSS: завантажений файл - як є, стандартний - від кореня сайту чи білду гри.
 export const chapterBackground = (chapter: Pick<CampaignChapterDef, "backgroundUrl">): string =>

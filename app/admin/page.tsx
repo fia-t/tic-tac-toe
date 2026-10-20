@@ -26,6 +26,8 @@ import { GameBuildSection } from "@/app/admin/sections/GameBuildSection";
 import { PlayersSection } from "@/app/admin/sections/PlayersSection";
 import { CampaignSection } from "@/app/admin/sections/CampaignSection";
 import { ModifiersSection } from "@/app/admin/sections/ModifiersSection";
+import { TranslationsSection } from "@/app/admin/sections/TranslationsSection";
+import { setLocale } from "@game/lib/i18n";
 
 // Права адміна визначаються ВИКЛЮЧНО custom claim'ом `admin: true` у ID
 // token (встановлюється лише через scripts/setAdminClaim.js, Firebase Admin
@@ -38,7 +40,7 @@ type AdminAuthState =
     | { status: "admin"; user: User }
     | { status: "error"; message: string };
 
-type AdminSection = "dashboard" | "players" | "campaign" | "modifiers" | "themes" | "names" | "seo" | "build";
+type AdminSection = "dashboard" | "players" | "campaign" | "modifiers" | "themes" | "names" | "translations" | "seo" | "build";
 
 const NAV_ITEMS: { id: AdminSection; label: string }[] = [
     { id: "dashboard", label: "Дашборд" },
@@ -47,6 +49,7 @@ const NAV_ITEMS: { id: AdminSection; label: string }[] = [
     { id: "modifiers", label: "Модифікатори" },
     { id: "themes", label: "Теми" },
     { id: "names", label: "Імена" },
+    { id: "translations", label: "Переклади" },
     { id: "seo", label: "SEO" },
     { id: "build", label: "Білд гри" },
 ];
@@ -57,6 +60,12 @@ export default function AdminPageRoute() {
     const [loginPassword, setLoginPassword] = useState("");
     const [loginLoading, setLoginLoading] = useState(false);
     const [loginError, setLoginError] = useState<string | null>(null);
+
+    // Адмінка українською: назви модифікаторів, ліг тощо беруться зі словника гри,
+    // а він без цього стартує англійською (мова гравця вмикається лише в самій грі).
+    useEffect(() => {
+        void setLocale("uk");
+    }, []);
 
     // Дашборд - стартовий розділ одразу після входу в адмінку.
     const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
@@ -215,6 +224,7 @@ export default function AdminPageRoute() {
                     {activeSection === "modifiers" && <ModifiersSection />}
                     {activeSection === "themes" && <ThemesSection />}
                     {activeSection === "names" && <NamesSection />}
+                    {activeSection === "translations" && <TranslationsSection />}
                     {activeSection === "seo" && <SeoSection />}
                     {activeSection === "build" && <GameBuildSection user={user} />}
                 </MainContentInner>

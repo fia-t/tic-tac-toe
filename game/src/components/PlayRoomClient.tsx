@@ -33,7 +33,7 @@ import {
     RoomFullError,
     PRESENCE_TIMEOUT_MS,
 } from "@game/lib/onlineGame";
-import { useT } from "@game/lib/i18n";
+import { initLocale, useT } from "@game/lib/i18n";
 
 // Екран кімнати - у тій самій колонці гри до 760px, що й меню: шапка з логотипом ("На головну" -
 // вихід із кімнати) і шестернею, під нею - картка запрошення / стан підключення / поле.
@@ -97,6 +97,11 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
     const [now, setNow] = useState(() => Date.now());
     const [leftBannerDismissed, setLeftBannerDismissed] = useState(false);
     const [customInviteLink, setCustomInviteLink] = useState<string | null>(null);
+
+    // Кімната може відкритись першою (посилання від друга) - мова браузера вмикається й тут.
+    useEffect(() => {
+        void initLocale();
+    }, []);
 
     useEffect(() => {
         if (!createInviteLink) return;

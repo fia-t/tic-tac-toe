@@ -14,7 +14,7 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getFirebaseDb, getFirebaseStorage, isFirebaseConfigured } from "@game/lib/firebase";
 import { assetUrl } from "@game/lib/assets";
-import { getLocale } from "@game/lib/i18n";
+import { contentText } from "@game/lib/i18n";
 
 export type ThemeImageKind = "background" | "x" | "o";
 
@@ -77,7 +77,7 @@ export const eventSkinsOf = (themes: Theme[], now: Date = new Date()): { live: {
 export const shortDate = (value: string): string => (DATE_RE.test(value) ? `${value.slice(8, 10)}.${value.slice(5, 7)}` : value);
 
 // Назва скіна мовою гри.
-export const themeName = (theme: Pick<Theme, "name" | "nameEn">): string => (getLocale() === "en" && theme.nameEn) || theme.name;
+export const themeName = (theme: Pick<Theme, "id" | "name" | "nameEn">): string => contentText(`theme:${theme.id}:name`, theme.name, theme.nameEn);
 
 export const DEFAULT_SKIN_PRICE = 300;
 export const skinPrice = (theme: Theme): number =>

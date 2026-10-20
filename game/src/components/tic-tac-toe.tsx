@@ -37,7 +37,7 @@ import { getProfile, setProfileName, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/lib/ui";
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
-import { useT } from "@game/lib/i18n";
+import { initLocale, useT } from "@game/lib/i18n";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -279,12 +279,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // щоб привітання на головній і табло не показували щоразу нове ім'я.
     useEffect(() => {
         let cancelled = false;
-        getActiveNames().then((names) => {
-            if (cancelled) return;
-            const picked = pickRandomName(names);
-            setHumanName(picked);
-            if (!getProfile().name) setProfileName(picked);
-        });
+        // Спершу мова браузера й її тексти - випадкове ім'я обирається вже нею.
+        initLocale()
+            .then(() => getActiveNames())
+            .then((names) => {
+                if (cancelled) return;
+                const picked = pickRandomName(names);
+                setHumanName(picked);
+                if (!getProfile().name) setProfileName(picked);
+            });
         return () => {
             cancelled = true;
         };

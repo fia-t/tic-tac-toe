@@ -17,7 +17,7 @@ import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
-import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
+import { setLocale, toLocale } from "@game/lib/i18n";
 
 // Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
 // каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
@@ -79,11 +79,15 @@ export default function App() {
             void reloadProfile();
         });
 
-        const unsubscribeLocale = sdk.onLocaleChange?.((locale) => setLocale(toLocale(locale)));
+        // Мова з порталу (якщо гра її знає) - замість мови браузера.
+        const applyPortalLocale = (raw: string | null | undefined) => {
+            const locale = toLocale(raw);
+            if (locale) void setLocale(locale);
+        };
+        const unsubscribeLocale = sdk.onLocaleChange?.(applyPortalLocale);
         if (sdk.getInviteParams || sdk.getLocale) {
             void Promise.all([sdk.getLocale?.(), sdk.getInviteParams?.()]).then(([locale, params]) => {
-                // Мова з порталу - лише якщо гравець не обрав свою в налаштуваннях.
-                if (locale && !getSavedLocale()) setLocale(toLocale(locale));
+                applyPortalLocale(locale);
                 const invitedRoom = params?.[INVITE_ROOM_KEY];
                 if (typeof invitedRoom === "string" && invitedRoom) setRoomId(invitedRoom.toUpperCase());
                 setStartupChecked(true);

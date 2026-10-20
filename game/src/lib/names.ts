@@ -12,7 +12,7 @@ import {
     Timestamp,
 } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
-import { getLocale } from "@game/lib/i18n";
+import { getLocale, localeNames } from "@game/lib/i18n";
 
 export type NameEntry = {
     id: string;
@@ -104,7 +104,10 @@ export const DEFAULT_NAMES_EN: string[] = [
 // Перетворює список записів (або їх відсутність) на пул рядків-імен,
 // завжди непорожній - фолбек на DEFAULT_NAMES.
 const toPool = (names: NameEntry[]): string[] => {
-    if (getLocale() === "en") return DEFAULT_NAMES_EN;
+    const locale = getLocale();
+    if (locale === "en") return DEFAULT_NAMES_EN;
+    // Інші мови - імена з файлу мови (locales/*.ts), поки він вантажиться - англійські.
+    if (locale !== "uk") return localeNames() ?? DEFAULT_NAMES_EN;
     return names.length > 0 ? names.map((n) => n.name) : DEFAULT_NAMES;
 };
 

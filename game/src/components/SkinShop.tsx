@@ -182,11 +182,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
         if (status !== "live") return "";
         const left = eventDaysLeft(skin, nowDate);
         if (left === null) return t("shopEventLive");
-        const n = left % 100;
-        const days =
-            left === 1
-                ? t("shopEventLastDay")
-                : t(n % 10 === 1 && n !== 11 ? "shopEventDays_one" : n % 10 >= 2 && n % 10 <= 4 && (n < 12 || n > 14) ? "shopEventDays_few" : "shopEventDays_many", { n: String(left) });
+        const days = left === 1 ? t("shopEventLastDay") : t("shopEventDays", { n: String(left) });
         return `${t("shopEventUntil", { date: shortDate(skin.eventEnd ?? "") })} · ${days}`;
     };
     const termLeft = (until: number) => {

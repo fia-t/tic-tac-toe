@@ -559,7 +559,7 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
                                     ? t("campaignRuleDraw")
                                     : n === 2
                                     ? t("campaignRuleWin")
-                                    : t("campaignRuleFast", { n: String(level.par), moves: level.par % 10 >= 2 && level.par % 10 <= 4 && (level.par < 12 || level.par > 14) ? t("movesFew") : level.par % 10 === 1 && level.par !== 11 ? t("movesOne") : t("movesMany") })}
+                                    : t("campaignRuleFast", { n: String(level.par) })}
                             </span>
                         </div>
                     ))}
