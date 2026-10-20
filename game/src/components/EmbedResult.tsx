@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, PillButton } from "@game/components/onlineStyles";
@@ -79,10 +79,9 @@ const bob = keyframes`
     60% { transform: translateY(-2px) rotate(3deg); }
 `;
 
+// Місце й розмір кошика задає bucketPlace (поруч із полем, щоб не закривати виграшну лінію).
 const Bucket = styled.div`
     position: absolute;
-    left: calc(50% - 80px);
-    bottom: calc(220px + env(safe-area-inset-bottom, 0px));
     width: 160px;
     animation: ${bob} 0.9s ease-in-out 0.6s 4;
     ${reduced}
@@ -339,6 +338,20 @@ const BatSvg = () => (
     </svg>
 );
 
+// Кошик не повинен закривати поле з виграшною лінією: є місце збоку (iframe, повний екран) -
+// ліворуч від поля на рівні його середини; немає (телефон) - менший, угорі над полем, де смуга
+// керування (поки відкрите вікно, вона не потрібна).
+const bucketPlace = (): React.CSSProperties => {
+    const board = document.querySelector("[data-tour=board]")?.getBoundingClientRect();
+    if (!board) return { left: "calc(50% - 80px)", bottom: "calc(220px + env(safe-area-inset-bottom, 0px))" };
+    const side = 160;
+    if (board.left >= side + 24) {
+        return { left: Math.max(12, board.left - side - 20), top: Math.max(12, board.top + board.height / 2 - side / 2), width: side };
+    }
+    const small = 104;
+    return { left: `calc(50% - ${small / 2}px)`, top: Math.max(8, board.top - small - 4), width: small };
+};
+
 // Дощ із цукерок, поки відкрите вікно: випадкові місце, затримка, швидкість і обертання;
 // кошик-гарбуз тим часом наповнюється.
 const CandyRain = () => {
@@ -355,6 +368,8 @@ const CandyRain = () => {
             })),
         []
     );
+    const [place, setPlace] = useState<React.CSSProperties | null>(null);
+    useLayoutEffect(() => setPlace(bucketPlace()), []);
     return (
         <Stage $tint="radial-gradient(circle at 50% 40%, rgba(255, 170, 60, 0.18), rgba(40, 14, 60, 0.45))">
             {pieces.map((p, i) => (
@@ -365,9 +380,11 @@ const CandyRain = () => {
                     {p.kind === 0 ? <WrappedCandy color={p.color} /> : p.kind === 1 ? <Lollipop color={p.color} /> : <CandyCorn />}
                 </Candy>
             ))}
-            <Bucket>
-                <PumpkinBucket />
-            </Bucket>
+            {place && (
+                <Bucket style={place}>
+                    <PumpkinBucket />
+                </Bucket>
+            )}
         </Stage>
     );
 };

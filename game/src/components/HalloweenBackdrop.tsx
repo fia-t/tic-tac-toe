@@ -47,6 +47,11 @@ export const HalloweenBackdrop = createGlobalStyle`
         --info-ink: #34204a;
         /* Напівпрозорий кремовий рахунок на темному небі виглядав брудно-сірим. */
         --score-bg: #fff6e6;
+        /* "Результат" під полем - світле посилання; неактивні кнопки - бляклі, але непрозорі
+           (крізь напівпрозорі просвічувало фіолетове небо). */
+        --link-ink: #ffd98a;
+        --link-ink-hover: #fff1c9;
+        --gb-disabled-filter: grayscale(0.85) brightness(0.8);
     }
 
     /* Вміст гри - над кажанами, що літають позаду (HalloweenBats). */

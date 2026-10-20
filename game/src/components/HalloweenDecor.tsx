@@ -31,7 +31,8 @@ const BatSky = styled.div`
     pointer-events: none;
     z-index: 0;
 
-    @media (prefers-reduced-motion: reduce) {
+    /* На телефоні смуга керування на всю ширину - кажани опинялися серед кнопок. */
+    @media (max-width: 760px), (prefers-reduced-motion: reduce) {
         display: none;
     }
 `;
@@ -109,6 +110,12 @@ const Web = styled.svg`
     width: 38px;
     height: 38px;
     pointer-events: none;
+
+    /* Вузький рахунок на телефоні - павутина лише в самому куті, не на слові "Бот". */
+    @media (max-width: 560px) {
+        width: 22px;
+        height: 22px;
+    }
 `;
 
 const SpiderHang = styled.div`

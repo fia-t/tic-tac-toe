@@ -359,7 +359,7 @@ const turnPulse = keyframes`
 // Підказка-статус: статичний рядок; новий текст плавно проявляється (key = текст).
 // Хід гравця ($mine) - бірюзова плашка з легкою пульсацією, щоб "Твій хід" було видно одразу.
 // Висота однакова з плашкою і без - рядок рахунку не стрибає.
-export const TurnLine = styled.div<{ $mine?: boolean }>`
+export const TurnLine = styled.div<{ $mine?: boolean; $pill?: boolean }>`
     display: flex;
     align-items: center;
     gap: 8px;
@@ -396,6 +396,20 @@ export const TurnLine = styled.div<{ $mine?: boolean }>`
         !$mine &&
         css`
             color: #8a6a48;
+        `}
+
+    /* Хелловінська гра в новині: простий текст губився на нічному небі - кремова плашка,
+       як у рахунку. */
+    ${({ $mine, $pill }) =>
+        !$mine &&
+        $pill &&
+        css`
+            flex: 0 1 auto;
+            padding: 5px 14px;
+            border-radius: 18px;
+            background: #fff6e6;
+            color: #5b3f22;
+            text-shadow: none;
         `}
 
     @media (prefers-reduced-motion: reduce) {
@@ -497,14 +511,14 @@ export const ResultLink = styled.button`
     padding: 4px 2px;
     border: none;
     background: none;
-    color: #0f6f8c;
+    color: var(--link-ink, #0f6f8c);
     font: 800 15px/1.2 var(--font-body);
     white-space: nowrap;
     cursor: pointer;
 
     @media (hover: hover) {
         &:hover {
-            color: #0a5068;
+            color: var(--link-ink-hover, #0a5068);
         }
     }
 
@@ -797,6 +811,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 <TurnLine
                     key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
                     $mine={myTurn && !over && !timerBoost.expired}
+                    $pill={isHalloweenEmbed()}
                     role="status"
                     aria-live="polite"
                 >

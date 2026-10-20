@@ -123,7 +123,7 @@ const states = css`
     &:disabled,
     &[aria-disabled="true"] {
         cursor: not-allowed;
-        filter: grayscale(0.6) opacity(0.6);
+        filter: var(--gb-disabled-filter, grayscale(0.6) opacity(0.6));
         transform: none;
     }
 
