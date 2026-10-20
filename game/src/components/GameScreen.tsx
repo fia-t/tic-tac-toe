@@ -251,13 +251,26 @@ const LeaveButton = styled.button`
 `;
 
 // Рахунок - над полем; підказка - в одному ряду з ним, одразу після нього.
-export const ScoreTop = styled.div`
+export const ScoreTop = styled.div<{ $wide?: boolean }>`
     display: flex;
     align-items: center;
     gap: 10px;
     /* Не вужчий за 560px (якщо екран дозволяє): на низькому, але широкому екрані (iframe у новині)
        поле маленьке, і підказка в плашці інакше розсипалась би у вузький стовпчик. */
     width: max(var(--board-w), min(100%, 560px));
+
+    /* Гра в новині: ширше за телефон рядок до 720px, і статус завжди в один рядок. */
+    ${({ $wide }) =>
+        $wide &&
+        css`
+            @media (min-width: 561px) {
+                width: max(var(--board-w), min(100%, 720px));
+
+                & > * {
+                    white-space: nowrap;
+                }
+            }
+        `}
 
     /* На телефоні рахунок і статус - в одному рядку сталої висоти (до двох рядків підказки),
        щоб поле стояло вище й не стрибало, коли статус змінюється. */
@@ -745,7 +758,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 </div>
             )}
 
-            <ScoreTop>
+            <ScoreTop $wide={isEmbed()}>
                 <ScorePill>
                     <span>{t("ai")}</span>
                     <b>{score.ai}</b>

@@ -653,7 +653,12 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         return (
             <RewardedAdContext.Provider value={undefined}>
                 <ShellVars />
-                <AppColumn ref={topRef}>{content}</AppColumn>
+                {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
+                {themeReady ? (
+                    <AppColumn ref={topRef}>{content}</AppColumn>
+                ) : (
+                    <div style={{ position: "fixed", inset: 0, display: "grid", placeItems: "center" }}>{content}</div>
+                )}
             </RewardedAdContext.Provider>
         );
     }
