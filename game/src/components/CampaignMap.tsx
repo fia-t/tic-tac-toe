@@ -32,7 +32,7 @@ import {
     recordLevelStars,
     useCampaign,
 } from "@game/lib/campaign";
-import { CampaignChapterDef, chapterBackground, chapterName, chapterSubtitle } from "@game/lib/campaignContent";
+import { CampaignChapterDef, bossLine, bossName, chapterBackground, chapterName, chapterSubtitle, levelTitle } from "@game/lib/campaignContent";
 import { earnCoins, grantSkin } from "@game/lib/wallet";
 import { CAMPAIGN_THEMES, themeName, type Theme } from "@game/lib/themes";
 import { assetUrl } from "@game/lib/assets";
@@ -407,7 +407,7 @@ const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t:
 const cardName = (card: AlbumCard, t: ReturnType<typeof useT>): string => {
     const chapter = CAMPAIGN_CHAPTERS[card.chapter];
     if (!chapter) return "";
-    return card.kind === "boss" ? chapter.bossName || t("campaignBoss") : card.kind === "gold" ? t("albumGold", { name: chapterName(chapter) }) : chapterName(chapter);
+    return card.kind === "boss" ? bossName(chapter) || t("campaignBoss") : card.kind === "gold" ? t("albumGold", { name: chapterName(chapter) }) : chapterName(chapter);
 };
 
 export const AlbumTileView: React.FC<{ card: AlbumCard; got: boolean }> = ({ card, got }) => {
@@ -459,13 +459,13 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
                     <BossIntro style={{ marginTop: 8 }}>
                         <BossPortrait chapterId={chapter.id} size={84} />
                         <div>
-                            <h2 id="level-info-title">{chapter.bossName || level.title}</h2>
-                            {chapter.bossLine && <p>«{chapter.bossLine}»</p>}
+                            <h2 id="level-info-title">{bossName(chapter) || levelTitle(level)}</h2>
+                            {chapter.bossLine && <p>«{bossLine(chapter)}»</p>}
                         </div>
                     </BossIntro>
                 ) : (
                     <h2 id="level-info-title" style={{ margin: "6px 44px 0 0", fontSize: 22, lineHeight: 1.1 }}>
-                        {level.title}
+                        {levelTitle(level)}
                     </h2>
                 )}
                 <Conditions aria-label={t("dailySpec")}>
@@ -606,7 +606,7 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
                                                 disabled={!open}
                                                 onClick={() => setInfo(index)}
                                                 aria-label={label}
-                                                title={open ? level.title : undefined}
+                                                title={open ? levelTitle(level) : undefined}
                                             >
                                                 {level.boss ? <BossPortrait chapterId={chapter.id} size={34} /> : index + 1}
                                                 {!level.boss && <LevelIcon>{level.preset ? <PuzzleIcon /> : <ModIcon id={level.modifier ?? null} size={18} />}</LevelIcon>}
@@ -765,7 +765,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
         <ResultPopup
             result={result.result}
             summary={result.summary}
-            eyebrow={`${t("campaignLevel", { n: String(result.level + 1) })} · ${level?.title ?? ""}`}
+            eyebrow={`${t("campaignLevel", { n: String(result.level + 1) })} · ${level ? levelTitle(level) : ""}`}
             stars={result.stars}
             extra={extra}
             onClose={() => {

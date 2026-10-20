@@ -23,6 +23,7 @@ export type DailyTemplate = {
     preset?: { X: number[]; O: number[] };
     // Назва-ціль рівня кампанії (з адмінки).
     title?: string;
+    titleEn?: string;
 };
 
 export const DAILY_TEMPLATES: DailyTemplate[] = [

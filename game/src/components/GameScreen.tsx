@@ -5,6 +5,7 @@ import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { InfoTip } from "@game/components/HomeScreen";
+import { levelTitle } from "@game/lib/campaignContent";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
@@ -596,7 +597,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     const goal = run
         ? run.kind === "campaign"
-            ? `${t("campaignLevel", { n: String((run.level ?? 0) + 1) })}: ${run.template.title ?? ""}`
+            ? `${t("campaignLevel", { n: String((run.level ?? 0) + 1) })}: ${levelTitle(run.template)}`
             : `${t("dailyBadge", { n: String(dayOfYear()) })}: ${t(`daily_${run.template.id}` as Parameters<typeof t>[0])}`
         : "";
 

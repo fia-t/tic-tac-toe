@@ -19,6 +19,11 @@ const firebaseConfig: FirebaseOptions = {
 
 export const isFirebaseConfigured = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 
+// Локальний запуск (розробка, перевірки) - не пишемо статистику: аналітику, партії в gameLogs і
+// картку гравця в players, щоб тестові сесії не потрапляли в дашборд адмінки.
+export const isLocalDev =
+    typeof window !== "undefined" && /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$|\.test$/.test(window.location.hostname);
+
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
@@ -98,6 +103,7 @@ export const addGameEventListener = (fn: GameEventListener): (() => void) => {
 
 export const trackEvent = (name: string, params?: Record<string, unknown>): void => {
     listeners.forEach((fn) => fn(name, params));
+    if (isLocalDev) return;
     void ensureAnalytics().then((instance) => {
         if (instance) logEvent(instance, name, params);
     });

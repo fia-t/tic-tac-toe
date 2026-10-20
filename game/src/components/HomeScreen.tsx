@@ -247,16 +247,22 @@ const OptInfo = styled.div`
 // Назва рівня в описі - у кольорі своєї кнопки (бурштиновий темніший, щоб читався на картці).
 const DIFF_TEXT: Record<Difficulty, string> = { easy: "#2f8a3e", medium: "#b8730c", master: "#c8382a" };
 
-// Складність і модифікатор - в одному ряду; кнопка модифікатора займає решту ширини (висотою як
-// кнопки складності). На телефоні в ній лише іконка - назва й опис вибраного в рядку під ним.
+// Складність і модифікатор - в одному ряду, опис вибраного - під кожним; кнопка модифікатора
+// займає решту ширини (висотою як кнопки складності). Опис складності не розширює її колонку.
+// На телефоні модифікатор - окремим рядком на всю ширину (опис під ним інакше не вмістився б).
 const OptRow = styled.div`
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 14px;
     min-width: 0;
 
     & > :first-child {
         flex: none;
+    }
+
+    & > :first-child > ${OptInfo} {
+        width: 0;
+        min-width: 100%;
     }
 
     & > :last-child {
@@ -268,10 +274,11 @@ const OptRow = styled.div`
     }
 
     @media (max-width: 480px) {
-        gap: 8px;
+        flex-wrap: wrap;
+        gap: 10px;
 
-        & > :last-child [aria-haspopup] > span {
-            display: none;
+        & > :last-child {
+            flex-basis: 100%;
         }
     }
 `;
@@ -688,13 +695,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     );
 
     // Модифікатор - кнопка зі списком лише тих, що пасують обраному полю.
-    const modSelect = (id: string, active: Modifier | null, allowed: Modifier[], onPick: (m: Modifier | null) => void, menuAlign: "left" | "right") => (
+    const modSelect = (
+        id: string,
+        active: Modifier | null,
+        allowed: Modifier[],
+        onPick: (m: Modifier | null) => void,
+        menuAlign: "left" | "right",
+        info?: React.ReactNode
+    ) => (
         <OptGroup>
             <EyebrowInfo id={id}>
                 {t("modifierLabel")}
                 <InfoTip text={id === "home-friend-mod" ? t("infoModFriend") : t("infoMod")} />
             </EyebrowInfo>
             <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} onPick={onPick} />
+            {info}
         </OptGroup>
     );
     const modInfo = (active: Modifier | null) => (
@@ -729,15 +744,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                         </DiffButton>
                     ))}
                 </DiffGroup>
-            </OptGroup>
-            {modSelect("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], pickModifier, "right")}
-            </OptRow>
-            <OptGroup>
                 <OptInfo>
                     <strong style={{ color: DIFF_TEXT[difficulty] }}>{t(`difficulty_${difficulty}`)}</strong> · {t(`diffNote_${difficulty}`)}
                 </OptInfo>
-                {modInfo(activeModifier)}
             </OptGroup>
+            {modSelect("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], pickModifier, "right", modInfo(activeModifier))}
+            </OptRow>
             <GameButton tone="primary" size="lg" block onClick={() => play(mode)}>
                 {t("homePlay")}
             </GameButton>
@@ -750,8 +762,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <h2 id="home-friend">{t("homeFriendOnline")}</h2>
                 {modePicker("home-friend-board", friendMode, setFriendMode)}
                 <ModGroup>
-                    {modSelect("home-friend-mod", friendModifier, friendAllowed, setFriendMod, "left")}
-                    {modInfo(friendModifier)}
+                    {modSelect("home-friend-mod", friendModifier, friendAllowed, setFriendMod, "left", modInfo(friendModifier))}
                 </ModGroup>
                 <GameButton tone="primary" size="lg" block disabled={friendBusy} onClick={() => void playFriend()}>
                     {friendBusy ? t("creating") : t("homeFriend")}

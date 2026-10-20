@@ -1,6 +1,6 @@
 "use client";
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, Timestamp, where } from "firebase/firestore";
-import { getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
+import { getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
 
 // Режими гри, за якими рахуються партії в адмінському дашборді.
 export type GameMode = "ai-easy" | "ai-hard" | "ai-5x5" | "friend-3x3" | "friend-9x9" | "friend-5x5";
@@ -31,7 +31,7 @@ const gameLogsCollection = "gameLogs";
 // перевіряють лише форму документа), щоб офлайн vs-AI режим не тягнув за
 // собою анонімний вхід.
 export const logGameResult = (mode: GameMode, outcome: GameOutcome): void => {
-    if (!isFirebaseConfigured) return;
+    if (!isFirebaseConfigured || isLocalDev) return;
     void addDoc(collection(getFirebaseDb(), gameLogsCollection), {
         mode,
         outcome,

@@ -17,6 +17,8 @@ export type CampaignLevelDef = {
     id?: string;
     // Назва-ціль рівня, як її бачить гравець ("Перемога в обхід каміння").
     title: string;
+    // Назва-ціль англійською; порожньо - показується українська.
+    titleEn?: string;
     mode: GameModeKey;
     difficulty: Difficulty;
     modifier?: Modifier | null;
@@ -42,6 +44,8 @@ export type CampaignChapterDef = {
     active: boolean;
     bossName: string;
     bossLine: string;
+    bossNameEn: string;
+    bossLineEn: string;
     rewardCoins: number;
     // id скіна, який відкривається за проходження розділу (порожньо - без скіна).
     rewardSkinId: string;
@@ -68,17 +72,19 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         order: 0,
         active: true,
         bossName: "Капітан Краб",
+        bossNameEn: "Captain Crab",
+        bossLineEn: "Pieces don't last long on my beach! Keep no more than three - and stay focused.",
         bossLine: "На моєму пляжі фішки довго не живуть! Тримай не більше трьох - і не відволікайся.",
         rewardCoins: 100,
         // Вбудований скін-нагорода (CAMPAIGN_THEMES): фон поля - арт розділу.
         rewardSkinId: "sea",
         levels: [
-            { ...W("Перша перемога над легким ботом", "traditional", "easy", 3), id: "beach-1" },
-            { ...W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }), id: "beach-2" },
-            { ...W("Зникаючі фішки: виграй", "traditional", "medium", 5, { modifier: "vanish" }), id: "beach-3" },
-            { ...W("Таймер: перемога на швидкість", "traditional", "medium", 4, { modifier: "timer" }), id: "beach-4" },
-            { ...W("Мізер проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }), id: "beach-5" },
-            { ...W("Бос: Капітан Краб", "traditional", "master", 8, { modifier: "vanish", goal: "survive", boss: true }), id: "beach-6" },
+            { ...W("Перша перемога над легким ботом", "traditional", "easy", 3), id: "beach-1", titleEn: "First win against the easy bot" },
+            { ...W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }), id: "beach-2", titleEn: "Puzzle: find the fork and win in 2 moves" },
+            { ...W("Зникаючі фішки: виграй", "traditional", "medium", 5, { modifier: "vanish" }), id: "beach-3", titleEn: "Vanishing pieces: win" },
+            { ...W("Таймер: перемога на швидкість", "traditional", "medium", 4, { modifier: "timer" }), id: "beach-4", titleEn: "Timer: win against the clock" },
+            { ...W("Мізер проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }), id: "beach-5", titleEn: "Misère vs Master: don't complete a line first" },
+            { ...W("Бос: Капітан Краб", "traditional", "master", 8, { modifier: "vanish", goal: "survive", boss: true }), id: "beach-6", titleEn: "Boss: Captain Crab" },
         ],
     },
     {
@@ -91,16 +97,18 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         order: 1,
         active: true,
         bossName: "Пан Кріт",
+        bossNameEn: "Mister Mole",
+        bossLineEn: "The forest is my domain. I dig a mound wherever I like. Can you get around it?",
         bossLine: "Ліс - мої володіння. Де захочу, там і вирию горбок. Встигнеш оминути?",
         rewardCoins: 150,
         rewardSkinId: "forest",
         levels: [
-            { ...W("4 в ряд проти легкого бота", "five", "easy", 6), id: "forest-1" },
-            { ...W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }), id: "forest-2" },
-            { ...W("Головоломка: створи подвійну загрозу й виграй за 2 ходи", "five", "medium", 2, { preset: { X: [6, 7, 8, 12], O: [3, 5, 9, 20] } }), id: "forest-3" },
-            { ...W("Кріт риє горбки: виграй", "five", "medium", 8, { modifier: "mole" }), id: "forest-4" },
-            { ...W("Гравітація: збери 4", "five", "medium", 8, { modifier: "gravity" }), id: "forest-5" },
-            { ...W("Бос: Пан Кріт", "five", "master", 10, { modifier: "mole", goal: "survive", boss: true }), id: "forest-6" },
+            { ...W("4 в ряд проти легкого бота", "five", "easy", 6), id: "forest-1", titleEn: "4 in a row against the easy bot" },
+            { ...W("Перемога в обхід каміння", "five", "medium", 7, { modifier: "stones" }), id: "forest-2", titleEn: "Win around the stones" },
+            { ...W("Головоломка: створи подвійну загрозу й виграй за 2 ходи", "five", "medium", 2, { preset: { X: [6, 7, 8, 12], O: [3, 5, 9, 20] } }), id: "forest-3", titleEn: "Puzzle: make a double threat and win in 2 moves" },
+            { ...W("Кріт риє горбки: виграй", "five", "medium", 8, { modifier: "mole" }), id: "forest-4", titleEn: "The mole digs mounds: win" },
+            { ...W("Гравітація: збери 4", "five", "medium", 8, { modifier: "gravity" }), id: "forest-5", titleEn: "Gravity: get 4 in a row" },
+            { ...W("Бос: Пан Кріт", "five", "master", 10, { modifier: "mole", goal: "survive", boss: true }), id: "forest-6", titleEn: "Boss: Mister Mole" },
         ],
     },
     {
@@ -113,17 +121,19 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         order: 2,
         active: true,
         bossName: "Орел-Вершина",
+        bossNameEn: "Summit Eagle",
+        bossLineEn: "From the summit I see all nine boards at once. Can you think in 5 seconds?",
         bossLine: "З гори я бачу всі дев'ять полів одразу. А ти встигнеш подумати за 5 секунд?",
         rewardCoins: 250,
         rewardSkinId: "peak",
         levels: [
-            { ...W("Перше гіга-поле", "difficult", "easy", 14), id: "mountains-1" },
-            { ...W("Гіга-поле проти середнього бота", "difficult", "medium", 16), id: "mountains-2" },
-            { ...W("Гіга-поле з таймером", "difficult", "medium", 16, { modifier: "timer" }), id: "mountains-3" },
+            { ...W("Перше гіга-поле", "difficult", "easy", 14), id: "mountains-1", titleEn: "Your first Ultimate board" },
+            { ...W("Гіга-поле проти середнього бота", "difficult", "medium", 16), id: "mountains-2", titleEn: "Ultimate against the medium bot" },
+            { ...W("Гіга-поле з таймером", "difficult", "medium", 16, { modifier: "timer" }), id: "mountains-3", titleEn: "Ultimate with a timer" },
             // Гіга-поле: індекси 0-80 (поле b, клітинка c -> b * 9 + c); виграні малі поля закриваються одразу.
-            { ...W("Головоломка: знайди хід, що виграє все гіга-поле", "difficult", "medium", 1, { preset: { X: [0, 1, 2, 36, 37, 38, 72, 78], O: [18, 19, 20, 54, 55, 56, 80, 44] } }), id: "mountains-4" },
-            { ...W("Майстер на гіга-полі: не програй", "difficult", "master", 18, { goal: "survive" }), id: "mountains-5" },
-            { ...W("Бос: Орел-Вершина", "difficult", "master", 20, { modifier: "timer", goal: "survive", boss: true }), id: "mountains-6" },
+            { ...W("Головоломка: знайди хід, що виграє все гіга-поле", "difficult", "medium", 1, { preset: { X: [0, 1, 2, 36, 37, 38, 72, 78], O: [18, 19, 20, 54, 55, 56, 80, 44] } }), id: "mountains-4", titleEn: "Puzzle: find the move that wins the whole Ultimate board" },
+            { ...W("Майстер на гіга-полі: не програй", "difficult", "master", 18, { goal: "survive" }), id: "mountains-5", titleEn: "Master on Ultimate: don't lose" },
+            { ...W("Бос: Орел-Вершина", "difficult", "master", 20, { modifier: "timer", goal: "survive", boss: true }), id: "mountains-6", titleEn: "Boss: Summit Eagle" },
         ],
     },
 ];
@@ -132,6 +142,11 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
 export const chapterName = (chapter: Pick<CampaignChapterDef, "name" | "nameEn">): string => (getLocale() === "en" && chapter.nameEn) || chapter.name;
 export const chapterSubtitle = (chapter: Pick<CampaignChapterDef, "subtitle" | "subtitleEn">): string =>
     (getLocale() === "en" && chapter.subtitleEn) || chapter.subtitle;
+
+// Ім'я й фраза боса, назва рівня - мовою гри.
+export const bossName = (chapter: Pick<CampaignChapterDef, "bossName" | "bossNameEn">): string => (getLocale() === "en" && chapter.bossNameEn) || chapter.bossName;
+export const bossLine = (chapter: Pick<CampaignChapterDef, "bossLine" | "bossLineEn">): string => (getLocale() === "en" && chapter.bossLineEn) || chapter.bossLine;
+export const levelTitle = (level: { title?: string; titleEn?: string }): string => (getLocale() === "en" && level.titleEn) || level.title || "";
 
 // Фон для <img>/CSS: завантажений файл - як є, стандартний - від кореня сайту чи білду гри.
 export const chapterBackground = (chapter: Pick<CampaignChapterDef, "backgroundUrl">): string =>
@@ -142,6 +157,7 @@ const COLLECTION = "campaignChapters";
 const toLevel = (raw: Record<string, unknown>, fallbackId: string): CampaignLevelDef => ({
     id: typeof raw.id === "string" && raw.id ? raw.id : fallbackId,
     title: String(raw.title ?? ""),
+    titleEn: String(raw.titleEn ?? ""),
     mode: (["traditional", "five", "difficult"] as const).includes(raw.mode as GameModeKey) ? (raw.mode as GameModeKey) : "traditional",
     difficulty: (["easy", "medium", "master"] as const).includes(raw.difficulty as Difficulty) ? (raw.difficulty as Difficulty) : "easy",
     modifier: (raw.modifier as Modifier) || null,
@@ -162,6 +178,8 @@ const toChapter = (id: string, raw: Record<string, unknown>): CampaignChapterDef
     active: raw.active !== false,
     bossName: String(raw.bossName ?? ""),
     bossLine: String(raw.bossLine ?? ""),
+    bossNameEn: String(raw.bossNameEn ?? ""),
+    bossLineEn: String(raw.bossLineEn ?? ""),
     rewardCoins: typeof raw.rewardCoins === "number" ? raw.rewardCoins : 0,
     rewardSkinId: String(raw.rewardSkinId ?? ""),
     levels: Array.isArray(raw.levels) ? raw.levels.map((level, index) => toLevel(level as Record<string, unknown>, `${id}-${index + 1}`)) : [],
@@ -190,6 +208,7 @@ export const getAllCampaignChapters = async (): Promise<CampaignChapterDef[]> =>
 const cleanLevel = (level: CampaignLevelDef, index: number, chapterId: string) => ({
     id: level.id || `${chapterId}-${index + 1}`,
     title: level.title,
+    titleEn: level.titleEn ?? "",
     mode: level.mode,
     difficulty: level.difficulty,
     modifier: level.modifier ?? null,

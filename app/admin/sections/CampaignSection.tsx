@@ -506,6 +506,14 @@ const ChapterEditor: React.FC<{
                         <TextInput value={draft.bossLine} disabled={disabled} onChange={(e) => set("bossLine", e.target.value)} />
                     </Wide>
                     <SmallLabel>
+                        Бос - імʼя англійською
+                        <TextInput value={draft.bossNameEn} placeholder="Boss name" disabled={disabled} onChange={(e) => set("bossNameEn", e.target.value)} />
+                    </SmallLabel>
+                    <SmallLabel>
+                        Бос - фраза англійською
+                        <TextInput value={draft.bossLineEn} placeholder="Boss line" disabled={disabled} onChange={(e) => set("bossLineEn", e.target.value)} />
+                    </SmallLabel>
+                    <SmallLabel>
                         Нагорода: скін
                         <Select value={draft.rewardSkinId} disabled={disabled} onChange={(e) => set("rewardSkinId", e.target.value)}>
                             <option value="">Без скіна</option>
@@ -546,6 +554,15 @@ const ChapterEditor: React.FC<{
                                 <td>{index + 1}</td>
                                 <td>
                                     <input type="text" value={level.title} disabled={disabled} onChange={(e) => setLevel(index, { title: e.target.value })} />
+                                    <input
+                                        type="text"
+                                        value={level.titleEn ?? ""}
+                                        placeholder="English"
+                                        aria-label="Назва-ціль англійською"
+                                        disabled={disabled}
+                                        style={{ marginTop: 4 }}
+                                        onChange={(e) => setLevel(index, { titleEn: e.target.value })}
+                                    />
                                     {level.preset && (
                                         <Row style={{ marginTop: 4 }}>
                                             <Tag>Головоломка: фішки на старті</Tag>
@@ -732,6 +749,8 @@ export const CampaignSection: React.FC = () => {
                 active: false,
                 bossName: "",
                 bossLine: "",
+                bossNameEn: "",
+                bossLineEn: "",
                 rewardCoins: 100,
                 rewardSkinId: "",
                 levels: [{ ...NEW_LEVEL }],

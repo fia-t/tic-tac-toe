@@ -1,6 +1,6 @@
 "use client";
 import { arrayUnion, doc, getDoc, serverTimestamp, setDoc, type Timestamp } from "firebase/firestore";
-import { addGameEventListener, getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
+import { addGameEventListener, getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
 import { ensureAnonymousUser } from "@game/lib/onlineGame";
 import { gameSource, type GameSource } from "@game/lib/gameLog";
 import { getProfile, levelForXp } from "@game/lib/profile";
@@ -117,7 +117,7 @@ const schedule = (delay = 2000) => {
 };
 
 export const startPlayerTracking = (): void => {
-    if (started || !isFirebaseConfigured || typeof window === "undefined") return;
+    if (started || !isFirebaseConfigured || typeof window === "undefined" || isLocalDev) return;
     started = true;
     schedule(3000);
     addGameEventListener((name) => {

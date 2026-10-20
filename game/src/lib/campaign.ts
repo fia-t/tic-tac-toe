@@ -10,7 +10,7 @@ import { CampaignChapterDef, DEFAULT_CHAPTERS, getCampaignChapters } from "@game
 //
 // par - скільки ходів гравця дозволено для 3 зірок (стартові фішки головоломки не рахуються).
 
-export type CampaignLevel = DailyTemplate & { chapter: number; chapterId: string; boss?: boolean; title: string };
+export type CampaignLevel = DailyTemplate & { chapter: number; chapterId: string; boss?: boolean; title: string; titleEn?: string };
 
 const buildLevels = (chapters: CampaignChapterDef[]): CampaignLevel[] =>
     chapters.flatMap((chapter, ci) =>
@@ -26,6 +26,7 @@ const buildLevels = (chapters: CampaignChapterDef[]): CampaignLevel[] =>
             preset: level.preset ?? undefined,
             boss: Boolean(level.boss),
             title: level.title,
+            titleEn: level.titleEn,
         }))
     );
 
