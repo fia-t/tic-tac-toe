@@ -256,6 +256,8 @@ export const uploadThemeImage = async (themeId: string, file: File, kind: ThemeI
     } catch {
         // об'єкта могло не бути (перше завантаження цього kind) - це нормально
     }
-    await uploadBytes(storageRef, file, { contentType: file.type });
+    // Кожне завантаження дає новий токен у URL, тож файл за цим URL ніколи не змінюється -
+    // браузер може тримати його в кеші рік і не перепитувати сховище.
+    await uploadBytes(storageRef, file, { contentType: file.type, cacheControl: "public, max-age=31536000, immutable" });
     return getDownloadURL(storageRef);
 };

@@ -318,7 +318,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             if (cancelled) return;
             // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) - скін можна
             // змінити в магазині, і на той момент картинки вже мають бути в кеші браузера.
-            await preloadThemeImages([CLASSIC_THEME, ...themes]);
+            // У грі з новини скін один і магазину немає - лише його картинки (менше трафіку й очікування).
+            const skin = embed ? themes.find((item) => item.id === embed.skinId) : undefined;
+            await preloadThemeImages(embed ? [skin ?? CLASSIC_THEME] : [CLASSIC_THEME, ...themes]);
             if (cancelled) return;
             setAvailableThemes(themes);
             // Івентовий скін - одразу обраний у всіх іграх; після кінця івенту - "Класика".
