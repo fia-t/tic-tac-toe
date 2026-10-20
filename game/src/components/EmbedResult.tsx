@@ -81,9 +81,9 @@ const bob = keyframes`
 
 const Bucket = styled.div`
     position: absolute;
-    left: calc(50% - 66px);
+    left: calc(50% - 80px);
     bottom: calc(220px + env(safe-area-inset-bottom, 0px));
-    width: 132px;
+    width: 160px;
     animation: ${bob} 0.9s ease-in-out 0.6s 4;
     ${reduced}
 `;
@@ -221,12 +221,63 @@ const Pile = styled.g`
     ${reduced}
 `;
 
-const PILE: [number, number, number][] = [
-    [28, 40, 7], [40, 40, 7], [52, 40, 7], [64, 40, 7], [76, 40, 7], [88, 40, 7],
-    [34, 30, 7], [46, 30, 7], [58, 30, 7], [70, 30, 7], [82, 30, 7],
-    [42, 20, 7], [54, 20, 7], [66, 20, 7], [78, 20, 7],
-    [50, 11, 6], [61, 10, 6], [71, 12, 6],
+// Гірка в кошику - справжні цукерки: загорнуті з хвостиками, кукурудзяні, льодяники й батончики.
+type PileCandy = { kind: "wrap" | "corn" | "lolli" | "bar"; x: number; y: number; rot: number; color: string };
+const PILE: PileCandy[] = [
+    // нижній ряд (біля краю кошика)
+    { kind: "wrap", x: 27, y: 40, rot: -15, color: "#8e44ad" },
+    { kind: "bar", x: 42, y: 41, rot: 8, color: "#e8452f" },
+    { kind: "corn", x: 55, y: 39, rot: -20, color: "" },
+    { kind: "wrap", x: 68, y: 41, rot: 20, color: "#2ecc71" },
+    { kind: "bar", x: 81, y: 40, rot: -10, color: "#f1c40f" },
+    { kind: "wrap", x: 93, y: 40, rot: 10, color: "#ff6fa8" },
+    // середній ряд
+    { kind: "corn", x: 34, y: 31, rot: 15, color: "" },
+    { kind: "wrap", x: 47, y: 30, rot: 30, color: "#f28c1b" },
+    { kind: "lolli", x: 60, y: 27, rot: -10, color: "#e8452f" },
+    { kind: "wrap", x: 73, y: 31, rot: -25, color: "#8e44ad" },
+    { kind: "corn", x: 86, y: 30, rot: -15, color: "" },
+    // верх гірки
+    { kind: "bar", x: 43, y: 21, rot: -18, color: "#2ecc71" },
+    { kind: "wrap", x: 56, y: 18, rot: 5, color: "#f1c40f" },
+    { kind: "corn", x: 68, y: 19, rot: 25, color: "" },
+    { kind: "wrap", x: 79, y: 22, rot: -30, color: "#ff6fa8" },
+    { kind: "lolli", x: 62, y: 8, rot: 12, color: "#8e44ad" },
 ];
+
+const PileCandyShape = ({ kind, color }: Pick<PileCandy, "kind" | "color">) => {
+    if (kind === "wrap")
+        return (
+            <>
+                <path d="M-6 0-12-5-11 0-12 5zM6 0 12-5 11 0 12 5z" fill={color} opacity="0.8" />
+                <ellipse rx="7" ry="5" fill={color} />
+                <path d="M-4-2c2-1.5 6-1.5 8 0" stroke="#fff" strokeWidth="1.4" fill="none" strokeLinecap="round" opacity="0.7" />
+            </>
+        );
+    if (kind === "corn")
+        return (
+            <>
+                <path d="M0-9C3-4 6 3 6 6s-12 3-12 0 3-10 6-15z" fill="#fff4dc" />
+                <path d="M-4.6 0C-5.5 2-6 4-6 6c0 3 12 3 12 0 0-2-.5-4-1.4-6z" fill="#f28c1b" />
+                <path d="M-6 5c0 2.5 12 2.5 12 0v1.2c0 3-12 3-12 0z" fill="#f6c443" />
+            </>
+        );
+    if (kind === "lolli")
+        return (
+            <>
+                <rect x="-1.2" y="2" width="2.4" height="12" rx="1.2" fill="#f4ead8" />
+                <circle r="7" fill={color} />
+                <path d="M0 0m-4 0a4 4 0 1 0 4-4a2.5 2.5 0 1 1-2.5 2.5" stroke="#fff" strokeWidth="1.6" fill="none" strokeLinecap="round" />
+            </>
+        );
+    return (
+        <>
+            <rect x="-8" y="-4.5" width="16" height="9" rx="1.5" fill="#6b3a1f" />
+            <rect x="-8" y="-4.5" width="9" height="9" rx="1.5" fill={color} />
+            <path d="M1-4.5v9" stroke="#fff" strokeWidth="1" opacity="0.5" />
+        </>
+    );
+};
 
 const PumpkinBucket = () => (
     <svg viewBox="0 -10 120 130" aria-hidden="true">
@@ -244,10 +295,9 @@ const PumpkinBucket = () => (
                 <path d="M86 26l10-20" stroke="#f4ead8" strokeWidth="3" strokeLinecap="round" />
                 <circle cx="96" cy="6" r="7" fill="#ff6fa8" />
                 <path d="M92 6a4 4 0 1 0 4-4" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
-                {PILE.map(([cx, cy, r], i) => (
-                    <g key={i}>
-                        <circle cx={cx} cy={cy} r={r} fill={CANDY_COLORS[(i * 5) % CANDY_COLORS.length]} />
-                        <circle cx={cx - r / 3} cy={cy - r / 3} r={r / 3} fill="#fff" opacity="0.45" />
+                {PILE.map((candy, i) => (
+                    <g key={i} transform={`translate(${candy.x} ${candy.y}) rotate(${candy.rot}) scale(1.25)`}>
+                        <PileCandyShape kind={candy.kind} color={candy.color} />
                     </g>
                 ))}
             </Pile>
