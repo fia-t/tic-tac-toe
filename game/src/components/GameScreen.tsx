@@ -25,7 +25,7 @@ import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModif
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
 
-export const GameRoot = styled.div<{ $timer?: boolean }>`
+export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
@@ -41,6 +41,18 @@ export const GameRoot = styled.div<{ $timer?: boolean }>`
     @media (min-width: 800px) {
         --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h))));
     }
+
+    /* Гра в новині: шапки немає - поле займає всю висоту iframe (чи екрана в повноекранному
+       режимі) і може бути ширшим за колонку; збоку лишається місце під бустери. */
+    ${({ $embed }) =>
+        $embed &&
+        css`
+            --board-w: min(100%, max(280px, calc(100dvh - 210px - var(--timer-h))));
+
+            @media (min-width: 800px) {
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 140px - var(--timer-h))));
+            }
+        `}
 `;
 
 // Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
@@ -580,7 +592,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const difficulty = useDifficulty();
     const choice = useModifierChoice();
     const activeModifier = effectiveModifier(mode, choice);
-    const weekly = weeklyModifier();
+    // У грі з новини акції "модифікатор тижня" немає - мітку в списку не показуємо.
+    const weekly = isEmbed() ? undefined : weeklyModifier();
     const [friendOpen, setFriendOpen] = useState(false);
     const booster = useBoosters(boosters.resetKey);
     const timerBoost = useMoveTimerBoost();
@@ -677,7 +690,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     return (
-        <GameRoot $timer={timer !== null && timer !== undefined && !over}>
+        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={isEmbed()}>
             <Bar data-tour="bar">
                 {quick ? (
                     <>

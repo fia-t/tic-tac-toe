@@ -663,9 +663,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 {themeReady ? (
                     <>
                         <AppColumn ref={topRef}>{content}</AppColumn>
-                        {/* Розгорнути гру з новини на весь екран (кнопка є, лише якщо iframe це дозволяє). */}
+                        {/* Розгорнути гру з новини на весь екран (кнопка є, лише якщо iframe це дозволяє);
+                            на 5×5 і гіга-полі кнопка час від часу пульсує - так поле буде більшим. */}
                         <div style={{ position: "fixed", right: 12, bottom: 12, zIndex: 50 }}>
-                            <FullscreenButton />
+                            <FullscreenButton nudge={gameMode !== "traditional"} />
                         </div>
                     </>
                 ) : (

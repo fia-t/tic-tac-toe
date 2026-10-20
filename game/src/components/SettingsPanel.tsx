@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import styled from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { GameButton, gameButtonCss } from "@game/components/GameButton";
 import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@game/components/GameIcons";
 import { Overlay } from "@game/components/gameStyles";
@@ -85,17 +85,61 @@ const Choices = styled.div`
 
 // Кнопка повного екрана - поруч із шестернею, такого самого розміру. Де розгорнути гру
 // неможливо (напр. iPhone Safari поза порталом), її немає.
-export const FullscreenButton: React.FC = () => {
+// Підказка "розгорни на весь екран": кнопка пульсує й світиться.
+const nudgePulse = keyframes`
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(242, 140, 27, 0.7); }
+    50% { transform: scale(1.25); box-shadow: 0 0 0 14px rgba(242, 140, 27, 0); }
+`;
+
+const NudgeButton = styled(GearButton)<{ $nudge: boolean }>`
+    ${({ $nudge }) =>
+        $nudge &&
+        css`
+            animation: ${nudgePulse} 1s ease-in-out 3;
+            @media (prefers-reduced-motion: reduce) {
+                animation: none;
+                outline: 3px solid #f28c1b;
+            }
+        `}
+`;
+
+// Перша підказка - одразу, далі - повтор, поки гравець так і не розгорнув гру.
+const NUDGE_MS = 3000;
+const NUDGE_REPEAT_MS = 40000;
+
+// nudge - рекомендувати повний екран (великі поля в грі з новини): 3 с пульсації, потім пауза й знову.
+export const FullscreenButton: React.FC<{ nudge?: boolean }> = ({ nudge = false }) => {
     const t = useT();
     const isFullscreen = useFullscreen();
     const [supported, setSupported] = React.useState(false);
+    const [pulsing, setPulsing] = React.useState(false);
     React.useEffect(() => setSupported(isFullscreenSupported()), []);
+    React.useEffect(() => {
+        if (!supported || !nudge || isFullscreen) {
+            setPulsing(false);
+            return;
+        }
+        // Поки відкрите вікно (напр. правила гіга-поля) - чекаємо: пульсація почнеться після закриття.
+        // Перша перевірка - з невеликою затримкою, щоб вікно, яке відкривається разом із полем, встигло з'явитись.
+        let stop: ReturnType<typeof setTimeout> | undefined;
+        let nextAt = Date.now() + 600;
+        const tick = setInterval(() => {
+            if (Date.now() < nextAt || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+            setPulsing(true);
+            stop = setTimeout(() => setPulsing(false), NUDGE_MS);
+            nextAt = Date.now() + NUDGE_REPEAT_MS;
+        }, 300);
+        return () => {
+            clearInterval(tick);
+            clearTimeout(stop);
+        };
+    }, [supported, nudge, isFullscreen]);
     if (!supported) return null;
     const label = isFullscreen ? t("fullscreenExit") : t("fullscreen");
     return (
-        <GearButton type="button" $inline onClick={() => void toggleFullscreen()} aria-label={label} title={label}>
+        <NudgeButton type="button" $inline $nudge={pulsing} onClick={() => void toggleFullscreen()} aria-label={label} title={label}>
             {isFullscreen ? <IconExitFullscreen size={18} /> : <IconFullscreen size={18} />}
-        </GearButton>
+        </NudgeButton>
     );
 };
 
