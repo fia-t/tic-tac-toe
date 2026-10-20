@@ -60,9 +60,14 @@ const Bar = styled.div<{ $quick?: boolean }>`
     }
 
     /* Звичайна гра на широкому екрані: смуга від лівого краю поля до правого краю колонки бустерів
-       (66 px = відступ 14 + кнопка 52), а не ширша за поле з обох боків. Не вужча за свій вміст. */
+       (66 px = відступ 14 + кнопка 52). Ніколи не вужча за свій вміст (один рядок): коли поле мале
+       (невисокий екран), смуга зсувається лівіше, щоб не вийти за правий край
+       (694 px - ширина вмісту українською, найширшого). */
     @media (min-width: 800px) {
-        ${({ $quick }) => ($quick ? "width: max(calc(var(--board-w) + 66px), 670px); margin-left: 66px;" : "")}
+        ${({ $quick }) =>
+            $quick
+                ? "align-self: flex-start; width: calc(var(--board-w) + 66px); min-width: max-content; margin-left: max(0px, min(calc((100% - var(--board-w)) / 2), calc(100% - 694px)));"
+                : ""}
     }
 
     @media (max-width: 480px) {
@@ -123,6 +128,11 @@ const PushRight = styled.div`
     flex-wrap: wrap;
     gap: 8px 10px;
     min-width: 0;
+
+    /* Широкий екран - завжди одним рядком із рештою смуги. */
+    @media (min-width: 761px) {
+        flex-wrap: nowrap;
+    }
 
     @media (max-width: 760px) {
         flex-basis: 100%;
