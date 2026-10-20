@@ -101,17 +101,28 @@ const wiggle = keyframes`
     50% { transform: rotate(7deg); }
 `;
 
-const Spider = styled.div`
+// Павук на павутинці: $top - наскільки нижче звисає (павутинка добудовується до верху екрана).
+const Spider = styled.div<{ $side: "left" | "right"; $top: number; $delay: number; $size: number }>`
     position: absolute;
-    top: 0;
-    right: 14%;
-    width: 64px;
-    animation: ${drop} 1.6s ease-out both;
+    top: ${({ $top }) => $top}px;
+    ${({ $side }) => ($side === "left" ? "left: 12%;" : "right: 14%;")}
+    width: ${({ $size }) => $size}px;
+    animation: ${drop} 1.6s ease-out ${({ $delay }) => $delay}s both;
     ${reduced}
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: calc(50% - 0.75px);
+        bottom: 100%;
+        width: 1.5px;
+        height: 100vh;
+        background: #d8d0e6;
+    }
 
     & > div {
         transform-origin: 50% 0;
-        animation: ${wiggle} 1.2s ease-in-out 1.6s infinite;
+        animation: ${wiggle} ${({ $delay }) => 1.2 + $delay * 0.3}s ease-in-out ${({ $delay }) => 1.6 + $delay}s infinite;
         ${reduced}
     }
 `;
@@ -150,9 +161,10 @@ const flap = keyframes`
 `;
 
 const batPath = keyframes`
-    0% { transform: translate(var(--x0), var(--y0)); opacity: 0; }
-    15% { opacity: 1; }
-    100% { transform: translate(var(--x1), var(--y1)); opacity: 0; }
+    0% { transform: translate(var(--x0), var(--y0)) scale(0.2); opacity: 0; }
+    15% { opacity: 0.85; }
+    85% { opacity: 1; }
+    100% { transform: translate(var(--x1), var(--y1)) scale(var(--s1)); opacity: 0; }
 `;
 
 const Bat = styled.div`
@@ -160,7 +172,8 @@ const Bat = styled.div`
     top: 0;
     left: 0;
     width: 42px;
-    animation: ${batPath} var(--dur) ease-in-out var(--delay) infinite both;
+    margin: -16px 0 0 -21px;
+    animation: ${batPath} var(--dur) cubic-bezier(0.55, 0, 0.9, 0.6) var(--delay) infinite both;
     ${reduced}
 
     svg {
@@ -170,6 +183,8 @@ const Bat = styled.div`
 `;
 
 // --- картинки (SVG) ---
+
+const CANDY_COLORS = ["#e8452f", "#f28c1b", "#8e44ad", "#2ecc71", "#f1c40f", "#ff6fa8"];
 
 const WrappedCandy = ({ color }: { color: string }) => (
     <svg viewBox="0 0 48 48" aria-hidden="true">
@@ -195,12 +210,48 @@ const CandyCorn = () => (
     </svg>
 );
 
+// Гірка цукерок у кошику: виростає з отвору, поки сиплються цукерки (обрізана по краю отвору).
+const fillUp = keyframes`
+    from { transform: translateY(40px); }
+    to { transform: translateY(0); }
+`;
+
+const Pile = styled.g`
+    animation: ${fillUp} 4.2s cubic-bezier(0.3, 0.6, 0.4, 1) 0.5s both;
+    ${reduced}
+`;
+
+const PILE: [number, number, number][] = [
+    [28, 40, 7], [40, 40, 7], [52, 40, 7], [64, 40, 7], [76, 40, 7], [88, 40, 7],
+    [34, 30, 7], [46, 30, 7], [58, 30, 7], [70, 30, 7], [82, 30, 7],
+    [42, 20, 7], [54, 20, 7], [66, 20, 7], [78, 20, 7],
+    [50, 11, 6], [61, 10, 6], [71, 12, 6],
+];
+
 const PumpkinBucket = () => (
-    <svg viewBox="0 0 120 120" aria-hidden="true">
+    <svg viewBox="0 -10 120 130" aria-hidden="true">
+        <defs>
+            <clipPath id="bucket-pile">
+                <rect x="14" y="-20" width="92" height="64" />
+            </clipPath>
+        </defs>
         <path d="M18 44C18 20 102 20 102 44" stroke="#3b2a1a" strokeWidth="5" fill="none" strokeLinecap="round" />
         <ellipse cx="60" cy="76" rx="52" ry="40" fill="#f07a14" />
         <path d="M60 36c-8 12-8 68 0 80M60 36c8 12 8 68 0 80M36 40c-12 14-12 60 0 74M84 40c12 14 12 60 0 74" stroke="#c95a0a" strokeWidth="3" fill="none" />
         <ellipse cx="60" cy="40" rx="40" ry="8" fill="#5a2c08" />
+        <g clipPath="url(#bucket-pile)">
+            <Pile>
+                <path d="M86 26l10-20" stroke="#f4ead8" strokeWidth="3" strokeLinecap="round" />
+                <circle cx="96" cy="6" r="7" fill="#ff6fa8" />
+                <path d="M92 6a4 4 0 1 0 4-4" stroke="#fff" strokeWidth="2" fill="none" strokeLinecap="round" />
+                {PILE.map(([cx, cy, r], i) => (
+                    <g key={i}>
+                        <circle cx={cx} cy={cy} r={r} fill={CANDY_COLORS[(i * 5) % CANDY_COLORS.length]} />
+                        <circle cx={cx - r / 3} cy={cy - r / 3} r={r / 3} fill="#fff" opacity="0.45" />
+                    </g>
+                ))}
+            </Pile>
+        </g>
         <path d="M38 64l10 8H30zM82 64l10 8H74z" fill="#3b1a05" />
         <path d="M36 90c8 8 40 8 48 0l-6 3-4-3-4 4-4-4-4 4-4-4-4 4-4-4z" fill="#3b1a05" />
     </svg>
@@ -238,9 +289,8 @@ const BatSvg = () => (
     </svg>
 );
 
-const CANDY_COLORS = ["#e8452f", "#f28c1b", "#8e44ad", "#2ecc71", "#f1c40f", "#ff6fa8"];
-
-// Дощ із цукерок, поки відкрите вікно: випадкові місце, затримка, швидкість і обертання.
+// Дощ із цукерок, поки відкрите вікно: випадкові місце, затримка, швидкість і обертання;
+// кошик-гарбуз тим часом наповнюється.
 const CandyRain = () => {
     const pieces = useMemo(
         () =>
@@ -272,18 +322,25 @@ const CandyRain = () => {
     );
 };
 
-// Капость за програш: павук спускається на павутинці, привид пролітає й краде цукерку, кажани.
+// Капость за програш: два павуки спускаються на павутинках, привид пролітає й краде цукерку,
+// кажани повільно летять на гравця.
 const Prank = () => {
     const bats = useMemo(
         () =>
-            Array.from({ length: 5 }, (_, i) => ({
-                x0: `${-10 + Math.random() * 20}vw`,
-                y0: `${60 + Math.random() * 30}vh`,
-                x1: `${70 + Math.random() * 40}vw`,
-                y1: `${-10 + Math.random() * 20}vh`,
-                delay: 0.4 + i * 0.35,
-                dur: 2.2 + Math.random(),
-            })),
+            Array.from({ length: 6 }, (_, i) => {
+                // Вилітають з глибини (центр угорі) і повільно летять на глядача - до країв екрана.
+                const x0 = 38 + Math.random() * 24;
+                const toLeft = i % 2 === 0;
+                return {
+                    x0: `${x0}vw`,
+                    y0: `${18 + Math.random() * 16}vh`,
+                    x1: `${toLeft ? -15 + Math.random() * 25 : 90 + Math.random() * 25}vw`,
+                    y1: `${45 + Math.random() * 45}vh`,
+                    s1: (2.2 + Math.random()).toFixed(2),
+                    delay: 0.3 + i * 0.85,
+                    dur: 4.6 + Math.random() * 1.6,
+                };
+            }),
         []
     );
     return (
@@ -291,7 +348,7 @@ const Prank = () => {
             {bats.map((b, i) => (
                 <Bat
                     key={i}
-                    style={{ ["--x0" as string]: b.x0, ["--y0" as string]: b.y0, ["--x1" as string]: b.x1, ["--y1" as string]: b.y1, ["--delay" as string]: `${b.delay}s`, ["--dur" as string]: `${b.dur}s` }}
+                    style={{ ["--x0" as string]: b.x0, ["--y0" as string]: b.y0, ["--x1" as string]: b.x1, ["--y1" as string]: b.y1, ["--s1" as string]: b.s1, ["--delay" as string]: `${b.delay}s`, ["--dur" as string]: `${b.dur}s` }}
                 >
                     <BatSvg />
                 </Bat>
@@ -301,7 +358,12 @@ const Prank = () => {
                     <GhostSvg />
                 </div>
             </Ghost>
-            <Spider>
+            <Spider $side="right" $top={0} $delay={0} $size={64}>
+                <div>
+                    <SpiderSvg />
+                </div>
+            </Spider>
+            <Spider $side="left" $top={96} $delay={0.7} $size={54}>
                 <div>
                     <SpiderSvg />
                 </div>
