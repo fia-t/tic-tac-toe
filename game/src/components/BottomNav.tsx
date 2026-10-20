@@ -8,13 +8,18 @@ import { useT } from "@game/lib/i18n";
 // його немає (вихід у меню - логотип у шапці). Кнопки стоять прямо на фоні, без плашки й тіні,
 // а під ними - м'яке згасання в пісочний колір низу сторінки, щоб картки плавно зникали під меню.
 
+// Кампанія - лише вкладкою на головній (одна точка входу), тож у меню її немає.
+export type NavItem = "home" | "campaign" | "shop" | "awards" | "profile";
+const ITEMS: NavItem[] = ["home", "shop", "awards", "profile"];
+const ITEMS_COUNT = ITEMS.length;
+
 const Nav = styled.nav`
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 1400;
-    padding: 28px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+    padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     background: linear-gradient(to top, rgba(243, 226, 196, 0.97) 0%, rgba(243, 226, 196, 0.9) 55%, rgba(243, 226, 196, 0) 100%);
     pointer-events: none;
 
@@ -22,7 +27,7 @@ const Nav = styled.nav`
         max-width: 760px;
         margin: 0 auto;
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(${ITEMS_COUNT}, minmax(0, 1fr));
         gap: 4px;
         pointer-events: auto;
     }
@@ -39,13 +44,13 @@ const HOVER: Record<NavItem, string> = {
 };
 
 const NavButton = styled.button<{ $item: NavItem }>`
-    ${gameButtonCss("lg")}
-    --gb-c: 16px;
+    ${gameButtonCss("md")}
+    --gb-c: 13px;
     flex-direction: column;
-    gap: 3px;
-    min-height: 78px;
+    gap: 1px;
+    min-height: 58px;
     padding: 0;
-    font-size: 16px;
+    font-size: 14px;
     /* Кремовий верхній бортик зливався б із пісочним згасанням: тонкий теплий контур по краю
        і ледь помітна тінь виділяють кнопку. Наведення й натискання ставлять свій filter. */
     filter: drop-shadow(0 -1px 0 rgba(139, 101, 60, 0.45)) drop-shadow(0 0 0.5px rgba(139, 101, 60, 0.5)) drop-shadow(0 3px 5px rgba(73, 48, 31, 0.14));
@@ -55,8 +60,8 @@ const NavButton = styled.button<{ $item: NavItem }>`
         color 0.12s ease;
 
     svg {
-        width: 34px;
-        height: 34px;
+        width: 24px;
+        height: 24px;
     }
 
     @media (hover: hover) {
@@ -66,33 +71,22 @@ const NavButton = styled.button<{ $item: NavItem }>`
         }
     }
 
-    /* Розміри - менші на телефоні, щоб «Кампанія» й «Нагороди» вміщались. */
+    /* На телефоні - трохи менші, щоб «Нагороди» вміщались. */
     @media (max-width: 640px) {
-        --gb-c: 16px;
+        --gb-c: 12px;
     }
 
     @media (max-width: 480px) {
-        min-height: 72px;
-        font-size: 14px;
-
-        svg {
-            width: 30px;
-            height: 30px;
-        }
-    }
-
-    @media (max-width: 380px) {
+        min-height: 54px;
         font-size: 13px;
 
         svg {
-            width: 28px;
-            height: 28px;
+            width: 22px;
+            height: 22px;
         }
     }
 `;
 
-export type NavItem = "home" | "campaign" | "shop" | "awards" | "profile";
-const ITEMS: NavItem[] = ["home", "campaign", "shop", "awards", "profile"];
 
 const NAV_ICONS: Record<NavItem, React.ReactNode> = {
     home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
@@ -128,7 +122,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ current, onNavigate }) => 
                         key={item}
                         type="button"
                         $item={item}
-                        aria-current={item === current ? "page" : undefined}
+                        aria-current={item === (current === "campaign" ? "home" : current) ? "page" : undefined}
                         onClick={() => onNavigate(item)}
                     >
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round" aria-hidden="true">

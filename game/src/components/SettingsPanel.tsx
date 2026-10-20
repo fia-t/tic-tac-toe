@@ -4,7 +4,7 @@ import styled from "styled-components";
 import { GameButton, gameButtonCss } from "@game/components/GameButton";
 import { IconClose, IconExitFullscreen, IconFullscreen, IconSettings } from "@game/components/GameIcons";
 import { Overlay } from "@game/components/gameStyles";
-import { ModalCard, ModalCloseButton, ModalTitle, PillButton } from "@game/components/onlineStyles";
+import { ModalCard, ModalCloseButton, ModalTitle } from "@game/components/onlineStyles";
 import { setMuted, useMuted } from "@game/lib/sound";
 import { chooseLocale, useLocale, useT, type Locale } from "@game/lib/i18n";
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
@@ -138,9 +138,6 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
                             </Choices>
                         </Row>
 
-                        <PillButton type="button" onClick={closePanel}>
-                            {t("close")}
-                        </PillButton>
                     </ModalCard>
                 </>
             )}

@@ -3,6 +3,7 @@ import { collection, deleteDoc, doc, getDocs, serverTimestamp, setDoc } from "fi
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { getFirebaseDb, getFirebaseStorage, isFirebaseConfigured } from "@game/lib/firebase";
 import { assetUrl } from "@game/lib/assets";
+import { getLocale } from "@game/lib/i18n";
 import type { Difficulty } from "@game/lib/difficulty";
 import type { GameModeKey, Modifier } from "@game/lib/modifiers";
 
@@ -32,6 +33,9 @@ export type CampaignChapterDef = {
     id: string;
     name: string;
     subtitle: string;
+    // Назва й підзаголовок англійською; порожньо - показується українська.
+    nameEn: string;
+    subtitleEn: string;
     // Повний URL (завантажений фон) або шлях від кореня сайту ("images/campaign/beach.jpg").
     backgroundUrl: string;
     order: number;
@@ -58,6 +62,8 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         id: "beach",
         name: "Пляж",
         subtitle: "Класика 3×3 і перші модифікатори",
+        nameEn: "Beach",
+        subtitleEn: "Classic 3×3 and the first modifiers",
         backgroundUrl: "images/campaign/beach.jpg",
         order: 0,
         active: true,
@@ -79,6 +85,8 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         id: "forest",
         name: "Ліс",
         subtitle: "Поле 5×5, чотири в ряд, кріт і каміння",
+        nameEn: "Forest",
+        subtitleEn: "5×5 board, four in a row, the mole and stones",
         backgroundUrl: "images/campaign/forest.jpg",
         order: 1,
         active: true,
@@ -99,6 +107,8 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         id: "mountains",
         name: "Гори",
         subtitle: "Гіга-поле: дев'ять полів",
+        nameEn: "Mountains",
+        subtitleEn: "Ultimate board: nine boards in one",
         backgroundUrl: "images/campaign/mountains.jpg",
         order: 2,
         active: true,
@@ -117,6 +127,11 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
         ],
     },
 ];
+
+// Назва й підзаголовок розділу мовою гри.
+export const chapterName = (chapter: Pick<CampaignChapterDef, "name" | "nameEn">): string => (getLocale() === "en" && chapter.nameEn) || chapter.name;
+export const chapterSubtitle = (chapter: Pick<CampaignChapterDef, "subtitle" | "subtitleEn">): string =>
+    (getLocale() === "en" && chapter.subtitleEn) || chapter.subtitle;
 
 // Фон для <img>/CSS: завантажений файл - як є, стандартний - від кореня сайту чи білду гри.
 export const chapterBackground = (chapter: Pick<CampaignChapterDef, "backgroundUrl">): string =>
@@ -140,6 +155,8 @@ const toChapter = (id: string, raw: Record<string, unknown>): CampaignChapterDef
     id,
     name: String(raw.name ?? ""),
     subtitle: String(raw.subtitle ?? ""),
+    nameEn: String(raw.nameEn ?? ""),
+    subtitleEn: String(raw.subtitleEn ?? ""),
     backgroundUrl: String(raw.backgroundUrl ?? ""),
     order: typeof raw.order === "number" ? raw.order : 0,
     active: raw.active !== false,

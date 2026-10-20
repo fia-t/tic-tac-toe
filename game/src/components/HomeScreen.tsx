@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
 import { GameButton } from "@game/components/GameButton";
-import { DiffButton, DiffGroup, ModButton, ModIcon, ModRow } from "@game/components/GameOptions";
+import { DiffButton, DiffGroup, ModIcon, ModifierSelect } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
@@ -15,7 +15,7 @@ import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
-import { ALL_MODIFIERS, GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
+import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 import { levelForXp, useProfile } from "@game/lib/profile";
 import { dailyReward } from "@game/lib/wallet";
 import { openPanel, useOpenPanel } from "@game/lib/ui";
@@ -247,22 +247,39 @@ const OptInfo = styled.div`
 // Назва рівня в описі - у кольорі своєї кнопки (бурштиновий темніший, щоб читався на картці).
 const DIFF_TEXT: Record<Difficulty, string> = { easy: "#2f8a3e", medium: "#b8730c", master: "#c8382a" };
 
-const ModScroll = styled(ModRow)`
-    /* Ряд іконок вміщається в картку, тож без прокрутки - вона обрізала б тултіпи. Довгі тултіпи
-       (з "модифікатор тижня") у крайніх кнопок вирівнюються по краю кнопки. */
-    padding: 2px 0 32px;
-    margin-bottom: -32px;
+// Складність і модифікатор - в одному ряду; кнопка модифікатора займає решту ширини (висотою як
+// кнопки складності). На телефоні в ній лише іконка - назва й опис вибраного в рядку під ним.
+const OptRow = styled.div`
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    min-width: 0;
 
-    & > button:nth-child(-n + 2)::after {
-        left: calc(-1 * var(--gb-c, 0px));
-        transform: none;
+    & > :first-child {
+        flex: none;
     }
 
-    & > button:nth-last-child(-n + 2)::after {
-        left: auto;
-        right: calc(-1 * var(--gb-c, 0px));
-        transform: none;
+    & > :last-child {
+        flex: 1 1 auto;
+        --mod-w: 100%;
+        --mod-w-sm: 100%;
+        --mod-h: 46px;
+        --mod-h-sm: 42px;
     }
+
+    @media (max-width: 480px) {
+        gap: 8px;
+
+        & > :last-child [aria-haspopup] > span {
+            display: none;
+        }
+    }
+`;
+
+const ModGroup = styled(OptGroup)`
+    --mod-w: 100%;
+    --mod-h: 46px;
+    --mod-h-sm: 42px;
 `;
 
 // "?" біля підпису групи (поле, складність, модифікатор): натискання відкриває коротке пояснення,
@@ -648,7 +665,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
     const modName = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
     const modDesc = (m: Modifier | null) => (m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc"));
-    const modTip = (m: Modifier | null) => modName(m) + (m && m === weekly ? ` · ${t("weeklyModifierTag")}` : "");
     const dailyRules = template.goal === "win" ? t("homeDailyRulesWin", { par: String(template.par) }) : t("homeDailyRulesSurvive");
     const weeklyMode = (MODES.find((m) => MODIFIERS_BY_MODE[m.id].includes(weekly)) ?? MODES[0]).id;
 
@@ -671,37 +687,26 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         </OptGroup>
     );
 
-    const modPicker = (id: string, active: Modifier | null, allowed: Modifier[], list: Modifier[], onPick: (m: Modifier | null) => void) => (
+    // Модифікатор - кнопка зі списком лише тих, що пасують обраному полю.
+    const modSelect = (id: string, active: Modifier | null, allowed: Modifier[], onPick: (m: Modifier | null) => void, menuAlign: "left" | "right") => (
         <OptGroup>
             <EyebrowInfo id={id}>
                 {t("modifierLabel")}
                 <InfoTip text={id === "home-friend-mod" ? t("infoModFriend") : t("infoMod")} />
             </EyebrowInfo>
-            <ModScroll role="group" aria-labelledby={id}>
-                {/* Показуємо всі модифікатори; ті, що не пасують обраному полю, - неактивні. */}
-                {[null, ...list].map((m) => (
-                    <ModButton
-                        key={m ?? "none"}
-                        type="button"
-                        aria-pressed={active === m}
-                        aria-label={modTip(m)}
-                        data-tip={modTip(m)}
-                        disabled={m !== null && !allowed.includes(m)}
-                        onClick={() => onPick(m)}
-                    >
-                        <ModIcon id={m} />
-                    </ModButton>
-                ))}
-            </ModScroll>
-            <OptInfo title={`${modName(active)} · ${modDesc(active)}`}>
-                <strong>{modName(active)}</strong> · {modDesc(active)}
-            </OptInfo>
+            <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} onPick={onPick} />
         </OptGroup>
+    );
+    const modInfo = (active: Modifier | null) => (
+        <OptInfo title={`${modName(active)} · ${modDesc(active)}`}>
+            <strong>{modName(active)}</strong> · {modDesc(active)}
+        </OptInfo>
     );
 
     const botTab = (
         <BotCard aria-label={t("homeQuick")}>
             {modePicker("home-board", mode, setMode)}
+            <OptRow>
             <OptGroup>
                 <EyebrowInfo id="home-diff">
                     {t("difficultyLabel")}
@@ -724,11 +729,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                         </DiffButton>
                     ))}
                 </DiffGroup>
+            </OptGroup>
+            {modSelect("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], pickModifier, "right")}
+            </OptRow>
+            <OptGroup>
                 <OptInfo>
                     <strong style={{ color: DIFF_TEXT[difficulty] }}>{t(`difficulty_${difficulty}`)}</strong> · {t(`diffNote_${difficulty}`)}
                 </OptInfo>
+                {modInfo(activeModifier)}
             </OptGroup>
-            {modPicker("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], ALL_MODIFIERS, pickModifier)}
             <GameButton tone="primary" size="lg" block onClick={() => play(mode)}>
                 {t("homePlay")}
             </GameButton>
@@ -740,13 +749,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             <Card aria-labelledby="home-friend">
                 <h2 id="home-friend">{t("homeFriendOnline")}</h2>
                 {modePicker("home-friend-board", friendMode, setFriendMode)}
-                {modPicker(
-                    "home-friend-mod",
-                    friendModifier,
-                    friendAllowed,
-                    ALL_MODIFIERS,
-                    setFriendMod
-                )}
+                <ModGroup>
+                    {modSelect("home-friend-mod", friendModifier, friendAllowed, setFriendMod, "left")}
+                    {modInfo(friendModifier)}
+                </ModGroup>
                 <GameButton tone="primary" size="lg" block disabled={friendBusy} onClick={() => void playFriend()}>
                     {friendBusy ? t("creating") : t("homeFriend")}
                 </GameButton>

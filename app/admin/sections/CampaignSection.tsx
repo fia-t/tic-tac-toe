@@ -486,6 +486,14 @@ const ChapterEditor: React.FC<{
                         <TextInput value={draft.subtitle} disabled={disabled} onChange={(e) => set("subtitle", e.target.value)} />
                     </Wide>
                     <SmallLabel>
+                        Назва англійською
+                        <TextInput value={draft.nameEn} placeholder="English name" disabled={disabled} onChange={(e) => set("nameEn", e.target.value)} />
+                    </SmallLabel>
+                    <SmallLabel>
+                        Підзаголовок англійською
+                        <TextInput value={draft.subtitleEn} placeholder="English subtitle" disabled={disabled} onChange={(e) => set("subtitleEn", e.target.value)} />
+                    </SmallLabel>
+                    <SmallLabel>
                         Бос - імʼя
                         <TextInput value={draft.bossName} disabled={disabled} onChange={(e) => set("bossName", e.target.value)} />
                     </SmallLabel>
@@ -717,6 +725,8 @@ export const CampaignSection: React.FC = () => {
                 id: createCampaignChapterId(),
                 name: newName.trim(),
                 subtitle: "",
+                nameEn: "",
+                subtitleEn: "",
                 backgroundUrl: "",
                 order,
                 active: false,

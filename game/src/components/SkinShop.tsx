@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { Card, Muted, Page } from "@game/components/pageStyles";
-import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice } from "@game/lib/themes";
+import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice, themeName } from "@game/lib/themes";
+import { chapterName } from "@game/lib/campaignContent";
 import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
 import { buySkin, equipSkin, getEquippedSkinId, isSkinUnlocked, startSkinTrial, useWallet } from "@game/lib/wallet";
 import { useT } from "@game/lib/i18n";
@@ -221,7 +222,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                     const note = isOn
                         ? `✓ ${t("shopEquipped")}`
                         : rewardOf && !owned
-                        ? t("shopCampaignReward", { name: rewardOf.name })
+                        ? t("shopCampaignReward", { name: chapterName(rewardOf) })
                         : !unlocked && price > 0 && missing > 0
                             ? t("shopNotEnough", { n: String(missing) })
                             : price > 0 && !unlocked
@@ -238,15 +239,22 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                 </Preview>
                             </PreviewWrap>
                             <div>
-                                <h3 title={skin.name}>{skin.name}</h3>
+                                <h3 title={themeName(skin)}>{themeName(skin)}</h3>
                                 {term && <EventTerm $soon={status === "soon"}>{term}</EventTerm>}
                                 <Muted style={{ minHeight: 19, color: isOn ? "#0f6f8c" : undefined, fontWeight: isOn ? 800 : undefined }}>{note}</Muted>
                             </div>
                             {unlocked ? (
                                 <>
-                                    <GameButton tone="primary" size="lg" block onClick={() => play(skin.id)}>
-                                        {t("homePlay")}
-                                    </GameButton>
+                                    {/* Обраний скін - "Грати" (одразу в партію); інший - "Обрати" (лише вибір). */}
+                                    {isOn ? (
+                                        <GameButton tone="primary" size="lg" block onClick={() => play(skin.id)}>
+                                            {t("homePlay")}
+                                        </GameButton>
+                                    ) : (
+                                        <GameButton size="lg" block onClick={() => equipSkin(skin.id)}>
+                                            {t("shopUse")}
+                                        </GameButton>
+                                    )}
                                     {/* Івентовий скін діє до кінця івенту - термін уже під назвою, без відліку годин. */}
                                     {trialUntil > now && status !== "live" ? (
                                         <Term>

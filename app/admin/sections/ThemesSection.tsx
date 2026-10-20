@@ -191,6 +191,22 @@ export const ThemesSection: React.FC = () => {
         }
     };
 
+    // Назва (укр.) і назва англійською - зберігаються при виході з поля.
+    const handleNameSave = async (theme: Theme, field: "name" | "nameEn", raw: string) => {
+        const value = raw.trim();
+        if (value === (theme[field] ?? "")) return;
+        if (field === "name" && !value) return;
+        setBusyThemeId(theme.id);
+        try {
+            await updateTheme(theme.id, { [field]: value || deleteField() } as Partial<Theme>);
+            await refreshThemes();
+        } catch (err) {
+            setThemesError(describeError("Не вдалося зберегти назву.", err));
+        } finally {
+            setBusyThemeId(null);
+        }
+    };
+
     const handleDelete = async (theme: Theme) => {
         if (!window.confirm(`Видалити тему "${theme.name}"?`)) return;
         setBusyThemeId(theme.id);
@@ -237,6 +253,27 @@ export const ThemesSection: React.FC = () => {
                             return (
                                 <ThemeCard key={theme.id} $active={theme.active}>
                                     <ThemeName>{theme.name}</ThemeName>
+                                    <DateRow>
+                                        <SmallLabel>
+                                            Назва
+                                            <TextInput
+                                                key={`${theme.id}-name-${theme.name}`}
+                                                defaultValue={theme.name}
+                                                disabled={busy}
+                                                onBlur={(e) => void handleNameSave(theme, "name", e.target.value)}
+                                            />
+                                        </SmallLabel>
+                                        <SmallLabel>
+                                            Назва англійською
+                                            <TextInput
+                                                key={`${theme.id}-nameEn-${theme.nameEn ?? ""}`}
+                                                defaultValue={theme.nameEn ?? ""}
+                                                placeholder="English name"
+                                                disabled={busy}
+                                                onBlur={(e) => void handleNameSave(theme, "nameEn", e.target.value)}
+                                            />
+                                        </SmallLabel>
+                                    </DateRow>
                                     <ThumbRow>
                                         <Thumb $src={theme.backgroundUrl} title="Фон" />
                                         <Thumb $src={theme.xMarkerUrl} title="X" />

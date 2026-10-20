@@ -1,8 +1,8 @@
 "use client";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import { ActionIcon, DiffButton, DiffGroup, ModIcon, RoundButton, tipCss } from "@game/components/GameOptions";
+import { ActionIcon, DiffButton, DiffGroup, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { InfoTip } from "@game/components/HomeScreen";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
@@ -122,9 +122,20 @@ const PushRight = styled.div`
         margin-left: 0;
     }
 
-
+    /* На телефоні "Бот" і "Модифікатор" - одним рядком: у кнопці модифікатора лише іконка
+       (назва й опис - у списку). */
     @media (max-width: 480px) {
+        flex-wrap: nowrap;
         gap: 6px 10px;
+        --mod-w-sm: 64px;
+
+        [aria-haspopup] > span {
+            display: none;
+        }
+
+        ${ModPicker} {
+            position: static;
+        }
     }
 `;
 
@@ -193,153 +204,6 @@ const BarDiff = styled(DiffButton)`
     }
 `;
 
-// Модифікатор - одна кнопка з поточним (іконка + назва) і список під нею. Ширина кнопки стала,
-// тож смуга не змінюється ні від вибору, ні від поля (у полів різна кількість модифікаторів).
-const ModPicker = styled.div`
-    position: relative;
-`;
-
-const ModToggle = styled.button`
-    ${gameButtonCss("sm")}
-
-    && {
-        --gb-c: 12px;
-        justify-content: flex-start;
-        gap: 6px;
-        width: 204px;
-        min-height: 40px;
-        padding: 0 4px;
-        font-size: 14px;
-    }
-
-    & > span {
-        flex: 1 1 auto;
-        min-width: 0;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        text-align: left;
-    }
-
-    & > svg:last-child {
-        transition: transform 0.15s ease;
-    }
-
-    &[aria-expanded="true"] > svg:last-child {
-        transform: rotate(180deg);
-    }
-
-    @media (max-width: 480px) {
-        && {
-            --gb-c: 11px;
-            width: 188px;
-            min-height: 36px;
-            font-size: 13px;
-        }
-    }
-`;
-
-const ModMenu = styled.div`
-    position: absolute;
-    top: calc(100% + 18px);
-    right: -12px;
-    z-index: 40;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    width: min(300px, calc(100vw - 32px));
-    padding: 6px;
-    border-radius: 16px;
-    background: #fff7e8;
-    box-shadow:
-        inset 0 0 0 2px #ebcb98,
-        0 14px 30px rgba(73, 48, 31, 0.25);
-
-    /* Коли "Модифікатор" іде окремим рядком від лівого краю - список теж від лівого краю. */
-    @media (max-width: 760px) {
-        right: auto;
-        left: -12px;
-    }
-`;
-
-const ModOption = styled.button`
-    display: grid;
-    grid-template-columns: 34px 1fr;
-    align-items: center;
-    column-gap: 10px;
-    padding: 7px 8px;
-    border: none;
-    border-radius: 11px;
-    background: transparent;
-    color: #49301f;
-    font: inherit;
-    text-align: left;
-    cursor: pointer;
-
-    & > i {
-        display: grid;
-        place-items: center;
-        width: 34px;
-        height: 34px;
-        border-radius: 10px;
-        background: #f6e2b8;
-        box-shadow: inset 0 -2px 0 #ebcb98;
-    }
-
-    b {
-        display: block;
-        font-size: 14px;
-        font-weight: 800;
-    }
-
-    small {
-        display: block;
-        margin-top: 2px;
-        color: #7a5530;
-        font-size: 12px;
-        line-height: 1.25;
-    }
-
-    em {
-        margin-left: 6px;
-        padding: 1px 6px;
-        border-radius: 999px;
-        background: #ffe3a3;
-        color: #7a4a0c;
-        font-size: 11px;
-        font-style: normal;
-        font-weight: 800;
-        white-space: nowrap;
-    }
-
-    @media (hover: hover) {
-        &:hover {
-            background: #fbeccd;
-        }
-    }
-
-    &[aria-checked="true"] {
-        background: #f3dcae;
-    }
-
-    &[aria-checked="true"] > i {
-        background: #815532;
-        box-shadow: none;
-        color: #fff7e8;
-    }
-
-    &:focus-visible {
-        outline: 3px solid #1fb3d9;
-        outline-offset: -3px;
-    }
-`;
-
-const Chevron = () => (
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M5 9l7 7 7-7" />
-    </svg>
-);
-
 
 // Ціль виклику дня / рівня кампанії і кнопка "Звичайна гра".
 const GoalBanner = styled.div`
@@ -379,6 +243,12 @@ export const ScoreTop = styled.div`
     align-items: center;
     gap: 10px;
     width: var(--board-w);
+
+    /* На телефоні статус - окремим рядком під рахунком: довга підказка не тисне рахунок. */
+    @media (max-width: 560px) {
+        flex-wrap: wrap;
+        row-gap: 6px;
+    }
 `;
 
 export const ScorePill = styled.div`
@@ -454,6 +324,11 @@ export const TurnLine = styled.div<{ $mine?: boolean }>`
                 ${lineIn} 0.35s ease both,
                 ${turnPulse} 1.8s ease-in-out 0.35s infinite;
         `}
+
+    @media (max-width: 560px) {
+        order: 3;
+        flex-basis: 100%;
+    }
 
     ${({ $mine }) =>
         !$mine &&
@@ -672,26 +547,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const booster = useBoosters(boosters.resetKey);
     const timerBoost = useMoveTimerBoost();
     const quick = run === null;
-    const [modOpen, setModOpen] = useState(false);
-    const modRef = useRef<HTMLDivElement>(null);
-
-    // Список модифікаторів закривається кліком поза ним і Escape.
-    useEffect(() => {
-        if (!modOpen) return;
-        const onDown = (event: PointerEvent) => {
-            if (!modRef.current?.contains(event.target as Node)) setModOpen(false);
-        };
-        const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setModOpen(false);
-        };
-        document.addEventListener("pointerdown", onDown);
-        document.addEventListener("keydown", onKey);
-        return () => {
-            document.removeEventListener("pointerdown", onDown);
-            document.removeEventListener("keydown", onKey);
-        };
-    }, [modOpen]);
-
     const openFriend = async () => {
         trackEvent("friend_modal_open", { from: mode });
         if (onBeforeFriendOpen && !(await onBeforeFriendOpen())) return;
@@ -738,7 +593,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </>
     );
 
-    const modName = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
 
     const goal = run
         ? run.kind === "campaign"
@@ -833,47 +687,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     {t("modifierLabel")}
                                     <InfoTip text={t("infoModGame")} />
                                 </BarLabel>
-                                <ModPicker ref={modRef}>
-                                    <ModToggle
-                                        type="button"
-                                        aria-haspopup="menu"
-                                        aria-expanded={modOpen}
-                                        aria-labelledby="bar-mod bar-mod-value"
-                                        data-selected={activeModifier !== null}
-                                        onClick={() => setModOpen((open) => !open)}
-                                    >
-                                        <ModIcon id={activeModifier} size={20} />
-                                        <span id="bar-mod-value">{modName(activeModifier)}</span>
-                                        <Chevron />
-                                    </ModToggle>
-                                    {modOpen && (
-                                        <ModMenu role="menu" aria-labelledby="bar-mod">
-                                            {[null, ...MODIFIERS_BY_MODE[mode]].map((m) => (
-                                                <ModOption
-                                                    key={m ?? "none"}
-                                                    type="button"
-                                                    role="menuitemradio"
-                                                    aria-checked={activeModifier === m}
-                                                    onClick={() => {
-                                                        pickModifier(m);
-                                                        setModOpen(false);
-                                                    }}
-                                                >
-                                                    <i>
-                                                        <ModIcon id={m} size={20} />
-                                                    </i>
-                                                    <span>
-                                                        <b>
-                                                            {modName(m)}
-                                                            {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
-                                                        </b>
-                                                        <small>{m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc")}</small>
-                                                    </span>
-                                                </ModOption>
-                                            ))}
-                                        </ModMenu>
-                                    )}
-                                </ModPicker>
+                                <ModifierSelect
+                                    value={activeModifier}
+                                    options={MODIFIERS_BY_MODE[mode]}
+                                    weekly={weekly}
+                                    labelledBy="bar-mod"
+                                    menuAlign="auto"
+                                    onPick={pickModifier}
+                                />
                             </BarGroup>
                         </PushRight>
                     </>

@@ -32,9 +32,9 @@ import {
     recordLevelStars,
     useCampaign,
 } from "@game/lib/campaign";
-import { CampaignChapterDef, chapterBackground } from "@game/lib/campaignContent";
+import { CampaignChapterDef, chapterBackground, chapterName, chapterSubtitle } from "@game/lib/campaignContent";
 import { earnCoins, grantSkin } from "@game/lib/wallet";
-import { CAMPAIGN_THEMES, type Theme } from "@game/lib/themes";
+import { CAMPAIGN_THEMES, themeName, type Theme } from "@game/lib/themes";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
 import { openPanel } from "@game/lib/ui";
@@ -91,6 +91,12 @@ const LevelButton = styled.button<{ $boss: boolean; $current: boolean }>`
         --gb-c: 18px;
         min-height: 0;
         padding: 0;
+    }
+
+    /* Закритий рівень - приглушений, але номер та іконку модифікатора видно (замок під ними). */
+    &&:disabled {
+        filter: grayscale(0.5) opacity(0.85);
+        color: #6f5a44;
     }
 
     &:disabled {
@@ -390,7 +396,10 @@ type CampaignProps = {
 
 const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t: ReturnType<typeof useT>): string => {
     const parts: string[] = [];
-    if (chapter.rewardSkinId) parts.push(t("campaignRewardSkin", { name: [...(themes ?? []), ...CAMPAIGN_THEMES].find((theme) => theme.id === chapter.rewardSkinId)?.name ?? chapter.rewardSkinId }));
+    if (chapter.rewardSkinId) {
+        const skin = [...(themes ?? []), ...CAMPAIGN_THEMES].find((theme) => theme.id === chapter.rewardSkinId);
+        parts.push(t("campaignRewardSkin", { name: skin ? themeName(skin) : chapter.rewardSkinId }));
+    }
     if (chapter.rewardCoins > 0) parts.push(t("campaignRewardCoins", { n: String(chapter.rewardCoins) }));
     return parts.join(" + ");
 };
@@ -398,7 +407,7 @@ const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t:
 const cardName = (card: AlbumCard, t: ReturnType<typeof useT>): string => {
     const chapter = CAMPAIGN_CHAPTERS[card.chapter];
     if (!chapter) return "";
-    return card.kind === "boss" ? chapter.bossName || t("campaignBoss") : card.kind === "gold" ? t("albumGold", { name: chapter.name }) : chapter.name;
+    return card.kind === "boss" ? chapter.bossName || t("campaignBoss") : card.kind === "gold" ? t("albumGold", { name: chapterName(chapter) }) : chapterName(chapter);
 };
 
 export const AlbumTileView: React.FC<{ card: AlbumCard; got: boolean }> = ({ card, got }) => {
@@ -444,7 +453,7 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
                     <IconClose size={16} />
                 </ModalCloseButton>
                 <Eyebrow>
-                    {t("campaignLevel", { n: String(index + 1) })} · {chapter?.name}
+                    {t("campaignLevel", { n: String(index + 1) })} · {chapter && chapterName(chapter)}
                 </Eyebrow>
                 {level.boss && chapter ? (
                     <BossIntro style={{ marginTop: 8 }}>
@@ -576,8 +585,8 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
                                         <Eyebrow>
                                             {t("chapterLabel", { n: String(ci + 1) })} · {chapterStars(ci, progress)} / {levels.length * 3} ★
                                         </Eyebrow>
-                                        <h2 id={`chapter-${chapter.id}`}>{chapter.name}</h2>
-                                        {chapter.subtitle && <Muted>{chapter.subtitle}</Muted>}
+                                        <h2 id={`chapter-${chapter.id}`}>{chapterName(chapter)}</h2>
+                                        {chapter.subtitle && <Muted>{chapterSubtitle(chapter)}</Muted>}
                                     </div>
                                 </ChapterHead>
                                 <Levels>
@@ -710,7 +719,7 @@ export const CampaignResults: React.FC<CampaignProps> = ({ onStart, onMenu = () 
                             coins,
                             summary: rewardsSince(levelBase, moves),
                             cards: got.cards,
-                            chapters: got.chapters.map((chapter) => t("campaignChapterDone", { name: chapter.name, reward: rewardText(chapter, themesRef.current, t) })),
+                            chapters: got.chapters.map((chapter) => t("campaignChapterDone", { name: chapterName(chapter), reward: rewardText(chapter, themesRef.current, t) })),
                         }),
                     900
                 );

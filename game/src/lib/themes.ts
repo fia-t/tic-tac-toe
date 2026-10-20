@@ -14,12 +14,15 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { getFirebaseDb, getFirebaseStorage, isFirebaseConfigured } from "@game/lib/firebase";
 import { assetUrl } from "@game/lib/assets";
+import { getLocale } from "@game/lib/i18n";
 
 export type ThemeImageKind = "background" | "x" | "o";
 
 export type Theme = {
     id: string;
     name: string;
+    // Назва англійською (для англійської мови гри); порожньо - показується name.
+    nameEn?: string;
     backgroundUrl: string;
     xMarkerUrl: string;
     oMarkerUrl: string;
@@ -73,6 +76,9 @@ export const eventSkinsOf = (themes: Theme[], now: Date = new Date()): { live: {
 // "2026-10-24" -> "24.10"
 export const shortDate = (value: string): string => (DATE_RE.test(value) ? `${value.slice(8, 10)}.${value.slice(5, 7)}` : value);
 
+// Назва скіна мовою гри.
+export const themeName = (theme: Pick<Theme, "name" | "nameEn">): string => (getLocale() === "en" && theme.nameEn) || theme.name;
+
 export const DEFAULT_SKIN_PRICE = 300;
 export const skinPrice = (theme: Theme): number =>
     typeof theme.price === "number" && theme.price >= 0 ? Math.floor(theme.price) : DEFAULT_SKIN_PRICE;
@@ -83,6 +89,7 @@ export const skinPrice = (theme: Theme): number =>
 export const CLASSIC_THEME: Theme = {
     id: "classic",
     name: "Класика",
+    nameEn: "Classic",
     backgroundUrl: assetUrl("images/themes/classic-board.svg"),
     xMarkerUrl: assetUrl("images/themes/classic-x.svg"),
     oMarkerUrl: assetUrl("images/themes/classic-o.svg"),
@@ -96,9 +103,10 @@ export const DEFAULT_THEME: Theme = CLASSIC_THEME;
 
 // Вбудовані скіни-нагороди кампанії: фон поля - арт розділу, фішки - SVG у public/images/themes.
 // Не купуються - відкриваються за проходження розділу (rewardSkinId у розділі кампанії).
-const campaignTheme = (id: string, name: string, art: string, order: number): Theme => ({
+const campaignTheme = (id: string, name: string, nameEn: string, art: string, order: number): Theme => ({
     id,
     name,
+    nameEn,
     backgroundUrl: assetUrl(`images/campaign/${art}.jpg`),
     xMarkerUrl: assetUrl(`images/themes/${id}-x.svg`),
     oMarkerUrl: assetUrl(`images/themes/${id}-o.svg`),
@@ -108,9 +116,9 @@ const campaignTheme = (id: string, name: string, art: string, order: number): Th
     price: 0,
 });
 export const CAMPAIGN_THEMES: Theme[] = [
-    campaignTheme("sea", "Морський бриз", "beach", 1000),
-    campaignTheme("forest", "Лісовий", "forest", 1001),
-    campaignTheme("peak", "Гірський", "mountains", 1002),
+    campaignTheme("sea", "Морський бриз", "Sea Breeze", "beach", 1000),
+    campaignTheme("forest", "Лісовий", "Forest", "forest", 1001),
+    campaignTheme("peak", "Гірський", "Mountain Peak", "mountains", 1002),
 ];
 // Теми з бази + вбудовані скіни кампанії (тема з бази з тим самим id має пріоритет).
 const withCampaignThemes = (themes: Theme[]): Theme[] => [...themes, ...CAMPAIGN_THEMES.filter((theme) => !themes.some((item) => item.id === theme.id))];
@@ -120,6 +128,7 @@ const themesCollection = "themes";
 const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
     id,
     name: (data.name as string) ?? "",
+    nameEn: typeof data.nameEn === "string" && data.nameEn.trim() ? data.nameEn : undefined,
     backgroundUrl: (data.backgroundUrl as string) ?? "",
     xMarkerUrl: (data.xMarkerUrl as string) ?? "",
     oMarkerUrl: (data.oMarkerUrl as string) ?? "",

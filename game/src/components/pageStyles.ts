@@ -36,7 +36,7 @@ export const Page = styled.div`
     width: 100%;
     min-width: 0;
     /* Місце під нижнє меню. */
-    padding-bottom: 120px;
+    padding-bottom: 96px;
     color: #4a2c0c;
 `;
 

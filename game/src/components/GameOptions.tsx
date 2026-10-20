@@ -1,8 +1,9 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import type { Difficulty } from "@game/lib/difficulty";
+import { useT } from "@game/lib/i18n";
 import type { Modifier } from "@game/lib/modifiers";
 
 // Спільні елементи вибору партії - на головній ("Швидка гра") і в смузі над полем:
@@ -272,3 +273,242 @@ export const RoundButton = styled.button`
         }
     }
 `;
+
+// Вибір модифікатора - одна кнопка з поточним (іконка + назва) і список під нею (назва й опис
+// кожного) - іконки самі по собі не впізнаються, а на телефоні тултіпів немає. Ширина кнопки стала
+// (--mod-w / --mod-w-sm), тож ряд не змінюється ні від вибору, ні від поля.
+type MenuAlign = "left" | "right" | "auto";
+
+export const ModPicker = styled.div`
+    position: relative;
+    min-width: 0;
+`;
+
+const ModToggle = styled.button`
+    ${gameButtonCss("sm")}
+
+    && {
+        --gb-c: 12px;
+        justify-content: flex-start;
+        gap: 6px;
+        width: var(--mod-w, 204px);
+        max-width: 100%;
+        min-height: var(--mod-h, 40px);
+        padding: 0 4px;
+        font-size: 14px;
+    }
+
+    & > span {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        text-align: left;
+    }
+
+    & > svg:last-child {
+        transition: transform 0.15s ease;
+    }
+
+    &[aria-expanded="true"] > svg:last-child {
+        transform: rotate(180deg);
+    }
+
+    @media (max-width: 480px) {
+        && {
+            --gb-c: 11px;
+            width: var(--mod-w-sm, 188px);
+            min-height: var(--mod-h-sm, 36px);
+            font-size: 13px;
+        }
+    }
+`;
+
+const ModMenu = styled.div<{ $align: MenuAlign }>`
+    position: absolute;
+    top: calc(100% + 18px);
+    ${({ $align }) => ($align === "left" ? "left: -12px;" : "right: -12px;")}
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: min(300px, calc(100vw - 32px));
+    padding: 6px;
+    border-radius: 16px;
+    background: #fff7e8;
+    box-shadow:
+        inset 0 0 0 2px #ebcb98,
+        0 14px 30px rgba(73, 48, 31, 0.25);
+
+    /* "auto" (смуга над полем): коли "Модифікатор" іде другим рядком від лівого краю - список теж
+       від лівого краю. На телефоні список прив'язаний до всієї смуги (ModPicker там static) -
+       по її правому краю, щоб не виходив за екран. */
+    @media (max-width: 760px) {
+        ${({ $align }) => ($align === "auto" ? "right: auto; left: -12px;" : "")}
+    }
+
+    @media (max-width: 480px) {
+        ${({ $align }) => ($align === "auto" ? "top: calc(100% + 8px); right: 0; left: auto;" : "")}
+    }
+`;
+
+const ModOption = styled.button`
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    align-items: center;
+    column-gap: 10px;
+    padding: 7px 8px;
+    border: none;
+    border-radius: 11px;
+    background: transparent;
+    color: #49301f;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    & > i {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        background: #f6e2b8;
+        box-shadow: inset 0 -2px 0 #ebcb98;
+    }
+
+    b {
+        display: block;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    small {
+        display: block;
+        margin-top: 2px;
+        color: #7a5530;
+        font-size: 12px;
+        line-height: 1.25;
+    }
+
+    em {
+        margin-left: 6px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #ffe3a3;
+        color: #7a4a0c;
+        font-size: 11px;
+        font-style: normal;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background: #fbeccd;
+        }
+    }
+
+    &[aria-checked="true"] {
+        background: #f3dcae;
+    }
+
+    &[aria-checked="true"] > i {
+        background: #815532;
+        box-shadow: none;
+        color: #fff7e8;
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: -3px;
+    }
+`;
+
+const Chevron = () => (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M5 9l7 7 7-7" />
+    </svg>
+);
+
+export const ModifierSelect = ({
+    value,
+    options,
+    weekly,
+    labelledBy,
+    menuAlign = "right",
+    onPick,
+}: {
+    value: Modifier | null;
+    options: Modifier[];
+    weekly?: Modifier;
+    labelledBy: string;
+    menuAlign?: MenuAlign;
+    onPick: (m: Modifier | null) => void;
+}) => {
+    const t = useT();
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const name = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
+
+    // Список закривається кліком поза ним і Escape.
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (event: PointerEvent) => {
+            if (!ref.current?.contains(event.target as Node)) setOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setOpen(false);
+        };
+        document.addEventListener("pointerdown", onDown);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("pointerdown", onDown);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [open]);
+
+    return (
+        <ModPicker ref={ref}>
+            <ModToggle
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-labelledby={`${labelledBy} ${labelledBy}-value`}
+                data-selected={value !== null}
+                onClick={() => setOpen((v) => !v)}
+            >
+                <ModIcon id={value} size={20} />
+                <span id={`${labelledBy}-value`}>{name(value)}</span>
+                <Chevron />
+            </ModToggle>
+            {open && (
+                <ModMenu role="menu" aria-labelledby={labelledBy} $align={menuAlign}>
+                    {[null, ...options].map((m) => (
+                        <ModOption
+                            key={m ?? "none"}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={value === m}
+                            onClick={() => {
+                                onPick(m);
+                                setOpen(false);
+                            }}
+                        >
+                            <i>
+                                <ModIcon id={m} size={20} />
+                            </i>
+                            <span>
+                                <b>
+                                    {name(m)}
+                                    {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
+                                </b>
+                                <small>{m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc")}</small>
+                            </span>
+                        </ModOption>
+                    ))}
+                </ModMenu>
+            )}
+        </ModPicker>
+    );
+};
