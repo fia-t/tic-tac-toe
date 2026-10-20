@@ -6,6 +6,7 @@ import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
 import { LeagueBadge, LeagueLadder } from "@game/components/LeagueCup";
+import { InfoTip } from "@game/components/HomeScreen";
 import { Star } from "@game/components/DailyChallenge";
 import { ACHIEVEMENTS, levelBounds, levelForXp, useProfile } from "@game/lib/profile";
 import { useCampaign } from "@game/lib/campaign";
@@ -34,6 +35,50 @@ const Medal = styled.span<{ $on: boolean }>`
     background: ${({ $on }) => ($on ? "radial-gradient(circle at 35% 30%, #ffe28a, #f5b82e 60%, #c98a12)" : "#e7dccb")};
     box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
 `;
+
+// Іконка кожного досягнення (своя тема замість однакових зірок); невідоме - зірка.
+const ACH_ICONS: Record<string, React.ReactNode> = {
+    first_win: <path d="M6 21V4M6 4h11l-2.5 4L17 12H6" />,
+    streak5: <path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z" />,
+    master_draw: <path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" />,
+    master_win: <path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z" />,
+    ultimate3: <path d="M9 4v16M15 4v16M4 9h16M4 15h16" />,
+    online_win: (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+        </>
+    ),
+    daily7: (
+        <>
+            <rect x="4" y="5" width="16" height="15" rx="2" />
+            <path d="M4 10h16M8 3v4M16 3v4" />
+        </>
+    ),
+    skins3: (
+        <>
+            <path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.5-4-8-9-8z" />
+            <circle cx="7.5" cy="11" r="1" />
+            <circle cx="10" cy="7" r="1" />
+            <circle cx="15" cy="7" r="1" />
+        </>
+    ),
+    beach: (
+        <>
+            <circle cx="15" cy="8" r="3" />
+            <path d="M3 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0" />
+        </>
+    ),
+};
+
+const AchIcon = ({ id, on }: { id: string; on: boolean }) =>
+    ACH_ICONS[id] ? (
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={on ? "#7a4a0c" : "#a8957c"} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            {ACH_ICONS[id]}
+        </svg>
+    ) : (
+        <Star on={on} size={26} />
+    );
 
 const Stats = styled.div`
     display: grid;
@@ -73,7 +118,7 @@ export const AwardsPage = () => {
                     return (
                         <Achievement key={a.id}>
                             <Medal $on={done} aria-hidden="true">
-                                <Star on={done} size={26} />
+                                <AchIcon id={a.id} on={done} />
                             </Medal>
                             <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
                                 <Spread>
@@ -131,7 +176,6 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
                     <i style={{ width: `${((profile.xp - from) / (to - from)) * 100}%` }} />
                 </Progress>
                 <Muted>{xpText}</Muted>
-                <Muted>{t("ratingExplain", { rating: String(myRating.rating), start: String(START_RATING) })}</Muted>
             </Card>
             <Card aria-labelledby="profile-stats">
                 <h3 id="profile-stats">{t("profileStats")}</h3>
@@ -145,8 +189,12 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
                 </Stats>
             </Card>
             <Card aria-labelledby="profile-leagues">
-                <h3 id="profile-leagues">{t("leaguesTitle")}</h3>
-                <Muted>{t("leaguesHint")}</Muted>
+                {/* Як рахується рейтинг - під "?", щоб не було стіни тексту одразу під ім'ям. */}
+                <h3 id="profile-leagues" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    {t("leaguesTitle")}
+                    <InfoTip text={t("ratingExplain", { rating: String(myRating.rating), start: String(START_RATING) })} />
+                </h3>
+                <Muted>{myRating.played ? t("leaguesHint") : t("leagueNoneHint")}</Muted>
                 <LeagueLadder rating={myRating.rating} played={myRating.played} />
             </Card>
         </Page>

@@ -285,6 +285,7 @@ const OptRow = styled.div`
 
 const ModGroup = styled(OptGroup)`
     --mod-w: 100%;
+    --mod-w-sm: 100%;
     --mod-h: 46px;
     --mod-h-sm: 42px;
 `;
@@ -783,7 +784,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     <LeagueBadge rating={myRating.rating} played={myRating.played} withRating />
                 </Spread>
                 <OnlineNow />
-                <GameButton tone="danger" size="lg" block onClick={() => openPanel("match")}>
+                <GameButton tone="primary" size="lg" block onClick={() => openPanel("match")}>
                     {t("homeMatch")}
                 </GameButton>
                 <Muted>{t("homeMatchHint")}</Muted>
@@ -885,7 +886,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
                 {condTiles(weeklyMode, weekly, difficulty, t("weeklySpec"))}
                 <GameButton
-                    tone="amber"
                     size="lg"
                     block
                     onClick={() => {

@@ -141,14 +141,38 @@ const TabBody = styled.div`
     display: contents;
 `;
 
+// Альбом по розділах: заголовок розділу (назва + скільки карток зібрано) і три його картки.
+const AlbumChapter = styled.section`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    & + & {
+        padding-top: 14px;
+        border-top: 1px dashed rgba(139, 101, 60, 0.25);
+    }
+
+    h3 {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 8px;
+        margin: 0;
+        font: 800 17px/1.2 var(--font-heading);
+        color: #49301f;
+    }
+
+    h3 span {
+        font: 800 13px/1 var(--font-body);
+        color: #7a5530;
+    }
+`;
+
 const Album = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
-
-    @media (min-width: 640px) {
-        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-    }
+    max-width: 480px;
 `;
 
 const AlbumTile = styled.div<{ $got: boolean; $gold?: boolean }>`
@@ -161,7 +185,7 @@ const AlbumTile = styled.div<{ $got: boolean; $gold?: boolean }>`
     text-align: center;
     background: ${({ $got, $gold }) => ($got ? ($gold ? "linear-gradient(160deg, #ffe7a0, #f5c04a)" : "#fff2dc") : "#efe3cf")};
     box-shadow: ${({ $got, $gold }) => ($got ? ($gold ? "inset 0 0 0 2px #d9a12a, 0 0 14px rgba(245, 184, 46, 0.45)" : "inset 0 0 0 2px #ebcb98") : "none")};
-    color: ${({ $got }) => ($got ? "#49301f" : "#a8957c")};
+    color: ${({ $got }) => ($got ? "#49301f" : "#6f5a44")};
 
     b {
         font-size: 13px;
@@ -169,10 +193,35 @@ const AlbumTile = styled.div<{ $got: boolean; $gold?: boolean }>`
     }
 
     small {
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.2;
     }
 `;
+
+// Ще не зібрана картка: розмитий знебарвлений силует її сцени й замок поверх.
+const LockedArt = styled.div`
+    position: relative;
+    width: 100%;
+
+    & > :first-child {
+        filter: grayscale(1) blur(3px) opacity(0.45);
+    }
+
+    & > svg {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        color: #7a5530;
+    }
+`;
+
+const LockIcon = () => (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="5" y="11" width="14" height="10" rx="2" />
+        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </svg>
+);
 
 const AlbumArt = styled.div<{ $src?: string; $gold?: boolean }>`
     display: grid;
@@ -415,9 +464,12 @@ export const AlbumTileView: React.FC<{ card: AlbumCard; got: boolean }> = ({ car
     const chapter = CAMPAIGN_CHAPTERS[card.chapter];
     if (!chapter) return null;
     // Анімована сцена картки (AlbumArt.ts); для розділів з адмінки її може не бути.
-    const scene = got ? albumArt(chapter.id, card.kind) : null;
+    const scene = albumArt(chapter.id, card.kind);
     const art = !got ? (
-        <AlbumArt>?</AlbumArt>
+        <LockedArt>
+            {scene ? <AlbumArt style={{ background: "none" }} dangerouslySetInnerHTML={{ __html: scene }} /> : <AlbumArt $src={chapterBackground(chapter)} />}
+            <LockIcon />
+        </LockedArt>
     ) : scene ? (
         <AlbumArt style={{ background: "none" }} dangerouslySetInnerHTML={{ __html: scene }} />
     ) : card.kind === "boss" ? (
@@ -430,7 +482,7 @@ export const AlbumTileView: React.FC<{ card: AlbumCard; got: boolean }> = ({ car
     return (
         <AlbumTile $got={got} $gold={card.kind === "gold"} title={got ? cardName(card, t) : t(`albumNeed_${card.kind}`)}>
             {art}
-            <b>{got ? cardName(card, t) : "???"}</b>
+            <b>{cardName(card, t)}</b>
             <small>{got ? t(`albumGot_${card.kind}`) : t(`albumNeed_${card.kind}`)}</small>
         </AlbumTile>
     );
@@ -650,11 +702,25 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes }) => {
                                 {cardsGot} / {albumCards().length}
                             </InfoPill>
                         </Spread>
-                        <Album>
-                            {albumCards().map((card) => (
-                                <AlbumTileView key={card.id} card={card} got={progress.cards.includes(card.id)} />
-                            ))}
-                        </Album>
+                        {CAMPAIGN_CHAPTERS.map((chapter, ci) => {
+                            const cards = albumCards().filter((card) => card.chapter === ci);
+                            const got = cards.filter((card) => progress.cards.includes(card.id)).length;
+                            return (
+                                <AlbumChapter key={chapter.id} aria-label={chapterName(chapter)}>
+                                    <h3>
+                                        {chapterName(chapter)}
+                                        <span>
+                                            {got} / {cards.length}
+                                        </span>
+                                    </h3>
+                                    <Album>
+                                        {cards.map((card) => (
+                                            <AlbumTileView key={card.id} card={card} got={progress.cards.includes(card.id)} />
+                                        ))}
+                                    </Album>
+                                </AlbumChapter>
+                            );
+                        })}
                     </Card>
                 </TabBody>
             )}

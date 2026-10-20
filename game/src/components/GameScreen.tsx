@@ -45,7 +45,7 @@ export const GameRoot = styled.div<{ $timer?: boolean }>`
 // Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
 // Кнопки вирівняні по низу (у груп над ними підпис). На широкому екрані - один рядок; від 760px
 // і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
-const Bar = styled.div`
+const Bar = styled.div<{ $quick?: boolean }>`
     position: relative;
     z-index: 25;
     display: flex;
@@ -57,6 +57,12 @@ const Bar = styled.div`
 
     @media (max-width: 760px) {
         flex-wrap: wrap;
+    }
+
+    /* Звичайна гра на широкому екрані: смуга від лівого краю поля до правого краю колонки бустерів
+       (66 px = відступ 14 + кнопка 52), а не ширша за поле з обох боків. Не вужча за свій вміст. */
+    @media (min-width: 800px) {
+        ${({ $quick }) => ($quick ? "width: max(calc(var(--board-w) + 66px), 670px); margin-left: 66px;" : "")}
     }
 
     @media (max-width: 480px) {
@@ -638,7 +644,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over}>
-            <Bar data-tour="bar">
+            <Bar data-tour="bar" $quick={quick}>
                 {quick ? (
                     <>
                         <BarActions>{actionButtons}</BarActions>

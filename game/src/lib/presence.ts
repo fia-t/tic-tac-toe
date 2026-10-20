@@ -13,7 +13,7 @@ import {
     where,
     type Unsubscribe,
 } from "firebase/firestore";
-import { getFirebaseDb, isFirebaseConfigured } from "@game/lib/firebase";
+import { getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
 import { ensureAnonymousUser } from "@game/lib/onlineGame";
 
 // Хто зараз у грі (як у прототипі - "Зараз онлайн: N") і хто шукає суперника в "Швидкому
@@ -46,7 +46,8 @@ let seekersUnsub: Unsubscribe | null = null;
 let allSeekers: (Seeker & { lastSeen: number })[] = [];
 
 const write = async () => {
-    if (!uid || (typeof document !== "undefined" && document.hidden)) return;
+    // Локальний запуск (перевірки) не показуємо в "онлайн зараз" - див. isLocalDev.
+    if (!uid || isLocalDev || (typeof document !== "undefined" && document.hidden)) return;
     try {
         await setDoc(doc(getFirebaseDb(), COLLECTION, uid), {
             lastSeen: serverTimestamp(),

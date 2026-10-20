@@ -58,6 +58,16 @@ export const LeagueBadge = ({
 }) => {
     const t = useT();
     const league = displayLeague(rating, played);
+    // До першого рейтингового матчу ліги ще немає - сірий кубок і "Без ліги", без числа рейтингу.
+    if (!played)
+        return (
+            <Badge $compact={compact} title={t("leagueNoneHint")}>
+                <span style={{ display: "inline-flex", filter: "grayscale(1) opacity(0.55)" }}>
+                    <LeagueCup league="wood" />
+                </span>
+                <span>{t("leagueNone")}</span>
+            </Badge>
+        );
     const name = t(`league_${league}`);
     return (
         <Badge $compact={compact} title={t("leagueTitle", { league: name })}>
@@ -106,8 +116,9 @@ const LeagueItem = styled.span<{ $league: League; $got: boolean; $now: boolean }
 
 export const LeagueLadder = ({ rating, played = true }: { rating: number; played?: boolean }) => {
     const t = useT();
-    const current = displayLeague(rating, played);
-    const currentMin = LEAGUES.find((league) => league.id === current)?.min ?? 0;
+    // Без жодного рейтингового матчу - жодна ліга не відмічена.
+    const current = played ? displayLeague(rating, played) : null;
+    const currentMin = LEAGUES.find((league) => league.id === current)?.min ?? -1;
     return (
         <LeagueList role="list">
             {LEAGUES.map((league) => (

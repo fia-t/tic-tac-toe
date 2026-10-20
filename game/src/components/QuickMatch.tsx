@@ -130,7 +130,7 @@ export const QuickMatch: React.FC<QuickMatchProps> = ({ fallbackName, onMatched,
                 </ModalCloseButton>
                 <ModalTitle id="match-title">{t("matchTitle")}</ModalTitle>
                 <ModalSubtitle>
-                    {t("matchRatingLine", { rating: String(rating), league: t(`league_${displayLeague(rating, played)}`) })}
+                    {t("matchRatingLine", { rating: String(rating), league: played ? t(`league_${displayLeague(rating, played)}`) : t("leagueNone") })}
                 </ModalSubtitle>
 
                 {phase === "unavailable" ? (

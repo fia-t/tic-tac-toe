@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { gameButtonCss } from "@game/components/GameButton";
+import { tipCss } from "@game/components/GameOptions";
 import { Coin } from "@game/components/SkinShop";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { assetUrl } from "@game/lib/assets";
@@ -153,10 +154,14 @@ const Crumb = styled.button`
         outline-offset: 2px;
     }
 
+    /* На телефоні - лише стрілка: назва табу обрізалась би ("Challe..."); повна - в aria-label. */
     @media (max-width: 420px) {
-        font-size: 13px;
-        padding: 0 8px 0 4px;
-        min-height: 32px;
+        padding: 0 10px;
+        min-height: 36px;
+
+        span {
+            display: none;
+        }
     }
 `;
 
@@ -178,6 +183,16 @@ const Pill = styled.button`
 
     svg {
         flex-shrink: 0;
+    }
+
+    /* Що означає лічильник - тултіп при наведенні чи фокусі (натискання відкриває його розділ).
+       Вирівняний по правому краю кнопки, щоб біля краю екрана не виходив за нього. */
+    ${tipCss}
+
+    &::after {
+        left: auto;
+        right: calc(-1 * var(--gb-c, 0px));
+        transform: none;
     }
 
     @media (max-width: 420px) {
@@ -300,17 +315,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onHome, onDaily, crumb }) => {
                 type="button"
                 onClick={() => openPanel("campaign")}
                 aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
-                title={t("campaignTitle")}
+                data-tip={t("tipStars", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
             >
                 <StarIcon />
                 <span>{stars}</span>
             </Pill>
-            <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} title={t("shopTitle")}>
+            <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} data-tip={t("tipCoins")}>
                 <Coin size={17} />
                 <span>{wallet.coins}</span>
                 {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
             </Pill>
-            <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} title={t("streakTitle")}>
+            <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
                 <Flame />
                 <span>{streak}</span>
             </Pill>
