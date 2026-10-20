@@ -475,7 +475,8 @@ export const ModifierSelect = ({
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-labelledby={`${labelledBy} ${labelledBy}-value`}
-                data-selected={value !== null}
+                // Вибраний модифікатор (і "Без модифікатора" теж) - коричнева кнопка, як вибраний рівень бота.
+                data-selected
                 onClick={() => setOpen((v) => !v)}
             >
                 <ModIcon id={value} size={20} />
