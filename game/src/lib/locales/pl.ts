@@ -406,6 +406,8 @@ const pack: LocalePack = {
         albumNeed_done: "Ukończ wszystkie poziomy rozdziału",
         albumNeed_boss: "Pokonaj bossa na 2+ gwiazdki",
         albumNeed_gold: "Zbierz wszystkie gwiazdki rozdziału",
+        halloweenWin: "Cukierki są twoje!",
+        halloweenLose: "Bu! Duch ukradł ci cukierki",
     },
     names: [
         "Różowy Hipopotam",

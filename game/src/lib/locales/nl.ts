@@ -405,6 +405,8 @@ const pack: LocalePack = {
         albumNeed_done: "Voltooi alle levels van het hoofdstuk",
         albumNeed_boss: "Versla de baas met 2+ sterren",
         albumNeed_gold: "Verzamel alle sterren van het hoofdstuk",
+        halloweenWin: "Het snoep is van jou!",
+        halloweenLose: "Boe! Een spook heeft je snoep gepikt",
     },
     names: [
         "Roze Nijlpaard",

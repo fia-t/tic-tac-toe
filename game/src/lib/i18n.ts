@@ -423,6 +423,8 @@ const uk = {
     albumNeed_done: "Пройди всі рівні розділу",
     albumNeed_boss: "Перемож боса на 2+ зірки",
     albumNeed_gold: "Збери всі зірки розділу",
+    halloweenWin: "Цукерки твої!",
+    halloweenLose: "Бу! Привид поцупив твої цукерки",
 };
 
 export type Key = keyof typeof uk;
@@ -830,6 +832,8 @@ const en: Record<Key, string> = {
     albumNeed_done: "Finish every level of the chapter",
     albumNeed_boss: "Beat the boss with 2+ stars",
     albumNeed_gold: "Collect all stars of the chapter",
+    halloweenWin: "Treats are yours!",
+    halloweenLose: "Boo! A ghost stole your candy",
 };
 
 const dictionaries: Partial<Record<Locale, Record<Key, string>>> = { uk, en };

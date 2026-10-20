@@ -405,6 +405,8 @@ const pack: LocalePack = {
         albumNeed_done: "Schließe alle Level des Kapitels ab",
         albumNeed_boss: "Besiege den Boss mit 2+ Sternen",
         albumNeed_gold: "Sammle alle Sterne des Kapitels",
+        halloweenWin: "Die Süßigkeiten gehören dir!",
+        halloweenLose: "Buh! Ein Geist hat deine Süßigkeiten geklaut",
     },
     names: [
         "Rosa Nilpferd",

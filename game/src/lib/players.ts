@@ -2,7 +2,7 @@
 import { arrayUnion, doc, getDoc, serverTimestamp, setDoc, type Timestamp } from "firebase/firestore";
 import { addGameEventListener, getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
 import { ensureAnonymousUser } from "@game/lib/onlineGame";
-import { gameSource, type GameSource } from "@game/lib/gameLog";
+import { currentGameSource, type GameSource } from "@game/lib/gameLog";
 import { getProfile, levelForXp } from "@game/lib/profile";
 import { getWallet } from "@game/lib/wallet";
 import { getCampaign, totalStars } from "@game/lib/campaign";
@@ -86,7 +86,7 @@ const save = async () => {
             {
                 name: (user?.name || profile.name || fallbackName || "").slice(0, 60),
                 qsId: user?.id ?? null,
-                source: gameSource,
+                source: currentGameSource(),
                 hosts: arrayUnion(currentHost()),
                 ...(existing?.exists() ? {} : { firstSeen: serverTimestamp() }),
                 lastPlayed: serverTimestamp(),

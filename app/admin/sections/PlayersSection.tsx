@@ -18,7 +18,7 @@ type Row = PlayerRecord & { id: string };
 const LIMIT = 500;
 const MAX_STARS = CAMPAIGN_LEVELS.length * 3;
 
-const SOURCE_LABEL: Record<string, string> = { site: "Сайт", portal: "Портал", crazygames: "CrazyGames", poki: "Poki", itch: "itch.io" };
+const SOURCE_LABEL: Record<string, string> = { site: "Сайт", embed: "Новини (iframe)", portal: "Портал", crazygames: "CrazyGames", poki: "Poki", itch: "itch.io" };
 const LEAGUE_LABEL: Record<string, string> = { wood: "Дерево", bronze: "Бронза", silver: "Срібло", gold: "Золото", diamond: "Діамант" };
 
 const toDate = (value: Timestamp | null | undefined): Date | null => (value && typeof value.toDate === "function" ? value.toDate() : null);

@@ -10,6 +10,8 @@ import { getWallet, useWallet } from "@game/lib/wallet";
 import { getProfile, useProfile } from "@game/lib/profile";
 import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
+import { isEmbed } from "@game/lib/embed";
+import { EmbedResult } from "@game/components/EmbedResult";
 
 // Вікно після партії проти ШІ (як у прототипі): режим і результат по центру, нагороди -
 // іконки з числами (не кнопки), далі "Ще раз" і "До меню". Клік поза вікном лише ховає його.
@@ -319,6 +321,8 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
     secondary,
 }) => {
     const t = useT();
+    // Гра з новини (iframe): без нагород і "До меню", для хелловінського скіна - анімація.
+    if (isEmbed()) return <EmbedResult result={result} onClose={onClose} onRestart={onRestart} />;
     const heading = title ?? (result === "win" ? t("resultWin") : result === "lose" ? t("resultLose") : t("resultDraw"));
     return (
         <>

@@ -22,7 +22,7 @@ import {
     getOnlineGridWinner,
     isOnlineGridFull,
 } from "@game/components/onlineGameLogic";
-import { GameMode, gameSource } from "@game/lib/gameLog";
+import { GameMode, currentGameSource } from "@game/lib/gameLog";
 import { WIN_LENGTH } from "@game/components/onlineGameLogic";
 import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, ModRules, STONE, createBoard, moleStep, playTurn } from "@game/components/modEngine";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, STONES_COUNT } from "@game/lib/modifiers";
@@ -376,7 +376,7 @@ export const makeMove = async (
             tx.set(doc(collection(db, "gameLogs")), {
                 mode,
                 outcome,
-                source: gameSource,
+                source: currentGameSource(),
                 createdAt: serverTimestamp(),
             });
         }

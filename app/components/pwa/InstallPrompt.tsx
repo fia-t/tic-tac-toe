@@ -16,6 +16,8 @@ export function InstallPrompt() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
+    // Гра в iframe новини (/embed) - без пропозиції встановити застосунок.
+    if (window.location.pathname.startsWith("/embed")) return;
     const handler = (event: Event) => {
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEvent);

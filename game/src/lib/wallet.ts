@@ -1,6 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { addGameEventListener, trackEvent } from "@game/lib/firebase";
+import { isEmbed } from "@game/lib/embed";
 import { getDifficulty } from "@game/lib/difficulty";
 
 // Монети й колекція скінів гравця. Скін = тема з адмінки (або вбудована "Класика").
@@ -194,6 +195,8 @@ export const useLastEarning = (): Earning | null =>
 
 if (typeof window !== "undefined") {
     addGameEventListener((name, params) => {
+        // Гра в новині (iframe) - без монет.
+        if (isEmbed()) return;
         if (name === "game_finished") {
             const difficulty = getDifficulty();
             const result = params?.result;

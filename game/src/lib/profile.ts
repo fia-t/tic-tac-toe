@@ -1,6 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { addGameEventListener } from "@game/lib/firebase";
+import { isEmbed } from "@game/lib/embed";
 import { getDifficulty } from "@game/lib/difficulty";
 import { earnCoins, getWallet } from "@game/lib/wallet";
 import { chapterLevels, getCampaign } from "@game/lib/campaign";
@@ -195,6 +196,8 @@ const recordResult = (result: "win" | "draw" | "lose", extra: (s: ProfileStats) 
 
 if (typeof window !== "undefined") {
     addGameEventListener((name, params) => {
+        // Гра в новині (iframe) - без досвіду, статистики й досягнень.
+        if (isEmbed()) return;
         if (name === "game_finished") {
             const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
             const master = getDifficulty() === "master";

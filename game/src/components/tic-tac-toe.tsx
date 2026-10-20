@@ -38,6 +38,7 @@ import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/li
 import { getActiveNames, pickRandomName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
+import { getEmbed } from "@game/lib/embed";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -113,9 +114,13 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [gameMode, setGameMode] = useState<"traditional" | "difficult" | "five">("traditional");
     const [themeReady, setThemeReady] = useState(false);
     const [availableThemes, setAvailableThemes] = useState<Theme[]>([]);
-    // Тема партії = обраний у магазині скін (вбудована "Класика" або тема з адмінки).
+    // Гра з новини (iframe, app/embed): скін із посилання, лише партія з ботом, без меню.
+    const embed = getEmbed();
+    // Тема партії = обраний у магазині скін (вбудована "Класика" або тема з адмінки); у грі
+    // з новини - скін із посилання.
     const equippedSkinId = getEquippedSkinId(useWallet());
-    const theme: Theme = availableThemes.find((item) => item.id === equippedSkinId) ?? CLASSIC_THEME;
+    const skinId = embed?.skinId ?? equippedSkinId;
+    const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
     const [humanName, setHumanName] = useState<string | null>(null);
     const [score, setScore] = useState({ ai: 0, human: 0 });
     // Бустери 3×3: позиції перед ходами гравця (для "Скасувати хід") і клітинка-підказка.
@@ -124,7 +129,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Номер партії 3×3 - нова партія знову дає безкоштовні бустери.
     const [round, setRound] = useState(0);
     // Гра відкривається на головному меню; "game" - саме поле, решта - розділи нижнього меню.
-    const [screen, setScreen] = useState<Screen>("home");
+    const [screen, setScreen] = useState<Screen>(embed ? "game" : "home");
     // Вогник серії в шапці - прокрутити головну до картки виклику дня.
     const [focusDaily, setFocusDaily] = useState(0);
     const topRef = useRef<HTMLDivElement>(null);
@@ -147,13 +152,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Туторіал новачка - на першій партії, поки його не закрили (далі не показується).
     const [tutorialOpen, setTutorialOpen] = useState(false);
     useEffect(() => {
-        if (onGameScreen && themeReady && isNewPlayer && !isTutorialDone()) setTutorialOpen(true);
-    }, [onGameScreen, themeReady, isNewPlayer]);
+        if (!embed && onGameScreen && themeReady && isNewPlayer && !isTutorialDone()) setTutorialOpen(true);
+    }, [embed, onGameScreen, themeReady, isNewPlayer]);
 
     // Присутність: хто зараз у грі й чи в партії (лічильник "онлайн" і запрошення в меню).
+    // У грі з новини суперників не шукають - без присутності, лише картка гравця (джерело "embed").
     useEffect(() => {
-        void startPresence();
+        if (!embed) void startPresence();
         startPlayerTracking();
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- режим вбудовування не змінюється
     }, []);
     // Ім'я для картки гравця в адмінці, якщо свого немає, - наше випадкове.
     useEffect(() => setPlayerFallbackName(shownName), [shownName]);
@@ -239,7 +246,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     // Новий модифікатор або скін - так само нова партія (5×5/Ultimate - через key нижче).
     // Скін теж: фішки на дошці зберігаються як URL картинок теми, тож старі не "перефарбуються".
-    const settingsKey = `${modifierChoice}|${equippedSkinId}`;
+    const settingsKey = `${modifierChoice}|${skinId}`;
     const prevModifier = useRef(settingsKey);
     useEffect(() => {
         if (prevModifier.current === settingsKey) return;
@@ -555,7 +562,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     } else if (gameMode === "difficult") {
         content = (
             <DifficultTicTacToe
-                key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${skinId}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={handleSetGameMode}
                 theme={theme}
@@ -569,7 +576,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     } else if (gameMode === "five") {
         content = (
             <FiveByFiveTicTacToe
-                key={`${difficulty}:${modifierChoice}:${equippedSkinId}:${runKey}`}
+                key={`${difficulty}:${modifierChoice}:${skinId}:${runKey}`}
                 hideResultPopup={dailyActive}
                 setGameMode={handleSetGameMode}
                 theme={theme}
@@ -631,6 +638,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                     }
                 />
             </>
+        );
+    }
+
+    // Гра з новини: лише поле з панеллю над ним - без шапки, меню, вікон розділів і запрошень.
+    if (embed) {
+        return (
+            <RewardedAdContext.Provider value={undefined}>
+                <ShellVars />
+                <AppColumn ref={topRef}>{content}</AppColumn>
+            </RewardedAdContext.Provider>
         );
     }
 

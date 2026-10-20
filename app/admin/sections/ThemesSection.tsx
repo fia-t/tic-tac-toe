@@ -29,8 +29,29 @@ import {
     FileInput,
     CheckboxLabel,
     DangerButton,
+    GhostButton,
     AddThemeRow,
 } from "@/app/admin/adminStyles";
+
+// Посилання на гру з цим скіном для iframe у новині (app/embed): лише партія з ботом, без меню.
+const embedUrl = (themeId: string): string => `${window.location.origin}/embed?skin=${encodeURIComponent(themeId)}`;
+
+const EmbedRow = styled.div`
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    input {
+        flex: 1;
+        min-width: 0;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid rgba(139, 101, 60, 0.25);
+        background: #fffdf8;
+        color: #5b3f22;
+        font-size: 12px;
+    }
+`;
 
 const fieldForKind = (kind: ThemeImageKind): "backgroundUrl" | "xMarkerUrl" | "oMarkerUrl" =>
     kind === "background" ? "backgroundUrl" : kind === "x" ? "xMarkerUrl" : "oMarkerUrl";
@@ -92,6 +113,18 @@ export const ThemesSection: React.FC = () => {
     const [themesLoading, setThemesLoading] = useState(false);
     const [themesError, setThemesError] = useState<string | null>(null);
     const [busyThemeId, setBusyThemeId] = useState<string | null>(null);
+    const [copiedThemeId, setCopiedThemeId] = useState<string | null>(null);
+
+    const copyEmbedLink = async (themeId: string, input: HTMLInputElement | null) => {
+        try {
+            await navigator.clipboard.writeText(embedUrl(themeId));
+            setCopiedThemeId(themeId);
+            setTimeout(() => setCopiedThemeId((id) => (id === themeId ? null : id)), 2000);
+        } catch {
+            // Буфер обміну недоступний - виділяємо посилання, щоб скопіювати вручну.
+            input?.select();
+        }
+    };
     const [newThemeName, setNewThemeName] = useState("");
     const [creating, setCreating] = useState(false);
 
@@ -359,6 +392,21 @@ export const ThemesSection: React.FC = () => {
                                             Видалити
                                         </DangerButton>
                                     </ThemeActionsRow>
+
+                                    {theme.active && (
+                                        <SmallLabel as="div" title="Гра лише з цим скіном для iframe на сторінці новини (поле Game iframe link)">
+                                            Посилання для новин
+                                            <EmbedRow>
+                                                <input id={`embed-${theme.id}`} readOnly value={embedUrl(theme.id)} onFocus={(e) => e.currentTarget.select()} aria-label={`Посилання для новин: ${theme.name}`} />
+                                                <GhostButton
+                                                    type="button"
+                                                    onClick={() => void copyEmbedLink(theme.id, document.getElementById(`embed-${theme.id}`) as HTMLInputElement | null)}
+                                                >
+                                                    {copiedThemeId === theme.id ? "Скопійовано" : "Копіювати"}
+                                                </GhostButton>
+                                            </EmbedRow>
+                                        </SmallLabel>
+                                    )}
                                 </ThemeCard>
                             );
                         })}

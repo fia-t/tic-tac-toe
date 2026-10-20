@@ -106,7 +106,7 @@ service cloud.firestore {
           'losses', 'onlineWins', 'level', 'xp', 'coins', 'campaignStars', 'dailyStreak', 'rating', 'ratedPlayed'])
         && data.name is string && data.name.size() <= 60
         && (data.qsId == null || (data.qsId is string && data.qsId.size() <= 80))
-        && data.source in ['site', 'portal', 'crazygames', 'poki', 'itch']
+        && data.source in ['site', 'embed', 'portal', 'crazygames', 'poki', 'itch']
         && data.hosts is list && data.hosts.size() <= 30
         && data.lastPlayed == request.time
         && data.games is int && data.wins is int && data.draws is int && data.losses is int
@@ -149,7 +149,7 @@ service cloud.firestore {
     return data.mode in ['ai-easy', 'ai-hard', 'ai-5x5', 'friend-3x3', 'friend-9x9', 'friend-5x5']
       && data.outcome in ['win', 'lose', 'draw', 'x_win', 'o_win']
       // source необов'язкове - вже викладені на порталах старі білди його не шлють.
-      && (!('source' in data) || data.source in ['site', 'portal', 'crazygames', 'poki', 'itch'])
+      && (!('source' in data) || data.source in ['site', 'embed', 'portal', 'crazygames', 'poki', 'itch'])
       && data.createdAt == request.time;
   }
 

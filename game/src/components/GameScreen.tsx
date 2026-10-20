@@ -9,6 +9,7 @@ import { levelTitle } from "@game/lib/campaignContent";
 import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTimerBoosts, useMoveTimerBoost } from "@game/components/MoveTimer";
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
+import { isEmbed } from "@game/lib/embed";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
@@ -609,9 +610,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <RoundButton type="button" onClick={restart} disabled={restartDisabled} aria-label={restartLabel} data-tip={restartLabel}>
                 <ActionIcon id="restart" />
             </RoundButton>
-            <RoundButton type="button" onClick={() => void openFriend()} aria-label={t("playWithFriend")} data-tip={t("playWithFriend")}>
-                <ActionIcon id="friend" />
-            </RoundButton>
+            {/* У грі з новини (iframe) - лише партія з ботом, без онлайн-кімнат. */}
+            {!isEmbed() && (
+                <RoundButton type="button" onClick={() => void openFriend()} aria-label={t("playWithFriend")} data-tip={t("playWithFriend")}>
+                    <ActionIcon id="friend" />
+                </RoundButton>
+            )}
         </>
     );
 

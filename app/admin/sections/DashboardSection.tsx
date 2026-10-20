@@ -32,10 +32,11 @@ const MODE_LABEL: Record<string, string> = {
 };
 
 // "unknown" - записи до появи поля source (сайт чи портал - невідомо).
-type SourceFilter = "all" | "site" | "portal" | "crazygames" | "poki" | "itch" | "unknown";
+type SourceFilter = "all" | "site" | "embed" | "portal" | "crazygames" | "poki" | "itch" | "unknown";
 
 const SOURCE_LABEL: Record<Exclude<SourceFilter, "all">, string> = {
     site: "Сайт",
+    embed: "Новини (iframe)",
     portal: "Портал",
     crazygames: "CrazyGames",
     poki: "Poki",

@@ -405,6 +405,8 @@ const pack: LocalePack = {
         albumNeed_done: "Completa tutti i livelli del capitolo",
         albumNeed_boss: "Batti il boss con 2+ stelle",
         albumNeed_gold: "Raccogli tutte le stelle del capitolo",
+        halloweenWin: "Le caramelle sono tue!",
+        halloweenLose: "Bu! Un fantasma ti ha rubato le caramelle",
     },
     names: [
         "Ippopotamo Rosa",

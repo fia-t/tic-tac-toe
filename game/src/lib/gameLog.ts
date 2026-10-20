@@ -1,6 +1,7 @@
 "use client";
 import { addDoc, collection, getDocs, orderBy, query, serverTimestamp, Timestamp, where } from "firebase/firestore";
 import { getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
+import { isEmbed } from "@game/lib/embed";
 
 // Режими гри, за якими рахуються партії в адмінському дашборді.
 export type GameMode = "ai-easy" | "ai-hard" | "ai-5x5" | "friend-3x3" | "friend-9x9" | "friend-5x5";
@@ -10,11 +11,13 @@ export type GameMode = "ai-easy" | "ai-hard" | "ai-5x5" | "friend-3x3" | "friend
 // немає єдиного "гравця", з чийого погляду вважати перемогу/поразку.
 export type GameOutcome = "win" | "lose" | "draw" | "x_win" | "o_win";
 
-// Звідки зіграна партія: "site" - Next.js-сайт, решта - ціль Vite-білду
-// (GAME_TARGET: portal/crazygames/poki/itch). Старі записи поля не мають (null).
-export type GameSource = "site" | "portal" | "crazygames" | "poki" | "itch";
+// Звідки зіграна партія: "site" - Next.js-сайт, "embed" - гра в iframe на сторінці новини
+// (app/embed), решта - ціль Vite-білду (GAME_TARGET: portal/crazygames/poki/itch).
+// Старі записи поля не мають (null).
+export type GameSource = "site" | "embed" | "portal" | "crazygames" | "poki" | "itch";
 
-export const gameSource: GameSource = (process.env.GAME_TARGET as GameSource | undefined) ?? "site";
+const buildSource: GameSource = (process.env.GAME_TARGET as GameSource | undefined) ?? "site";
+export const currentGameSource = (): GameSource => (isEmbed() ? "embed" : buildSource);
 
 export type GameLogEntry = {
     id: string;
@@ -35,7 +38,7 @@ export const logGameResult = (mode: GameMode, outcome: GameOutcome): void => {
     void addDoc(collection(getFirebaseDb(), gameLogsCollection), {
         mode,
         outcome,
-        source: gameSource,
+        source: currentGameSource(),
         createdAt: serverTimestamp(),
     }).catch(() => {
         // тихо ігноруємо - див. коментар вище
