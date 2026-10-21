@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { DiffButton, DiffGroup, ModIcon, ModifierSelect } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
@@ -13,6 +13,7 @@ import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
+import { isEmbed } from "@game/lib/embed";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
@@ -327,7 +328,7 @@ const InfoButton = styled.button`
     }
 `;
 
-const InfoPop = styled.div`
+const InfoPop = styled.div<{ $embed?: boolean }>`
     position: fixed;
     z-index: 1700;
     max-width: min(320px, calc(100vw - 24px));
@@ -339,6 +340,24 @@ const InfoPop = styled.div`
     text-transform: none;
     letter-spacing: 0;
     box-shadow: 0 8px 20px rgba(60, 35, 10, 0.3);
+
+    /* Гра в новині: кольору рахунку, як і тултіпи. */
+    ${({ $embed }) =>
+        $embed &&
+        css`
+            background: #fff6e6;
+            color: #5b3f22;
+            font-size: 15px;
+            box-shadow:
+                0 0 0 2px rgba(139, 101, 60, 0.35),
+                0 8px 20px rgba(40, 20, 10, 0.3);
+
+            @media (min-width: 1200px) and (min-height: 800px) {
+                max-width: 420px;
+                padding: 12px 16px;
+                font-size: 19px;
+            }
+        `}
 `;
 
 export const InfoTip = ({ text }: { text: string }) => {
@@ -385,7 +404,7 @@ export const InfoTip = ({ text }: { text: string }) => {
             </InfoButton>
             {at &&
                 createPortal(
-                    <InfoPop ref={pop} role="tooltip" style={{ left: at.left, top: at.top }}>
+                    <InfoPop ref={pop} role="tooltip" $embed={isEmbed()} style={{ left: at.left, top: at.top }}>
                         {text}
                     </InfoPop>,
                     document.body

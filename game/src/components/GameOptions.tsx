@@ -375,8 +375,8 @@ const ModMenu = styled.div<{ $align: MenuAlign }>`
     top: calc(100% + 18px);
     ${({ $align }) => ($align === "left" ? "left: -12px;" : "right: -12px;")}
     z-index: 40;
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: repeat(var(--mod-menu-cols, 1), minmax(0, 1fr));
     gap: 2px;
     width: min(var(--mod-menu-w, 300px), calc(100vw - 32px));
     padding: 6px;
