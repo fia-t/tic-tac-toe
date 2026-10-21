@@ -9,32 +9,42 @@ import { useT } from "@game/lib/i18n";
 // Легкий туторіал для нового гравця на першій партії: кілька карток унизу екрана, кожна
 // підсвічує своє місце (поле, смугу над ним, бустери, логотип-меню). Не блокує гру - поле
 // клікабельне; закривається хрестиком, "Пропустити" або після останнього кроку й більше не
-// показується (localStorage).
+// показується (localStorage). Гра з новини має свій коротший набір кроків і свій ключ.
 
 const DONE_KEY = "ttt-tutorial-done";
+export const EMBED_TUTORIAL_KEY = "ttt-embed-tutorial-done";
 
-export const isTutorialDone = (): boolean => {
+export const isTutorialDone = (key: string = DONE_KEY): boolean => {
     try {
-        return localStorage.getItem(DONE_KEY) === "1";
+        return localStorage.getItem(key) === "1";
     } catch {
         return false;
     }
 };
 
-const markDone = () => {
+const markDone = (key: string) => {
     try {
-        localStorage.setItem(DONE_KEY, "1");
+        localStorage.setItem(key, "1");
     } catch {
         // Сховище недоступне - туторіал може показатись ще раз, це не страшно.
     }
 };
 
-type Step = { target: string; title: "tutorialTitle1" | "tutorialTitle2" | "tutorialTitle3" | "tutorialTitle4"; text: "tutorialText1" | "tutorialText2" | "tutorialText3" | "tutorialText4" };
-const STEPS: Step[] = [
+type StepNo = 1 | 2 | 3 | 4 | 5;
+export type TutorialStep = { target: string; title: `tutorialTitle${StepNo}`; text: `tutorialText${StepNo}` };
+const STEPS: TutorialStep[] = [
     { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
     { target: "bar", title: "tutorialTitle2", text: "tutorialText2" },
     { target: "boosters", title: "tutorialTitle3", text: "tutorialText3" },
     { target: "menu", title: "tutorialTitle4", text: "tutorialText4" },
+];
+
+// Гра з новини: без меню; останній крок - повний екран, якщо iframe його дозволяє (кнопка є).
+export const embedTutorialSteps = (): TutorialStep[] => [
+    { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
+    { target: "bar", title: "tutorialTitle2", text: "tutorialText2" },
+    { target: "boosters", title: "tutorialTitle3", text: "tutorialText3" },
+    ...(document.querySelector('[data-tour="fullscreen"]') ? [{ target: "fullscreen", title: "tutorialTitle5", text: "tutorialText5" } as TutorialStep] : []),
 ];
 
 // Нейтральне сяйво - кремове кільце з тонким темним контуром і м'яким світлим ореолом:
@@ -129,10 +139,10 @@ const Dots = styled.div`
     }
 `;
 
-export const Tutorial: React.FC<{ onDone: () => void }> = ({ onDone }) => {
+export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; doneKey?: string }> = ({ onDone, steps = STEPS, doneKey = DONE_KEY }) => {
     const t = useT();
     const [step, setStep] = useState(0);
-    const current = STEPS[step];
+    const current = steps[step];
 
     useEffect(() => {
         trackEvent("tutorial_step", { step: step + 1 });
@@ -145,12 +155,12 @@ export const Tutorial: React.FC<{ onDone: () => void }> = ({ onDone }) => {
     }, []);
 
     const finish = (how: "done" | "skip") => {
-        markDone();
+        markDone(doneKey);
         trackEvent("tutorial_finished", { how, step: step + 1 });
         onDone();
     };
 
-    const last = step === STEPS.length - 1;
+    const last = step === steps.length - 1;
     return (
         <>
             <Highlight $target={current.target} />
@@ -159,8 +169,8 @@ export const Tutorial: React.FC<{ onDone: () => void }> = ({ onDone }) => {
                 <h3 id="tutorial-title">{t(current.title)}</h3>
                 <p>{t(current.text)}</p>
                 <Footer>
-                    <Dots aria-label={`${step + 1} / ${STEPS.length}`}>
-                        {STEPS.map((s, i) => (
+                    <Dots aria-label={`${step + 1} / ${steps.length}`}>
+                        {steps.map((s, i) => (
                             <i key={s.target} data-on={i === step} />
                         ))}
                     </Dots>

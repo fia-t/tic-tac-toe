@@ -31,7 +31,7 @@ import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
-import { Tutorial, isTutorialDone } from "@game/components/Tutorial";
+import { EMBED_TUTORIAL_KEY, Tutorial, embedTutorialSteps, isTutorialDone, type TutorialStep } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
 import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
@@ -156,6 +156,14 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     useEffect(() => {
         if (!embed && onGameScreen && themeReady && isNewPlayer && !isTutorialDone()) setTutorialOpen(true);
     }, [embed, onGameScreen, themeReady, isNewPlayer]);
+    // Гра з новини: короткий туторіал при першому відкритті (свій ключ - незалежно від сайту).
+    // Кроки збираються після рендеру поля: крок "повний екран" - лише якщо кнопка є.
+    const [embedSteps, setEmbedSteps] = useState<TutorialStep[] | null>(null);
+    useEffect(() => {
+        if (!embed || !themeReady || isTutorialDone(EMBED_TUTORIAL_KEY)) return;
+        const timer = setTimeout(() => setEmbedSteps(embedTutorialSteps()), 700);
+        return () => clearTimeout(timer);
+    }, [embed, themeReady]);
 
     // Присутність: хто зараз у грі й чи в партії (лічильник "онлайн" і запрошення в меню).
     // У грі з новини суперників не шукають - без присутності, лише картка гравця (джерело "embed").
@@ -670,6 +678,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 )}
                 {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
                 {themeReady ? <AppColumn ref={topRef}>{content}</AppColumn> : content}
+                {embedSteps && <Tutorial steps={embedSteps} doneKey={EMBED_TUTORIAL_KEY} onDone={() => setEmbedSteps(null)} />}
             </RewardedAdContext.Provider>
         );
     }

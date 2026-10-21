@@ -148,7 +148,7 @@ export const FullscreenButton: React.FC<{ nudge?: boolean; round?: boolean }> = 
     const icon = isFullscreen ? <IconExitFullscreen size={20} /> : <IconFullscreen size={20} />;
     if (round)
         return (
-            <NudgeRound type="button" $nudge={pulsing} onClick={() => void toggleFullscreen()} aria-label={label} data-tip={label}>
+            <NudgeRound type="button" data-tour="fullscreen" $nudge={pulsing} onClick={() => void toggleFullscreen()} aria-label={label} data-tip={label}>
                 {icon}
             </NudgeRound>
         );

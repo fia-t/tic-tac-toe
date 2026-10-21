@@ -296,6 +296,8 @@ const pack: LocalePack = {
         tutorialText3: "¿Atascado? La pista muestra una buena jugada y Deshacer retira tu jugada. Gratis una vez por partida.",
         tutorialTitle4: "Menú",
         tutorialText4: "El logo abre el menú: reto diario, campaña, skins, premios y partidas con jugadores reales.",
+        tutorialTitle5: "Pantalla completa",
+        tutorialText5: "Este botón abre el juego en pantalla completa y el tablero se agranda. Útil en 5×5 y Ultimate.",
         tutorialNext: "Siguiente",
         tutorialSkip: "Saltar",
         tutorialDone: "Entendido",

@@ -296,6 +296,8 @@ const pack: LocalePack = {
         tutorialText3: "Travou? A dica mostra uma boa jogada, Desfazer volta sua jogada. Grátis uma vez por partida.",
         tutorialTitle4: "Menu",
         tutorialText4: "O logo abre o menu: desafio diário, campanha, skins, prêmios e partidas com jogadores reais.",
+        tutorialTitle5: "Tela cheia",
+        tutorialText5: "Este botão abre o jogo em tela cheia e o tabuleiro fica maior. Útil no 5×5 e no Ultimate.",
         tutorialNext: "Próximo",
         tutorialSkip: "Pular",
         tutorialDone: "Entendi",
