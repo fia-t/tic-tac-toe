@@ -250,7 +250,7 @@ const CornerBox = styled.div`
         top: auto;
         right: auto;
         flex-shrink: 0;
-        margin: -6px 0 0 -9px;
+        margin: -6px -6px 0 -9px;
     }
 `;
 
