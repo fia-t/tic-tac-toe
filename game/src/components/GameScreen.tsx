@@ -260,6 +260,7 @@ const CornerTip = styled.span`
 const CornerBox = styled.div`
     display: flex;
     align-items: flex-start;
+    min-width: 0;
 
     & > ${CornerTip} {
         position: relative;
