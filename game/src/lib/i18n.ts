@@ -25,6 +25,9 @@ const uk = {
     player: "Гравець",
     // Гравець у рахунку гри з новини (імені там немає).
     you: "Ти",
+    barScore: "Рахунок",
+    quarty: "Кварті",
+    tutorialTextBarEmbed: "Над полем - вибір поля (3×3, 5×5, гіга-поле), рахунок і модифікатор правил. «Заново» починає нову партію.",
     resultWin: "Перемога!",
     resultCoins: "{n:монета|монети|монет}",
     resultXp: "досвіду",
@@ -439,6 +442,9 @@ const en: Record<Key, string> = {
     ai: "Bot",
     player: "Player",
     you: "You",
+    barScore: "Score",
+    quarty: "Quarty",
+    tutorialTextBarEmbed: "Above the board: board size (3×3, 5×5, Ultimate), the score and a rule modifier. Restart begins a new game.",
     resultWin: "You win!",
     resultCoins: "{n:coin|coins}",
     resultXp: "XP",
@@ -898,15 +904,11 @@ export const toLocale = (raw: string | null | undefined): Locale | null => {
     return LOCALES.find((locale) => locale === code) ?? null;
 };
 
-// Перша мова браузера, яку знає гра; інакше - англійська.
+// Основна мова браузера, якщо гра її знає; інакше - англійська (наступні мови зі списку
+// браузера не враховуються).
 export const browserLocale = (): Locale => {
     if (typeof navigator === "undefined") return "en";
-    const list = navigator.languages?.length ? navigator.languages : [navigator.language];
-    for (const raw of list) {
-        const locale = toLocale(raw);
-        if (locale) return locale;
-    }
-    return "en";
+    return toLocale(navigator.languages?.[0] ?? navigator.language) ?? "en";
 };
 
 // Стартова мова - англійська і на сервері, і в браузері до initLocale (гідратація не розходиться);

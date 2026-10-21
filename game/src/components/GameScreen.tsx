@@ -11,6 +11,7 @@ import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
+import { QuartyFace } from "@game/components/QuartyFace";
 import { FullscreenButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
@@ -51,8 +52,15 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
         css`
             --board-w: min(100%, max(280px, calc(100dvh - 210px - var(--timer-h))));
 
+            padding-top: 10px;
+
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 140px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 150px - var(--timer-h))));
+            }
+
+            /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
+            @media (min-width: 1200px) and (min-height: 800px) {
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 195px - var(--timer-h))));
             }
         `}
 `;
@@ -85,6 +93,10 @@ const Bar = styled.div<{ $embed?: boolean }>`
             @media (min-width: 761px) {
                 width: auto;
             }
+
+            @media (min-width: 1200px) and (min-height: 800px) {
+                zoom: 1.3;
+            }
         `}
 `;
 
@@ -106,7 +118,35 @@ const BarGroupRow = styled.div`
 `;
 
 // "Заново" і "Гра з другом" у смузі - менші за бустери біля поля.
-const BarActions = styled(BarGroupRow)`
+const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
+    /* Гра в новині: "Заново" відокремлене від вибору поля. */
+    ${({ $embed }) =>
+        $embed &&
+        css`
+            margin-right: 22px;
+
+            @media (max-width: 480px) {
+                margin-right: 12px;
+            }
+        `}
+
+    && ${RoundButton} {
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
+    }
+
+    @media (max-width: 480px) {
+        && ${RoundButton} {
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+        }
+    }
+`;
+
+// Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
+const BarFull = styled(BarGroup)`
     && ${RoundButton} {
         width: 42px;
         height: 42px;
@@ -293,6 +333,12 @@ export const ScoreTop = styled.div<{ $wide?: boolean }>`
                     white-space: nowrap;
                 }
             }
+
+            /* zoom множить і ширину - ділимо, щоб рядок лишався шириною поля. */
+            @media (min-width: 1200px) and (min-height: 800px) {
+                zoom: 1.2;
+                width: calc(max(var(--board-w), min(100%, 720px)) / 1.2);
+            }
         `}
 
     /* На телефоні рахунок і статус - в одному рядку сталої висоти (до двох рядків підказки),
@@ -343,6 +389,32 @@ export const ScorePill = styled.div`
         max-width: 48%;
         gap: 6px;
         padding: 4px 10px;
+    }
+`;
+
+// Гра в новині: рахунок - у смузі на місці вибору бота, висотою як кнопки поруч.
+const BarScore = styled(ScorePill)`
+    min-height: 40px;
+
+    @media (max-width: 560px) {
+        max-width: none;
+    }
+`;
+
+// Гра в новині: опис вибраного модифікатора - у рядку статусу, по правому краю.
+const ModNote = styled.div`
+    flex: 0 1 auto;
+    min-width: 0;
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--bar-ink, #7a5530);
+    font-size: 14px;
+    line-height: 1.3;
+
+    strong {
+        font-weight: 800;
     }
 `;
 
@@ -472,6 +544,52 @@ const Boosters = styled.div`
             left: calc(100% + var(--gb-c, 0px) + 6px);
             top: 50%;
             transform: translateY(-50%);
+        }
+    }
+`;
+
+// Гра в новині з таймером (найбільше бустерів): бустери таймера - зліва від поля, решта -
+// справа. На вузькому екрані колонки зливаються в один ряд під полем.
+const SplitBoosters = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 8px;
+
+    & > div {
+        display: contents;
+    }
+
+    @media (min-width: 800px) {
+        & > div {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        & > div:first-child {
+            right: calc(100% + 14px);
+
+            /* Тултіпи лівої колонки - ліворуч від кнопок. */
+            & > button::after {
+                left: auto;
+                right: calc(100% + var(--gb-c, 0px) + 6px);
+                top: 50%;
+                transform: translateY(-50%);
+            }
+        }
+
+        & > div:last-child {
+            left: calc(100% + 14px);
+
+            & > button::after {
+                left: calc(100% + var(--gb-c, 0px) + 6px);
+                top: 50%;
+                transform: translateY(-50%);
+            }
         }
     }
 `;
@@ -660,6 +778,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onSetMode(target);
     };
 
+    const embed = isEmbed();
     const restartLabel = over ? t("playAgain") : t("restart");
     const actionButtons = (
         <>
@@ -717,12 +836,26 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         );
     };
 
+    const hasTimer = timer !== null && timer !== undefined;
+    const mainButtons = (
+        <>
+            {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
+            {boosterButton("hint", boosters.canHint, boosters.onHint)}
+        </>
+    );
+    const timerButtons = (
+        <>
+            {boosterButton("pause", boosters.canHint && !timerBoost.firstFree && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
+            {boosterButton("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
+        </>
+    );
+
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={isEmbed()}>
             <Bar data-tour="bar" $embed={isEmbed()}>
                 {quick ? (
                     <>
-                        <BarActions>{actionButtons}</BarActions>
+                        <BarActions $embed={embed}>{actionButtons}</BarActions>
                         <BarGroup>
                             <BarLabel id="bar-board">
                                 {t("barBoard")}
@@ -744,6 +877,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             </BarGroupRow>
                         </BarGroup>
                         <PushRight $embed={isEmbed()}>
+                            {embed ? (
+                                <BarGroup>
+                                    <BarLabel id="bar-score">{t("barScore")}</BarLabel>
+                                    <BarScore aria-labelledby="bar-score">
+                                        {isHalloweenEmbed() && <ScoreCobweb />}
+                                        <QuartyFace />
+                                        <span>{t("quarty")}</span>
+                                        <b>{score.ai}</b>
+                                        <span>—</span>
+                                        <b>{score.human}</b>
+                                        <span>{t("you")}</span>
+                                    </BarScore>
+                                </BarGroup>
+                            ) : (
                             <BarGroup>
                                 <BarLabel id="bar-bot">
                                     {t("barBot")}
@@ -764,6 +911,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     ))}
                                 </DiffGroup>
                             </BarGroup>
+                            )}
                             <BarGroup>
                                 <BarLabel id="bar-mod">
                                     {t("modifierLabel")}
@@ -778,6 +926,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     onPick={pickModifier}
                                 />
                             </BarGroup>
+                            {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
+                            {embed && (
+                                <BarFull>
+                                    <FullscreenButton round nudge={mode !== "traditional"} />
+                                </BarFull>
+                            )}
                         </PushRight>
                     </>
                 ) : (
@@ -799,15 +953,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 </div>
             )}
 
-            <ScoreTop $wide={isEmbed()}>
+            <ScoreTop $wide={embed}>
+                {!embed && (
                 <ScorePill>
                     {isHalloweenEmbed() && <ScoreCobweb />}
                     <span>{t("ai")}</span>
                     <b>{score.ai}</b>
                     <span>—</span>
                     <b>{score.human}</b>
-                    <span>{isEmbed() ? t("you") : (humanName ?? t("player"))}</span>
+                    <span>{humanName ?? t("player")}</span>
                 </ScorePill>
+                )}
                 <TurnLine
                     key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
                     $mine={myTurn && !over && !timerBoost.expired}
@@ -826,7 +982,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         status
                     )}
                 </TurnLine>
-                {over && quick && onShowResult && (
+                {embed && activeModifier && (
+                    <ModNote title={`${t(`modifier_${activeModifier}`)} · ${t(`modifierDesc_${activeModifier}`)}`}>
+                        <strong>{t(`modifier_${activeModifier}`)}</strong> · {t(`modifierDesc_${activeModifier}`)}
+                    </ModNote>
+                )}
+                {/* У новині вікно результату й так з'являється після партії - посилання зайве. */}
+                {over && quick && onShowResult && !embed && (
                     <ResultLink type="button" onClick={onShowResult}>
                         {t("showResult")}
                     </ResultLink>
@@ -835,20 +997,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
             <BoardHolder data-tour="board">
                 {board}
-                {quick && (
-                    <Boosters data-tour="boosters">
-                        {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
-                        {boosterButton("hint", boosters.canHint, boosters.onHint)}
-                        {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
-                        {isEmbed() && <FullscreenButton round nudge={mode !== "traditional"} />}
-                        {timer !== null && timer !== undefined && (
-                            <>
-                                {boosterButton("pause", boosters.canHint && !timerBoost.firstFree && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
-                                {boosterButton("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
-                            </>
-                        )}
-                    </Boosters>
-                )}
+                {quick &&
+                    (embed && hasTimer ? (
+                        <SplitBoosters>
+                            <div>{timerButtons}</div>
+                            <div data-tour="boosters">{mainButtons}</div>
+                        </SplitBoosters>
+                    ) : (
+                        <Boosters data-tour="boosters">
+                            {mainButtons}
+                            {hasTimer && timerButtons}
+                        </Boosters>
+                    ))}
             </BoardHolder>
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}

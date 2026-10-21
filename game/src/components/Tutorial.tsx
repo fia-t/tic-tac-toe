@@ -31,7 +31,7 @@ const markDone = (key: string) => {
 };
 
 type StepNo = 1 | 2 | 3 | 4 | 5;
-export type TutorialStep = { target: string; title: `tutorialTitle${StepNo}`; text: `tutorialText${StepNo}` };
+export type TutorialStep = { target: string; title: `tutorialTitle${StepNo}`; text: `tutorialText${StepNo}` | "tutorialTextBarEmbed" };
 const STEPS: TutorialStep[] = [
     { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
     { target: "bar", title: "tutorialTitle2", text: "tutorialText2" },
@@ -42,7 +42,7 @@ const STEPS: TutorialStep[] = [
 // Гра з новини: без меню; останній крок - повний екран, якщо iframe його дозволяє (кнопка є).
 export const embedTutorialSteps = (): TutorialStep[] => [
     { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
-    { target: "bar", title: "tutorialTitle2", text: "tutorialText2" },
+    { target: "bar", title: "tutorialTitle2", text: "tutorialTextBarEmbed" },
     { target: "boosters", title: "tutorialTitle3", text: "tutorialText3" },
     ...(document.querySelector('[data-tour="fullscreen"]') ? [{ target: "fullscreen", title: "tutorialTitle5", text: "tutorialText5" } as TutorialStep] : []),
 ];
@@ -155,8 +155,9 @@ const cardPlace = (target: string, card: HTMLElement): React.CSSProperties | und
     if (!overlaps(center)) return undefined;
     const shifted = r.left - gap - w / 2;
     if (shifted - w / 2 >= 16) return { left: shifted };
-    // Угору - лише якщо там картка вже не закриє це місце (велике поле на десктопі - лишаємо внизу).
-    if (r.top > 16 + h + gap) return { top: "calc(16px + env(safe-area-inset-top, 0px))", bottom: "auto" };
+    // Угору - лише на телефоні (смуга на всю ширину) і якщо там картка не закриє це місце;
+    // на ширшому екрані вгорі смуга керування - картка лишається внизу.
+    if (window.innerWidth <= 760 && r.top > 16 + h + gap) return { top: "calc(16px + env(safe-area-inset-top, 0px))", bottom: "auto" };
     return undefined;
 };
 
@@ -169,8 +170,12 @@ export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; do
     useLayoutEffect(() => {
         const update = () => setPlace(cardRef.current ? cardPlace(current.target, cardRef.current) : undefined);
         update();
+        const later = [setTimeout(update, 400), setTimeout(update, 1200)];
         window.addEventListener("resize", update);
-        return () => window.removeEventListener("resize", update);
+        return () => {
+            later.forEach(clearTimeout);
+            window.removeEventListener("resize", update);
+        };
     }, [current.target]);
 
     useEffect(() => {

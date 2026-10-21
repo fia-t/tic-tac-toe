@@ -107,6 +107,19 @@ export const GlobalStyle = createGlobalStyle`
 `;
 
 export const Container = styled.div`
+    user-select: none;
+    -webkit-user-select: none;
+
+    img {
+        -webkit-user-drag: none;
+    }
+
+    input,
+    textarea {
+        user-select: text;
+        -webkit-user-select: text;
+    }
+
     display: flex;
     justify-content: center;
     align-items: flex-start;

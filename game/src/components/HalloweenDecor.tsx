@@ -1,15 +1,16 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
+import { Container } from "@game/components/gameStyles";
 
 // Живі прикраси хелловінської гри в новині: кажани, що пролітають повз місяць, і павутина з
 // павучком на рахунку. Фон (небо, місяць, листя) - у HalloweenBackdrop.
 
-// Кажани летять справа наліво повз місяць: політ по горизонталі, легке погойдування
-// вгору-вниз і помахи крилами. Позаду вмісту гри, кліки не перехоплюють.
+// Кажани летять справа наліво повз місяць і знижуються - залітають за поле й повністю ховаються
+// за ним; легке погойдування вгору-вниз і помахи крилами. Позаду вмісту гри, кліки не перехоплюють.
 const flyAcross = keyframes`
-    from { transform: translateX(0); }
-    to { transform: translateX(-520px); }
+    from { transform: translate(0, 0); }
+    to { transform: translate(-520px, 260px); }
 `;
 const bob = keyframes`
     from { transform: translateY(-10px); }
@@ -20,13 +21,15 @@ const flap = keyframes`
     50% { transform: scaleY(0.35); }
 `;
 
+// Права межа - край ігрової області, а не вікна: кажани з'являються з-під смуги прокрутки,
+// а не летять поверх неї (--bats-right виставляє HalloweenBats).
 const BatSky = styled.div`
     position: fixed;
     top: 0;
-    right: 0;
+    bottom: 0;
+    right: var(--bats-right, 0px);
     width: 460px;
     max-width: 100vw;
-    height: 210px;
     overflow: hidden;
     pointer-events: none;
     z-index: 0;
@@ -80,17 +83,31 @@ const FLIGHTS = [
     { top: 112, dur: 17, delay: 8, size: 34 },
 ];
 
-export const HalloweenBats = () => (
-    <BatSky aria-hidden="true">
-        {FLIGHTS.map((f, i) => (
-            <BatFlight key={i} $top={f.top} $dur={f.dur} $delay={f.delay}>
-                <BatBob $size={f.size}>
-                    <BatShape />
-                </BatBob>
-            </BatFlight>
-        ))}
-    </BatSky>
-);
+export const HalloweenBats = () => {
+    const sky = useRef<HTMLDivElement>(null);
+    // Ширина смуги прокрутки контейнера гри (вона з'являється, коли вміст вищий за iframe).
+    useEffect(() => {
+        const box = document.querySelector<HTMLElement>(String(Container));
+        if (!box) return;
+        const update = () => sky.current?.style.setProperty("--bats-right", `${box.offsetWidth - box.clientWidth}px`);
+        update();
+        const observer = new ResizeObserver(update);
+        observer.observe(box);
+        if (box.firstElementChild) observer.observe(box.firstElementChild);
+        return () => observer.disconnect();
+    }, []);
+    return (
+        <BatSky ref={sky} aria-hidden="true">
+            {FLIGHTS.map((f, i) => (
+                <BatFlight key={i} $top={f.top} $dur={f.dur} $delay={f.delay}>
+                    <BatBob $size={f.size}>
+                        <BatShape />
+                    </BatBob>
+                </BatFlight>
+            ))}
+        </BatSky>
+    );
+};
 
 // Рахунок у павутинні: павутина в лівому верхньому куті (біля "Бот"), а з-під лівого краю
 // на нитці звисає павучок, що повільно опускається й підіймається.

@@ -143,7 +143,7 @@ const Row = styled.div`
     gap: 8px;
     width: min(92vw, 460px);
     margin: 0 0 8px;
-    color: #7a5530;
+    color: var(--bar-ink, #7a5530);
     font-size: 13px;
     font-weight: 800;
 `;
