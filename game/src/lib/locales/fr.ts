@@ -14,6 +14,7 @@ const pack: LocalePack = {
         resultXp: "XP",
         resultMoves: "{n:coup|coups}",
         resultLose: "Le bot gagne !",
+        quartyWins: "Quarty gagne !",
         resultDraw: "Match nul",
         restart: "Recommencer",
         modeClassic: "Classique 3×3",

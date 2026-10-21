@@ -14,6 +14,7 @@ const pack: LocalePack = {
         resultXp: "EP",
         resultMoves: "{n:Zug|Züge}",
         resultLose: "Der Bot gewinnt!",
+        quartyWins: "Quarty gewinnt!",
         resultDraw: "Unentschieden",
         restart: "Neustart",
         modeClassic: "Klassisch 3×3",

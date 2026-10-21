@@ -322,7 +322,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     };
 
     const statusText = isGameOver
-        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+        ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
         : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
 
     const winningCells = winner ? winningIndexSet(board, WIN_LENGTH) : undefined;

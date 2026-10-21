@@ -613,7 +613,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         );
     } else {
         const statusText = isGameOver
-            ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+            ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
             : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
         const playerTurn = !isGameOver && !isAiTurn;
         content = (

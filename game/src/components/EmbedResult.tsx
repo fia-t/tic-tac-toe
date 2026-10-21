@@ -527,7 +527,7 @@ export const EmbedResult: React.FC<EmbedResultProps> = ({ result, onClose, onRes
         : result === "win"
           ? t("resultWin")
           : result === "lose"
-            ? t("resultLose")
+            ? t("quartyWins")
             : t("resultDraw");
     return (
         <>

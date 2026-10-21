@@ -346,7 +346,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     };
 
     const statusText = isGameOver
-        ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
+        ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
         : currentTurn === "ai"
         ? t(isEmbed() ? "quartyThinking" : "aiThinking")
         : activeBoard === null

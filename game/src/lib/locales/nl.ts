@@ -14,6 +14,7 @@ const pack: LocalePack = {
         resultXp: "XP",
         resultMoves: "{n:zet|zetten}",
         resultLose: "De bot wint!",
+        quartyWins: "Quarty wint!",
         resultDraw: "Gelijkspel",
         restart: "Opnieuw",
         modeClassic: "Klassiek 3×3",

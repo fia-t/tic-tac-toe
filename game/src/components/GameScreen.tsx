@@ -63,12 +63,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             }
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 140px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 142px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 170px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 173px - var(--timer-h))));
             }
         `}
 `;
@@ -110,25 +110,27 @@ const Bar = styled.div<{ $embed?: boolean }>`
                "Заново" - біля лівого краю, повний екран - біля правого, плитки поля, рахунок і
                модифікатор - між ними по центру (вільне місце порівну зліва й справа, EmbedSide). */
             @media (min-width: 761px) {
-                column-gap: 32px;
+                column-gap: 48px;
                 width: 100vw;
                 padding: 0 48px;
-                /* Модифікатор - за шириною тексту (опис видно повністю); стискається з трикрапкою,
-                   лише якщо в рядку не вистачає місця. */
-                --mod-w: auto;
+                /* Модифікатор - сталої ширини (як із "Без модифікатора"), щоб смуга не "дихала" при
+                   перемиканні; довший опис - з трикрапкою, повністю - при наведенні. */
+                --mod-w: 188px;
             }
 
             /* Вужчий iframe (до 940px): менші відступи - усе в один рядок. */
             @media (min-width: 761px) and (max-width: 939px) {
-                column-gap: 16px;
+                column-gap: 24px;
                 padding: 0 24px;
             }
 
-            /* zoom множить і ширину, і відступи - ділимо, щоб смуга лишалась шириною екрана. */
+            /* Повний екран: смуга компактно по центру (не до країв), модифікатор - ширший, як із
+               таймером; "Заново" і повний екран - за 68px від сусідів (EmbedSide). */
             @media (min-width: 1200px) and (min-height: 800px) {
                 zoom: 1.3;
-                width: calc(100vw / 1.3);
-                padding: 0 calc(48px / 1.3);
+                width: auto;
+                padding: 0;
+                --mod-w: 264px;
             }
         `}
 `;
@@ -211,6 +213,13 @@ const EmbedSide = styled.div`
             flex-shrink: 1;
         }
     }
+
+    /* zoom 1.3: 4px + проміжок 48px = 52px, на екрані - 68px. */
+    @media (min-width: 1200px) and (min-height: 800px) {
+        & > :last-child {
+            margin-left: 4px;
+        }
+    }
 `;
 
 // Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
@@ -290,9 +299,10 @@ const BarStatus = styled.div`
     margin-top: 4px;
     white-space: nowrap;
 
+    /* Рядок статусу - посередині між першим рядком смуги і полем (по 12px зверху й знизу). */
     @media (min-width: 761px) {
         gap: 40px;
-        margin-top: 14px;
+        margin: 12px 0 4px;
     }
 
     /* Ширина групи - як у плиток поля; статус і таймер не стискаються, а виходять праворуч
@@ -310,6 +320,13 @@ const BarTimer = styled.div`
     & > div {
         width: 420px;
         margin: 0;
+    }
+
+    /* Повний екран (zoom 1.3): коротший - не виходить за край поля навіть на гіга-полі. */
+    @media (min-width: 1200px) and (min-height: 800px) {
+        & > div {
+            width: 330px;
+        }
     }
 
     @media (max-width: 760px) {

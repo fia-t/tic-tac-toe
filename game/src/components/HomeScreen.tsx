@@ -911,8 +911,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     {t("homeWeekly")}
                     <InfoTip text={t("infoWeekly")} />
                 </h2>
-                <h3>{t(`modifier_${weekly}`)}</h3>
-                <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
+                <Row style={{ alignItems: "baseline", rowGap: 2, columnGap: 12 }}>
+                    <h3>{t(`modifier_${weekly}`)}</h3>
+                    <Muted>{t(`modifierDesc_${weekly}`)}</Muted>
+                </Row>
                 {condTiles(weeklyMode, weekly, difficulty, t("weeklySpec"))}
                 <GameButton
                     size="lg"
