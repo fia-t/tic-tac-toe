@@ -58,17 +58,13 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             padding-top: 10px;
             padding-bottom: 4px;
 
-            @media (min-width: 761px) {
-                --timer-h: 0px;
-            }
-
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 138px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 168px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2)));
             }
         `}
 `;
@@ -110,6 +106,11 @@ const Bar = styled.div<{ $embed?: boolean }>`
                "Заново" - біля лівого краю, повний екран - біля правого, плитки поля, рахунок і
                модифікатор - між ними по центру (вільне місце порівну зліва й справа, EmbedSide). */
             @media (min-width: 761px) {
+                /* Сітка: "Заново" | модифікатор | рахунок | підказка ходу | повний екран. Колонки
+                   модифікатора й підказки рівні (1fr) - рахунок рівно по центру; коли місця бракує,
+                   вони стискаються до свого min-width, і рахунок трохи зсувається. */
+                display: grid;
+                grid-template-columns: auto 1fr auto 1fr auto;
                 column-gap: 48px;
                 width: 100vw;
                 padding: 0 48px;
@@ -118,18 +119,22 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 --mod-w: 188px;
             }
 
+            /* Iframe до 1100px: менші проміжки - модифікатор і підказка ходу вміщаються повністю. */
+            @media (min-width: 761px) and (max-width: 1099px) {
+                column-gap: 24px;
+            }
+
             /* Вужчий iframe (до 940px): менші відступи - усе в один рядок. */
             @media (min-width: 761px) and (max-width: 939px) {
                 column-gap: 24px;
                 padding: 0 24px;
             }
 
-            /* Повний екран: смуга компактно по центру (не до країв), модифікатор - ширший, як із
-               таймером; "Заново" і повний екран - за 68px від сусідів (EmbedSide). */
+            /* Повний екран: смуга на всю ширину (з урахуванням zoom), модифікатор - ширший, як із
+               таймером. */
             @media (min-width: 1200px) and (min-height: 800px) {
                 zoom: 1.3;
-                width: auto;
-                padding: 0;
+                width: calc(100vw / 1.3);
                 --mod-w: 264px;
             }
         `}
@@ -189,16 +194,11 @@ const EmbedSide = styled.div`
     gap: 10px;
     min-width: 0;
 
-    /* Ширший екран: частини "розчиняються" в смузі; перед плитками поля (останні в лівій частині)
-       і перед повним екраном (останній у правій) - вільне місце порівну. */
+    /* Ширший екран: частини "розчиняються" в смузі. Якщо місця бракує - стискаються лише
+       підказка ходу й модифікатор (з трикрапкою), решта - свого розміру. */
     @media (min-width: 761px) {
         display: contents;
 
-        & > :last-child {
-            margin-left: auto;
-        }
-
-        /* Якщо місця бракує - стискається лише модифікатор (з трикрапкою), решта - свого розміру. */
         & > * {
             flex-shrink: 0;
         }
@@ -207,17 +207,125 @@ const EmbedSide = styled.div`
             flex-shrink: 1;
         }
     }
+`;
 
-    /* zoom 1.3: 4px + проміжок 48px = 52px, на екрані - 68px. */
+// Перед рахунком і перед повним екраном - вільне місце порівну: "Заново" біля лівого краю,
+// повний екран - біля правого, рахунок, підказка ходу й модифікатор - між ними по центру.
+const autoLeft = css`
+    flex-shrink: 0;
+
+    @media (min-width: 761px) {
+        margin-left: auto;
+    }
+
+    /* Повний екран (zoom 1.3): 4px + проміжок 48px = 52px, на екрані - 68px. */
     @media (min-width: 1200px) and (min-height: 800px) {
-        & > :last-child {
-            margin-left: 4px;
-        }
+        margin-left: 4px;
+    }
+`;
+
+// Частини смуги лише для вузького (телефон) чи лише для ширшого екрана.
+const NarrowOnly = styled.div`
+    display: contents;
+
+    @media (min-width: 761px) {
+        display: none;
+    }
+`;
+
+const WideOnly = styled.div`
+    display: none;
+
+    @media (min-width: 761px) {
+        display: contents;
+    }
+`;
+
+// Ширший екран: модифікатор - одразу після "Заново", впритул до рахунку.
+const ModSlot = styled.div`
+    justify-self: end;
+    display: flex;
+    justify-content: flex-end;
+    min-width: 140px;
+    max-width: 100%;
+`;
+
+// Ширший екран: рахунок - рівно по центру; не стискається (стискаються модифікатор і підказка).
+const ScoreMid = styled(BarGroup)`
+    min-width: max-content;
+`;
+
+// Ширший екран: підказка ходу - перед повним екраном, сталої ширини під найдовший переклад
+// ("Du bist dran - in einem beliebigen offenen Feld"), щоб смуга не стрибала; під нею - таймер.
+const HintSlot = styled.div`
+    justify-self: start;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 332px;
+    min-width: 240px;
+`;
+
+const StatusSlot = styled.div`
+    display: flex;
+    height: 46px;
+    align-items: center;
+
+    && > * {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-width: 0;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+`;
+
+// Таймер ходу під підказкою - на всю її ширину.
+const SlotTimer = styled.div`
+    margin: 8px 0 4px;
+
+    & > div {
+        width: 100%;
+        margin: 0;
+    }
+`;
+
+// Ширший екран: плитки поля - колонкою зліва від поля, строго під "Заново" (left рахує
+// GameScreen) і по вертикальному центру поля. Підказка - праворуч: назва й правило перемоги.
+const TileColumn = styled.div`
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 2;
+
+    & > button {
+        width: 60px;
+        height: 60px;
+    }
+
+    /* Підказка - праворуч від плитки, у два рядки: назва й правило перемоги. */
+    & > button::after {
+        left: calc(100% + 12px);
+        top: 50%;
+        transform: translateY(-50%);
+        width: max-content;
+        max-width: 240px;
+        white-space: pre-line;
+        text-align: left;
+    }
+
+    @media (max-width: 760px) {
+        display: none;
     }
 `;
 
 // Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
 const BarFull = styled(BarGroup)`
+    ${autoLeft}
+
     && ${RoundButton} {
         width: 42px;
         height: 42px;
@@ -312,22 +420,6 @@ const BarStatus = styled.div`
        (подвійний клас - сильніше за flex самого рядка статусу). */
     && > * {
         flex-shrink: 0;
-    }
-`;
-
-// Таймер ходу в новині: на широкому екрані - у рядку статусу праворуч від "Твій хід",
-// на вузькому (смуга у два рядки) - окремим рядком над полем, як на сайті.
-const BarTimer = styled.div`
-    display: flex;
-
-    /* Ширина - до правого краю кнопки модифікатора (--timer-w рахує GameScreen). */
-    & > div {
-        width: var(--timer-w, 420px);
-        margin: 0;
-    }
-
-    @media (max-width: 760px) {
-        display: none;
     }
 `;
 
@@ -719,56 +811,6 @@ const Boosters = styled.div`
     }
 `;
 
-// Гра в новині з таймером (найбільше бустерів): бустери таймера - зліва від поля, решта -
-// справа. На вузькому екрані колонки зливаються в один ряд під полем.
-const SplitBoosters = styled.div`
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    padding-top: 8px;
-
-    & > div {
-        display: contents;
-    }
-
-    @media (min-width: 800px) {
-        /* Колонки - абсолютно, сам контейнер не займає місця під полем (інакше зайва прокрутка). */
-        height: 0;
-        padding: 0;
-
-        & > div {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        & > div:first-child {
-            right: calc(100% + 24px);
-
-            /* Тултіпи лівої колонки - ліворуч від кнопок. */
-            & > button::after {
-                left: auto;
-                right: calc(100% + var(--gb-c, 0px) + 6px);
-                top: 50%;
-                transform: translateY(-50%);
-            }
-        }
-
-        & > div:last-child {
-            left: calc(100% + 24px);
-
-            & > button::after {
-                left: calc(100% + var(--gb-c, 0px) + 6px);
-                top: 50%;
-                transform: translateY(-50%);
-            }
-        }
-    }
-`;
-
 const Badge = styled.span<{ $free: boolean }>`
     position: absolute;
     top: calc(-1 * var(--gb-c, 13px) - 4px);
@@ -1031,24 +1073,53 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const hasTimer = timer !== null && timer !== undefined;
     const timerRunning = hasTimer && !over;
 
-    // Гра в новині: шкала таймера в рядку статусу закінчується там, де кнопка модифікатора.
-    // Перераховується, коли змінюється статус (ширина плашки), поле, модифікатор чи розмір екрана.
-    const timerBox = useRef<HTMLDivElement>(null);
+    // У новині частини лише для телефону чи лише для ширшого екрана; на сайті - завжди.
+    const narrowOnly = (node: React.ReactNode) => (embed ? <NarrowOnly>{node}</NarrowOnly> : node);
+    // Гра в новині: рахунок з Кварті (на ширшому екрані - по центру смуги, на телефоні - у
+    // другому рядку смуги).
+    const scorePill = (
+        <BarScore>
+            {isHalloweenEmbed() && <ScoreCobweb spider={!(hasTimer && !over)} />}
+            <QuartyFace src={assetUrl("icons/mentor.a5788621.avif")} alt="" />
+            <span>{t("quarty")}</span>
+            <b>{score.ai}</b>
+            <span>—</span>
+            <b>{score.human}</b>
+            <span>{t("you")}</span>
+        </BarScore>
+    );
+    const modGroup = (
+        <BarGroup>
+            <BarLabel id="bar-mod" $hidden>
+                {t("modifierLabel")}
+            </BarLabel>
+            <CornerBox>
+                {modSelect}
+                <CornerTip>
+                    <InfoTip text={t("infoModGame")} />
+                </CornerTip>
+            </CornerBox>
+        </BarGroup>
+    );
+    // Підказка на плитці поля в новині: назва й правило перемоги (замість окремого "?").
+    const tileTip = (tile: (typeof MODE_TILES)[number]) => `${t(tile.label)}\n${t(`boardRule_${tile.id}`)}`;
+    // Колонка плиток поля - строго під кнопкою "Заново" (по центру кнопки).
+    const tileColumn = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => {
-        const box = timerBox.current;
-        if (!box) return;
-        const fit = () => {
-            const mod = document.querySelector('[data-tour="bar"] [aria-haspopup="menu"]');
-            if (!mod || !box.offsetWidth) return;
-            // На повному екрані смуга має zoom - переводимо екранні пікселі в CSS-пікселі.
-            const zoom = box.getBoundingClientRect().width / box.offsetWidth || 1;
-            const width = (mod.getBoundingClientRect().right - box.getBoundingClientRect().left) / zoom;
-            box.style.setProperty("--timer-w", `${Math.max(160, Math.round(width))}px`);
+        const column = tileColumn.current;
+        if (!column) return;
+        const place = () => {
+            const restart = document.querySelector('[data-tour="bar"] button');
+            const holder = column.parentElement;
+            if (!restart || !holder) return;
+            const r = restart.getBoundingClientRect();
+            column.style.left = `${Math.round(r.left + r.width / 2 - holder.getBoundingClientRect().left - column.offsetWidth / 2)}px`;
         };
-        fit();
-        window.addEventListener("resize", fit);
-        return () => window.removeEventListener("resize", fit);
-    }, [timerRunning, status, showFirstHint, mode, activeModifier, timerBoost.expired]);
+        place();
+        window.addEventListener("resize", place);
+        return () => window.removeEventListener("resize", place);
+    }, [mode, timerRunning]);
+
     const mainButtons = (
         <>
             {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
@@ -1070,6 +1141,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {embedSide(
                             <>
                         <BarActions $embed={embed}>{actionButtons}</BarActions>
+                        {embed && (
+                            <WideOnly>
+                                <ModSlot>{modGroup}</ModSlot>
+                            </WideOnly>
+                        )}
+                        {narrowOnly(
                         <BarGroup>
                             <BarLabel id="bar-board" $hidden>
                                 {t("barBoard")}
@@ -1081,45 +1158,41 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                         type="button"
                                         aria-pressed={mode === tile.id}
                                         aria-label={t(tile.label)}
-                                        data-tip={t(tile.label)}
+                                        data-tip={embed ? tileTip(tile) : t(tile.label)}
                                         onClick={() => pickMode(tile.id)}
                                     >
                                         <img src={assetUrl(tile.img)} alt="" />
                                     </ModeTile>
                                 ))}
-                                <CornerTip>
-                                    <InfoTip text={t("infoBoard")} />
-                                </CornerTip>
+                                {!embed && (
+                                    <CornerTip>
+                                        <InfoTip text={t("infoBoard")} />
+                                    </CornerTip>
+                                )}
                             </BarGroupRow>
-                            {embed && (
-                                <BarStatus>
-                                    {turnLine}
-                                    {timerRunning && (
-                                        <BarTimer ref={timerBox}>
-                                            <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
-                                        </BarTimer>
-                                    )}
-                                </BarStatus>
-                            )}
+                            {embed && <BarStatus>{turnLine}</BarStatus>}
                         </BarGroup>
+                        )}
                             </>
                         )}
                         <PushRight $embed={isEmbed()}>
                             {embed ? (
-                                <BarGroup>
-                                    <BarLabel id="bar-score" $hidden>
-                                        {t("barScore")}
-                                    </BarLabel>
-                                    <BarScore aria-labelledby="bar-score">
-                                        {isHalloweenEmbed() && <ScoreCobweb spider={!(hasTimer && !over)} />}
-                                        <QuartyFace src={assetUrl("icons/mentor.a5788621.avif")} alt="" />
-                                        <span>{t("quarty")}</span>
-                                        <b>{score.ai}</b>
-                                        <span>—</span>
-                                        <b>{score.human}</b>
-                                        <span>{t("you")}</span>
-                                    </BarScore>
-                                </BarGroup>
+                                <>
+                                    <NarrowOnly>
+                                        <BarGroup>{scorePill}</BarGroup>
+                                    </NarrowOnly>
+                                    <WideOnly>
+                                        <ScoreMid>{scorePill}</ScoreMid>
+                                        <HintSlot>
+                                            <StatusSlot>{turnLine}</StatusSlot>
+                                            {timerRunning && (
+                                                <SlotTimer>
+                                                    <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
+                                                </SlotTimer>
+                                            )}
+                                        </HintSlot>
+                                    </WideOnly>
+                                </>
                             ) : (
                             <BarGroup>
                                 <BarLabel id="bar-bot" $hidden>
@@ -1146,17 +1219,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             )}
                             {embedSide(
                                 <>
-                            <BarGroup>
-                                <BarLabel id="bar-mod" $hidden>
-                                    {t("modifierLabel")}
-                                </BarLabel>
-                                <CornerBox>
-                                    {modSelect}
-                                    <CornerTip>
-                                        <InfoTip text={t("infoModGame")} />
-                                    </CornerTip>
-                                </CornerBox>
-                            </BarGroup>
+                            {narrowOnly(modGroup)}
                             {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
                             {embed && (
                                 <BarFull>
@@ -1207,18 +1270,28 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
             <BoardHolder data-tour="board">
                 {board}
+                {embed && quick && (
+                    <TileColumn ref={tileColumn} role="group" aria-label={t("barBoard")}>
+                        {MODE_TILES.map((tile) => (
+                            <ModeTile
+                                key={tile.id}
+                                type="button"
+                                aria-pressed={mode === tile.id}
+                                aria-label={t(tile.label)}
+                                data-tip={tileTip(tile)}
+                                onClick={() => pickMode(tile.id)}
+                            >
+                                <img src={assetUrl(tile.img)} alt="" />
+                            </ModeTile>
+                        ))}
+                    </TileColumn>
+                )}
                 {quick &&
-                    (embed && hasTimer ? (
-                        <SplitBoosters>
-                            <div>{timerButtons}</div>
-                            <div data-tour="boosters">{mainButtons}</div>
-                        </SplitBoosters>
-                    ) : (
-                        <Boosters data-tour="boosters">
-                            {mainButtons}
-                            {hasTimer && timerButtons}
-                        </Boosters>
-                    ))}
+                    <Boosters data-tour="boosters">
+                        {mainButtons}
+                        {hasTimer && timerButtons}
+                    </Boosters>
+                }
             </BoardHolder>
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
