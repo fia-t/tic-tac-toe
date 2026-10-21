@@ -57,6 +57,13 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
                iframe і з'являлась смуга прокрутки. */
             padding-top: 10px;
             padding-bottom: 4px;
+            /* Тултіпи - більші, ніж на сайті. */
+            --tip-fs: 16px;
+            --tip-pad: 6px 12px;
+            /* Список модифікаторів - теж крупніше. */
+            --mod-menu-w: 340px;
+            --mod-menu-b: 16px;
+            --mod-menu-s: 14px;
 
             @media (min-width: 800px) {
                 --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h))));
@@ -65,6 +72,8 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
                 --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2)));
+                --tip-fs: 21px;
+                --tip-pad: 8px 16px;
             }
         `}
 `;
@@ -136,6 +145,9 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 zoom: 1.3;
                 width: calc(100vw / 1.3);
                 --mod-w: 264px;
+                /* zoom збільшує й тултіпи - ділимо, щоб були як біля поля. */
+                --tip-fs: 16px;
+                --tip-pad: 6px 12px;
             }
         `}
 `;
@@ -271,12 +283,13 @@ const StatusSlot = styled.div`
     height: 46px;
     align-items: center;
 
-    /* Плашка - кольору рахунку; довга фраза переноситься в другий рядок. */
+    /* Плашка - кольору рахунку, завжди висотою на два рядки; довга фраза переноситься, коротка -
+       більшим шрифтом (розмір підбирає GameScreen). */
     && > * {
         flex: 1 1 auto;
         justify-content: center;
         min-width: 0;
-        max-height: 46px;
+        height: 46px;
         overflow: hidden;
         background: var(--score-bg, #fff6e6);
         color: #0f6f8c;
@@ -308,7 +321,7 @@ const TileColumn = styled.div`
         top: 50%;
         transform: translateY(-50%);
         width: max-content;
-        max-width: 240px;
+        max-width: 300px;
         white-space: pre-line;
         text-align: left;
     }
@@ -316,6 +329,10 @@ const TileColumn = styled.div`
     /* Повний екран: плитки більші - під збільшену смугу. */
     @media (min-width: 1200px) and (min-height: 800px) {
         gap: 18px;
+
+        & > button::after {
+            max-width: 400px;
+        }
 
         & > button {
             width: 78px;
@@ -1117,6 +1134,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             </CornerBox>
         </BarGroup>
     );
+    // Підказка ходу в новині (ширший екран): найбільший шрифт, з яким текст вміщається в плашку.
+    const hintBox = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        const box = hintBox.current;
+        if (!box) return;
+        const fit = () => {
+            const line = box.firstElementChild as HTMLElement | null;
+            if (!line || !line.clientHeight) return;
+            for (let size = 21; size >= 13; size--) {
+                line.style.fontSize = `${size}px`;
+                if (line.scrollHeight <= line.clientHeight && line.scrollWidth <= line.clientWidth) break;
+            }
+        };
+        fit();
+        window.addEventListener("resize", fit);
+        return () => window.removeEventListener("resize", fit);
+    }, [status, showFirstHint, timerBoost.expired, over, myTurn]);
     // Підказка на плитці поля в новині: назва й правило перемоги (замість окремого "?").
     const tileTip = (tile: (typeof MODE_TILES)[number]) => `${t(tile.label)}\n${t(`boardRule_${tile.id}`)}`;
     // Колонка плиток поля - строго під кнопкою "Заново" (по центру кнопки).
@@ -1200,7 +1234,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     <WideOnly>
                                         <ScoreMid>{scorePill}</ScoreMid>
                                         <HintSlot>
-                                            <StatusSlot>{turnLine}</StatusSlot>
+                                            <StatusSlot ref={hintBox}>{turnLine}</StatusSlot>
                                         </HintSlot>
                                     </WideOnly>
                                 </>

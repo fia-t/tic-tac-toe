@@ -20,11 +20,11 @@ export const tipCss = css`
         left: 50%;
         top: calc(100% + var(--gb-c, 0px) + 6px);
         transform: translateX(-50%);
-        padding: 4px 9px;
+        padding: var(--tip-pad, 4px 9px);
         border-radius: 8px;
         background: #49301f;
         color: #fff7e8;
-        font: 400 13px/1.2 var(--font-body);
+        font: 400 var(--tip-fs, 13px) / 1.25 var(--font-body);
         white-space: nowrap;
         text-shadow: none;
         opacity: 0;
@@ -377,7 +377,7 @@ const ModMenu = styled.div<{ $align: MenuAlign }>`
     display: flex;
     flex-direction: column;
     gap: 2px;
-    width: min(300px, calc(100vw - 32px));
+    width: min(var(--mod-menu-w, 300px), calc(100vw - 32px));
     padding: 6px;
     border-radius: 16px;
     background: #fff7e8;
@@ -423,7 +423,7 @@ const ModOption = styled.button`
 
     b {
         display: block;
-        font-size: 14px;
+        font-size: var(--mod-menu-b, 14px);
         font-weight: 800;
     }
 
@@ -431,7 +431,7 @@ const ModOption = styled.button`
         display: block;
         margin-top: 2px;
         color: #7a5530;
-        font-size: 12px;
+        font-size: var(--mod-menu-s, 12px);
         line-height: 1.25;
     }
 
