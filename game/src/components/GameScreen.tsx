@@ -73,8 +73,9 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
         `}
 `;
 
-// Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - кожна з підписом і "?".
-// Кнопки вирівняні по низу (у груп над ними підпис). На широкому екрані - один рядок; від 760px
+// Смуга над полем: дії, а далі групи "Поле", "Бот", "Модифікатор" - без видимих підписів, "?" - у
+// куточку групи.
+// Кнопки вирівняні по низу. На широкому екрані - один рядок; від 760px
 // і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
 const Bar = styled.div<{ $embed?: boolean }>`
     position: relative;
@@ -85,6 +86,8 @@ const Bar = styled.div<{ $embed?: boolean }>`
     gap: 8px 6px;
     width: 100%;
     min-width: 0;
+    /* Кнопка модифікатора з описом - вужча, щоб уся смуга вміщалась в один рядок. */
+    --mod-w: 220px;
 
     @media (max-width: 760px) {
         flex-wrap: wrap;
@@ -110,14 +113,15 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 column-gap: 32px;
                 width: 100vw;
                 padding: 0 48px;
-                --mod-w: 236px;
+                /* Модифікатор - за шириною тексту (опис видно повністю); стискається з трикрапкою,
+                   лише якщо в рядку не вистачає місця. */
+                --mod-w: auto;
             }
 
-            /* Вужчий iframe (до 940px): менші відступи й вужчий модифікатор - усе в один рядок. */
+            /* Вужчий iframe (до 940px): менші відступи - усе в один рядок. */
             @media (min-width: 761px) and (max-width: 939px) {
                 column-gap: 16px;
                 padding: 0 24px;
-                --mod-w: 190px;
             }
 
             /* zoom множить і ширину, і відступи - ділимо, щоб смуга лишалась шириною екрана. */
@@ -220,7 +224,7 @@ const BarLabel = styled.div<{ $hidden?: boolean }>`
     color: var(--bar-ink, #7a5530);
     white-space: nowrap;
 
-    /* Гра в новині: підписів над кнопками не видно (лишаються для екранних читачів). */
+    /* Підписів над кнопками не видно (лишаються для екранних читачів). */
     ${({ $hidden }) =>
         $hidden &&
         css`
@@ -233,7 +237,7 @@ const BarLabel = styled.div<{ $hidden?: boolean }>`
         `}
 `;
 
-// Гра в новині: маленький "?" у верхньому правому куті гіга-поля й кнопки модифікатора.
+// Маленький "?" у верхньому правому куті гіга-поля, кнопок бота й модифікатора.
 const CornerTip = styled.span`
     position: absolute;
     top: -6px;
@@ -983,7 +987,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const modSelect = (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc={embed} onPick={pickModifier} />
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc onPick={pickModifier} />
     );
     const turnLine = (
         <TurnLine
@@ -1023,11 +1027,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             <>
                         <BarActions $embed={embed}>{actionButtons}</BarActions>
                         <BarGroup>
-                            <BarLabel id="bar-board" $hidden={embed}>
+                            <BarLabel id="bar-board" $hidden>
                                 {t("barBoard")}
-                                {!embed && <InfoTip text={t("infoBoard")} />}
                             </BarLabel>
-                            <BarGroupRow role="group" aria-labelledby="bar-board" style={embed ? { position: "relative", gap: 10 } : undefined}>
+                            <BarGroupRow role="group" aria-labelledby="bar-board" style={{ position: "relative", gap: embed ? 10 : undefined }}>
                                 {MODE_TILES.map((tile) => (
                                     <ModeTile
                                         key={tile.id}
@@ -1040,11 +1043,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                         <img src={assetUrl(tile.img)} alt="" />
                                     </ModeTile>
                                 ))}
-                                {embed && (
-                                    <CornerTip>
-                                        <InfoTip text={t("infoBoard")} />
-                                    </CornerTip>
-                                )}
+                                <CornerTip>
+                                    <InfoTip text={t("infoBoard")} />
+                                </CornerTip>
                             </BarGroupRow>
                             {embed && (
                                 <BarStatus>
@@ -1077,11 +1078,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 </BarGroup>
                             ) : (
                             <BarGroup>
-                                <BarLabel id="bar-bot">
+                                <BarLabel id="bar-bot" $hidden>
                                     {t("barBot")}
-                                    <InfoTip text={t("infoDiff")} />
                                 </BarLabel>
-                                <DiffGroup role="group" aria-labelledby="bar-bot">
+                                <DiffGroup role="group" aria-labelledby="bar-bot" style={{ position: "relative" }}>
                                     {DIFFICULTIES.map((level) => (
                                         <BarDiff
                                             key={level}
@@ -1094,26 +1094,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                             {t(`difficulty_${level}`)}
                                         </BarDiff>
                                     ))}
+                                    <CornerTip>
+                                        <InfoTip text={t("infoDiff")} />
+                                    </CornerTip>
                                 </DiffGroup>
                             </BarGroup>
                             )}
                             {embedSide(
                                 <>
                             <BarGroup>
-                                <BarLabel id="bar-mod" $hidden={embed}>
+                                <BarLabel id="bar-mod" $hidden>
                                     {t("modifierLabel")}
-                                    {!embed && <InfoTip text={t("infoModGame")} />}
                                 </BarLabel>
-                                {embed ? (
-                                    <CornerBox>
-                                        {modSelect}
-                                        <CornerTip>
-                                            <InfoTip text={t("infoModGame")} />
-                                        </CornerTip>
-                                    </CornerBox>
-                                ) : (
-                                    modSelect
-                                )}
+                                <CornerBox>
+                                    {modSelect}
+                                    <CornerTip>
+                                        <InfoTip text={t("infoModGame")} />
+                                    </CornerTip>
+                                </CornerBox>
                             </BarGroup>
                             {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
                             {embed && (
