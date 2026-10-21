@@ -63,12 +63,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             }
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 142px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 138px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 173px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 168px - var(--timer-h))));
             }
         `}
 `;
@@ -299,10 +299,11 @@ const BarStatus = styled.div`
     margin-top: 4px;
     white-space: nowrap;
 
-    /* Рядок статусу - посередині між першим рядком смуги і полем (по 12px зверху й знизу). */
+    /* Рядок статусу - посередині між першим рядком смуги і полем (по 12px зверху й знизу:
+       плашка нижча за рядок на 4px). */
     @media (min-width: 761px) {
         gap: 40px;
-        margin: 12px 0 4px;
+        margin: 8px 0 4px;
     }
 
     /* Ширина групи - як у плиток поля; статус і таймер не стискаються, а виходять праворуч
