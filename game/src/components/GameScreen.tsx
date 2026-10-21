@@ -58,6 +58,10 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             padding-top: 10px;
             padding-bottom: 4px;
 
+            @media (min-width: 761px) {
+                --timer-h: 0px;
+            }
+
             @media (min-width: 800px) {
                 --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 126px - var(--timer-h))));
             }
@@ -231,8 +235,37 @@ const CornerBox = styled.div`
 const BarStatus = styled.div`
     contain: inline-size;
     display: flex;
+    align-items: center;
+    gap: 16px;
     margin-top: 4px;
     white-space: nowrap;
+`;
+
+// Таймер ходу в новині: на широкому екрані - у рядку статусу праворуч від "Твій хід",
+// на вузькому (смуга у два рядки) - окремим рядком над полем, як на сайті.
+const BarTimer = styled.div`
+    display: flex;
+
+    & > div {
+        width: 360px;
+        margin: 0;
+    }
+
+    @media (max-width: 760px) {
+        display: none;
+    }
+`;
+
+const RowTimer = styled.div<{ $embed?: boolean }>`
+    width: var(--board-w);
+
+    ${({ $embed }) =>
+        $embed &&
+        css`
+            @media (min-width: 761px) {
+                display: none;
+            }
+        `}
 `;
 
 // Аватар Кварті в рахунку гри з новини.
@@ -908,6 +941,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </TurnLine>
     );
     const hasTimer = timer !== null && timer !== undefined;
+    const timerRunning = hasTimer && !over;
     const mainButtons = (
         <>
             {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
@@ -951,7 +985,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     </CornerTip>
                                 )}
                             </BarGroupRow>
-                            {embed && <BarStatus>{turnLine}</BarStatus>}
+                            {embed && (
+                                <BarStatus>
+                                    {turnLine}
+                                    {timerRunning && (
+                                        <BarTimer>
+                                            <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
+                                        </BarTimer>
+                                    )}
+                                </BarStatus>
+                            )}
                         </BarGroup>
                         <PushRight $embed={isEmbed()}>
                             {embed ? (
@@ -1028,10 +1071,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 )}
             </Bar>
 
-            {timer !== null && timer !== undefined && !over && (
-                <div style={{ width: "var(--board-w)" }}>
+            {timerRunning && (
+                <RowTimer $embed={embed && quick}>
                     <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
-                </div>
+                </RowTimer>
             )}
 
             {!embed && (
