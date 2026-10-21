@@ -256,7 +256,7 @@ const ScoreMid = styled(BarGroup)`
 `;
 
 // Ширший екран: підказка ходу - перед повним екраном, сталої ширини під найдовший переклад
-// ("Du bist dran - in einem beliebigen offenen Feld"), щоб смуга не стрибала; під нею - таймер.
+// ("Du bist dran - in einem beliebigen offenen Feld"), щоб смуга не стрибала.
 const HintSlot = styled.div`
     justify-self: start;
     display: flex;
@@ -271,22 +271,18 @@ const StatusSlot = styled.div`
     height: 46px;
     align-items: center;
 
+    /* Плашка - кольору рахунку; довга фраза переноситься в другий рядок. */
     && > * {
         flex: 1 1 auto;
         justify-content: center;
         min-width: 0;
+        max-height: 46px;
         overflow: hidden;
-        white-space: nowrap;
-    }
-`;
-
-// Таймер ходу під підказкою - на всю її ширину.
-const SlotTimer = styled.div`
-    margin: 8px 0 4px;
-
-    & > div {
-        width: 100%;
-        margin: 0;
+        background: var(--score-bg, #fff6e6);
+        color: #0f6f8c;
+        text-shadow: none;
+        text-align: center;
+        line-height: 1.1;
     }
 `;
 
@@ -423,16 +419,8 @@ const BarStatus = styled.div`
     }
 `;
 
-const RowTimer = styled.div<{ $embed?: boolean }>`
+const RowTimer = styled.div`
     width: var(--board-w);
-
-    ${({ $embed }) =>
-        $embed &&
-        css`
-            @media (min-width: 761px) {
-                display: none;
-            }
-        `}
 `;
 
 // Аватар Кварті в рахунку гри з новини.
@@ -671,8 +659,8 @@ const BarScore = styled(ScorePill)`
     min-height: 46px;
 
     @media (min-width: 761px) {
-        gap: 10px;
-        padding: 4px 20px;
+        gap: 8px;
+        padding: 4px 14px;
         font-size: 16px;
     }
 
@@ -1185,11 +1173,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                         <ScoreMid>{scorePill}</ScoreMid>
                                         <HintSlot>
                                             <StatusSlot>{turnLine}</StatusSlot>
-                                            {timerRunning && (
-                                                <SlotTimer>
-                                                    <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
-                                                </SlotTimer>
-                                            )}
                                         </HintSlot>
                                     </WideOnly>
                                 </>
@@ -1244,7 +1227,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             </Bar>
 
             {timerRunning && (
-                <RowTimer $embed={embed && quick}>
+                <RowTimer>
                     <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
                 </RowTimer>
             )}
