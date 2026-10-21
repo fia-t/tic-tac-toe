@@ -40,7 +40,7 @@ import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/li
 import { findNameKey, getActiveNames, nameIn, pickRandomEntry, playerName } from "@game/lib/names";
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
-import { getEmbed, isHalloweenEmbed } from "@game/lib/embed";
+import { getEmbed, isHalloweenEmbed, isEmbed } from "@game/lib/embed";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -614,7 +614,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     } else {
         const statusText = isGameOver
             ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
-            : isAiTurn ? t("aiThinking") : t("yourTurn");
+            : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
         const playerTurn = !isGameOver && !isAiTurn;
         content = (
             <>

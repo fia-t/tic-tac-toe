@@ -27,6 +27,7 @@ import { playSound } from "@game/lib/sound";
 import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, STONE, TurnResult, createBoard, moleStep, playTurn, randomLegalCell } from "@game/components/modEngine";
 import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
 import { getDailyRun } from "@game/lib/daily";
+import { isEmbed } from "@game/lib/embed";
 import { useMoveTimer } from "@game/components/MoveTimer";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
@@ -322,7 +323,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
-        : isAiTurn ? t("aiThinking") : t("yourTurn");
+        : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
 
     const winningCells = winner ? winningIndexSet(board, WIN_LENGTH) : undefined;
     const playerTurn = !isGameOver && !isAiTurn;

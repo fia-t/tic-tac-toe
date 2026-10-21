@@ -33,6 +33,7 @@ import { pickMasterUltimatePositional, randomFreeCell } from "@game/components/a
 import { playSound } from "@game/lib/sound";
 import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/modifiers";
 import { getDailyRun } from "@game/lib/daily";
+import { isEmbed } from "@game/lib/embed";
 import { useMoveTimer } from "@game/components/MoveTimer";
 
 const HintMiniCell = styled(MiniCell)<{ $hint: boolean }>`
@@ -347,7 +348,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t("resultLose") : t("resultDraw")
         : currentTurn === "ai"
-        ? t("aiThinking")
+        ? t(isEmbed() ? "quartyThinking" : "aiThinking")
         : activeBoard === null
         ? t("ultTurnAny")
         : t("ultTurnActive");

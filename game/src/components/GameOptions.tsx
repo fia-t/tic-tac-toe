@@ -284,7 +284,7 @@ export const ModPicker = styled.div`
     min-width: 0;
 `;
 
-const ModToggle = styled.button`
+const ModToggle = styled.button<{ $desc?: boolean }>`
     ${gameButtonCss("sm")}
 
     && {
@@ -314,6 +314,34 @@ const ModToggle = styled.button`
     &[aria-expanded="true"] > svg:last-child {
         transform: rotate(180deg);
     }
+
+    /* З описом: назва й під нею дрібніше - що робить модифікатор (як у розкритому списку). */
+    ${({ $desc }) =>
+        $desc &&
+        css`
+            && {
+                width: var(--mod-w, 260px);
+                min-height: 46px;
+            }
+
+            & > span {
+                display: flex;
+                flex-direction: column;
+                gap: 1px;
+                line-height: 1.15;
+            }
+
+            & > span > * {
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            & > span > small {
+                font-size: 11px;
+                font-weight: 600;
+                opacity: 0.85;
+            }
+        `}
 
     @media (max-width: 480px) {
         && {
@@ -437,6 +465,7 @@ export const ModifierSelect = ({
     weekly,
     labelledBy,
     menuAlign = "right",
+    withDesc = false,
     onPick,
 }: {
     value: Modifier | null;
@@ -444,12 +473,15 @@ export const ModifierSelect = ({
     weekly?: Modifier;
     labelledBy: string;
     menuAlign?: MenuAlign;
+    // Під назвою на кнопці - опис вибраного модифікатора (гра з новини).
+    withDesc?: boolean;
     onPick: (m: Modifier | null) => void;
 }) => {
     const t = useT();
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
     const name = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
+    const desc = (m: Modifier | null) => (m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc"));
 
     // Список закривається кліком поза ним і Escape.
     useEffect(() => {
@@ -477,10 +509,19 @@ export const ModifierSelect = ({
                 aria-labelledby={`${labelledBy} ${labelledBy}-value`}
                 // Вибраний модифікатор (і "Без модифікатора" теж) - коричнева кнопка, як вибраний рівень бота.
                 data-selected
+                $desc={withDesc}
+                title={withDesc ? `${name(value)} · ${desc(value)}` : undefined}
                 onClick={() => setOpen((v) => !v)}
             >
                 <ModIcon id={value} size={20} />
-                <span id={`${labelledBy}-value`}>{name(value)}</span>
+                {withDesc ? (
+                    <span id={`${labelledBy}-value`}>
+                        <b>{name(value)}</b>
+                        <small>{desc(value)}</small>
+                    </span>
+                ) : (
+                    <span id={`${labelledBy}-value`}>{name(value)}</span>
+                )}
                 <Chevron />
             </ModToggle>
             {open && (
@@ -504,7 +545,7 @@ export const ModifierSelect = ({
                                     {name(m)}
                                     {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
                                 </b>
-                                <small>{m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc")}</small>
+                                <small>{desc(m)}</small>
                             </span>
                         </ModOption>
                     ))}

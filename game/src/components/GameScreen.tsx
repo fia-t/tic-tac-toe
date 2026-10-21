@@ -384,6 +384,9 @@ export const ScoreTop = styled.div<{ $wide?: boolean }>`
     ${({ $wide }) =>
         $wide &&
         css`
+            /* Гра в новині: у рядку лише статус - по центру над полем. */
+            justify-content: center;
+
             @media (min-width: 561px) {
                 width: max(var(--board-w), min(100%, 720px));
 
@@ -456,23 +459,6 @@ const BarScore = styled(ScorePill)`
 
     @media (max-width: 560px) {
         max-width: none;
-    }
-`;
-
-// Гра в новині: опис вибраного модифікатора - у рядку статусу, по правому краю.
-const ModNote = styled.div`
-    flex: 0 1 auto;
-    min-width: 0;
-    margin-left: auto;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--bar-ink, #7a5530);
-    font-size: 14px;
-    line-height: 1.3;
-
-    strong {
-        font-weight: 800;
     }
 `;
 
@@ -590,7 +576,7 @@ const Boosters = styled.div`
 
     @media (min-width: 800px) {
         position: absolute;
-        left: calc(100% + 14px);
+        left: calc(100% + 24px);
         top: 50%;
         transform: translateY(-50%);
         flex-direction: column;
@@ -629,7 +615,7 @@ const SplitBoosters = styled.div`
         }
 
         & > div:first-child {
-            right: calc(100% + 14px);
+            right: calc(100% + 24px);
 
             /* Тултіпи лівої колонки - ліворуч від кнопок. */
             & > button::after {
@@ -641,7 +627,7 @@ const SplitBoosters = styled.div`
         }
 
         & > div:last-child {
-            left: calc(100% + 14px);
+            left: calc(100% + 24px);
 
             & > button::after {
                 left: calc(100% + var(--gb-c, 0px) + 6px);
@@ -895,7 +881,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const modSelect = (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" onPick={pickModifier} />
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc={embed} onPick={pickModifier} />
     );
     const hasTimer = timer !== null && timer !== undefined;
     const mainButtons = (
@@ -1052,11 +1038,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         status
                     )}
                 </TurnLine>
-                {embed && activeModifier && (
-                    <ModNote title={`${t(`modifier_${activeModifier}`)} · ${t(`modifierDesc_${activeModifier}`)}`}>
-                        <strong>{t(`modifier_${activeModifier}`)}</strong> · {t(`modifierDesc_${activeModifier}`)}
-                    </ModNote>
-                )}
                 {/* У новині вікно результату й так з'являється після партії - посилання зайве. */}
                 {over && quick && onShowResult && !embed && (
                     <ResultLink type="button" onClick={onShowResult}>

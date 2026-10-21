@@ -145,6 +145,11 @@ const SpiderHang = styled.div`
     transform-origin: top center;
     animation: ${sway} 2.2s ease-in-out infinite alternate;
 
+    /* На телефоні павучок звисав на плашку "Твій хід" - лишається тільки павутинка. */
+    @media (max-width: 760px) {
+        display: none;
+    }
+
     &::before {
         content: "";
         display: block;

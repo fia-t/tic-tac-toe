@@ -123,6 +123,7 @@ const pack: LocalePack = {
         modifier_none: "Sin modificador",
         modifierNoneDesc: "Reglas normales",
         aiThinking: "El bot está pensando...",
+        quartyThinking: "Quarty está pensando...",
         modifier_vanish: "Fichas que desaparecen",
         modifier_gravity: "Gravedad",
         modifier_stones: "Piedras",
