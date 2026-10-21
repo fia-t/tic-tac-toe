@@ -482,6 +482,7 @@ export const ModifierSelect = ({
     labelledBy,
     menuAlign = "right",
     withDesc = false,
+    plain = false,
     onPick,
 }: {
     value: Modifier | null;
@@ -491,6 +492,8 @@ export const ModifierSelect = ({
     menuAlign?: MenuAlign;
     // Під назвою на кнопці - опис вибраного модифікатора (гра з новини).
     withDesc?: boolean;
+    // Світла кнопка, як бустери (гра з новини), замість коричневої "вибраної".
+    plain?: boolean;
     onPick: (m: Modifier | null) => void;
 }) => {
     const t = useT();
@@ -523,8 +526,9 @@ export const ModifierSelect = ({
                 aria-haspopup="menu"
                 aria-expanded={open}
                 aria-labelledby={`${labelledBy} ${labelledBy}-value`}
-                // Вибраний модифікатор (і "Без модифікатора" теж) - коричнева кнопка, як вибраний рівень бота.
-                data-selected
+                // Вибраний модифікатор (і "Без модифікатора" теж) - коричнева кнопка, як вибраний рівень бота
+                // (у грі з новини - світла, як бустери).
+                data-selected={plain ? undefined : true}
                 $desc={withDesc}
                 title={withDesc ? `${name(value)} · ${desc(value)}` : undefined}
                 onClick={() => setOpen((v) => !v)}

@@ -1010,7 +1010,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const modSelect = (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc onPick={pickModifier} />
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc plain={embed} onPick={pickModifier} />
     );
     const turnLine = (
         <TurnLine
