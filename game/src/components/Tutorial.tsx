@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { createGlobalStyle, keyframes } from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { IconClose } from "@game/components/GameIcons";
@@ -139,10 +139,36 @@ const Dots = styled.div`
     }
 `;
 
+// Картка внизу по центру; якщо так вона закрила б підсвічене місце (бустери чи повний екран
+// праворуч від поля) - зсуваємо її лівіше, а коли збоку місця немає (телефон) - угору екрана.
+const cardPlace = (target: string, card: HTMLElement): React.CSSProperties | undefined => {
+    const el = document.querySelector(`[data-tour="${target}"]`);
+    if (!el) return undefined;
+    const r = el.getBoundingClientRect();
+    const w = card.offsetWidth;
+    const h = card.offsetHeight;
+    const gap = 12;
+    const top = window.innerHeight - 16 - h;
+    const center = window.innerWidth / 2;
+    const overlaps = (c: number) => r.bottom > top - gap && r.right > c - w / 2 - gap && r.left < c + w / 2 + gap;
+    if (!overlaps(center)) return undefined;
+    const shifted = r.left - gap - w / 2;
+    if (shifted - w / 2 >= 16) return { left: shifted };
+    return { top: "calc(16px + env(safe-area-inset-top, 0px))", bottom: "auto" };
+};
+
 export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; doneKey?: string }> = ({ onDone, steps = STEPS, doneKey = DONE_KEY }) => {
     const t = useT();
     const [step, setStep] = useState(0);
     const current = steps[step];
+    const cardRef = useRef<HTMLDivElement>(null);
+    const [place, setPlace] = useState<React.CSSProperties | undefined>(undefined);
+    useLayoutEffect(() => {
+        const update = () => setPlace(cardRef.current ? cardPlace(current.target, cardRef.current) : undefined);
+        update();
+        window.addEventListener("resize", update);
+        return () => window.removeEventListener("resize", update);
+    }, [current.target]);
 
     useEffect(() => {
         trackEvent("tutorial_step", { step: step + 1 });
@@ -164,7 +190,7 @@ export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; do
     return (
         <>
             <Highlight $target={current.target} />
-            <Card role="dialog" aria-modal="false" aria-labelledby="tutorial-title">
+            <Card ref={cardRef} style={place} role="dialog" aria-modal="false" aria-labelledby="tutorial-title">
                 <Close size="xs" square aria-label={t("close")} onClick={() => finish("skip")} icon={<IconClose size={14} />} />
                 <h3 id="tutorial-title">{t(current.title)}</h3>
                 <p>{t(current.text)}</p>
