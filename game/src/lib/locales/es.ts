@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Elige un tablero",
         barBoard: "Tablero",
         barBot: "Bot",
-        infoModGame: "Un modificador cambia las reglas: temporizador por jugada, gravedad, piedras, topo y más. Solo se muestran los que encajan con este tablero; pasa el cursor sobre un icono para ver su nombre.",
+        infoModGame: "Un modificador cambia las reglas: temporizador por jugada, gravedad, piedras, topo y más. Solo se muestran los que encajan con este tablero.",
         infoWhat: "¿Qué es esto?",
         infoMatch: "Una partida clasificatoria de 3×3 contra un jugador real que también busca rival ahora mismo. Los jugadores del menú reciben una invitación para jugar contigo. Si nadie aparece en 20 segundos, puedes jugar contra el bot. Las victorias suben tu puntuación y tu liga; las partidas contra el bot o un amigo no las cambian.",
         infoDaily: "Cada día, una partida nueva con reglas fijas: el tablero, el modificador y el bot son los mismos para todos. Cumple la tarea para ganar hasta 3 estrellas y monedas. Juega a diario para mantener la racha: cuanto más larga, mayor la recompensa. Se puede jugar una vez al día.",

@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Wähle ein Feld",
         barBoard: "Feld",
         barBot: "Bot",
-        infoModGame: "Ein Modifikator ändert die Spielregeln: Zugtimer, Schwerkraft, Felsen, Maulwurf und mehr. Es werden nur die gezeigt, die zu diesem Feld passen; fahre über ein Symbol, um seinen Namen zu sehen.",
+        infoModGame: "Ein Modifikator ändert die Spielregeln: Zugtimer, Schwerkraft, Felsen, Maulwurf und mehr. Es werden nur die gezeigt, die zu diesem Feld passen.",
         infoWhat: "Was ist das?",
         infoMatch: "Ein gewertetes 3×3-Spiel gegen einen echten Spieler, der gerade auch einen Gegner sucht. Spieler im Menü bekommen eine Einladung, gegen dich zu spielen. Taucht in 20 Sekunden niemand auf, kannst du gegen den Bot spielen. Siege verbessern deine Wertung und Liga; Spiele gegen den Bot oder einen Freund ändern sie nicht.",
         infoDaily: "Jeden Tag ein neues Spiel mit festen Regeln: Feld, Modifikator und Bot sind für alle gleich. Erfülle die Aufgabe für bis zu 3 Sterne und Münzen. Spiel täglich, um deine Serie zu halten: je länger die Serie, desto größer die Belohnung. Einmal pro Tag spielbar.",

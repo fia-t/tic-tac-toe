@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Scegli un tabellone",
         barBoard: "Tabellone",
         barBot: "Bot",
-        infoModGame: "Un modificatore cambia le regole: timer per mossa, gravità, pietre, talpa e altro. Sono mostrati solo quelli adatti a questo tabellone; passa sopra un'icona per vederne il nome.",
+        infoModGame: "Un modificatore cambia le regole: timer per mossa, gravità, pietre, talpa e altro. Sono mostrati solo quelli adatti a questo tabellone.",
         infoWhat: "Cos'è?",
         infoMatch: "Una partita classificata 3×3 contro un giocatore vero che cerca un avversario proprio ora. I giocatori nel menu ricevono un invito a sfidarti. Se nessuno arriva in 20 secondi, puoi giocare contro il bot. Le vittorie alzano il tuo punteggio e la tua lega; le partite contro il bot o un amico non li cambiano.",
         infoDaily: "Ogni giorno una nuova partita con regole fisse: tabellone, modificatore e bot sono uguali per tutti. Completa la missione per ottenere fino a 3 stelle e monete. Gioca ogni giorno per mantenere la serie: più è lunga, più grande è il premio. Si gioca una volta al giorno.",

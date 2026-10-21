@@ -372,13 +372,15 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
 
 const ModMenu = styled.div<{ $align: MenuAlign }>`
     position: absolute;
-    top: calc(100% + 18px);
+    top: calc(100% + var(--mod-menu-gap, 18px));
     ${({ $align }) => ($align === "left" ? "left: -12px;" : "right: -12px;")}
     z-index: 40;
     display: grid;
     grid-template-columns: repeat(var(--mod-menu-cols, 1), minmax(0, 1fr));
     gap: 2px;
     width: min(var(--mod-menu-w, 300px), calc(100vw - 32px));
+    max-height: var(--mod-menu-max-h, none);
+    overflow-y: auto;
     padding: 6px;
     border-radius: 16px;
     background: #fff7e8;
@@ -403,7 +405,7 @@ const ModOption = styled.button`
     grid-template-columns: 34px 1fr;
     align-items: center;
     column-gap: 10px;
-    padding: 7px 8px;
+    padding: var(--mod-opt-pad, 7px 8px);
     border: none;
     border-radius: 11px;
     background: transparent;

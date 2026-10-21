@@ -366,7 +366,7 @@ const pack: LocalePack = {
         homePickBoard: "Wybierz planszę",
         barBoard: "Plansza",
         barBot: "Bot",
-        infoModGame: "Modyfikator zmienia zasady gry: zegar na ruch, grawitacja, kamienie, kret i inne. Widać tylko te, które pasują do tej planszy; najedź na ikonę, aby zobaczyć nazwę.",
+        infoModGame: "Modyfikator zmienia zasady gry: zegar na ruch, grawitacja, kamienie, kret i inne. Widać tylko te, które pasują do tej planszy.",
         infoWhat: "Co to jest?",
         infoMatch: "Rankingowa gra 3×3 z prawdziwym graczem, który też właśnie szuka przeciwnika. Gracze w menu dostają zaproszenie do gry z tobą. Jeśli nikt nie pojawi się w 20 sekund, możesz zagrać z botem. Wygrane podnoszą twój ranking i ligę; gry z botem albo znajomym ich nie zmieniają.",
         infoDaily: "Codziennie nowa gra z ustalonymi zasadami: plansza, modyfikator i bot są takie same dla wszystkich. Wykonaj zadanie, żeby zdobyć do 3 gwiazdek i monety. Graj codziennie, by utrzymać serię: im dłuższa, tym większa nagroda. Można zagrać raz dziennie.",

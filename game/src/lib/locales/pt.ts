@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Escolha um tabuleiro",
         barBoard: "Tabuleiro",
         barBot: "Bot",
-        infoModGame: "Um modificador muda as regras do jogo: cronômetro por jogada, gravidade, pedras, toupeira e mais. Só aparecem os que combinam com este tabuleiro; passe o mouse sobre um ícone para ver o nome.",
+        infoModGame: "Um modificador muda as regras do jogo: cronômetro por jogada, gravidade, pedras, toupeira e mais. Só aparecem os que combinam com este tabuleiro.",
         infoWhat: "O que é isso?",
         infoMatch: "Uma partida ranqueada 3×3 contra um jogador real que também procura um adversário agora. Jogadores no menu recebem um convite para jogar com você. Se ninguém aparecer em 20 segundos, você pode jogar contra o bot. Vitórias aumentam seu rating e sua liga; partidas contra o bot ou um amigo não os mudam.",
         infoDaily: "Todo dia, uma nova partida com regras definidas: tabuleiro, modificador e bot são iguais para todos. Cumpra a tarefa para ganhar até 3 estrelas e moedas. Jogue todo dia para manter a sequência: quanto maior, maior a recompensa. Pode ser jogado uma vez por dia.",

@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Kies een bord",
         barBoard: "Bord",
         barBot: "Bot",
-        infoModGame: "Een modifier verandert de spelregels: zettimer, zwaartekracht, stenen, mol en meer. Alleen de modifiers die bij dit bord passen staan erbij; ga met de muis over een icoon om de naam te zien.",
+        infoModGame: "Een modifier verandert de spelregels: zettimer, zwaartekracht, stenen, mol en meer. Alleen de modifiers die bij dit bord passen staan erbij.",
         infoWhat: "Wat is dit?",
         infoMatch: "Een gerangschikt 3×3-spel tegen een echte speler die nu ook een tegenstander zoekt. Spelers in het menu krijgen een uitnodiging om tegen jou te spelen. Komt er binnen 20 seconden niemand, dan kun je tegen de bot spelen. Winst verhoogt je rating en competitie; spellen tegen de bot of een vriend veranderen ze niet.",
         infoDaily: "Elke dag een nieuw spel met vaste regels: het bord, de modifier en de bot zijn voor iedereen hetzelfde. Voltooi de opdracht voor maximaal 3 sterren en munten. Speel dagelijks om je reeks te houden: hoe langer de reeks, hoe groter de beloning. Eén keer per dag te spelen.",

@@ -43,6 +43,7 @@ const Title = styled.h2<{ $result: Result; $spooky?: boolean }>`
 
 const PrimaryButton = styled(PillButton)`
     ${buttonTone("primary")}
+    --gb-fs: 20px;
 `;
 
 // --- шар анімації ---

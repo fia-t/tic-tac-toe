@@ -365,7 +365,7 @@ const pack: LocalePack = {
         homePickBoard: "Choisis un plateau",
         barBoard: "Plateau",
         barBot: "Bot",
-        infoModGame: "Un modificateur change les règles : chrono par coup, gravité, pierres, taupe et plus encore. Seuls ceux adaptés à ce plateau sont proposés ; survole une icône pour voir son nom.",
+        infoModGame: "Un modificateur change les règles : chrono par coup, gravité, pierres, taupe et plus encore. Seuls ceux adaptés à ce plateau sont proposés.",
         infoWhat: "Qu'est-ce que c'est ?",
         infoMatch: "Une partie classée en 3×3 contre un vrai joueur qui cherche aussi un adversaire en ce moment. Les joueurs dans le menu reçoivent une invitation à t'affronter. Si personne n'arrive en 20 secondes, tu peux jouer contre le bot. Les victoires font monter ton classement et ta ligue ; les parties contre le bot ou un ami ne les changent pas.",
         infoDaily: "Chaque jour, une nouvelle partie aux règles fixées : le plateau, le modificateur et le bot sont les mêmes pour tous. Réussis la mission pour gagner jusqu'à 3 étoiles et des pièces. Joue chaque jour pour garder ta série : plus elle est longue, plus la récompense est grande. Jouable une fois par jour.",
