@@ -37,6 +37,16 @@ const groundLeaves = svg(
     "0 0 200 50"
 );
 
+// Другий, вищий ряд листя - з іншим візерунком, щоб ряди не повторювали один одного.
+const groundLeavesBack = svg(
+    Array.from({ length: 18 }, (_, i) => {
+        const x = (i * 53 + 11) % 200;
+        const y = 30 + ((i * 17) % 14);
+        return leaf(x, y, (i * 71 + 20) % 360, 1 + ((i * 3) % 5) / 10, LEAF_COLORS[(i + 2) % LEAF_COLORS.length]);
+    }).join(""),
+    "0 0 200 50"
+);
+
 export const HalloweenBackdrop = createGlobalStyle`
     :root {
         --board-overlay: ${boardLeaves};
@@ -65,25 +75,27 @@ export const HalloweenBackdrop = createGlobalStyle`
         background-color: #2a1a3e;
         background-image:
             ${groundLeaves},
+            ${groundLeavesBack},
             radial-gradient(circle at calc(100% - 70px) 105px, #fff4d6 0 30px, rgba(255, 228, 170, 0.28) 32px, transparent 84px),
             radial-gradient(circle, rgba(255, 244, 214, 0.5) 1px, transparent 1.6px),
             radial-gradient(circle, rgba(255, 244, 214, 0.35) 1px, transparent 1.6px),
             linear-gradient(180deg, #1f1433 0%, #34204a 40%, #6b3550 72%, #b8582a 100%);
-        background-size: 400px 100px, auto, 53px 47px, 71px 67px, auto;
-        background-position: left bottom, 0 0, 0 0, 20px 30px, 0 0;
-        background-repeat: repeat-x, no-repeat, repeat, repeat, no-repeat;
+        background-size: 400px 100px, 400px 100px, auto, 53px 47px, 71px 67px, auto;
+        background-position: left bottom, 130px calc(100% - 26px), 0 0, 0 0, 20px 30px, 0 0;
+        background-repeat: repeat-x, repeat-x, no-repeat, repeat, repeat, no-repeat;
 
         /* Телефон: смуга керування на всю ширину - місяць лише виглядає з кута. */
         @media (max-width: 760px) {
             background-image:
                 ${groundLeaves},
+                ${groundLeavesBack},
                 radial-gradient(circle at 100% 0, #fff4d6 0 26px, rgba(255, 228, 170, 0.25) 28px, transparent 60px),
                 radial-gradient(circle, rgba(255, 244, 214, 0.5) 1px, transparent 1.6px),
                 radial-gradient(circle, rgba(255, 244, 214, 0.35) 1px, transparent 1.6px),
                 linear-gradient(180deg, #1f1433 0%, #34204a 40%, #6b3550 72%, #b8582a 100%);
-            background-size: 400px 100px, auto, 53px 47px, 71px 67px, auto;
-            background-position: left bottom, 0 0, 0 0, 20px 30px, 0 0;
-            background-repeat: repeat-x, no-repeat, repeat, repeat, no-repeat;
+            background-size: 400px 100px, 400px 100px, auto, 53px 47px, 71px 67px, auto;
+            background-position: left bottom, 130px calc(100% - 26px), 0 0, 0 0, 20px 30px, 0 0;
+            background-repeat: repeat-x, repeat-x, no-repeat, repeat, repeat, no-repeat;
         }
     }
 `;

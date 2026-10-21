@@ -373,7 +373,7 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
 const ModMenu = styled.div<{ $align: MenuAlign }>`
     position: absolute;
     top: calc(100% + var(--mod-menu-gap, 18px));
-    ${({ $align }) => ($align === "left" ? "left: -12px;" : "right: -12px;")}
+    ${({ $align }) => ($align === "left" ? "left: var(--mod-menu-x, -12px);" : "right: -12px;")}
     z-index: 40;
     display: grid;
     grid-template-columns: repeat(var(--mod-menu-cols, 1), minmax(0, 1fr));

@@ -131,9 +131,13 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 --mod-w: 188px;
                 /* Список модифікаторів - одразу під кнопкою, щільніший і ширший (менше переносів),
                    щоб на 5×5 (шість модифікаторів) вміщався в iframe без прокрутки. */
-                --mod-menu-gap: 6px;
+                --mod-menu-gap: 2px;
+                --mod-menu-x: 0px;
                 --mod-menu-w: 400px;
                 --mod-opt-pad: 4px 8px;
+                /* Текст - якомога більший, але так, щоб список вміщався у висоту iframe. */
+                --mod-menu-b: clamp(15px, 3.7dvh, 20px);
+                --mod-menu-s: clamp(13px, 3.1dvh, 17px);
                 --mod-menu-max-h: calc(100dvh - 70px);
             }
 
