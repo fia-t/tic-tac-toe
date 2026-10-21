@@ -6,11 +6,11 @@ import { Container } from "@game/components/gameStyles";
 // Живі прикраси хелловінської гри в новині: кажани, що пролітають повз місяць, і павутина з
 // павучком на рахунку. Фон (небо, місяць, листя) - у HalloweenBackdrop.
 
-// Кажани летять справа наліво повз місяць і знижуються - залітають за поле й повністю ховаються
-// за ним; легке погойдування вгору-вниз і помахи крилами. Позаду вмісту гри, кліки не перехоплюють.
+// Кажани летять справа наліво повз місяць через увесь iframe, трохи знижуючись; легке
+// погойдування вгору-вниз і помахи крилами. Поверх гри, але кліків не перехоплюють.
 const flyAcross = keyframes`
     from { transform: translate(0, 0); }
-    to { transform: translate(-520px, 260px); }
+    to { transform: translate(calc(-100vw - 140px), 120px); }
 `;
 const bob = keyframes`
     from { transform: translateY(-10px); }
@@ -27,12 +27,11 @@ const BatSky = styled.div`
     position: fixed;
     top: 0;
     bottom: 0;
+    left: 0;
     right: var(--bats-right, 0px);
-    width: 460px;
-    max-width: 100vw;
     overflow: hidden;
     pointer-events: none;
-    z-index: 0;
+    z-index: 2;
 
     /* На телефоні смуга керування на всю ширину - кажани опинялися серед кнопок. */
     @media (max-width: 760px), (prefers-reduced-motion: reduce) {
@@ -75,12 +74,12 @@ const BatShape = () => (
     </svg>
 );
 
-// Траєкторії - нижче смуги керування (кнопки "Модифікатор"); перша проходить просто через
-// місяць (центр - 70px від правого краю, 105px згори).
+// Траєкторії - нижче смуги керування й рядка статусу; перша проходить повз місяць (центр -
+// 70px від правого краю, 105px згори). Проліт через увесь iframe - повільніше.
 const FLIGHTS = [
-    { top: 86, dur: 11, delay: 0, size: 62 },
-    { top: 140, dur: 14, delay: 4, size: 44 },
-    { top: 112, dur: 17, delay: 8, size: 34 },
+    { top: 132, dur: 16, delay: 0, size: 62 },
+    { top: 200, dur: 21, delay: 5, size: 44 },
+    { top: 168, dur: 26, delay: 11, size: 34 },
 ];
 
 export const HalloweenBats = () => {

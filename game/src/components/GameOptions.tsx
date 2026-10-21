@@ -323,8 +323,10 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
                 width: var(--mod-w, 260px);
                 /* Тонші бортики - два рядки вміщаються у висоту інших кнопок смуги. */
                 --gb-c: 8px;
+                gap: 10px;
                 height: var(--mod-h, 46px);
                 min-height: 0;
+                padding: 0 8px 0 10px;
             }
 
             & > span {
@@ -339,8 +341,12 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
                 text-overflow: ellipsis;
             }
 
+            & > span > b {
+                font-size: 15px;
+            }
+
             & > span > small {
-                font-size: 11px;
+                font-size: 12px;
                 font-weight: 600;
                 opacity: 0.85;
             }

@@ -63,12 +63,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             }
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 126px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 156px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 152px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 191px - var(--timer-h))));
             }
         `}
 `;
@@ -94,21 +94,40 @@ const Bar = styled.div<{ $embed?: boolean }>`
         gap: 6px 4px;
     }
 
-    /* Гра в новині: смуга не на всю ширину iframe, а компактно по центру над полем. */
+    /* Гра в новині: усі кнопки однієї висоти (46px) і по верхньому краю; під вибором поля -
+       статус "чий хід" (і таймер). */
     ${({ $embed }) =>
         $embed &&
         css`
-            /* Усі кнопки однієї висоти (46px) і по верхньому краю: під вибором поля - статус "чий хід". */
             align-items: flex-start;
             --mod-h: 46px;
             --mod-h-sm: 46px;
 
+            /* Ширший екран: перший рядок - у тонкій рамці на всю ширину iframe (по 16px від країв),
+               кнопки й блоки - рівномірно; рядок статусу - під рамкою. */
             @media (min-width: 761px) {
-                width: auto;
+                justify-content: space-between;
+                width: min(calc(100vw - 32px), 1240px);
+                padding: 14px 22px 0;
+                --mod-w: 300px;
+
+                &::before {
+                    content: "";
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    height: 74px;
+                    border: 2px solid var(--bar-frame, rgba(139, 101, 60, 0.35));
+                    border-radius: 22px;
+                    pointer-events: none;
+                }
             }
 
+            /* zoom множить і ширину - ділимо, щоб рамка лишалась у межах екрана. */
             @media (min-width: 1200px) and (min-height: 800px) {
                 zoom: 1.3;
+                width: min(calc((100vw - 48px) / 1.3), 1240px);
             }
         `}
 `;
@@ -136,7 +155,9 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
     ${({ $embed }) =>
         $embed &&
         css`
-            margin-right: 22px;
+            @media (max-width: 760px) {
+                margin-right: 22px;
+            }
 
             && ${RoundButton} {
                 width: 46px;
@@ -240,6 +261,12 @@ const BarStatus = styled.div`
     margin-top: 4px;
     white-space: nowrap;
 
+    /* Під рамкою першого рядка. */
+    @media (min-width: 761px) {
+        gap: 40px;
+        margin-top: 24px;
+    }
+
     /* Ширина групи - як у плиток поля; статус і таймер не стискаються, а виходять праворуч
        (подвійний клас - сильніше за flex самого рядка статусу). */
     && > * {
@@ -253,7 +280,7 @@ const BarTimer = styled.div`
     display: flex;
 
     & > div {
-        width: 360px;
+        width: 420px;
         margin: 0;
     }
 
@@ -298,7 +325,7 @@ const PushRight = styled.div<{ $embed?: boolean }>`
         display: contents;
 
         & > ${BarGroup} {
-            margin-left: ${({ $embed }) => ($embed ? "28px" : "auto")};
+            margin-left: ${({ $embed }) => ($embed ? "0" : "auto")};
         }
     }
 
@@ -354,7 +381,7 @@ const ModeTile = styled.button`
 
     /* Вибране поле - не більше за інші, лише яскраве світіння. */
     &[aria-pressed="true"] img {
-        filter: drop-shadow(0 0 4px rgba(31, 179, 217, 0.95)) drop-shadow(0 0 12px rgba(31, 179, 217, 0.8));
+        filter: drop-shadow(0 0 1.5px rgba(215, 248, 255, 1)) drop-shadow(0 0 5px rgba(31, 179, 217, 0.95));
     }
 
     &:focus-visible {
@@ -507,6 +534,12 @@ export const ScorePill = styled.div`
 // Гра в новині: рахунок - у смузі на місці вибору бота, висотою як кнопки поруч.
 const BarScore = styled(ScorePill)`
     min-height: 46px;
+
+    @media (min-width: 761px) {
+        gap: 10px;
+        padding: 4px 20px;
+        font-size: 16px;
+    }
 
     @media (max-width: 560px) {
         max-width: none;
@@ -976,7 +1009,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 {t("barBoard")}
                                 {!embed && <InfoTip text={t("infoBoard")} />}
                             </BarLabel>
-                            <BarGroupRow role="group" aria-labelledby="bar-board" style={embed ? { position: "relative" } : undefined}>
+                            <BarGroupRow role="group" aria-labelledby="bar-board" style={embed ? { position: "relative", gap: 10 } : undefined}>
                                 {MODE_TILES.map((tile) => (
                                     <ModeTile
                                         key={tile.id}
