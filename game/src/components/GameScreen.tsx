@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DiffButton, DiffGroup, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
@@ -318,16 +318,10 @@ const BarStatus = styled.div`
 const BarTimer = styled.div`
     display: flex;
 
+    /* Ширина - до правого краю кнопки модифікатора (--timer-w рахує GameScreen). */
     & > div {
-        width: 420px;
+        width: var(--timer-w, 420px);
         margin: 0;
-    }
-
-    /* Повний екран (zoom 1.3): коротший - не виходить за край поля навіть на гіга-полі. */
-    @media (min-width: 1200px) and (min-height: 800px) {
-        & > div {
-            width: 330px;
-        }
     }
 
     @media (max-width: 760px) {
@@ -1034,6 +1028,25 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const embedSide = (node: React.ReactNode) => (embed ? <EmbedSide>{node}</EmbedSide> : node);
     const hasTimer = timer !== null && timer !== undefined;
     const timerRunning = hasTimer && !over;
+
+    // Гра в новині: шкала таймера в рядку статусу закінчується там, де кнопка модифікатора.
+    // Перераховується, коли змінюється статус (ширина плашки), поле, модифікатор чи розмір екрана.
+    const timerBox = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        const box = timerBox.current;
+        if (!box) return;
+        const fit = () => {
+            const mod = document.querySelector('[data-tour="bar"] [aria-haspopup="menu"]');
+            if (!mod || !box.offsetWidth) return;
+            // На повному екрані смуга має zoom - переводимо екранні пікселі в CSS-пікселі.
+            const zoom = box.getBoundingClientRect().width / box.offsetWidth || 1;
+            const width = (mod.getBoundingClientRect().right - box.getBoundingClientRect().left) / zoom;
+            box.style.setProperty("--timer-w", `${Math.max(160, Math.round(width))}px`);
+        };
+        fit();
+        window.addEventListener("resize", fit);
+        return () => window.removeEventListener("resize", fit);
+    }, [timerRunning, status, showFirstHint, mode, activeModifier, timerBoost.expired]);
     const mainButtons = (
         <>
             {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
@@ -1080,7 +1093,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 <BarStatus>
                                     {turnLine}
                                     {timerRunning && (
-                                        <BarTimer>
+                                        <BarTimer ref={timerBox}>
                                             <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
                                         </BarTimer>
                                     )}
