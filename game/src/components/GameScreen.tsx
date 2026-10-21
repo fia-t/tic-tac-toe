@@ -201,6 +201,15 @@ const EmbedSide = styled.div`
         & > :last-child {
             margin-left: auto;
         }
+
+        /* Якщо місця бракує - стискається лише модифікатор (з трикрапкою), решта - свого розміру. */
+        & > * {
+            flex-shrink: 0;
+        }
+
+        & > :has([aria-haspopup="menu"]) {
+            flex-shrink: 1;
+        }
     }
 `;
 
@@ -345,6 +354,7 @@ const PushRight = styled.div<{ $embed?: boolean }>`
 
         & > ${BarGroup} {
             margin-left: ${({ $embed }) => ($embed ? "0" : "auto")};
+            flex-shrink: ${({ $embed }) => ($embed ? 0 : 1)};
         }
     }
 
