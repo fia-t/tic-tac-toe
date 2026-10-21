@@ -32,7 +32,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
     --timer-h: ${({ $timer }) => ($timer ? "38px" : "0px")};
-    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h))));
+    --board-w: min(100%, 628px, max(280px, calc(100dvh - 252px - var(--timer-h))));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -59,12 +59,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             padding-bottom: 4px;
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 122px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 126px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 148px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 152px - var(--timer-h))));
             }
         `}
 `;
@@ -166,14 +166,6 @@ const BarFull = styled(BarGroup)`
         width: 46px;
         height: 46px;
         min-height: 46px;
-    }
-
-    @media (max-width: 480px) {
-        && ${RoundButton} {
-            width: 40px;
-            height: 40px;
-            min-height: 40px;
-        }
     }
 `;
 
