@@ -31,7 +31,7 @@ const markDone = (key: string) => {
 };
 
 type StepNo = 1 | 2 | 3 | 4 | 5;
-export type TutorialStep = { target: string; title: `tutorialTitle${StepNo}`; text: `tutorialText${StepNo}` | "tutorialTextBarEmbed" };
+export type TutorialStep = { target: string; title: `tutorialTitle${StepNo}`; text: `tutorialText${StepNo}` | "tutorialTextBarEmbed" | "tutorialTextBoardEmbed" };
 const STEPS: TutorialStep[] = [
     { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
     { target: "bar", title: "tutorialTitle2", text: "tutorialText2" },
@@ -41,7 +41,7 @@ const STEPS: TutorialStep[] = [
 
 // Гра з новини: без меню; останній крок - повний екран, якщо iframe його дозволяє (кнопка є).
 export const embedTutorialSteps = (): TutorialStep[] => [
-    { target: "board", title: "tutorialTitle1", text: "tutorialText1" },
+    { target: "board", title: "tutorialTitle1", text: "tutorialTextBoardEmbed" },
     { target: "bar", title: "tutorialTitle2", text: "tutorialTextBarEmbed" },
     { target: "boosters", title: "tutorialTitle3", text: "tutorialText3" },
     ...(document.querySelector('[data-tour="fullscreen"]') ? [{ target: "fullscreen", title: "tutorialTitle5", text: "tutorialText5" } as TutorialStep] : []),

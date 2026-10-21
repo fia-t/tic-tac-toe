@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Classifica",
         tutorialTitle1: "Come si gioca",
         tutorialText1: "Tu giochi con le croci ✕, il bot con i cerchi. Fai tre in fila: in orizzontale, in verticale o in diagonale.",
+        tutorialTextBoardEmbed: "Tu giochi con le croci ✕, Quarty con i cerchi. Fai tre in fila: in orizzontale, in verticale o in diagonale.",
         tutorialTitle2: "Modalità e difficoltà",
         tutorialText2: "Sopra il tabellone: modalità (3×3, 5×5, Ultimate), difficoltà del bot e modificatori delle regole. Ricomincia avvia una nuova partita.",
         tutorialTitle3: "Bonus",

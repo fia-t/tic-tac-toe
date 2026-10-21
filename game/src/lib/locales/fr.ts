@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Classement",
         tutorialTitle1: "Comment jouer",
         tutorialText1: "Tu joues les croix ✕, le bot les ronds. Aligne trois symboles : en ligne, en colonne ou en diagonale.",
+        tutorialTextBoardEmbed: "Tu joues les croix ✕, Quarty les ronds. Aligne trois symboles : en ligne, en colonne ou en diagonale.",
         tutorialTitle2: "Modes et difficulté",
         tutorialText2: "Au-dessus du plateau : les modes (3×3, 5×5, Ultimate), la difficulté du bot et les modificateurs de règles. Recommencer lance une nouvelle partie.",
         tutorialTitle3: "Bonus",

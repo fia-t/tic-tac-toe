@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Ranglijst",
         tutorialTitle1: "Zo speel je",
         tutorialText1: "Jij speelt kruisjes ✕, de bot rondjes. Maak drie op een rij: horizontaal, verticaal of diagonaal.",
+        tutorialTextBoardEmbed: "Jij speelt kruisjes ✕, Quarty rondjes. Maak drie op een rij: horizontaal, verticaal of diagonaal.",
         tutorialTitle2: "Modi en niveau",
         tutorialText2: "Boven het bord: modi (3×3, 5×5, Ultimate), het niveau van de bot en regelmodifiers. Opnieuw start een nieuw spel.",
         tutorialTitle3: "Boosters",

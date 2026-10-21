@@ -51,7 +51,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
         css`
             /* До 800px смуга у два рядки, бустери - рядком під полем: усе це вміщається по висоті
                iframe без прокрутки. */
-            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 236px - var(--timer-h))));
 
             /* Знизу - лише відступ контейнера (12px): інакше вміст на кілька пікселів вищий за
                iframe і з'являлась смуга прокрутки. */
@@ -59,12 +59,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             padding-bottom: 4px;
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 128px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 122px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 166px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 148px - var(--timer-h))));
             }
         `}
 `;
@@ -94,6 +94,11 @@ const Bar = styled.div<{ $embed?: boolean }>`
     ${({ $embed }) =>
         $embed &&
         css`
+            /* Усі кнопки однієї висоти (46px) і по верхньому краю: під вибором поля - статус "чий хід". */
+            align-items: flex-start;
+            --mod-h: 46px;
+            --mod-h-sm: 46px;
+
             @media (min-width: 761px) {
                 width: auto;
             }
@@ -129,6 +134,12 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
         css`
             margin-right: 22px;
 
+            && ${RoundButton} {
+                width: 46px;
+                height: 46px;
+                min-height: 46px;
+            }
+
             @media (max-width: 480px) {
                 margin-right: 12px;
             }
@@ -152,9 +163,9 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
 // Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
 const BarFull = styled(BarGroup)`
     && ${RoundButton} {
-        width: 42px;
-        height: 42px;
-        min-height: 42px;
+        width: 46px;
+        height: 46px;
+        min-height: 46px;
     }
 
     @media (max-width: 480px) {
@@ -221,6 +232,15 @@ const CornerBox = styled.div`
         flex-shrink: 0;
         margin: -6px 0 0 -9px;
     }
+`;
+
+// Гра в новині: статус "чий хід" - під вибором поля. contain: inline-size - довгий статус
+// виходить праворуч за групу, але не розширює її (смуга не стрибає зі зміною тексту).
+const BarStatus = styled.div`
+    contain: inline-size;
+    display: flex;
+    margin-top: 4px;
+    white-space: nowrap;
 `;
 
 // Аватар Кварті в рахунку гри з новини.
@@ -301,9 +321,9 @@ const ModeTile = styled.button`
         }
     }
 
+    /* Вибране поле - не більше за інші, лише яскраве світіння. */
     &[aria-pressed="true"] img {
-        transform: translateY(-2px) scale(1.05);
-        filter: drop-shadow(0 0 8px rgba(31, 179, 217, 0.6));
+        filter: drop-shadow(0 0 4px rgba(31, 179, 217, 0.95)) drop-shadow(0 0 12px rgba(31, 179, 217, 0.8));
     }
 
     &:focus-visible {
@@ -455,7 +475,7 @@ export const ScorePill = styled.div`
 
 // Гра в новині: рахунок - у смузі на місці вибору бота, висотою як кнопки поруч.
 const BarScore = styled(ScorePill)`
-    min-height: 40px;
+    min-height: 46px;
 
     @media (max-width: 560px) {
         max-width: none;
@@ -883,6 +903,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const modSelect = (
         <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc={embed} onPick={pickModifier} />
     );
+    const turnLine = (
+        <TurnLine
+            key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
+            $mine={myTurn && !over && !timerBoost.expired}
+            $pill={isHalloweenEmbed()}
+            role="status"
+            aria-live="polite"
+        >
+            {myTurn && !over && !timerBoost.expired && <TurnMark>{turnMarker ? <img src={turnMarker} alt="" /> : <Cross />}</TurnMark>}
+            {showFirstHint ? t("firstMoveHint") : timerBoost.expired && !over ? t("timerExpired") : status}
+        </TurnLine>
+    );
     const hasTimer = timer !== null && timer !== undefined;
     const mainButtons = (
         <>
@@ -927,6 +959,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     </CornerTip>
                                 )}
                             </BarGroupRow>
+                            {embed && <BarStatus>{turnLine}</BarStatus>}
                         </BarGroup>
                         <PushRight $embed={isEmbed()}>
                             {embed ? (
@@ -1009,8 +1042,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 </div>
             )}
 
-            <ScoreTop $wide={embed}>
-                {!embed && (
+            {!embed && (
+            <ScoreTop>
                 <ScorePill>
                     {isHalloweenEmbed() && <ScoreCobweb />}
                     <span>{t("ai")}</span>
@@ -1019,32 +1052,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <b>{score.human}</b>
                     <span>{humanName ?? t("player")}</span>
                 </ScorePill>
-                )}
-                <TurnLine
-                    key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
-                    $mine={myTurn && !over && !timerBoost.expired}
-                    $pill={isHalloweenEmbed()}
-                    role="status"
-                    aria-live="polite"
-                >
-                    {myTurn && !over && !timerBoost.expired && (
-                        <TurnMark>{turnMarker ? <img src={turnMarker} alt="" /> : <Cross />}</TurnMark>
-                    )}
-                    {showFirstHint ? (
-                        t("firstMoveHint")
-                    ) : timerBoost.expired && !over ? (
-                        t("timerExpired")
-                    ) : (
-                        status
-                    )}
-                </TurnLine>
-                {/* У новині вікно результату й так з'являється після партії - посилання зайве. */}
-                {over && quick && onShowResult && !embed && (
+                {turnLine}
+                {over && quick && onShowResult && (
                     <ResultLink type="button" onClick={onShowResult}>
                         {t("showResult")}
                     </ResultLink>
                 )}
             </ScoreTop>
+            )}
 
             <BoardHolder data-tour="board">
                 {board}

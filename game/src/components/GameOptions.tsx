@@ -321,14 +321,17 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
         css`
             && {
                 width: var(--mod-w, 260px);
-                min-height: 46px;
+                /* Тонші бортики - два рядки вміщаються у висоту інших кнопок смуги. */
+                --gb-c: 8px;
+                height: var(--mod-h, 46px);
+                min-height: 0;
             }
 
             & > span {
                 display: flex;
                 flex-direction: column;
-                gap: 1px;
-                line-height: 1.15;
+                gap: 0;
+                line-height: 1.1;
             }
 
             & > span > * {
@@ -340,6 +343,13 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
                 font-size: 11px;
                 font-weight: 600;
                 opacity: 0.85;
+            }
+
+            @media (max-width: 480px) {
+                && {
+                    width: var(--mod-w-sm, 188px);
+                    height: var(--mod-h-sm, 46px);
+                }
             }
         `}
 

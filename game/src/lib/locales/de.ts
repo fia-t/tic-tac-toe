@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Bestenliste",
         tutorialTitle1: "So wird gespielt",
         tutorialText1: "Du spielst Kreuze ✕, der Bot Kreise. Bring drei in eine Reihe: waagerecht, senkrecht oder diagonal.",
+        tutorialTextBoardEmbed: "Du spielst Kreuze ✕, Quarty Kreise. Bring drei in eine Reihe: waagerecht, senkrecht oder diagonal.",
         tutorialTitle2: "Modi und Stärke",
         tutorialText2: "Über dem Feld: Modi (3×3, 5×5, Ultimate), Bot-Stärke und Regel-Modifikatoren. Neustart beginnt ein neues Spiel.",
         tutorialTitle3: "Booster",

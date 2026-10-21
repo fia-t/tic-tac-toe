@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Ranking",
         tutorialTitle1: "Como jogar",
         tutorialText1: "Você joga com X ✕, o bot com O. Faça três em linha: na horizontal, na vertical ou na diagonal.",
+        tutorialTextBoardEmbed: "Você joga com X ✕, Quarty com O. Faça três em linha: na horizontal, na vertical ou na diagonal.",
         tutorialTitle2: "Modos e dificuldade",
         tutorialText2: "Acima do tabuleiro: modos (3×3, 5×5, Ultimate), dificuldade do bot e modificadores de regras. Reiniciar começa uma nova partida.",
         tutorialTitle3: "Bônus",

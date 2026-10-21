@@ -295,6 +295,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Ranking",
         tutorialTitle1: "Jak grać",
         tutorialText1: "Grasz krzyżykami ✕, bot kółkami. Ułóż trzy w rzędzie: poziomo, pionowo albo po skosie.",
+        tutorialTextBoardEmbed: "Grasz krzyżykami ✕, Quarty kółkami. Ułóż trzy w rzędzie: poziomo, pionowo albo po skosie.",
         tutorialTitle2: "Tryby i poziom",
         tutorialText2: "Nad planszą: tryby (3×3, 5×5, Ultimate), poziom bota i modyfikatory zasad. Od nowa zaczyna nową grę.",
         tutorialTitle3: "Wzmocnienia",

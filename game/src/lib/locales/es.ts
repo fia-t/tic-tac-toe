@@ -294,6 +294,7 @@ const pack: LocalePack = {
         homeLeaderboard: "Clasificación",
         tutorialTitle1: "Cómo jugar",
         tutorialText1: "Juegas con las cruces ✕ y el bot con los círculos. Haz tres en raya: en horizontal, en vertical o en diagonal.",
+        tutorialTextBoardEmbed: "Juegas con las cruces ✕ y Quarty con los círculos. Haz tres en raya: en horizontal, en vertical o en diagonal.",
         tutorialTitle2: "Modos y dificultad",
         tutorialText2: "Encima del tablero: modos (3×3, 5×5, Ultimate), dificultad del bot y modificadores de reglas. Reiniciar empieza una partida nueva.",
         tutorialTitle3: "Potenciadores",
