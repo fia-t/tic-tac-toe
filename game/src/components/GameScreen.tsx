@@ -57,9 +57,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
                iframe і з'являлась смуга прокрутки. */
             padding-top: 10px;
             padding-bottom: 4px;
-            /* Тултіпи - більші, ніж на сайті. */
+            /* Тултіпи - більші, ніж на сайті, і кольору рахунку. */
             --tip-fs: 16px;
             --tip-pad: 6px 12px;
+            --tip-bg: var(--score-bg, #fff6e6);
+            --tip-ink: #5b3f22;
+            --tip-shadow: 0 0 0 2px rgba(139, 101, 60, 0.35), 0 6px 16px rgba(40, 20, 10, 0.3);
             /* Список модифікаторів - теж крупніше. */
             --mod-menu-w: 340px;
             --mod-menu-b: 16px;
@@ -452,6 +455,13 @@ const RowTimer = styled.div`
 
     & > div {
         width: 100%;
+    }
+
+    /* Повний екран: підпис і секунди крупніші. */
+    @media (min-width: 1200px) and (min-height: 800px) {
+        & > div {
+            font-size: 17px;
+        }
     }
 `;
 
@@ -1080,8 +1090,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         );
     };
 
-    const modSelect = (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" withDesc plain={embed} onPick={pickModifier} />
+    // Список модифікаторів: у новині на ширшому екрані модифікатор зліва - список від його лівого краю.
+    const modSelect = (menuAlign: "left" | "auto") => (
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign={menuAlign} withDesc plain={embed} onPick={pickModifier} />
     );
     const turnLine = (
         <TurnLine
@@ -1114,7 +1125,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <span>{t("you")}</span>
         </BarScore>
     );
-    const modGroup = (
+    const modGroup = (menuAlign: "left" | "auto") => (
         <BarGroup>
             <BarLabel id="bar-mod" $hidden>
                 {t("modifierLabel")}
@@ -1122,11 +1133,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <CornerBox>
                 {isHalloweenEmbed() ? (
                     <ModWeb>
-                        {modSelect}
+                        {modSelect(menuAlign)}
                         <ScoreCobweb />
                     </ModWeb>
                 ) : (
-                    modSelect
+                    modSelect(menuAlign)
                 )}
                 <CornerTip>
                     <InfoTip text={t("infoModGame")} />
@@ -1193,7 +1204,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         <BarActions $embed={embed}>{actionButtons}</BarActions>
                         {embed && (
                             <WideOnly>
-                                <ModSlot>{modGroup}</ModSlot>
+                                <ModSlot>{modGroup("left")}</ModSlot>
                             </WideOnly>
                         )}
                         {narrowOnly(
@@ -1264,7 +1275,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             )}
                             {embedSide(
                                 <>
-                            {narrowOnly(modGroup)}
+                            {narrowOnly(modGroup("auto"))}
                             {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
                             {embed && (
                                 <BarFull>

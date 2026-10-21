@@ -22,8 +22,9 @@ export const tipCss = css`
         transform: translateX(-50%);
         padding: var(--tip-pad, 4px 9px);
         border-radius: 8px;
-        background: #49301f;
-        color: #fff7e8;
+        background: var(--tip-bg, #49301f);
+        color: var(--tip-ink, #fff7e8);
+        box-shadow: var(--tip-shadow, none);
         font: 400 var(--tip-fs, 13px) / 1.25 var(--font-body);
         white-space: nowrap;
         text-shadow: none;
