@@ -113,6 +113,13 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 --mod-w: 236px;
             }
 
+            /* Вужчий iframe (до 940px): менші відступи й вужчий модифікатор - усе в один рядок. */
+            @media (min-width: 761px) and (max-width: 939px) {
+                column-gap: 16px;
+                padding: 0 24px;
+                --mod-w: 190px;
+            }
+
             /* zoom множить і ширину, і відступи - ділимо, щоб смуга лишалась шириною екрана. */
             @media (min-width: 1200px) and (min-height: 800px) {
                 zoom: 1.3;
