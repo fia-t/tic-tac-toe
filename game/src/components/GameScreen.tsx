@@ -11,7 +11,6 @@ import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
-import { QuartyFace } from "@game/components/QuartyFace";
 import { FullscreenButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
@@ -50,17 +49,22 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
     ${({ $embed }) =>
         $embed &&
         css`
-            --board-w: min(100%, max(280px, calc(100dvh - 210px - var(--timer-h))));
+            /* До 800px смуга у два рядки, бустери - рядком під полем: усе це вміщається по висоті
+               iframe без прокрутки. */
+            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h))));
 
+            /* Знизу - лише відступ контейнера (12px): інакше вміст на кілька пікселів вищий за
+               iframe і з'являлась смуга прокрутки. */
             padding-top: 10px;
+            padding-bottom: 4px;
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 150px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 128px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 195px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 166px - var(--timer-h))));
             }
         `}
 `;
@@ -162,7 +166,7 @@ const BarFull = styled(BarGroup)`
     }
 `;
 
-const BarLabel = styled.div`
+const BarLabel = styled.div<{ $hidden?: boolean }>`
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -172,6 +176,60 @@ const BarLabel = styled.div`
     text-transform: uppercase;
     color: var(--bar-ink, #7a5530);
     white-space: nowrap;
+
+    /* Гра в новині: підписів над кнопками не видно (лишаються для екранних читачів). */
+    ${({ $hidden }) =>
+        $hidden &&
+        css`
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            min-height: 0;
+            overflow: hidden;
+            clip-path: inset(50%);
+        `}
+`;
+
+// Гра в новині: маленький "?" у верхньому правому куті гіга-поля й кнопки модифікатора.
+const CornerTip = styled.span`
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    z-index: 3;
+    display: flex;
+
+    button {
+        width: 15px;
+        height: 15px;
+        margin: 0;
+        font-size: 10px;
+        line-height: 15px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+`;
+
+// Кнопка модифікатора з "?" у куті. Без position: на телефоні список модифікаторів розкривається
+// від ширшого блоку (ModPicker static), тож "?" - у потоці з від'ємними відступами.
+const CornerBox = styled.div`
+    display: flex;
+    align-items: flex-start;
+
+    & > ${CornerTip} {
+        position: relative;
+        top: auto;
+        right: auto;
+        flex-shrink: 0;
+        margin: -6px 0 0 -9px;
+    }
+`;
+
+// Аватар Кварті в рахунку гри з новини.
+const QuartyFace = styled.img`
+    display: block;
+    flex-shrink: 0;
+    width: 29px;
+    height: 24px;
+    object-fit: contain;
 `;
 
 const PushRight = styled.div<{ $embed?: boolean }>`
@@ -836,6 +894,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         );
     };
 
+    const modSelect = (
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign="auto" onPick={pickModifier} />
+    );
     const hasTimer = timer !== null && timer !== undefined;
     const mainButtons = (
         <>
@@ -857,11 +918,11 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <>
                         <BarActions $embed={embed}>{actionButtons}</BarActions>
                         <BarGroup>
-                            <BarLabel id="bar-board">
+                            <BarLabel id="bar-board" $hidden={embed}>
                                 {t("barBoard")}
-                                <InfoTip text={t("infoBoard")} />
+                                {!embed && <InfoTip text={t("infoBoard")} />}
                             </BarLabel>
-                            <BarGroupRow role="group" aria-labelledby="bar-board">
+                            <BarGroupRow role="group" aria-labelledby="bar-board" style={embed ? { position: "relative" } : undefined}>
                                 {MODE_TILES.map((tile) => (
                                     <ModeTile
                                         key={tile.id}
@@ -874,15 +935,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                         <img src={assetUrl(tile.img)} alt="" />
                                     </ModeTile>
                                 ))}
+                                {embed && (
+                                    <CornerTip>
+                                        <InfoTip text={t("infoBoard")} />
+                                    </CornerTip>
+                                )}
                             </BarGroupRow>
                         </BarGroup>
                         <PushRight $embed={isEmbed()}>
                             {embed ? (
                                 <BarGroup>
-                                    <BarLabel id="bar-score">{t("barScore")}</BarLabel>
+                                    <BarLabel id="bar-score" $hidden>
+                                        {t("barScore")}
+                                    </BarLabel>
                                     <BarScore aria-labelledby="bar-score">
                                         {isHalloweenEmbed() && <ScoreCobweb spider={!(hasTimer && !over)} />}
-                                        <QuartyFace />
+                                        <QuartyFace src={assetUrl("icons/mentor.a5788621.avif")} alt="" />
                                         <span>{t("quarty")}</span>
                                         <b>{score.ai}</b>
                                         <span>—</span>
@@ -913,18 +981,20 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             </BarGroup>
                             )}
                             <BarGroup>
-                                <BarLabel id="bar-mod">
+                                <BarLabel id="bar-mod" $hidden={embed}>
                                     {t("modifierLabel")}
-                                    <InfoTip text={t("infoModGame")} />
+                                    {!embed && <InfoTip text={t("infoModGame")} />}
                                 </BarLabel>
-                                <ModifierSelect
-                                    value={activeModifier}
-                                    options={MODIFIERS_BY_MODE[mode]}
-                                    weekly={weekly}
-                                    labelledBy="bar-mod"
-                                    menuAlign="auto"
-                                    onPick={pickModifier}
-                                />
+                                {embed ? (
+                                    <CornerBox>
+                                        {modSelect}
+                                        <CornerTip>
+                                            <InfoTip text={t("infoModGame")} />
+                                        </CornerTip>
+                                    </CornerBox>
+                                ) : (
+                                    modSelect
+                                )}
                             </BarGroup>
                             {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
                             {embed && (
