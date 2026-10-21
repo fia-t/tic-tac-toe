@@ -32,7 +32,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
     --timer-h: ${({ $timer }) => ($timer ? "38px" : "0px")};
-    --board-w: min(100%, 628px, max(280px, calc(100dvh - 252px - var(--timer-h))));
+    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h))));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -51,7 +51,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
         css`
             /* До 800px смуга у два рядки, бустери - рядком під полем: усе це вміщається по висоті
                iframe без прокрутки. */
-            --board-w: min(100%, max(200px, calc(100dvh - 236px - var(--timer-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h))));
 
             /* Знизу - лише відступ контейнера (12px): інакше вміст на кілька пікселів вищий за
                iframe і з'являлась смуга прокрутки. */
