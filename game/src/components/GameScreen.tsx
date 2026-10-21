@@ -63,12 +63,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
             }
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 160px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 140px - var(--timer-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 196px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 170px - var(--timer-h))));
             }
         `}
 `;
@@ -103,25 +103,15 @@ const Bar = styled.div<{ $embed?: boolean }>`
             --mod-h: 46px;
             --mod-h-sm: 46px;
 
-            /* Ширший екран: перший рядок - у тонкій рамці на всю ширину iframe (по 16px від країв),
-               кнопки й блоки - рівномірно; рядок статусу - під рамкою. */
+            /* Ширший екран: рахунок - по центру (над серединою поля), однаковий проміжок до плиток
+               поля зліва й до модифікатора справа; "Заново" і повний екран - на однаковій відстані
+               від своїх сусідів (EmbedSide). */
             @media (min-width: 761px) {
-                justify-content: space-between;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+                column-gap: 32px;
                 width: min(calc(100vw - 32px), 1240px);
-                padding: 14px 22px 0;
-                --mod-w: 300px;
-
-                &::before {
-                    content: "";
-                    position: absolute;
-                    left: 0;
-                    right: 0;
-                    top: 0;
-                    height: 74px;
-                    border: 2px solid var(--bar-frame, rgba(139, 101, 60, 0.35));
-                    border-radius: 22px;
-                    pointer-events: none;
-                }
+                --mod-w: 236px;
             }
 
             /* zoom множить і ширину - ділимо, щоб рамка лишалась у межах екрана. */
@@ -156,7 +146,7 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
         $embed &&
         css`
             @media (max-width: 760px) {
-                margin-right: 22px;
+                margin-right: 12px;
             }
 
             && ${RoundButton} {
@@ -166,7 +156,7 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
             }
 
             @media (max-width: 480px) {
-                margin-right: 12px;
+                margin-right: 2px;
             }
         `}
 
@@ -182,6 +172,19 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
             height: 40px;
             min-height: 40px;
         }
+    }
+`;
+
+// Гра в новині: ліва ("Заново" і плитки поля) і права (модифікатор і повний екран) частини смуги.
+const EmbedSide = styled.div<{ $right?: boolean }>`
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    min-width: 0;
+
+    @media (min-width: 761px) {
+        gap: 22px;
+        justify-self: ${({ $right }) => ($right ? "start" : "end")};
     }
 `;
 
@@ -261,10 +264,9 @@ const BarStatus = styled.div`
     margin-top: 4px;
     white-space: nowrap;
 
-    /* Під рамкою першого рядка. */
     @media (min-width: 761px) {
         gap: 40px;
-        margin-top: 24px;
+        margin-top: 14px;
     }
 
     /* Ширина групи - як у плиток поля; статус і таймер не стискаються, а виходять праворуч
@@ -983,6 +985,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             {showFirstHint ? t("firstMoveHint") : timerBoost.expired && !over ? t("timerExpired") : status}
         </TurnLine>
     );
+    // У новині частини смуги - в обгортках EmbedSide (рахунок між ними по центру), на сайті - без них.
+    const embedSide = (node: React.ReactNode, right = false) => (embed ? <EmbedSide $right={right}>{node}</EmbedSide> : node);
     const hasTimer = timer !== null && timer !== undefined;
     const timerRunning = hasTimer && !over;
     const mainButtons = (
@@ -1003,6 +1007,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <Bar data-tour="bar" $embed={isEmbed()}>
                 {quick ? (
                     <>
+                        {embedSide(
+                            <>
                         <BarActions $embed={embed}>{actionButtons}</BarActions>
                         <BarGroup>
                             <BarLabel id="bar-board" $hidden={embed}>
@@ -1039,6 +1045,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 </BarStatus>
                             )}
                         </BarGroup>
+                            </>
+                        )}
                         <PushRight $embed={isEmbed()}>
                             {embed ? (
                                 <BarGroup>
@@ -1077,6 +1085,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 </DiffGroup>
                             </BarGroup>
                             )}
+                            {embedSide(
+                                <>
                             <BarGroup>
                                 <BarLabel id="bar-mod" $hidden={embed}>
                                     {t("modifierLabel")}
@@ -1098,6 +1108,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 <BarFull>
                                     <FullscreenButton round nudge={mode !== "traditional"} />
                                 </BarFull>
+                            )}
+                                </>,
+                                true
                             )}
                         </PushRight>
                     </>

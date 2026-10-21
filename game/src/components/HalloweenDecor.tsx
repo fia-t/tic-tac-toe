@@ -7,7 +7,8 @@ import { Container } from "@game/components/gameStyles";
 // павучком на рахунку. Фон (небо, місяць, листя) - у HalloweenBackdrop.
 
 // Кажани летять справа наліво повз місяць через увесь iframe, трохи знижуючись; легке
-// погойдування вгору-вниз і помахи крилами. Поверх гри, але кліків не перехоплюють.
+// погойдування вгору-вниз і помахи крилами. Позаду вмісту гри: за полем і бустерами пролітають,
+// не заважаючи грі.
 const flyAcross = keyframes`
     from { transform: translate(0, 0); }
     to { transform: translate(calc(-100vw - 140px), 120px); }
@@ -31,7 +32,7 @@ const BatSky = styled.div`
     right: var(--bats-right, 0px);
     overflow: hidden;
     pointer-events: none;
-    z-index: 2;
+    z-index: 0;
 
     /* На телефоні смуга керування на всю ширину - кажани опинялися серед кнопок. */
     @media (max-width: 760px), (prefers-reduced-motion: reduce) {
