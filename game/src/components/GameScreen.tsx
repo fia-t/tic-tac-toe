@@ -103,21 +103,21 @@ const Bar = styled.div<{ $embed?: boolean }>`
             --mod-h: 46px;
             --mod-h-sm: 46px;
 
-            /* Ширший екран: рахунок - по центру (над серединою поля), однаковий проміжок до плиток
-               поля зліва й до модифікатора справа; "Заново" і повний екран - на однаковій відстані
-               від своїх сусідів (EmbedSide). */
+            /* Ширший екран: смуга на всю ширину iframe з однаковими боковими відступами 48px;
+               "Заново" - біля лівого краю, повний екран - біля правого, плитки поля, рахунок і
+               модифікатор - між ними по центру (вільне місце порівну зліва й справа, EmbedSide). */
             @media (min-width: 761px) {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
                 column-gap: 32px;
-                width: min(calc(100vw - 32px), 1240px);
+                width: 100vw;
+                padding: 0 48px;
                 --mod-w: 236px;
             }
 
-            /* zoom множить і ширину - ділимо, щоб рамка лишалась у межах екрана. */
+            /* zoom множить і ширину, і відступи - ділимо, щоб смуга лишалась шириною екрана. */
             @media (min-width: 1200px) and (min-height: 800px) {
                 zoom: 1.3;
-                width: min(calc((100vw - 48px) / 1.3), 1240px);
+                width: calc(100vw / 1.3);
+                padding: 0 calc(48px / 1.3);
             }
         `}
 `;
@@ -176,15 +176,20 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
 `;
 
 // Гра в новині: ліва ("Заново" і плитки поля) і права (модифікатор і повний екран) частини смуги.
-const EmbedSide = styled.div<{ $right?: boolean }>`
+const EmbedSide = styled.div`
     display: flex;
     align-items: flex-start;
     gap: 10px;
     min-width: 0;
 
+    /* Ширший екран: частини "розчиняються" в смузі; перед плитками поля (останні в лівій частині)
+       і перед повним екраном (останній у правій) - вільне місце порівну. */
     @media (min-width: 761px) {
-        gap: 22px;
-        justify-self: ${({ $right }) => ($right ? "start" : "end")};
+        display: contents;
+
+        & > :last-child {
+            margin-left: auto;
+        }
     }
 `;
 
@@ -986,7 +991,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </TurnLine>
     );
     // У новині частини смуги - в обгортках EmbedSide (рахунок між ними по центру), на сайті - без них.
-    const embedSide = (node: React.ReactNode, right = false) => (embed ? <EmbedSide $right={right}>{node}</EmbedSide> : node);
+    const embedSide = (node: React.ReactNode) => (embed ? <EmbedSide>{node}</EmbedSide> : node);
     const hasTimer = timer !== null && timer !== undefined;
     const timerRunning = hasTimer && !over;
     const mainButtons = (
@@ -1109,8 +1114,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                     <FullscreenButton round nudge={mode !== "traditional"} />
                                 </BarFull>
                             )}
-                                </>,
-                                true
+                                </>
                             )}
                         </PushRight>
                     </>
