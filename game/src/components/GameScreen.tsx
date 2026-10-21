@@ -162,12 +162,6 @@ const BarActions = styled(BarGroupRow)<{ $embed?: boolean }>`
                 margin-right: 12px;
             }
 
-            && ${RoundButton} {
-                width: 46px;
-                height: 46px;
-                min-height: 46px;
-            }
-
             @media (max-width: 480px) {
                 margin-right: 2px;
             }
@@ -225,9 +219,17 @@ const EmbedSide = styled.div`
 // Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
 const BarFull = styled(BarGroup)`
     && ${RoundButton} {
-        width: 46px;
-        height: 46px;
-        min-height: 46px;
+        width: 42px;
+        height: 42px;
+        min-height: 42px;
+    }
+
+    @media (max-width: 480px) {
+        && ${RoundButton} {
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+        }
     }
 `;
 
