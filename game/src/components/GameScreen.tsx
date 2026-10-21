@@ -656,6 +656,10 @@ const SplitBoosters = styled.div`
     }
 
     @media (min-width: 800px) {
+        /* Колонки - абсолютно, сам контейнер не займає місця під полем (інакше зайва прокрутка). */
+        height: 0;
+        padding: 0;
+
         & > div {
             position: absolute;
             top: 50%;
