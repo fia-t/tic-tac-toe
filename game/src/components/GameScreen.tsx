@@ -313,6 +313,16 @@ const TileColumn = styled.div`
         text-align: left;
     }
 
+    /* Повний екран: плитки більші - під збільшену смугу. */
+    @media (min-width: 1200px) and (min-height: 800px) {
+        gap: 18px;
+
+        & > button {
+            width: 78px;
+            height: 78px;
+        }
+    }
+
     @media (max-width: 760px) {
         display: none;
     }
@@ -419,8 +429,13 @@ const BarStatus = styled.div`
     }
 `;
 
+// Таймер ходу - над полем, рівно шириною поля.
 const RowTimer = styled.div`
     width: var(--board-w);
+
+    & > div {
+        width: 100%;
+    }
 `;
 
 // Аватар Кварті в рахунку гри з новини.
