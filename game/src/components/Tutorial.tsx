@@ -140,7 +140,8 @@ const Dots = styled.div`
 `;
 
 // Картка внизу по центру; якщо так вона закрила б підсвічене місце (бустери чи повний екран
-// праворуч від поля) - зсуваємо її лівіше, а коли збоку місця немає (телефон) - угору екрана.
+// праворуч від поля) - зсуваємо її лівіше, а коли збоку місця немає (телефон) - угору екрана,
+// якщо там вона його не закриває.
 const cardPlace = (target: string, card: HTMLElement): React.CSSProperties | undefined => {
     const el = document.querySelector(`[data-tour="${target}"]`);
     if (!el) return undefined;
@@ -154,7 +155,9 @@ const cardPlace = (target: string, card: HTMLElement): React.CSSProperties | und
     if (!overlaps(center)) return undefined;
     const shifted = r.left - gap - w / 2;
     if (shifted - w / 2 >= 16) return { left: shifted };
-    return { top: "calc(16px + env(safe-area-inset-top, 0px))", bottom: "auto" };
+    // Угору - лише якщо там картка вже не закриє це місце (велике поле на десктопі - лишаємо внизу).
+    if (r.top > 16 + h + gap) return { top: "calc(16px + env(safe-area-inset-top, 0px))", bottom: "auto" };
+    return undefined;
 };
 
 export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; doneKey?: string }> = ({ onDone, steps = STEPS, doneKey = DONE_KEY }) => {
