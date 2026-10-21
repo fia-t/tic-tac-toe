@@ -881,7 +881,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 <BarGroup>
                                     <BarLabel id="bar-score">{t("barScore")}</BarLabel>
                                     <BarScore aria-labelledby="bar-score">
-                                        {isHalloweenEmbed() && <ScoreCobweb />}
+                                        {isHalloweenEmbed() && <ScoreCobweb spider={!(hasTimer && !over)} />}
                                         <QuartyFace />
                                         <span>{t("quarty")}</span>
                                         <b>{score.ai}</b>

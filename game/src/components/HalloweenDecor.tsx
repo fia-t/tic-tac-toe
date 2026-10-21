@@ -173,7 +173,8 @@ const SpiderHang = styled.div`
     }
 `;
 
-export const ScoreCobweb = () => (
+// spider=false - без павучка (під рахунком рядок таймера, павук звисав би на його підпис).
+export const ScoreCobweb: React.FC<{ spider?: boolean }> = ({ spider = true }) => (
     <>
         <Web viewBox="0 0 30 30" aria-hidden="true">
             <g fill="none" stroke="rgba(90, 70, 90, 0.55)" strokeWidth="0.8">
@@ -183,17 +184,19 @@ export const ScoreCobweb = () => (
                 <path d="M23 3.6Q20 12 19 19Q11 19 3.5 23" />
             </g>
         </Web>
-        <SpiderHang aria-hidden="true">
-            <svg viewBox="-9 -4 18 16">
-                <g stroke="#1a1024" strokeWidth="1.2" fill="none" strokeLinecap="round">
-                    <path d="M-2 3l-4-3-2 2M-2 4h-5l-2 3M-2 5l-4 3-1 3M-2 6l-3 4" />
-                    <path d="M2 3l4-3 2 2M2 4h5l2 3M2 5l4 3 1 3M2 6l3 4" />
-                </g>
-                <ellipse cx="0" cy="5" rx="3.6" ry="4.2" fill="#1a1024" />
-                <circle cx="0" cy="0.6" r="2.4" fill="#1a1024" />
-                <circle cx="-0.9" cy="0.3" r="0.6" fill="#ff8a2a" />
-                <circle cx="0.9" cy="0.3" r="0.6" fill="#ff8a2a" />
-            </svg>
-        </SpiderHang>
+        {spider && (
+            <SpiderHang aria-hidden="true">
+                <svg viewBox="-9 -4 18 16">
+                    <g stroke="#1a1024" strokeWidth="1.2" fill="none" strokeLinecap="round">
+                        <path d="M-2 3l-4-3-2 2M-2 4h-5l-2 3M-2 5l-4 3-1 3M-2 6l-3 4" />
+                        <path d="M2 3l4-3 2 2M2 4h5l2 3M2 5l4 3 1 3M2 6l3 4" />
+                    </g>
+                    <ellipse cx="0" cy="5" rx="3.6" ry="4.2" fill="#1a1024" />
+                    <circle cx="0" cy="0.6" r="2.4" fill="#1a1024" />
+                    <circle cx="-0.9" cy="0.3" r="0.6" fill="#ff8a2a" />
+                    <circle cx="0.9" cy="0.3" r="0.6" fill="#ff8a2a" />
+                </svg>
+            </SpiderHang>
+        )}
     </>
 );
