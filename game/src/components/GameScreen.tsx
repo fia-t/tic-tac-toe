@@ -438,6 +438,13 @@ const RowTimer = styled.div`
     }
 `;
 
+// Хелловінська гра в новині: павутина в лівому верхньому куті модифікатора, з-під лівого краю
+// звисає павучок.
+const ModWeb = styled.div`
+    position: relative;
+    min-width: 0;
+`;
+
 // Аватар Кварті в рахунку гри з новини.
 const QuartyFace = styled.img`
     display: block;
@@ -1082,7 +1089,6 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     // другому рядку смуги).
     const scorePill = (
         <BarScore>
-            {isHalloweenEmbed() && <ScoreCobweb spider={!(hasTimer && !over)} />}
             <QuartyFace src={assetUrl("icons/mentor.a5788621.avif")} alt="" />
             <span>{t("quarty")}</span>
             <b>{score.ai}</b>
@@ -1097,7 +1103,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 {t("modifierLabel")}
             </BarLabel>
             <CornerBox>
-                {modSelect}
+                {isHalloweenEmbed() ? (
+                    <ModWeb>
+                        {modSelect}
+                        <ScoreCobweb />
+                    </ModWeb>
+                ) : (
+                    modSelect
+                )}
                 <CornerTip>
                     <InfoTip text={t("infoModGame")} />
                 </CornerTip>
