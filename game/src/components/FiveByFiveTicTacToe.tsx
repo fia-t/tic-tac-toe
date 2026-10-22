@@ -145,7 +145,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         logGameResult("ai-5x5", result);
     };
 
-    // --- партія з модифікатором правил (гравітація, каміння, мізер): хід через modEngine ---
+    // --- партія з модифікатором правил (гравітація, каміння, піддавки): хід через modEngine ---
     const rules = { gravity: modifier === "gravity", misere: modifier === "misere" };
     const isMole = modifier === "mole";
     const ruleMode = rules.gravity || rules.misere || modifier === "stones" || isMole;

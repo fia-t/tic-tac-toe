@@ -83,7 +83,7 @@ export const DEFAULT_CHAPTERS: CampaignChapterDef[] = [
             { ...W("Головоломка: знайди вилку й виграй за 2 ходи", "traditional", "medium", 2, { preset: { X: [0, 4], O: [1, 8] } }), id: "beach-2", titleEn: "Puzzle: find the fork and win in 2 moves" },
             { ...W("Зникаючі фішки: виграй", "traditional", "medium", 5, { modifier: "vanish" }), id: "beach-3", titleEn: "Vanishing pieces: win" },
             { ...W("Таймер: перемога на швидкість", "traditional", "medium", 4, { modifier: "timer" }), id: "beach-4", titleEn: "Timer: win against the clock" },
-            { ...W("Мізер проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }), id: "beach-5", titleEn: "Misère vs Master: don't complete a line first" },
+            { ...W("Піддавки проти Майстра: не склади лінію першим", "traditional", "master", 5, { modifier: "misere", goal: "survive" }), id: "beach-5", titleEn: "Giveaway vs Master: don't complete a line first" },
             { ...W("Бос: Капітан Краб", "traditional", "master", 8, { modifier: "vanish", goal: "survive", boss: true }), id: "beach-6", titleEn: "Boss: Captain Crab" },
         ],
     },

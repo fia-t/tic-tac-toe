@@ -1,4 +1,4 @@
-// Рушій партій з модифікаторами правил (зникаючі фішки, гравітація, каміння, мізер)
+// Рушій партій з модифікаторами правил (зникаючі фішки, гравітація, каміння, піддавки)
 // для 3×3 і 5×5. Звичайні партії без модифікаторів і далі йдуть через gameLogic.ts +
 // aiLevels.ts - там перевірений ШІ; тут - свій, бо модифікатори змінюють і правила
 // перемоги, і те, які ходи взагалі можливі.
@@ -83,7 +83,7 @@ export const legalMoves = (st: State): number[] => {
 
 export const outcomeOf = (st: State): Outcome | null => {
     const owner = lineOwner(st);
-    // Мізер: хто склав лінію - той програв.
+    // Піддавки: хто склав лінію - той програв.
     if (owner) return { winner: st.rules.misere ? other(owner) : owner };
     if (!legalMoves(st).length || (st.rules.vanish && st.hist.moves >= VANISH_MAX_MOVES)) return { winner: "draw" };
     return null;
@@ -122,7 +122,7 @@ const evaluate = (st: State, p: "X" | "O"): number => {
 
 // Кандидати ходу: на великому полі - лише поруч із уже поставленими фішками і не більше
 // limit найкращих за оцінкою (інакше перебір 5×5 занадто дорогий для браузера).
-// У мізері "поруч" не діє: там сильні якраз ходи подалі від ліній.
+// У піддавках "поруч" не діє: там сильні якраз ходи подалі від ліній.
 const candidates = (st: State, p: "X" | "O", limit: number): number[] => {
     let moves = legalMoves(st);
     if (st.n > 3 && !st.rules.gravity && !st.rules.misere) {
@@ -172,7 +172,7 @@ export const chooseMove = (st: State, p: "X" | "O", difficulty: Difficulty): num
     if (difficulty === "easy" && Math.random() < 0.35) return pickRandom(moves);
     const o = other(p);
     for (const m of moves) if (outcomeOf(applyMove(st, m, p))?.winner === p) return m;
-    // Блок: у мізері суперник "виграє", лише якщо ми самі складемо лінію - блокувати нічого.
+    // Блок: у піддавках суперник "виграє", лише якщо ми самі складемо лінію - блокувати нічого.
     if (!st.rules.misere) for (const m of moves) if (outcomeOf(applyMove(st, m, o))?.winner === o) return m;
 
     if (difficulty === "master") {

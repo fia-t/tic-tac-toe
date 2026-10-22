@@ -360,7 +360,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         logGameResult("ai-easy", result);
     };
 
-    // --- партія з модифікатором правил (зникаючі фішки, мізер): хід через modEngine ---
+    // --- партія з модифікатором правил (зникаючі фішки, піддавки): хід через modEngine ---
     const rules3 = { vanish: modifier3 === "vanish", misere: modifier3 === "misere" };
     const ruleMode = rules3.vanish || rules3.misere;
     const markers = { player: playerMarker, ai: aiMarker };
