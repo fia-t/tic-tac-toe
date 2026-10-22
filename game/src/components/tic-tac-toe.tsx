@@ -687,7 +687,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         <RewardedAdContext.Provider value={onRewardedAd}>
             <ShellVars />
             <AppColumn ref={topRef}>
-                {/* На екрані партії шапки немає: будиночок, повний екран і налаштування - у смузі над полем. */}
+                {/* На екрані партії шапки немає: стрілка "Назад", повний екран і налаштування - у смузі над полем. */}
                 {onGameScreen && themeReady ? (
                     <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
                 ) : (

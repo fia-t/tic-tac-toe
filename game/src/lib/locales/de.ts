@@ -301,7 +301,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Booster",
         tutorialText3: "Feststeckend? Der Tipp zeigt einen guten Zug, Rückgängig nimmt deinen Zug zurück. Einmal pro Spiel gratis.",
         tutorialTitle4: "Menü",
-        tutorialText4: "Das Häuschen öffnet das Menü: tägliche Herausforderung, Kampagne, Skins, Belohnungen und Spiele gegen echte Spieler.",
+        tutorialText4: "Der Zurück-Pfeil öffnet das Menü: tägliche Herausforderung, Kampagne, Skins, Belohnungen und Spiele gegen echte Spieler.",
         tutorialTitle5: "Vollbild",
         tutorialText5: "Mit diesem Knopf läuft das Spiel im Vollbild und das Feld wird größer. Praktisch bei 5×5 und Ultimate.",
         tutorialNext: "Weiter",

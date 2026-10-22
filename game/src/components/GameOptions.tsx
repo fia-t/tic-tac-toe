@@ -199,7 +199,7 @@ export const ModRow = styled.div`
 
 // Іконки дій (заново, гра з другом, бустери) - круглі кремові кнопки.
 const ACTION_ICONS = {
-    home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
+    back: <path d="M15 5l-7 7 7 7" />,
     restart: (
         <>
             <path d="M20 12a8 8 0 1 1-2.6-5.9" />
@@ -266,6 +266,25 @@ export const RoundButton = styled.button`
         left: 50%;
         top: 50%;
         transform: translate(-50%, -50%);
+    }
+
+    /* Неактивна: приглушуємо іконку й кладемо світлу вуаль, а не filter на всю кнопку - інакше
+       напівпрозорим ставав би й тултіп. */
+    &&:disabled {
+        filter: none;
+    }
+
+    &:disabled > svg {
+        opacity: 0.35;
+    }
+
+    &:disabled::before {
+        content: "";
+        position: absolute;
+        inset: calc(-1 * var(--gb-c, 0px));
+        border-radius: 50%;
+        background: rgba(255, 250, 240, 0.5);
+        pointer-events: none;
     }
 
     @media (max-width: 480px) {
@@ -604,11 +623,20 @@ const DiffToggle = styled(ModToggle)<{ $level: Difficulty }>`
     }
 `;
 
+const DIFF_COLOR: Record<Difficulty, string> = { easy: "#2f8a3e", medium: "#e0a020", master: "#c0392b" };
+
 const DiffDot = styled.span<{ $level: Difficulty }>`
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: ${({ $level }) => ({ easy: "#2f8a3e", medium: "#e0a020", master: "#c0392b" })[$level]};
+    background: ${({ $level }) => DIFF_COLOR[$level]};
+`;
+
+// Вибраний рівень у списку - уся іконка кольору рівня.
+const DiffOption = styled(ModOption)<{ $level: Difficulty }>`
+    &[aria-checked="true"] > i {
+        background: ${({ $level }) => DIFF_COLOR[$level]};
+    }
 `;
 
 export const DifficultySelect = ({ value, labelledBy, onPick }: { value: Difficulty; labelledBy: string; onPick: (level: Difficulty) => void }) => {
@@ -650,8 +678,9 @@ export const DifficultySelect = ({ value, labelledBy, onPick }: { value: Difficu
             {open && (
                 <ModMenu role="menu" aria-labelledby={labelledBy} $align="left" style={{ width: "min(300px, calc(100vw - 32px))" }}>
                     {DIFFICULTIES.map((level) => (
-                        <ModOption
+                        <DiffOption
                             key={level}
+                            $level={level}
                             type="button"
                             role="menuitemradio"
                             aria-checked={value === level}
@@ -667,7 +696,7 @@ export const DifficultySelect = ({ value, labelledBy, onPick }: { value: Difficu
                                 <b>{t(`difficulty_${level}`)}</b>
                                 <small>{t(`diffNote_${level}`)}</small>
                             </span>
-                        </ModOption>
+                        </DiffOption>
                     ))}
                 </ModMenu>
             )}

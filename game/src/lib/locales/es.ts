@@ -301,7 +301,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Potenciadores",
         tutorialText3: "¿Atascado? La pista muestra una buena jugada y Deshacer retira tu jugada. Gratis una vez por partida.",
         tutorialTitle4: "Menú",
-        tutorialText4: "La casita abre el menú: reto diario, campaña, skins, premios y partidas con jugadores reales.",
+        tutorialText4: "La flecha Atrás abre el menú: reto diario, campaña, skins, premios y partidas con jugadores reales.",
         tutorialTitle5: "Pantalla completa",
         tutorialText5: "Este botón abre el juego en pantalla completa y el tablero se agranda. Útil en 5×5 y Ultimate.",
         tutorialNext: "Siguiente",

@@ -301,7 +301,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Boosters",
         tutorialText3: "Vast? De hint toont een goede zet, Ongedaan maken neemt je zet terug. Eén keer per spel gratis.",
         tutorialTitle4: "Menu",
-        tutorialText4: "Het huisje opent het menu: dagelijkse uitdaging, campagne, skins, beloningen en spellen met echte spelers.",
+        tutorialText4: "De terugpijl opent het menu: dagelijkse uitdaging, campagne, skins, beloningen en spellen met echte spelers.",
         tutorialTitle5: "Volledig scherm",
         tutorialText5: "Met deze knop speel je op volledig scherm en wordt het bord groter. Handig bij 5×5 en Ultimate.",
         tutorialNext: "Volgende",

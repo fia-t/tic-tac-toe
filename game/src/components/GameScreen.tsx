@@ -18,7 +18,7 @@ import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@ga
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 
 // Екран партії проти бота, спільний для 3×3, 5×5 і гіга-поля (на сайті - так само, як у грі з новини):
-// - смуга над полем: "Додому", "Заново", "Гра з другом", складність бота й модифікатор (списки),
+// - смуга над полем: "Назад", "Заново", "Гра з другом", складність бота й модифікатор (списки),
 //   рахунок, підказка ("Твій хід", "Бот думає..."), повний екран і налаштування; у виклику дня чи
 //   рівні кампанії - плашка з ціллю замість виборів;
 // - плитки поля - колонкою зліва від поля (на телефоні - у смузі);
@@ -28,7 +28,7 @@ import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModif
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
 
-// Екран партії на сайті: кнопка-будиночок у смузі повертає туди, звідки прийшли (замість шапки).
+// Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
 export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
@@ -337,7 +337,7 @@ const StatusSlot = styled.div`
 
 // Ширший екран: плитки поля - колонкою зліва від поля, строго під "Заново" (left рахує
 // GameScreen) і по вертикальному центру поля. Підказка - праворуч: назва й правило перемоги.
-const TileColumn = styled.div`
+const TileColumn = styled.div<{ $site?: boolean }>`
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -346,9 +346,10 @@ const TileColumn = styled.div`
     gap: 14px;
     z-index: 2;
 
+    /* На сайті плитки трохи більші, ніж у новині. */
     & > button {
-        width: 66px;
-        height: 66px;
+        width: ${({ $site }) => ($site ? 66 : 60)}px;
+        height: ${({ $site }) => ($site ? 66 : 60)}px;
     }
 
     /* Підказка - праворуч від плитки, у два рядки: назва й правило перемоги. */
@@ -371,8 +372,8 @@ const TileColumn = styled.div`
         }
 
         & > button {
-            width: 84px;
-            height: 84px;
+            width: ${({ $site }) => ($site ? 84 : 78)}px;
+            height: ${({ $site }) => ($site ? 84 : 78)}px;
         }
     }
 
@@ -1064,12 +1065,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const embed = isEmbed();
-    // Розкладка гри з новини: у новині й на сайті (будиночок замість шапки).
+    // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
     const wide = embed || goHome !== null;
     const restartLabel = over ? t("playAgain") : t("restart");
     const homeButton = goHome && (
-        <RoundButton type="button" data-tour="menu" onClick={goHome} aria-label={t("nav_home")} data-tip={t("nav_home")}>
-            <ActionIcon id="home" />
+        <RoundButton type="button" data-tour="menu" onClick={goHome} aria-label={t("back")} data-tip={t("back")}>
+            <ActionIcon id="back" />
         </RoundButton>
     );
     const actionButtons = (
@@ -1365,7 +1366,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <BoardHolder data-tour="board">
                 {board}
                 {wide && quick && (
-                    <TileColumn ref={tileColumn} role="group" aria-label={t("barBoard")}>
+                    <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")}>
                         {MODE_TILES.map((tile) => (
                             <ModeTile
                                 key={tile.id}

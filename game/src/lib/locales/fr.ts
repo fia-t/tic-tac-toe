@@ -301,7 +301,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Bonus",
         tutorialText3: "Bloqué ? L'indice montre un bon coup, Annuler reprend ton coup. Gratuit une fois par partie.",
         tutorialTitle4: "Menu",
-        tutorialText4: "La maison ouvre le menu : défi du jour, campagne, skins, récompenses et parties contre de vrais joueurs.",
+        tutorialText4: "La flèche Retour ouvre le menu : défi du jour, campagne, skins, récompenses et parties contre de vrais joueurs.",
         tutorialTitle5: "Plein écran",
         tutorialText5: "Ce bouton affiche le jeu en plein écran pour agrandir le plateau. Pratique en 5×5 et en Ultimate.",
         tutorialNext: "Suivant",

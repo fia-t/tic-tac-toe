@@ -302,7 +302,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Wzmocnienia",
         tutorialText3: "Utknięcie? Podpowiedź pokazuje dobry ruch, Cofnij cofa twój ruch. Raz na grę za darmo.",
         tutorialTitle4: "Menu",
-        tutorialText4: "Domek otwiera menu: wyzwanie dnia, kampania, skórki, nagrody i gry z prawdziwymi graczami.",
+        tutorialText4: "Strzałka Wstecz otwiera menu: wyzwanie dnia, kampania, skórki, nagrody i gry z prawdziwymi graczami.",
         tutorialTitle5: "Pełny ekran",
         tutorialText5: "Ten przycisk otwiera grę na pełnym ekranie, a plansza robi się większa. Wygodne przy 5×5 i Ultimate.",
         tutorialNext: "Dalej",
