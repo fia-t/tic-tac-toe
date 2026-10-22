@@ -160,8 +160,8 @@ export const FullscreenButton: React.FC<{ nudge?: boolean; round?: boolean }> = 
 };
 
 // inline - кнопка у верхньому ряду меню (TopBar); без нього - закріплена в правому верхньому
-// куті (екран онлайн-кімнати).
-export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false }) => {
+// куті (екран онлайн-кімнати). round - кругла кнопка в смузі над полем.
+export const SettingsButton: React.FC<{ inline?: boolean; round?: boolean }> = ({ inline = false, round = false }) => {
     const t = useT();
     const open = useOpenPanel() === "settings";
     const muted = useMuted();
@@ -170,9 +170,15 @@ export const SettingsButton: React.FC<{ inline?: boolean }> = ({ inline = false 
 
     return (
         <>
-            <GearButton type="button" $inline={inline} onClick={() => openPanel("settings")} aria-label={t("settings")} title={t("settings")}>
-                <IconSettings size={inline ? 18 : 22} />
-            </GearButton>
+            {round ? (
+                <RoundButton type="button" onClick={() => openPanel("settings")} aria-label={t("settings")} data-tip={t("settings")}>
+                    <IconSettings size={20} />
+                </RoundButton>
+            ) : (
+                <GearButton type="button" $inline={inline} onClick={() => openPanel("settings")} aria-label={t("settings")} title={t("settings")}>
+                    <IconSettings size={inline ? 18 : 22} />
+                </GearButton>
+            )}
 
             {open && (
                 <>

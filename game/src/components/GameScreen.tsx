@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import { ActionIcon, DiffButton, DiffGroup, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
+import { ActionIcon, DifficultySelect, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { InfoTip } from "@game/components/HomeScreen";
 import { levelTitle } from "@game/lib/campaignContent";
@@ -11,21 +11,25 @@ import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
-import { FullscreenButton } from "@game/components/SettingsPanel";
+import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
-import { DIFFICULTIES, setDifficulty, useDifficulty } from "@game/lib/difficulty";
+import { Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 
-// Екран партії проти бота (як у прототипі), спільний для 3×3, 5×5 і гіга-поля:
-// - смуга над полем: "Заново", "Гра з другом", плитки режимів, складність ("світлофор") і
-//   модифікатори; у виклику дня чи рівні кампанії - плашка з ціллю замість виборів;
-// - рядок рахунку з підказкою ("Твій хід", "Бот думає...") одразу після нього;
+// Екран партії проти бота, спільний для 3×3, 5×5 і гіга-поля (на сайті - так само, як у грі з новини):
+// - смуга над полем: "Додому", "Заново", "Гра з другом", складність бота й модифікатор (списки),
+//   рахунок, підказка ("Твій хід", "Бот думає..."), повний екран і налаштування; у виклику дня чи
+//   рівні кампанії - плашка з ціллю замість виборів;
+// - плитки поля - колонкою зліва від поля (на телефоні - у смузі);
 // - поле, праворуч від нього (або під ним на вузькому екрані) - бустери "Скасувати хід" і "Підказка";
 //   у партії з таймером - ще "Пауза таймера" й "Заморозка часу".
 
 // Rewarded-реклама агрегатора: є - бустер після безкоштовної спроби можна взяти за рекламу.
 export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefined>(undefined);
+
+// Екран партії на сайті: кнопка-будиночок у смузі повертає туди, звідки прийшли (замість шапки).
+export const GameHomeContext = createContext<(() => void) | null>(null);
 
 export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
@@ -44,8 +48,8 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
         --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h))));
     }
 
-    /* Гра в новині: шапки немає - поле займає всю висоту iframe (чи екрана в повноекранному
-       режимі) і може бути ширшим за колонку; збоку лишається місце під бустери. */
+    /* Гра в новині й екран партії на сайті: шапки немає - поле займає всю висоту iframe (чи екрана
+       в повноекранному режимі) і може бути ширшим за колонку; збоку лишається місце під бустери. */
     ${({ $embed }) =>
         $embed &&
         css`
@@ -85,7 +89,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
 // куточку групи.
 // Кнопки вирівняні по низу. На широкому екрані - один рядок; від 760px
 // і вужче "Бот" і "Модифікатор" завжди другим рядком, щоб розкладка не залежала від поля.
-const Bar = styled.div<{ $embed?: boolean }>`
+const Bar = styled.div<{ $embed?: boolean; $site?: boolean }>`
     position: relative;
     z-index: 25;
     display: flex;
@@ -107,7 +111,7 @@ const Bar = styled.div<{ $embed?: boolean }>`
 
     /* Гра в новині: усі кнопки однієї висоти (46px) і по верхньому краю; під вибором поля -
        статус "чий хід" (і таймер). */
-    ${({ $embed }) =>
+    ${({ $embed, $site }) =>
         $embed &&
         css`
             align-items: flex-start;
@@ -141,8 +145,25 @@ const Bar = styled.div<{ $embed?: boolean }>`
                 --mod-menu-max-h: calc(100dvh - 70px);
             }
 
-            /* Iframe до 1100px: менші проміжки - модифікатор і підказка ходу вміщаються повністю. */
-            @media (min-width: 761px) and (max-width: 1099px) {
+            /* Сайт до 1100px: у кнопці модифікатора лише іконка (назва й опис - у списку), підказка
+               ходу й рахунок вужчі; до 1000px - ще менші проміжки. Так уся смуга в один рядок. */
+            ${$site &&
+            css`
+                @media (min-width: 761px) and (max-width: 1099px) {
+                    --mod-w: 64px;
+                    --mod-label: none;
+                    --hint-min: 200px;
+                    --score-min: 0;
+                }
+
+                @media (min-width: 761px) and (max-width: 999px) {
+                    column-gap: 16px !important;
+                }
+            `}
+
+            /* Iframe до 1100px: менші проміжки - модифікатор і підказка ходу вміщаються повністю.
+               На сайті кнопок у смузі більше (додому, гра з другом, бот, налаштування) - до 1400px. */
+            @media (min-width: 761px) and (max-width: ${$site ? 1399 : 1099}px) {
                 column-gap: 24px;
             }
 
@@ -272,13 +293,14 @@ const ModSlot = styled.div`
     justify-self: end;
     display: flex;
     justify-content: flex-end;
+    gap: 10px;
     min-width: 140px;
     max-width: 100%;
 `;
 
 // Ширший екран: рахунок - рівно по центру; не стискається (стискаються модифікатор і підказка).
 const ScoreMid = styled(BarGroup)`
-    min-width: max-content;
+    min-width: var(--score-min, max-content);
 `;
 
 // Ширший екран: підказка ходу - перед повним екраном, сталої ширини під найдовший переклад
@@ -289,7 +311,7 @@ const HintSlot = styled.div`
     flex-direction: column;
     width: 100%;
     max-width: 332px;
-    min-width: 240px;
+    min-width: var(--hint-min, 240px);
 `;
 
 const StatusSlot = styled.div`
@@ -325,8 +347,8 @@ const TileColumn = styled.div`
     z-index: 2;
 
     & > button {
-        width: 60px;
-        height: 60px;
+        width: 66px;
+        height: 66px;
     }
 
     /* Підказка - праворуч від плитки, у два рядки: назва й правило перемоги. */
@@ -349,8 +371,8 @@ const TileColumn = styled.div`
         }
 
         & > button {
-            width: 78px;
-            height: 78px;
+            width: 84px;
+            height: 84px;
         }
     }
 
@@ -359,9 +381,11 @@ const TileColumn = styled.div`
     }
 `;
 
-// Гра в новині: повний екран - у смузі після модифікатора, кнопка розміром як "Заново".
+// Повний екран (і на сайті - налаштування) - у смузі останніми, кнопки розміром як "Заново".
 const BarFull = styled(BarGroup)`
     ${autoLeft}
+    flex-direction: row;
+    gap: 10px;
 
     && ${RoundButton} {
         width: 42px;
@@ -531,7 +555,7 @@ const PushRight = styled.div<{ $embed?: boolean }>`
         gap: 6px 10px;
         --mod-w-sm: 64px;
 
-        [aria-haspopup] > span {
+        [aria-haspopup]:not([data-diff]) > span {
             display: none;
         }
 
@@ -586,26 +610,6 @@ const ModeTile = styled.button`
     }
 `;
 
-const BarDiff = styled(DiffButton)`
-    ${tipCss}
-
-    && {
-        --gb-c: 12px;
-        min-height: 40px;
-        padding: 0 2px;
-        font-size: 14px;
-    }
-
-    @media (max-width: 480px) {
-        && {
-            --gb-c: 11px;
-            min-height: 36px;
-            padding: 0 1px;
-            font-size: 13px;
-        }
-    }
-`;
-
 
 // Ціль виклику дня / рівня кампанії і кнопка "Звичайна гра".
 const GoalBanner = styled.div`
@@ -639,7 +643,8 @@ const LeaveButton = styled.button`
     }
 `;
 
-// Рахунок - над полем; підказка - в одному ряду з ним, одразу після нього.
+// Рахунок - над полем; підказка - в одному ряду з ним, одразу після нього (на сайті - лише на
+// телефоні: на ширшому екрані обидва в смузі).
 export const ScoreTop = styled.div<{ $wide?: boolean }>`
     display: flex;
     align-items: center;
@@ -675,6 +680,13 @@ export const ScoreTop = styled.div<{ $wide?: boolean }>`
     @media (max-width: 560px) {
         gap: 8px;
         min-height: 40px;
+    }
+`;
+
+// Сайт: на ширшому екрані рахунок і підказка - у смузі (крім виклику дня й рівня кампанії).
+const NarrowScoreTop = styled(ScoreTop)<{ $inBar?: boolean }>`
+    @media (min-width: 761px) {
+        ${({ $inBar }) => ($inBar ? "display: none;" : "")}
     }
 `;
 
@@ -1004,6 +1016,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     onShowResult,
 }) => {
     const t = useT();
+    const goHome = useContext(GameHomeContext);
     const run = useDailyRun();
     const difficulty = useDifficulty();
     const choice = useModifierChoice();
@@ -1034,7 +1047,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         onRestart();
     };
 
-    const pickDifficulty = (level: (typeof DIFFICULTIES)[number]) => {
+    const pickDifficulty = (level: Difficulty) => {
         if (level === difficulty) return;
         trackEvent("select_difficulty", { difficulty: level });
         setDifficulty(level);
@@ -1051,9 +1064,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const embed = isEmbed();
+    // Розкладка гри з новини: у новині й на сайті (будиночок замість шапки).
+    const wide = embed || goHome !== null;
     const restartLabel = over ? t("playAgain") : t("restart");
+    const homeButton = goHome && (
+        <RoundButton type="button" data-tour="menu" onClick={goHome} aria-label={t("nav_home")} data-tip={t("nav_home")}>
+            <ActionIcon id="home" />
+        </RoundButton>
+    );
     const actionButtons = (
         <>
+            {homeButton}
             <RoundButton type="button" onClick={restart} disabled={restartDisabled} aria-label={restartLabel} data-tip={restartLabel}>
                 <ActionIcon id="restart" />
             </RoundButton>
@@ -1110,7 +1131,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     // Список модифікаторів: у новині на ширшому екрані модифікатор зліва - список від його лівого краю.
     const modSelect = (menuAlign: "left" | "auto") => (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign={menuAlign} withDesc plain={embed} onPick={pickModifier} />
+        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign={menuAlign} withDesc plain={wide} onPick={pickModifier} />
     );
     const turnLine = (
         <TurnLine
@@ -1122,18 +1143,24 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         >
             {myTurn && !over && !timerBoost.expired && <TurnMark>{turnMarker ? <img src={turnMarker} alt="" /> : <Cross />}</TurnMark>}
             {showFirstHint ? t("firstMoveHint") : timerBoost.expired && !over ? t("timerExpired") : status}
+            {/* Сайт: "Результат" - у плашці підказки. */}
+            {goHome && over && quick && onShowResult && (
+                <ResultLink type="button" onClick={onShowResult}>
+                    {t("showResult")}
+                </ResultLink>
+            )}
         </TurnLine>
     );
     // У новині частини смуги - в обгортках EmbedSide (рахунок між ними по центру), на сайті - без них.
-    const embedSide = (node: React.ReactNode) => (embed ? <EmbedSide>{node}</EmbedSide> : node);
+    const embedSide = (node: React.ReactNode) => (wide ? <EmbedSide>{node}</EmbedSide> : node);
     const hasTimer = timer !== null && timer !== undefined;
     const timerRunning = hasTimer && !over;
 
     // У новині частини лише для телефону чи лише для ширшого екрана; на сайті - завжди.
-    const narrowOnly = (node: React.ReactNode) => (embed ? <NarrowOnly>{node}</NarrowOnly> : node);
-    // Гра в новині: рахунок з Кварті (на ширшому екрані - по центру смуги, на телефоні - у
-    // другому рядку смуги).
-    const scorePill = (
+    const narrowOnly = (node: React.ReactNode) => (wide ? <NarrowOnly>{node}</NarrowOnly> : node);
+    // Рахунок у смузі (на ширшому екрані - по центру; у новині на телефоні - у другому рядку
+    // смуги): у новині - з Кварті, на сайті - бот і ім'я гравця.
+    const scorePill = embed ? (
         <BarScore>
             <QuartyFace src={assetUrl("icons/mentor.a5788621.avif")} alt="" />
             <span>{t("quarty")}</span>
@@ -1142,6 +1169,23 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <b>{score.human}</b>
             <span>{t("you")}</span>
         </BarScore>
+    ) : (
+        <BarScore>
+            <span>{t("ai")}</span>
+            <b>{score.ai}</b>
+            <span>—</span>
+            <b>{score.human}</b>
+            <span>{humanName ?? t("player")}</span>
+        </BarScore>
+    );
+    // Складність бота (сайт) - список, як у модифікатора.
+    const diffSelect = goHome && (
+        <BarGroup>
+            <BarLabel id="bar-bot" $hidden>
+                {t("barBot")}
+            </BarLabel>
+            <DifficultySelect value={difficulty} labelledBy="bar-bot" onPick={pickDifficulty} />
+        </BarGroup>
     );
     const modGroup = (menuAlign: "left" | "auto") => (
         <BarGroup>
@@ -1213,16 +1257,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     );
 
     return (
-        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={isEmbed()}>
-            <Bar data-tour="bar" $embed={isEmbed()}>
+        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide}>
+            <Bar data-tour="bar" $embed={wide && quick} $site={!embed}>
                 {quick ? (
                     <>
                         {embedSide(
                             <>
-                        <BarActions $embed={embed}>{actionButtons}</BarActions>
-                        {embed && (
+                        <BarActions $embed={wide}>{actionButtons}</BarActions>
+                        {wide && (
                             <WideOnly>
-                                <ModSlot>{modGroup("left")}</ModSlot>
+                                <ModSlot>
+                                    {diffSelect}
+                                    {modGroup("left")}
+                                </ModSlot>
                             </WideOnly>
                         )}
                         {narrowOnly(
@@ -1230,36 +1277,29 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             <BarLabel id="bar-board" $hidden>
                                 {t("barBoard")}
                             </BarLabel>
-                            <BarGroupRow role="group" aria-labelledby="bar-board" style={{ position: "relative", gap: embed ? 10 : undefined }}>
+                            <BarGroupRow role="group" aria-labelledby="bar-board" style={{ position: "relative", gap: 10 }}>
                                 {MODE_TILES.map((tile) => (
                                     <ModeTile
                                         key={tile.id}
                                         type="button"
                                         aria-pressed={mode === tile.id}
                                         aria-label={t(tile.label)}
-                                        data-tip={embed ? tileTip(tile) : t(tile.label)}
+                                        data-tip={tileTip(tile)}
                                         onClick={() => pickMode(tile.id)}
                                     >
                                         <img src={assetUrl(tile.img)} alt="" />
                                     </ModeTile>
                                 ))}
-                                {!embed && (
-                                    <CornerTip>
-                                        <InfoTip text={t("infoBoard")} />
-                                    </CornerTip>
-                                )}
                             </BarGroupRow>
                             {embed && <BarStatus>{turnLine}</BarStatus>}
                         </BarGroup>
                         )}
                             </>
                         )}
-                        <PushRight $embed={isEmbed()}>
-                            {embed ? (
+                        <PushRight $embed>
+                            {wide && (
                                 <>
-                                    <NarrowOnly>
-                                        <BarGroup>{scorePill}</BarGroup>
-                                    </NarrowOnly>
+                                    <NarrowOnly>{embed ? <BarGroup>{scorePill}</BarGroup> : diffSelect}</NarrowOnly>
                                     <WideOnly>
                                         <ScoreMid>{scorePill}</ScoreMid>
                                         <HintSlot>
@@ -1267,37 +1307,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                         </HintSlot>
                                     </WideOnly>
                                 </>
-                            ) : (
-                            <BarGroup>
-                                <BarLabel id="bar-bot" $hidden>
-                                    {t("barBot")}
-                                </BarLabel>
-                                <DiffGroup role="group" aria-labelledby="bar-bot" style={{ position: "relative" }}>
-                                    {DIFFICULTIES.map((level) => (
-                                        <BarDiff
-                                            key={level}
-                                            type="button"
-                                            $level={level}
-                                            aria-pressed={difficulty === level}
-                                            data-tip={t(`diffNote_${level}`)}
-                                            onClick={() => pickDifficulty(level)}
-                                        >
-                                            {t(`difficulty_${level}`)}
-                                        </BarDiff>
-                                    ))}
-                                    <CornerTip>
-                                        <InfoTip text={t("infoDiff")} />
-                                    </CornerTip>
-                                </DiffGroup>
-                            </BarGroup>
                             )}
                             {embedSide(
                                 <>
                             {narrowOnly(modGroup("auto"))}
-                            {/* Гра в новині: розгорнути на весь екран; на 5×5 і гіга-полі кнопка час від часу пульсує. */}
-                            {embed && (
+                            {/* Розгорнути на весь екран (у новині на 5×5 і гіга-полі кнопка час від часу пульсує);
+                                на сайті - ще налаштування. */}
+                            {wide && (
                                 <BarFull>
-                                    <FullscreenButton round nudge={mode !== "traditional"} />
+                                    <FullscreenButton round nudge={embed && mode !== "traditional"} />
+                                    {goHome && <SettingsButton round />}
                                 </BarFull>
                             )}
                                 </>
@@ -1306,13 +1325,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </>
                 ) : (
                     <>
+                        {actionButtons}
                         <GoalBanner>
                             <span>{goal}</span>
                             <LeaveButton type="button" onClick={endDailyRun}>
                                 {t("dailyLeave")}
                             </LeaveButton>
                         </GoalBanner>
-                        {actionButtons}
+                        {goHome && (
+                            <BarFull style={{ marginLeft: "auto" }}>
+                                <FullscreenButton round />
+                                <SettingsButton round />
+                            </BarFull>
+                        )}
                     </>
                 )}
             </Bar>
@@ -1324,7 +1349,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             )}
 
             {!embed && (
-            <ScoreTop>
+            <NarrowScoreTop $inBar={quick}>
                 <ScorePill>
                     {isHalloweenEmbed() && <ScoreCobweb />}
                     <span>{t("ai")}</span>
@@ -1334,17 +1359,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     <span>{humanName ?? t("player")}</span>
                 </ScorePill>
                 {turnLine}
-                {over && quick && onShowResult && (
-                    <ResultLink type="button" onClick={onShowResult}>
-                        {t("showResult")}
-                    </ResultLink>
-                )}
-            </ScoreTop>
+            </NarrowScoreTop>
             )}
 
             <BoardHolder data-tour="board">
                 {board}
-                {embed && quick && (
+                {wide && quick && (
                     <TileColumn ref={tileColumn} role="group" aria-label={t("barBoard")}>
                         {MODE_TILES.map((tile) => (
                             <ModeTile

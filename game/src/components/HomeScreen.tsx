@@ -334,23 +334,21 @@ const InfoPop = styled.div<{ $embed?: boolean }>`
     max-width: min(320px, calc(100vw - 24px));
     padding: 10px 12px;
     border-radius: 14px;
-    background: #49301f;
-    color: #fff7e8;
+    /* Кольору рахунку, як і тултіпи. */
+    background: #fff6e6;
+    color: #5b3f22;
     font: 600 13px/1.4 var(--font-body);
     text-transform: none;
     letter-spacing: 0;
-    box-shadow: 0 8px 20px rgba(60, 35, 10, 0.3);
+    box-shadow:
+        0 0 0 2px rgba(139, 101, 60, 0.35),
+        0 8px 20px rgba(40, 20, 10, 0.3);
 
-    /* Гра в новині: кольору рахунку, як і тултіпи. */
+    /* Гра в новині: крупніше. */
     ${({ $embed }) =>
         $embed &&
         css`
-            background: #fff6e6;
-            color: #5b3f22;
             font-size: 15px;
-            box-shadow:
-                0 0 0 2px rgba(139, 101, 60, 0.35),
-                0 8px 20px rgba(40, 20, 10, 0.3);
 
             @media (min-width: 1200px) and (min-height: 800px) {
                 max-width: 420px;

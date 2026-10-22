@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import type { Difficulty } from "@game/lib/difficulty";
+import { DIFFICULTIES, type Difficulty } from "@game/lib/difficulty";
 import { useT } from "@game/lib/i18n";
 import type { Modifier } from "@game/lib/modifiers";
 
@@ -22,9 +22,10 @@ export const tipCss = css`
         transform: translateX(-50%);
         padding: var(--tip-pad, 4px 9px);
         border-radius: 8px;
-        background: var(--tip-bg, #49301f);
-        color: var(--tip-ink, #fff7e8);
-        box-shadow: var(--tip-shadow, none);
+        /* Кремовий, кольору рахунку. */
+        background: var(--tip-bg, #fff6e6);
+        color: var(--tip-ink, #5b3f22);
+        box-shadow: var(--tip-shadow, 0 0 0 2px rgba(139, 101, 60, 0.35), 0 6px 16px rgba(40, 20, 10, 0.3));
         font: 400 var(--tip-fs, 13px) / 1.25 var(--font-body);
         white-space: nowrap;
         text-shadow: none;
@@ -198,6 +199,7 @@ export const ModRow = styled.div`
 
 // Іконки дій (заново, гра з другом, бустери) - круглі кремові кнопки.
 const ACTION_ICONS = {
+    home: <path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />,
     restart: (
         <>
             <path d="M20 12a8 8 0 1 1-2.6-5.9" />
@@ -332,7 +334,8 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
             }
 
             & > span {
-                display: flex;
+                /* --mod-label: none - лише іконка (вузька смуга на сайті). */
+                display: var(--mod-label, flex);
                 flex-direction: column;
                 gap: 0;
                 line-height: 1.1;
@@ -570,6 +573,99 @@ export const ModifierSelect = ({
                                     {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
                                 </b>
                                 <small>{desc(m)}</small>
+                            </span>
+                        </ModOption>
+                    ))}
+                </ModMenu>
+            )}
+        </ModPicker>
+    );
+};
+
+// Складність бота в смузі над полем - одна кнопка кольору рівня ("світлофор") і список під нею,
+// як у модифікаторів: назва й що означає рівень. Опис вибраного - у тултіпі кнопки.
+const DiffToggle = styled(ModToggle)<{ $level: Difficulty }>`
+    ${tipCss}
+
+    && {
+        width: auto;
+        padding: 0 10px 0 12px;
+        font-size: 15px;
+        ${({ $level }) => buttonTone(DIFF_TONE[$level])}
+    }
+
+    && > span {
+        flex: none;
+        overflow: visible;
+    }
+
+    &[aria-expanded="true"]::after {
+        display: none;
+    }
+`;
+
+const DiffDot = styled.span<{ $level: Difficulty }>`
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: ${({ $level }) => ({ easy: "#2f8a3e", medium: "#e0a020", master: "#c0392b" })[$level]};
+`;
+
+export const DifficultySelect = ({ value, labelledBy, onPick }: { value: Difficulty; labelledBy: string; onPick: (level: Difficulty) => void }) => {
+    const t = useT();
+    const [open, setOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (event: PointerEvent) => {
+            if (!ref.current?.contains(event.target as Node)) setOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setOpen(false);
+        };
+        document.addEventListener("pointerdown", onDown);
+        document.addEventListener("keydown", onKey);
+        return () => {
+            document.removeEventListener("pointerdown", onDown);
+            document.removeEventListener("keydown", onKey);
+        };
+    }, [open]);
+
+    return (
+        <ModPicker ref={ref}>
+            <DiffToggle
+                type="button"
+                $level={value}
+                data-diff
+                aria-haspopup="menu"
+                aria-expanded={open}
+                aria-labelledby={`${labelledBy} ${labelledBy}-value`}
+                data-tip={t(`diffNote_${value}`)}
+                onClick={() => setOpen((v) => !v)}
+            >
+                <span id={`${labelledBy}-value`}>{t(`difficulty_${value}`)}</span>
+                <Chevron />
+            </DiffToggle>
+            {open && (
+                <ModMenu role="menu" aria-labelledby={labelledBy} $align="left" style={{ width: "min(300px, calc(100vw - 32px))" }}>
+                    {DIFFICULTIES.map((level) => (
+                        <ModOption
+                            key={level}
+                            type="button"
+                            role="menuitemradio"
+                            aria-checked={value === level}
+                            onClick={() => {
+                                onPick(level);
+                                setOpen(false);
+                            }}
+                        >
+                            <i>
+                                <DiffDot $level={level} />
+                            </i>
+                            <span>
+                                <b>{t(`difficulty_${level}`)}</b>
+                                <small>{t(`diffNote_${level}`)}</small>
                             </span>
                         </ModOption>
                     ))}

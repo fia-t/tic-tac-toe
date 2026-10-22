@@ -29,7 +29,7 @@ import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/Profile
 import { TopBar } from "@game/components/TopBar";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
-import { GameScreen, RewardedAdContext } from "@game/components/GameScreen";
+import { GameHomeContext, GameScreen, RewardedAdContext } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
 import { EMBED_TUTORIAL_KEY, Tutorial, embedTutorialSteps, isTutorialDone, type TutorialStep } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
@@ -687,8 +687,15 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         <RewardedAdContext.Provider value={onRewardedAd}>
             <ShellVars />
             <AppColumn ref={topRef}>
-                <TopBar onHome={() => navigate("home")} onDaily={openDaily} crumb={crumb} />
-                {content}
+                {/* На екрані партії шапки немає: будиночок, повний екран і налаштування - у смузі над полем. */}
+                {onGameScreen && themeReady ? (
+                    <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
+                ) : (
+                    <>
+                        <TopBar onHome={() => navigate("home")} onDaily={openDaily} crumb={crumb} />
+                        {content}
+                    </>
+                )}
             </AppColumn>
             {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
             {screen !== "game" && <BottomNav current={screen} onNavigate={navigate} />}

@@ -17,7 +17,7 @@ import { useT } from "@game/lib/i18n";
 
 const Bar = styled.header`
     position: relative;
-    z-index: 20;
+    z-index: 30;
     display: flex;
     align-items: center;
     gap: 10px;

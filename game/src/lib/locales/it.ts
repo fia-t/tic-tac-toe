@@ -301,7 +301,7 @@ const pack: LocalePack = {
         tutorialTitle3: "Bonus",
         tutorialText3: "Bloccato? Il suggerimento mostra una buona mossa, Annulla ritira la tua mossa. Gratis una volta per partita.",
         tutorialTitle4: "Menu",
-        tutorialText4: "Il logo apre il menu: sfida del giorno, campagna, skin, premi e partite con giocatori veri.",
+        tutorialText4: "La casetta apre il menu: sfida del giorno, campagna, skin, premi e partite con giocatori veri.",
         tutorialTitle5: "Schermo intero",
         tutorialText5: "Questo pulsante apre il gioco a schermo intero e il campo diventa più grande. Comodo nel 5×5 e nell'Ultimate.",
         tutorialNext: "Avanti",
