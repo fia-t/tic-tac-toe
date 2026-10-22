@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Le pedine cadono in fondo alla colonna.",
         modifierDesc_stones: "Tre caselle hanno delle pietre - gioca intorno.",
         modifierDesc_timer: "5 secondi a mossa, altrimenti si gioca una mossa a caso.",
-        modifierDesc_misere: "Al contrario: chi completa una linea perde.",
+        modifierDesc_misere: "Chi completa una linea perde.",
         weeklyTag: "della settimana",
         timerLabel: "Tempo per la tua mossa",
         dailyReward: "Premio: {n} {n:moneta|monete} (di più con una serie più lunga).",

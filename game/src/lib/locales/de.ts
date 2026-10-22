@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Steine fallen ganz nach unten in die Spalte.",
         modifierDesc_stones: "Auf drei Feldern liegen Felsen - spiel um sie herum.",
         modifierDesc_timer: "5 Sekunden pro Zug, sonst wird zufällig gezogen.",
-        modifierDesc_misere: "Umgekehrt: wer eine Reihe vollendet, verliert.",
+        modifierDesc_misere: "Wer eine Reihe vollendet, verliert.",
         weeklyTag: "der Woche",
         timerLabel: "Zeit für deinen Zug",
         dailyReward: "Belohnung: {n} {n:Münze|Münzen} (mehr bei längerer Serie).",

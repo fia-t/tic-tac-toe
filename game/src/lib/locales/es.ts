@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Las fichas caen al fondo de la columna.",
         modifierDesc_stones: "Tres casillas tienen piedras: juega a su alrededor.",
         modifierDesc_timer: "5 segundos por jugada; si no, se juega una al azar.",
-        modifierDesc_misere: "Al revés: quien completa una línea pierde.",
+        modifierDesc_misere: "Quien completa una línea pierde.",
         weeklyTag: "de la semana",
         timerLabel: "Tiempo para tu jugada",
         dailyReward: "Recompensa: {n} {n:moneda|monedas} (más con una racha larga).",

@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Les pions tombent au bas de la colonne.",
         modifierDesc_stones: "Trois cases portent des pierres - joue autour.",
         modifierDesc_timer: "5 secondes par coup, sinon un coup au hasard est joué.",
-        modifierDesc_misere: "À l'envers : qui complète une ligne perd.",
+        modifierDesc_misere: "Qui complète une ligne perd.",
         weeklyTag: "de la semaine",
         timerLabel: "Temps pour ton coup",
         dailyReward: "Récompense : {n} {n:pièce|pièces} (plus avec une longue série).",

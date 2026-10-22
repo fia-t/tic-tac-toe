@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "As peças caem até o fundo da coluna.",
         modifierDesc_stones: "Três casas têm pedras - jogue ao redor delas.",
         modifierDesc_timer: "5 segundos por jogada, senão uma jogada aleatória é feita.",
-        modifierDesc_misere: "Ao contrário: quem completa uma linha perde.",
+        modifierDesc_misere: "Quem completa uma linha perde.",
         weeklyTag: "da semana",
         timerLabel: "Tempo para sua jogada",
         dailyReward: "Recompensa: {n} {n:moeda|moedas} (mais com uma sequência maior).",

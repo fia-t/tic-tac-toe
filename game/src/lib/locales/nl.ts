@@ -134,7 +134,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Stukken vallen naar de bodem van de kolom.",
         modifierDesc_stones: "Op drie vakjes liggen stenen - speel eromheen.",
         modifierDesc_timer: "5 seconden per zet, anders wordt er willekeurig gezet.",
-        modifierDesc_misere: "Omgekeerd: wie een rij maakt, verliest.",
+        modifierDesc_misere: "Wie een rij maakt, verliest.",
         weeklyTag: "van de week",
         timerLabel: "Tijd voor je zet",
         dailyReward: "Beloning: {n} {n:munt|munten} (meer bij een langere reeks).",

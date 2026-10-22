@@ -135,7 +135,7 @@ const pack: LocalePack = {
         modifierDesc_gravity: "Pionki spadają na dół kolumny.",
         modifierDesc_stones: "Na trzech polach leżą kamienie - graj wokół nich.",
         modifierDesc_timer: "5 sekund na ruch, inaczej wykonywany jest losowy ruch.",
-        modifierDesc_misere: "Na odwrót: kto ułoży linię, przegrywa.",
+        modifierDesc_misere: "Kto ułoży linię, przegrywa.",
         weeklyTag: "tygodnia",
         timerLabel: "Czas na twój ruch",
         dailyReward: "Nagroda: {n} {n:moneta|monety|monet} (więcej za dłuższą serię).",
