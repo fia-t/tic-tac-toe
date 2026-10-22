@@ -268,8 +268,8 @@ export const RoundButton = styled.button`
         transform: translate(-50%, -50%);
     }
 
-    /* Неактивна: приглушуємо іконку й кладемо світлу вуаль, а не filter на всю кнопку - інакше
-       напівпрозорим ставав би й тултіп. */
+    /* Неактивна: поверх - світліша сіра копія тієї самої основи (точно за формою кнопки), іконка
+       бліда. Не filter на всю кнопку - інакше напівпрозорим ставав би й тултіп. */
     &&:disabled {
         filter: none;
     }
@@ -282,8 +282,12 @@ export const RoundButton = styled.button`
         content: "";
         position: absolute;
         inset: calc(-1 * var(--gb-c, 0px));
-        border-radius: 50%;
-        background: rgba(255, 250, 240, 0.5);
+        border-style: solid;
+        border-color: transparent;
+        border-width: var(--gb-c, 0px);
+        border-image: inherit;
+        filter: grayscale(1) brightness(1.2);
+        opacity: 0.55;
         pointer-events: none;
     }
 

@@ -617,9 +617,12 @@ const GoalBanner = styled.div`
     display: flex;
     align-items: center;
     gap: 10px;
-    flex: 0 1 auto;
+    /* Займає все місце, що лишилось (у смузі - колонку виборів бота й модифікатора), висотою як
+       кнопки поруч; розмір тексту підбирає GameScreen, щоб ціль уміщалась. */
+    flex: 1 1 0;
     min-width: 0;
-    padding: 6px 6px 6px 14px;
+    height: 46px;
+    padding: 4px 4px 4px 14px;
     border-radius: 999px;
     background: linear-gradient(155deg, #ffe3a3, #f5c96a);
     box-shadow: 3px 3px 6px rgba(101, 72, 35, 0.25);
@@ -627,8 +630,12 @@ const GoalBanner = styled.div`
     font-size: 14px;
     font-weight: 800;
 
-    span {
+    & > span {
+        flex: 1 1 auto;
         min-width: 0;
+        max-height: 37px;
+        overflow: hidden;
+        line-height: 1.1;
     }
 `;
 
@@ -641,6 +648,35 @@ const LeaveButton = styled.button`
         --gb-c: 13px;
         min-height: 38px;
         padding: 0 4px;
+    }
+
+    /* Ширший екран: лише хрестик (назва - у тултіпі), щоб цілі лишалось більше місця. */
+    & > svg {
+        display: none;
+    }
+
+    @media (min-width: 761px) {
+        ${tipCss}
+        position: relative;
+
+        && {
+            width: 38px;
+            padding: 0;
+        }
+
+        & > span {
+            display: none;
+        }
+
+        & > svg {
+            display: block;
+        }
+
+        &::after {
+            left: auto;
+            right: calc(-1 * var(--gb-c, 0px));
+            transform: none;
+        }
     }
 `;
 
@@ -1244,6 +1280,40 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         return () => window.removeEventListener("resize", place);
     }, [mode, timerRunning]);
 
+    // Ціль виклику: найбільший шрифт (14-10px), з яким вона вміщається у два-три рядки плашки.
+    // Плашка є і в широкій, і у вузькій розкладці - підбираємо в кожній.
+    useLayoutEffect(() => {
+        const texts = [...document.querySelectorAll<HTMLElement>("[data-goal-text]")];
+        if (!texts.length) return;
+        const fit = () => {
+            for (const text of texts) {
+                for (let size = 14; size >= 10; size--) {
+                    text.style.fontSize = `${size}px`;
+                    if (text.scrollHeight <= text.clientHeight) break;
+                }
+            }
+        };
+        // Перераховуємо, коли змінюється ширина плашки і коли довантажився шрифт.
+        const observer = new ResizeObserver(fit);
+        for (const text of texts) observer.observe(text.parentElement ?? text);
+        void document.fonts?.ready.then(fit);
+        return () => observer.disconnect();
+    }, [goal]);
+    // Виклик дня / рівень кампанії: ціль і "Звичайна гра" - на місці виборів бота й модифікатора.
+    const goalBanner = (
+        <GoalBanner>
+            <span data-goal-text title={goal}>
+                {goal}
+            </span>
+            <LeaveButton type="button" onClick={endDailyRun} aria-label={t("dailyLeave")} data-tip={t("dailyLeave")}>
+                <span>{t("dailyLeave")}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6 6 18" />
+                </svg>
+            </LeaveButton>
+        </GoalBanner>
+    );
+
     const mainButtons = (
         <>
             {boosterButton("undo", boosters.canUndo, boosters.onUndo)}
@@ -1259,8 +1329,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide}>
-            <Bar data-tour="bar" $embed={wide && quick} $site={!embed}>
-                {quick ? (
+            <Bar data-tour="bar" $embed={wide} $site={!embed}>
+                {wide ? (
                     <>
                         {embedSide(
                             <>
@@ -1268,12 +1338,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         {wide && (
                             <WideOnly>
                                 <ModSlot>
-                                    {diffSelect}
-                                    {modGroup("left")}
+                                    {quick ? (
+                                        <>
+                                            {diffSelect}
+                                            {modGroup("left")}
+                                        </>
+                                    ) : (
+                                        goalBanner
+                                    )}
                                 </ModSlot>
                             </WideOnly>
                         )}
-                        {narrowOnly(
+                        {quick && narrowOnly(
                         <BarGroup>
                             <BarLabel id="bar-board" $hidden>
                                 {t("barBoard")}
@@ -1300,7 +1376,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                         <PushRight $embed>
                             {wide && (
                                 <>
-                                    <NarrowOnly>{embed ? <BarGroup>{scorePill}</BarGroup> : diffSelect}</NarrowOnly>
+                                    <NarrowOnly>{embed ? <BarGroup>{scorePill}</BarGroup> : quick ? diffSelect : goalBanner}</NarrowOnly>
                                     <WideOnly>
                                         <ScoreMid>{scorePill}</ScoreMid>
                                         <HintSlot>
@@ -1311,7 +1387,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                             )}
                             {embedSide(
                                 <>
-                            {narrowOnly(modGroup("auto"))}
+                            {quick && narrowOnly(modGroup("auto"))}
                             {/* Розгорнути на весь екран (у новині на 5×5 і гіга-полі кнопка час від часу пульсує);
                                 на сайті - ще налаштування. */}
                             {wide && (
@@ -1326,19 +1402,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </>
                 ) : (
                     <>
+                        {goalBanner}
                         {actionButtons}
-                        <GoalBanner>
-                            <span>{goal}</span>
-                            <LeaveButton type="button" onClick={endDailyRun}>
-                                {t("dailyLeave")}
-                            </LeaveButton>
-                        </GoalBanner>
-                        {goHome && (
-                            <BarFull style={{ marginLeft: "auto" }}>
-                                <FullscreenButton round />
-                                <SettingsButton round />
-                            </BarFull>
-                        )}
                     </>
                 )}
             </Bar>
@@ -1350,7 +1415,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             )}
 
             {!embed && (
-            <NarrowScoreTop $inBar={quick}>
+            <NarrowScoreTop $inBar>
                 <ScorePill>
                     {isHalloweenEmbed() && <ScoreCobweb />}
                     <span>{t("ai")}</span>
