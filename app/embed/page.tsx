@@ -3,7 +3,7 @@ import { EmbedEntry } from "@/app/components/EmbedEntry";
 import { Container } from "@game/components/gameStyles";
 
 // Гра для iframe на сторінці новини: /embed?skin=<id теми>. Посилання копіюється в адмінці
-// ("Теми" → "Посилання для новин"); вбудовувати дозволено лише доменам із frame-ancestors (next.config.ts).
+// ("Теми" → "Посилання для новин"); вбудовувати дозволено лише доменам із frame-ancestors (прод і dev-портал) (next.config.ts).
 export const metadata: Metadata = {
     title: "Tic Tac Toe",
     robots: { index: false, follow: false },

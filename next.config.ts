@@ -20,7 +20,7 @@ const contentSecurityPolicy = `
   object-src 'none';
   base-uri 'self';
   form-action 'self';
-  frame-ancestors 'self' https://play-dev.quartsoft.com;
+  frame-ancestors 'self' https://play.quartsoft.com https://play-dev.quartsoft.com;
 `.replace(/\s{2,}/g, " ").trim();
 
 const securityHeaders = [
