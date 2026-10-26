@@ -133,14 +133,27 @@ export const DashboardSection: React.FC = () => {
         [logs, sourceFilter]
     );
 
+    // По днях: партії, гравці (пристрої з полем player) і скільки з них повернулися -
+    // уже грали в один із попередніх днів періоду (у перший день періоду завжди 0).
     const byDay = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<string, { games: number; players: Set<string> }>();
         filteredLogs.forEach((log) => {
             const date = log.createdAt?.toDate();
             const key = date ? toDateInputValue(date) : "?";
-            map.set(key, (map.get(key) ?? 0) + 1);
+            const day = map.get(key) ?? { games: 0, players: new Set<string>() };
+            day.games += 1;
+            if (log.player) day.players.add(log.player);
+            map.set(key, day);
         });
-        return Array.from(map.entries()).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+        const seen = new Set<string>();
+        const rows = Array.from(map.entries())
+            .sort((a, b) => (a[0] < b[0] ? -1 : 1))
+            .map(([date, day]) => {
+                const returning = Array.from(day.players).filter((p) => seen.has(p)).length;
+                day.players.forEach((p) => seen.add(p));
+                return { date, games: day.games, players: day.players.size, returning };
+            });
+        return rows.reverse();
     }, [filteredLogs]);
 
     const byMode = useMemo(() => {
@@ -157,15 +170,24 @@ export const DashboardSection: React.FC = () => {
     // Колонка "Не вказано" - лише поки в періоді є старі записи без поля device.
     const hasUnknownDevice = byMode.some(([, row]) => row.unknown > 0);
 
-    // Люди (пристрої) за періодом: скільки партій зіграв кожен. Рахуються лише
-    // записи з полем player - старі логи його не мають.
+    // Люди (пристрої) за періодом: скільки партій зіграв кожен і в скільки різних
+    // днів (повернення). Рахуються лише записи з полем player - старі логи його не мають.
     const players = useMemo(() => {
-        const map = new Map<string, number>();
+        const map = new Map<string, { games: number; days: Set<string> }>();
         filteredLogs.forEach((log) => {
-            if (log.player) map.set(log.player, (map.get(log.player) ?? 0) + 1);
+            if (!log.player) return;
+            const entry = map.get(log.player) ?? { games: 0, days: new Set<string>() };
+            entry.games += 1;
+            const date = log.createdAt?.toDate();
+            if (date) entry.days.add(toDateInputValue(date));
+            map.set(log.player, entry);
         });
-        const counts = Array.from(map.values());
-        return { total: counts.length, repeat: counts.filter((n) => n > 1).length };
+        const entries = Array.from(map.values());
+        return {
+            total: entries.length,
+            repeat: entries.filter((e) => e.games > 1).length,
+            returned: entries.filter((e) => e.days.size > 1).length,
+        };
     }, [filteredLogs]);
 
     const total = filteredLogs.length;
@@ -240,6 +262,13 @@ export const DashboardSection: React.FC = () => {
                             {loading ? "" : `з ${players.total} гравців за період`}
                         </StatHint>
                     </StatCard>
+                    <StatCard>
+                        <StatValue>{loading ? "…" : players.returned}</StatValue>
+                        <StatLabel>Повернулися (грали в різні дні)</StatLabel>
+                        <StatHint>
+                            {loading ? "" : `з ${players.total} гравців за період`}
+                        </StatHint>
+                    </StatCard>
                 </StatCardRow>
             </Section>
 
@@ -283,13 +312,17 @@ export const DashboardSection: React.FC = () => {
                                     <tr>
                                         <Th>Дата</Th>
                                         <Th>Кількість партій</Th>
+                                        <Th>Гравців</Th>
+                                        <Th>З них повернулися</Th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {byDay.map(([date, count]) => (
-                                        <tr key={date}>
-                                            <Td>{date}</Td>
-                                            <Td>{count}</Td>
+                                    {byDay.map((day) => (
+                                        <tr key={day.date}>
+                                            <Td>{day.date}</Td>
+                                            <Td>{day.games}</Td>
+                                            <Td>{day.players}</Td>
+                                            <Td>{day.returning}</Td>
                                         </tr>
                                     ))}
                                 </tbody>
