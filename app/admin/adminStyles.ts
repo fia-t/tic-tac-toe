@@ -314,6 +314,12 @@ export const StatCardRow = styled.div`
     margin-bottom: 24px;
 `;
 
+export const StatHint = styled.div`
+    margin-top: 4px;
+    font-size: 12px;
+    color: #9a7b55;
+`;
+
 export const StatCard = styled.div`
     background: #fffaf0;
     border-radius: 18px;

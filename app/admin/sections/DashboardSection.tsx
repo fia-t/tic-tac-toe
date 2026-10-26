@@ -13,6 +13,7 @@ import {
     StatCard,
     StatValue,
     StatLabel,
+    StatHint,
     EmptyState,
     TableWrap,
     Table,
@@ -143,13 +144,28 @@ export const DashboardSection: React.FC = () => {
     }, [filteredLogs]);
 
     const byMode = useMemo(() => {
-        const map = new Map<string, Map<string, number>>();
+        const map = new Map<string, { outcomes: Map<string, number>; mobile: number; desktop: number; unknown: number }>();
         filteredLogs.forEach((log) => {
-            const outcomes = map.get(log.mode) ?? new Map<string, number>();
-            outcomes.set(log.outcome, (outcomes.get(log.outcome) ?? 0) + 1);
-            map.set(log.mode, outcomes);
+            const row = map.get(log.mode) ?? { outcomes: new Map<string, number>(), mobile: 0, desktop: 0, unknown: 0 };
+            row.outcomes.set(log.outcome, (row.outcomes.get(log.outcome) ?? 0) + 1);
+            row[log.device ?? "unknown"] += 1;
+            map.set(log.mode, row);
         });
         return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    }, [filteredLogs]);
+
+    // Колонка "Не вказано" - лише поки в періоді є старі записи без поля device.
+    const hasUnknownDevice = byMode.some(([, row]) => row.unknown > 0);
+
+    // Люди (пристрої) за періодом: скільки партій зіграв кожен. Рахуються лише
+    // записи з полем player - старі логи його не мають.
+    const players = useMemo(() => {
+        const map = new Map<string, number>();
+        filteredLogs.forEach((log) => {
+            if (log.player) map.set(log.player, (map.get(log.player) ?? 0) + 1);
+        });
+        const counts = Array.from(map.values());
+        return { total: counts.length, repeat: counts.filter((n) => n > 1).length };
     }, [filteredLogs]);
 
     const total = filteredLogs.length;
@@ -217,6 +233,13 @@ export const DashboardSection: React.FC = () => {
                         <StatValue>{loading ? "…" : total}</StatValue>
                         <StatLabel>Зіграно партій за період</StatLabel>
                     </StatCard>
+                    <StatCard>
+                        <StatValue>{loading ? "…" : players.repeat}</StatValue>
+                        <StatLabel>Зіграли більше однієї партії</StatLabel>
+                        <StatHint>
+                            {loading ? "" : `з ${players.total} гравців за період`}
+                        </StatHint>
+                    </StatCard>
                 </StatCardRow>
             </Section>
 
@@ -282,19 +305,25 @@ export const DashboardSection: React.FC = () => {
                                     <tr>
                                         <Th>Режим</Th>
                                         <Th>Всього</Th>
+                                        <Th>Мобільний</Th>
+                                        <Th>Ноутбук/ПК</Th>
+                                        {hasUnknownDevice && <Th>Пристрій не вказано</Th>}
                                         <Th>Розбивка</Th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {byMode.map(([mode, outcomes]) => {
-                                        const modeTotal = Array.from(outcomes.values()).reduce((a, b) => a + b, 0);
-                                        const breakdown = Array.from(outcomes.entries())
+                                    {byMode.map(([mode, row]) => {
+                                        const modeTotal = row.mobile + row.desktop + row.unknown;
+                                        const breakdown = Array.from(row.outcomes.entries())
                                             .map(([outcome, count]) => `${OUTCOME_LABEL[outcome] ?? outcome}: ${count}`)
                                             .join(", ");
                                         return (
                                             <tr key={mode}>
                                                 <Td>{MODE_LABEL[mode] ?? mode}</Td>
                                                 <Td>{modeTotal}</Td>
+                                                <Td>{row.mobile}</Td>
+                                                <Td>{row.desktop}</Td>
+                                                {hasUnknownDevice && <Td>{row.unknown}</Td>}
                                                 <Td style={{ whiteSpace: "normal" }}>{breakdown}</Td>
                                             </tr>
                                         );
