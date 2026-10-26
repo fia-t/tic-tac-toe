@@ -31,6 +31,45 @@ const Card = styled(ModalCard)<{ $low?: boolean }>`
             top: auto;
             bottom: max(24px, env(safe-area-inset-bottom, 0px));
         `}
+
+    /* Iframe новини на телефоні (~370×190): низька плашка внизу - заголовок ліворуч,
+       "Грати ще раз" праворуч, хрестик у куті; поле й анімацію видно над нею. */
+    @media (max-width: 760px) and (max-height: 479px) {
+        top: auto;
+        bottom: 8px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        width: min(94vw, 380px);
+        padding: 10px 46px 10px 16px;
+        border-radius: 18px;
+        text-align: left;
+
+        & > h2 {
+            margin: 0;
+            font-size: 15px;
+            line-height: 1.15;
+        }
+
+        && > ${PillButton} {
+            width: auto;
+            margin: 0;
+            padding: 0 18px;
+            --gb-fs: 16px;
+            white-space: nowrap;
+        }
+
+        && > ${ModalCloseButton} {
+            top: 50%;
+            right: 10px;
+            margin-top: -14px;
+            width: 28px;
+            height: 28px;
+            min-height: 28px;
+            --gb-c: 8px;
+        }
+    }
 `;
 
 const Title = styled.h2<{ $result: Result; $spooky?: boolean }>`

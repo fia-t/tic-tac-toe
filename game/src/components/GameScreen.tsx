@@ -1058,6 +1058,16 @@ const CompactSide = styled.div`
         display: none;
     }
 
+    /* Модифікатор - лише іконка рівно по центру кнопки (без стрілки списку). */
+    && [aria-haspopup="menu"] {
+        justify-content: center;
+        padding: 0;
+    }
+
+    & [aria-haspopup="menu"] > svg:last-child {
+        display: none;
+    }
+
     /* Список модифікаторів - поверх усього iframe (у смузі висотою ~190px він не вміщається під кнопкою). */
     & [role="menu"] {
         position: fixed;
