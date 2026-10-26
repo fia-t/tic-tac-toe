@@ -31,7 +31,7 @@ export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefi
 // Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
-export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
+export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
@@ -82,6 +82,16 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean }>`
                 --tip-fs: 21px;
                 --tip-pad: 8px 16px;
             }
+        `}
+
+    /* Гра в новині на телефоні: над полем два ряди, під полем плитки поля й модифікатор. */
+    ${({ $phone }) =>
+        $phone &&
+        css`
+            --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h))));
+            gap: 10px;
+            /* По вертикальному центру екрана (AppColumn - flex-колонка). */
+            margin-block: auto;
         `}
 `;
 
@@ -915,6 +925,85 @@ const Boosters = styled.div`
     }
 `;
 
+// Гра в новині на телефоні (до 760px, зазвичай на весь екран після заставки "Грати"): шириною поля.
+// Перший ряд - повний екран, рахунок, "Заново"; другий - бустери й статус ходу.
+const PhoneBar = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: var(--board-w);
+
+    && ${RoundButton} {
+        flex-shrink: 0;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+    }
+`;
+
+const PhoneRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+`;
+
+// Рахунок і статус ходу - на все місце, що лишилось у ряду.
+const PhoneFill = styled.div`
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+
+    && > * {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-width: 0;
+        max-width: none;
+    }
+`;
+
+const PhoneBoosters = styled.div`
+    display: flex;
+    gap: 14px;
+`;
+
+// Під полем: плитки поля рядком і модифікатор на всю ширину (список розкривається вгору).
+const PhoneOptions = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: var(--board-w);
+    --mod-w: 100%;
+    --mod-w-sm: 100%;
+
+    & ${ModeTile} {
+        flex: 1 1 0;
+        width: auto;
+        max-width: 72px;
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    & ${BarGroup}, & ${CornerBox}, & ${ModWeb}, & ${ModPicker} {
+        flex: 1 1 auto;
+        width: 100%;
+    }
+
+    & [role="menu"] {
+        top: auto;
+        bottom: calc(100% + 8px);
+        left: 0;
+        right: auto;
+        width: 100%;
+    }
+`;
+
+const PhoneTiles = styled.div`
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+`;
+
 const Badge = styled.span<{ $free: boolean }>`
     position: absolute;
     top: calc(-1 * var(--gb-c, 13px) - 4px);
@@ -972,6 +1061,22 @@ type BoosterKind = "undo" | "hint" | "pause" | "freeze";
 const ALL_FREE: Record<BoosterKind, boolean> = { undo: true, hint: true, pause: true, freeze: true };
 
 // Бустери: кожен один раз за партію безкоштовно, далі - за rewarded-рекламу (якщо вона є).
+// Гра в новині на екрані до 760px - окрема телефонна розкладка (PhoneBar/PhoneOptions). Вибір - у JS,
+// а не CSS: так у DOM лише одна смуга, і навчання підсвічує саме її (data-tour).
+const PHONE_QUERY = "(max-width: 760px)";
+const usePhoneEmbed = (embed: boolean): boolean => {
+    const [phone, setPhone] = useState(() => embed && typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches);
+    useEffect(() => {
+        if (!embed) return;
+        const query = window.matchMedia(PHONE_QUERY);
+        const update = () => setPhone(query.matches);
+        update();
+        query.addEventListener("change", update);
+        return () => query.removeEventListener("change", update);
+    }, [embed]);
+    return embed && phone;
+};
+
 const useBoosters = (resetKey: unknown) => {
     const rewarded = useContext(RewardedAdContext);
     const [free, setFree] = useState<Record<BoosterKind, boolean>>(ALL_FREE);
@@ -1101,6 +1206,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const embed = isEmbed();
+    const phone = usePhoneEmbed(embed);
     // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
     const wide = embed || goHome !== null;
     const restartLabel = over ? t("playAgain") : t("restart");
@@ -1326,6 +1432,51 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             {boosterButton("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
         </>
     );
+
+    const modeTiles = MODE_TILES.map((tile) => (
+        <ModeTile key={tile.id} type="button" aria-pressed={mode === tile.id} aria-label={t(tile.label)} data-tip={tileTip(tile)} onClick={() => pickMode(tile.id)}>
+            <img src={assetUrl(tile.img)} alt="" />
+        </ModeTile>
+    ));
+
+    // Гра в новині на телефоні: над полем - повний екран, рахунок і "Заново", під ними бустери й
+    // статус ходу; під полем - плитки поля й модифікатор.
+    if (phone)
+        return (
+            <GameRoot $timer={timerRunning} $embed $phone>
+                <PhoneBar data-tour="bar">
+                    <PhoneRow>
+                        <FullscreenButton round />
+                        <PhoneFill>{scorePill}</PhoneFill>
+                        <RoundButton type="button" onClick={restart} aria-label={restartLabel} data-tip={restartLabel}>
+                            <ActionIcon id="restart" />
+                        </RoundButton>
+                    </PhoneRow>
+                    <PhoneRow>
+                        <PhoneBoosters data-tour="boosters">
+                            {mainButtons}
+                            {hasTimer && timerButtons}
+                        </PhoneBoosters>
+                        <PhoneFill>{turnLine}</PhoneFill>
+                    </PhoneRow>
+                </PhoneBar>
+
+                {timerRunning && (
+                    <RowTimer>
+                        <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
+                    </RowTimer>
+                )}
+
+                <BoardHolder data-tour="board">{board}</BoardHolder>
+
+                <PhoneOptions>
+                    <PhoneTiles role="group" aria-label={t("barBoard")}>
+                        {modeTiles}
+                    </PhoneTiles>
+                    {modGroup("left")}
+                </PhoneOptions>
+            </GameRoot>
+        );
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide}>

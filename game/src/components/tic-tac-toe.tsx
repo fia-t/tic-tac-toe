@@ -41,6 +41,7 @@ import { findNameKey, getActiveNames, nameIn, pickRandomEntry, playerName } from
 import { logGameResult } from "@game/lib/gameLog";
 import { initLocale, useT } from "@game/lib/i18n";
 import { getEmbed, isHalloweenEmbed, isEmbed } from "@game/lib/embed";
+import { EmbedSplash, useEmbedCompact } from "@game/components/EmbedSplash";
 import { Difficulty, getDifficulty, hasStoredDifficulty, setDifficulty, shouldBlunder, useDifficulty } from "@game/lib/difficulty";
 import { DailyChallenge } from "@game/components/DailyChallenge";
 import { EMPTY_HISTORY, ModHistory, TurnResult, fadingCells, playTurn, randomLegalCell } from "@game/components/modEngine";
@@ -159,6 +160,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Гра з новини: короткий туторіал при першому відкритті (свій ключ - незалежно від сайту).
     // Кроки збираються після рендеру поля: крок "повний екран" - лише якщо кнопка є.
     const [embedSteps, setEmbedSteps] = useState<TutorialStep[] | null>(null);
+    // Новина на телефоні: iframe замалий - заставка "Грати" поверх гри, навчання - вже на весь екран.
+    const embedCompact = useEmbedCompact();
     useEffect(() => {
         if (!embed || !themeReady || isTutorialDone(EMBED_TUTORIAL_KEY)) return;
         const timer = setTimeout(() => setEmbedSteps(embedTutorialSteps()), 700);
@@ -678,7 +681,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                 )}
                 {/* Поки вантажаться теми - лоадер по центру iframe, а не вгорі сторінки. */}
                 {themeReady ? <AppColumn ref={topRef}>{content}</AppColumn> : content}
-                {embedSteps && <Tutorial steps={embedSteps} doneKey={EMBED_TUTORIAL_KEY} onDone={() => setEmbedSteps(null)} />}
+                {embedSteps && !embedCompact && <Tutorial steps={embedSteps} doneKey={EMBED_TUTORIAL_KEY} onDone={() => setEmbedSteps(null)} />}
+                {embedCompact && themeReady && <EmbedSplash />}
             </RewardedAdContext.Provider>
         );
     }
