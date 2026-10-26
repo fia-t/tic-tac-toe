@@ -31,7 +31,7 @@ export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefi
 // Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
-export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean }>`
+export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
@@ -91,6 +91,19 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
             --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h))));
             gap: 10px;
             /* По вертикальному центру екрана (AppColumn - flex-колонка). */
+            margin-block: auto;
+        `}
+
+    /* Гра в новині на телефоні в самому iframe (~370×190): поле зліва на всю висоту, кнопки - справа. */
+    ${({ $compact }) =>
+        $compact &&
+        css`
+            --board-w: min(calc(100dvh - 16px), calc(100vw - 196px));
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 0;
             margin-block: auto;
         `}
 `;
@@ -998,6 +1011,75 @@ const PhoneOptions = styled.div`
     }
 `;
 
+// Компактна розкладка (iframe новини на телефоні): колонка праворуч від поля, усе дрібніше.
+const CompactSide = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    flex: 0 1 172px;
+    min-width: 0;
+    --mod-h: 36px;
+    --mod-h-sm: 36px;
+    --mod-w: 46px;
+    --mod-w-sm: 46px;
+    --mod-label: none;
+
+    & ${PhoneRow} {
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    && ${RoundButton}, & ${ModeTile} {
+        flex-shrink: 0;
+        width: 36px;
+        height: 36px;
+        min-height: 36px;
+    }
+
+    && ${RoundButton} svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    & ${ScorePill} {
+        min-height: 32px;
+        padding: 2px 8px;
+        gap: 5px;
+        font-size: 13px;
+    }
+
+    & ${TurnLine} {
+        min-height: 32px;
+        font-size: 13px;
+    }
+
+    /* Підказки "?" біля модифікатора тут немає місця. */
+    & ${CornerTip} {
+        display: none;
+    }
+
+    /* Список модифікаторів - поверх усього iframe (у смузі висотою ~190px він не вміщається під кнопкою). */
+    & [role="menu"] {
+        position: fixed;
+        inset: 6px;
+        width: auto;
+        max-height: none;
+        --mod-opt-pad: 3px 6px;
+    }
+`;
+
+// Таймер ходу в компактній розкладці - на ширину колонки, дрібнішим шрифтом.
+const CompactTimer = styled.div`
+    display: flex;
+    align-items: center;
+    min-height: 32px;
+
+    & > div {
+        width: 100%;
+        font-size: 11px;
+    }
+`;
+
 const PhoneTiles = styled.div`
     display: flex;
     justify-content: center;
@@ -1061,21 +1143,23 @@ type BoosterKind = "undo" | "hint" | "pause" | "freeze";
 const ALL_FREE: Record<BoosterKind, boolean> = { undo: true, hint: true, pause: true, freeze: true };
 
 // Бустери: кожен один раз за партію безкоштовно, далі - за rewarded-рекламу (якщо вона є).
-// Гра в новині на екрані до 760px - окрема телефонна розкладка (PhoneBar/PhoneOptions). Вибір - у JS,
-// а не CSS: так у DOM лише одна смуга, і навчання підсвічує саме її (data-tour).
-const PHONE_QUERY = "(max-width: 760px)";
-const usePhoneEmbed = (embed: boolean): boolean => {
-    const [phone, setPhone] = useState(() => embed && typeof window !== "undefined" && window.matchMedia(PHONE_QUERY).matches);
+// Гра в новині на екрані до 760px - окрема телефонна розкладка (PhoneBar/PhoneOptions), а в самому
+// iframe новини на телефоні (низький, ~370×190) - компактна (CompactSide). Вибір - у JS, а не CSS:
+// так у DOM лише одна смуга, і навчання підсвічує саме її (data-tour).
+const useMedia = (query: string, enabled: boolean): boolean => {
+    const [match, setMatch] = useState(() => enabled && typeof window !== "undefined" && window.matchMedia(query).matches);
     useEffect(() => {
-        if (!embed) return;
-        const query = window.matchMedia(PHONE_QUERY);
-        const update = () => setPhone(query.matches);
+        if (!enabled) return;
+        const list = window.matchMedia(query);
+        const update = () => setMatch(list.matches);
         update();
-        query.addEventListener("change", update);
-        return () => query.removeEventListener("change", update);
-    }, [embed]);
-    return embed && phone;
+        list.addEventListener("change", update);
+        return () => list.removeEventListener("change", update);
+    }, [query, enabled]);
+    return enabled && match;
 };
+const usePhoneEmbed = (embed: boolean): boolean => useMedia("(max-width: 760px)", embed);
+export const useEmbedCompact = (embed: boolean): boolean => useMedia("(max-width: 760px) and (max-height: 479px)", embed);
 
 const useBoosters = (resetKey: unknown) => {
     const rewarded = useContext(RewardedAdContext);
@@ -1207,6 +1291,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     const embed = isEmbed();
     const phone = usePhoneEmbed(embed);
+    const compact = useEmbedCompact(embed);
     // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
     const wide = embed || goHome !== null;
     const restartLabel = over ? t("playAgain") : t("restart");
@@ -1438,6 +1523,38 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <img src={assetUrl(tile.img)} alt="" />
         </ModeTile>
     ));
+
+    // Гра в новині на телефоні, у самому iframe новини: поле зліва; справа - "Заново", бустери й
+    // повний екран, рахунок, статус ходу (з таймером - смуга таймера), плитки поля й модифікатор.
+    if (compact)
+        return (
+            <GameRoot $embed $compact>
+                <BoardHolder data-tour="board">{board}</BoardHolder>
+                <CompactSide data-tour="bar">
+                    <PhoneRow>
+                        <RoundButton type="button" onClick={restart} aria-label={restartLabel} data-tip={restartLabel}>
+                            <ActionIcon id="restart" />
+                        </RoundButton>
+                        {mainButtons}
+                        <FullscreenButton round nudge={mode !== "traditional"} />
+                    </PhoneRow>
+                    <PhoneFill>{scorePill}</PhoneFill>
+                    <PhoneFill>
+                        {timerRunning ? (
+                            <CompactTimer>
+                                <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
+                            </CompactTimer>
+                        ) : (
+                            turnLine
+                        )}
+                    </PhoneFill>
+                    <PhoneRow role="group" aria-label={t("barBoard")}>
+                        {modeTiles}
+                        {modGroup("left")}
+                    </PhoneRow>
+                </CompactSide>
+            </GameRoot>
+        );
 
     // Гра в новині на телефоні: над полем - повний екран, рахунок і "Заново", під ними бустери й
     // статус ходу; під полем - плитки поля й модифікатор.
