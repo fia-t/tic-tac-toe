@@ -630,6 +630,9 @@ export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => v
     );
 };
 
+// Останнє оброблене значення focusDaily: головна перемонтовується при кожному поверненні в меню.
+let handledFocusDaily = 0;
+
 type HomeScreenProps = {
     name: string | null;
     initialMode: GameModeKey;
@@ -678,7 +681,10 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     };
 
     useEffect(() => {
-        if (!focusDaily) return;
+        // Кожен клік по вогнику - один раз: при наступному поверненні на головну (напр. з кампанії
+        // на "Онлайн") те саме значення не повинно знову перемикати на виклики.
+        if (!focusDaily || focusDaily === handledFocusDaily) return;
+        handledFocusDaily = focusDaily;
         setTabState("daily");
         setDailyFlash(true);
         const timer = setTimeout(() => setDailyFlash(false), 1300);
@@ -755,7 +761,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 {t("modifierLabel")}
                 <InfoTip text={id === "home-friend-mod" ? t("infoModFriend") : t("infoMod")} />
             </EyebrowInfo>
-            <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} onPick={onPick} />
+            <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} plain onPick={onPick} />
             {info}
         </OptGroup>
     );

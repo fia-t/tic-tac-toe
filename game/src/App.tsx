@@ -15,7 +15,7 @@ import { configureProfileStorage, getProfile, reloadProfile, setLevelReporter, P
 import { getScreen, useOpenPanel } from "@game/lib/ui";
 import { GameLoader } from "@game/components/GameLoader";
 import { setPortalTokenProvider } from "@game/lib/matchmaking";
-import { setPortalUserProvider } from "@game/lib/players";
+import { refreshPortalUser, setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 
@@ -77,6 +77,7 @@ export default function App() {
             void reloadWallet();
             void reloadCampaign();
             void reloadProfile();
+            void refreshPortalUser();
         });
 
         // Мова з порталу (якщо гра її знає) - замість мови браузера, але не замість обраної

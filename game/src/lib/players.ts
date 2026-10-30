@@ -1,4 +1,5 @@
 "use client";
+import { useSyncExternalStore } from "react";
 import { arrayUnion, doc, getDoc, serverTimestamp, setDoc, type Timestamp } from "firebase/firestore";
 import { addGameEventListener, getFirebaseDb, isFirebaseConfigured, isLocalDev } from "@game/lib/firebase";
 import { ensureAnonymousUser } from "@game/lib/onlineGame";
@@ -70,7 +71,30 @@ export const setPlayerFallbackName = (name: string | null): void => {
 // Акаунт порталу (QS Play SDK) - App.tsx передає, якщо SDK це вміє.
 export const setPortalUserProvider = (provider: () => Promise<{ id: string; name: string } | null>): void => {
     portalUser = provider;
+    void refreshPortalUser();
 };
+
+// Ім'я акаунта порталу - для привітання й табло (якщо гравець не задав свого).
+let portalName: string | null = null;
+const portalNameListeners = new Set<() => void>();
+
+// Перечитати акаунт порталу - на старті й після входу/виходу гравця на порталі.
+export const refreshPortalUser = async (): Promise<void> => {
+    const user = portalUser ? await portalUser().catch(() => null) : null;
+    const name = user?.name?.trim().slice(0, 40) || null;
+    if (name === portalName) return;
+    portalName = name;
+    portalNameListeners.forEach((listener) => listener());
+};
+
+const subscribePortalName = (listener: () => void) => {
+    portalNameListeners.add(listener);
+    return () => {
+        portalNameListeners.delete(listener);
+    };
+};
+
+export const usePortalUserName = (): string | null => useSyncExternalStore(subscribePortalName, () => portalName, () => null);
 
 const save = async () => {
     try {

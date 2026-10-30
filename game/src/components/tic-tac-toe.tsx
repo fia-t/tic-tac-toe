@@ -33,7 +33,7 @@ import { GameHomeContext, GameScreen, RewardedAdContext, useEmbedCompact } from 
 import { MatchInvite } from "@game/components/MatchInvite";
 import { EMBED_TUTORIAL_KEY, Tutorial, embedTutorialSteps, isTutorialDone, type TutorialStep } from "@game/components/Tutorial";
 import { setPresence, startPresence } from "@game/lib/presence";
-import { setPlayerFallbackName, startPlayerTracking } from "@game/lib/players";
+import { setPlayerFallbackName, startPlayerTracking, usePortalUserName } from "@game/lib/players";
 import { endDailyRun } from "@game/lib/daily";
 import { getProfile, setAutoName, useProfile } from "@game/lib/profile";
 import { closePanel, setScreenState, useOpenPanel, scrollGameTo } from "@game/lib/ui";
@@ -147,7 +147,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setScreen("game");
         if (!hasStoredDifficulty()) setDifficulty("easy");
     }, []);
-    const shownName = playerName(profile);
+    // Ім'я, яке гравець задав сам, - головне; інакше ім'я акаунта порталу (якщо знаємо), інакше наше випадкове.
+    const portalName = usePortalUserName();
+    const shownName = profile.name && !profile.nameKey ? profile.name : (portalName ?? playerName(profile));
 
     // Облік часу гри на порталі: геймплей - лише на полі, меню й розділи - пауза (App слухає ці події).
     const onGameScreen = screen === "game";
@@ -694,7 +696,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                     <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
                 ) : (
                     <>
-                        <TopBar onHome={() => navigate("home")} onDaily={openDaily} crumb={crumb} />
+                        <TopBar onDaily={openDaily} crumb={crumb} />
                         {content}
                     </>
                 )}

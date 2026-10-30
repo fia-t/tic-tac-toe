@@ -321,6 +321,7 @@ const pack: LocalePack = {
         leagueNone: "Ancora nessuna lega",
         tipStars: "Stelle della campagna: {n} su {total}",
         tipCoins: "Monete - spendile in skin nel negozio",
+        coinsForAd: "Guarda una pubblicità: +{n} monete",
         tipStreak: "Giorni di sfida di fila: {n}",
         leagueNoneHint: "La tua lega compare dopo il primo match rapido.",
         leaguesTitle: "Leghe",

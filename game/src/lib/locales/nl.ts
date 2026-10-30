@@ -321,6 +321,7 @@ const pack: LocalePack = {
         leagueNone: "Nog geen competitie",
         tipStars: "Campagnesterren: {n} van {total}",
         tipCoins: "Munten - geef ze uit aan skins in de winkel",
+        coinsForAd: "Bekijk een advertentie: +{n} munten",
         tipStreak: "Dagen op rij met de uitdaging: {n}",
         leagueNoneHint: "Je competitie verschijnt na je eerste snelle match.",
         leaguesTitle: "Competities",

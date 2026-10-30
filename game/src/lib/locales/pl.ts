@@ -322,6 +322,7 @@ const pack: LocalePack = {
         leagueNone: "Jeszcze bez ligi",
         tipStars: "Gwiazdki kampanii: {n} z {total}",
         tipCoins: "Monety - wydaj je na skórki w sklepie",
+        coinsForAd: "Obejrzyj reklamę: +{n} monet",
         tipStreak: "Dni z rzędu z wyzwaniem: {n}",
         leagueNoneHint: "Twoja liga pojawi się po pierwszym szybkim meczu.",
         leaguesTitle: "Ligi",
