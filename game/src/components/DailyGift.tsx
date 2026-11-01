@@ -643,18 +643,17 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
                 <Grid>{cells}</Grid>
                 {claimed !== null && <GiftBurst gift={todayGift} doubled={doubled} />}
                 {status.ready || claimed !== null ? (
-                    <Buttons $two={Boolean(onRewardedAd)}>
+                    <Buttons $two>
                         <GameButton tone="green" size="lg" block disabled={claimed !== null || watching} onClick={() => claim(false)}>
                             {t("giftClaim")}
                         </GameButton>
-                        {onRewardedAd && (
-                            <AdButton>
-                                <GameButton tone="amber" size="lg" block disabled={claimed !== null || watching} onClick={() => void watch()}>
-                                    {t("giftDouble")}
-                                </GameButton>
-                                <AdTag aria-hidden="true">AD</AdTag>
-                            </AdButton>
-                        )}
+                        {/* "×2 за рекламу" - завжди (як "AD" на бустерах); де реклами ще немає (сайт) - неактивна, з поясненням. */}
+                        <AdButton title={onRewardedAd ? undefined : t("rewardSoon")}>
+                            <GameButton tone="amber" size="lg" block disabled={!onRewardedAd || claimed !== null || watching} onClick={() => void watch()}>
+                                {t("giftDouble")}
+                            </GameButton>
+                            <AdTag aria-hidden="true">AD</AdTag>
+                        </AdButton>
                     </Buttons>
                 ) : (
                     <GameButton size="lg" block onClick={onClose}>

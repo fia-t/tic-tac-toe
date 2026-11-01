@@ -6,6 +6,9 @@ import {
     getAllThemes,
     createTheme,
     updateTheme,
+    customizeBuiltInTheme,
+    BUILT_IN_THEMES,
+    CAMPAIGN_THEMES,
     deleteTheme,
     uploadThemeImage,
     DEFAULT_SKIN_PRICE,
@@ -106,8 +109,22 @@ const EVENT_LABEL: Record<EventStatus, (theme: Theme) => string> = {
     ended: (theme) => `Завершено ${shortDate(theme.eventEnd ?? "")}`,
 };
 
-// Управління каталогом тем (фон + скіни X/O) - без змін у логіці, лише
-// винесено з app/admin/page.tsx у власний розділ адмінського меню "Теми".
+// Позначка вбудованого скіна (згенерованого в коді): магазинний чи нагорода кампанії.
+const BuiltInChip = styled.span`
+    align-self: flex-start;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    background: rgba(31, 179, 217, 0.14);
+    color: #0f6f8c;
+`;
+
+const isCampaignTheme = (id: string) => CAMPAIGN_THEMES.some((theme) => theme.id === id);
+
+// Управління каталогом тем (фон + скіни X/O). У каталозі - і теми з бази, і вбудовані скіни з коду
+// (магазинні й нагороди кампанії): вбудований можна налаштувати так само - при першій зміні
+// для нього створюється документ у базі з тим самим id, і гра бере налаштування звідти.
 export const ThemesSection: React.FC = () => {
     const [themes, setThemes] = useState<Theme[]>([]);
     const [themesLoading, setThemesLoading] = useState(false);
@@ -127,6 +144,14 @@ export const ThemesSection: React.FC = () => {
     };
     const [newThemeName, setNewThemeName] = useState("");
     const [creating, setCreating] = useState(false);
+
+    // Каталог: теми з бази, потім вбудовані скіни, яких у базі ще немає (налаштовані - уже серед тем з бази).
+    const dbIds = new Set(themes.map((theme) => theme.id));
+    const catalog = [...themes, ...BUILT_IN_THEMES.filter((theme) => !dbIds.has(theme.id))];
+
+    // Зміна теми: тема з бази - updateTheme; вбудований без документа - спершу створюємо документ.
+    const saveTheme = (theme: Theme, patch: Partial<Omit<Theme, "id" | "createdAt">>) =>
+        dbIds.has(theme.id) ? updateTheme(theme.id, patch) : customizeBuiltInTheme(theme, patch);
 
     const refreshThemes = async () => {
         setThemesLoading(true);
@@ -164,7 +189,7 @@ export const ThemesSection: React.FC = () => {
         setThemesError(null);
         try {
             const url = await uploadThemeImage(theme.id, file, kind);
-            await updateTheme(theme.id, { [fieldForKind(kind)]: url });
+            await saveTheme(theme, { [fieldForKind(kind)]: url });
             await refreshThemes();
         } catch (err) {
             setThemesError(describeError("Не вдалося завантажити зображення.", err));
@@ -176,7 +201,7 @@ export const ThemesSection: React.FC = () => {
     const handleToggleActive = async (theme: Theme) => {
         setBusyThemeId(theme.id);
         try {
-            await updateTheme(theme.id, { active: !theme.active });
+            await saveTheme(theme, { active: !theme.active });
             await refreshThemes();
         } catch (err) {
             setThemesError(describeError("Не вдалося оновити тему.", err));
@@ -192,7 +217,7 @@ export const ThemesSection: React.FC = () => {
         setBusyThemeId(theme.id);
         try {
             // Порожнє поле - ціна за замовчуванням (DEFAULT_SKIN_PRICE у грі).
-            await updateTheme(theme.id, { price: value ?? deleteField() } as Partial<Theme>);
+            await saveTheme(theme, { price: value ?? deleteField() } as Partial<Theme>);
             await refreshThemes();
         } catch (err) {
             setThemesError(describeError("Не вдалося зберегти ціну.", err));
@@ -211,7 +236,7 @@ export const ThemesSection: React.FC = () => {
         setBusyThemeId(theme.id);
         setThemesError(null);
         try {
-            await updateTheme(theme.id, {
+            await saveTheme(theme, {
                 event: next.event,
                 eventStart: next.eventStart || deleteField(),
                 eventEnd: next.eventEnd || deleteField(),
@@ -231,7 +256,7 @@ export const ThemesSection: React.FC = () => {
         if (field === "name" && !value) return;
         setBusyThemeId(theme.id);
         try {
-            await updateTheme(theme.id, { [field]: value || deleteField() } as Partial<Theme>);
+            await saveTheme(theme, { [field]: value || deleteField() } as Partial<Theme>);
             await refreshThemes();
         } catch (err) {
             setThemesError(describeError("Не вдалося зберегти назву.", err));
@@ -241,7 +266,9 @@ export const ThemesSection: React.FC = () => {
     };
 
     const handleDelete = async (theme: Theme) => {
-        if (!window.confirm(`Видалити тему "${theme.name}"?`)) return;
+        const builtIn = BUILT_IN_THEMES.some((item) => item.id === theme.id);
+        const question = builtIn ? `Скинути налаштування скіна "${theme.name}" до вбудованих (назва, ціна, картинки з коду)?` : `Видалити тему "${theme.name}"?`;
+        if (!window.confirm(question)) return;
         setBusyThemeId(theme.id);
         try {
             await deleteTheme(theme.id);
@@ -272,20 +299,28 @@ export const ThemesSection: React.FC = () => {
             </Section>
 
             <Section>
-                <SectionTitle>Каталог ({themes.length})</SectionTitle>
+                <SectionTitle>Каталог ({catalog.length})</SectionTitle>
                 {themesError && <ErrorText>{themesError}</ErrorText>}
                 {themesLoading ? (
                     <p>Завантаження...</p>
-                ) : themes.length === 0 ? (
+                ) : catalog.length === 0 ? (
                     <p>Тем ще немає - додайте першу вище.</p>
                 ) : (
                     <ThemeGrid>
-                        {themes.map((theme) => {
+                        {catalog.map((theme) => {
                             const busy = busyThemeId === theme.id;
                             const complete = Boolean(theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl);
+                            const builtIn = BUILT_IN_THEMES.some((item) => item.id === theme.id);
+                            const customized = builtIn && dbIds.has(theme.id);
                             return (
                                 <ThemeCard key={theme.id} $active={theme.active}>
                                     <ThemeName>{theme.name}</ThemeName>
+                                    {builtIn && (
+                                        <BuiltInChip title="Скін згенерований у коді гри. Зміни тут перекривають вбудовані значення; картинки, які не завантажували, лишаються вбудованими.">
+                                            {isCampaignTheme(theme.id) ? "Вбудований · нагорода кампанії" : "Вбудований"}
+                                            {customized ? " · налаштований" : ""}
+                                        </BuiltInChip>
+                                    )}
                                     <DateRow>
                                         <SmallLabel>
                                             Назва
@@ -388,9 +423,11 @@ export const ThemesSection: React.FC = () => {
                                             />
                                             Активна
                                         </CheckboxLabel>
-                                        <DangerButton type="button" disabled={busy} onClick={() => void handleDelete(theme)}>
-                                            Видалити
-                                        </DangerButton>
+                                        {(!builtIn || customized) && (
+                                            <DangerButton type="button" disabled={busy} onClick={() => void handleDelete(theme)}>
+                                                {builtIn ? "Скинути" : "Видалити"}
+                                            </DangerButton>
+                                        )}
                                     </ThemeActionsRow>
 
                                     {theme.active && (

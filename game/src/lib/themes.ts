@@ -6,8 +6,7 @@ import {
     getDocs,
     deleteDoc,
     updateDoc,
-    query,
-    where,
+    setDoc,
     serverTimestamp,
     Timestamp,
 } from "firebase/firestore";
@@ -155,8 +154,30 @@ export const SHOP_THEMES: Theme[] = [
     shopTheme("royal", "Королівський", "Royal", 800, 908),
 ];
 export const BUILT_IN_THEMES: Theme[] = [...SHOP_THEMES, ...CAMPAIGN_THEMES];
-// Теми з бази + вбудовані скіни магазину й кампанії (тема з бази з тим самим id має пріоритет).
-const withCampaignThemes = (themes: Theme[]): Theme[] => [...themes, ...BUILT_IN_THEMES.filter((theme) => !themes.some((item) => item.id === theme.id))];
+export const isBuiltInTheme = (id: string): boolean => BUILT_IN_THEMES.some((theme) => theme.id === id);
+// Документ у базі з id вбудованого скіна - його налаштування з адмінки (назва, ціна, івент, активність).
+// Картинки, які в адмінці не завантажували, лишаються вбудованими (шлях рахується вже в самій грі).
+const withBuiltIn = (theme: Theme): Theme => {
+    const base = BUILT_IN_THEMES.find((item) => item.id === theme.id);
+    if (!base) return theme;
+    return {
+        ...base,
+        ...theme,
+        name: theme.name || base.name,
+        nameEn: theme.nameEn ?? base.nameEn,
+        backgroundUrl: theme.backgroundUrl || base.backgroundUrl,
+        xMarkerUrl: theme.xMarkerUrl || base.xMarkerUrl,
+        oMarkerUrl: theme.oMarkerUrl || base.oMarkerUrl,
+        price: theme.price ?? base.price,
+        order: theme.order || base.order,
+    };
+};
+// Активні теми з бази + вбудовані скіни магазину й кампанії, яких у базі немає. Вбудований скін,
+// налаштований в адмінці, береться з бази - тож його можна й вимкнути (active: false).
+const withCampaignThemes = (dbThemes: Theme[]): Theme[] => [
+    ...dbThemes.filter((theme) => theme.active && theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl).sort((a, b) => a.order - b.order),
+    ...BUILT_IN_THEMES.filter((theme) => !dbThemes.some((item) => item.id === theme.id)),
+];
 
 const themesCollection = "themes";
 
@@ -183,16 +204,10 @@ export const getActiveThemes = async (): Promise<Theme[]> => {
     if (!isFirebaseConfigured) return BUILT_IN_THEMES;
     try {
         const db = getFirebaseDb();
-        // Сортування "order" - на клієнті, а не через Firestore orderBy, щоб не
-        // вимагати композитний індекс (equality + orderBy на різних полях).
-        const q = query(collection(db, themesCollection), where("active", "==", true));
-        const snap = await getDocs(q);
-        return withCampaignThemes(
-            snap.docs
-                .map((d) => toTheme(d.id, d.data()))
-                .filter((theme) => theme.backgroundUrl && theme.xMarkerUrl && theme.oMarkerUrl)
-                .sort((a, b) => a.order - b.order)
-        );
+        // Усі документи (не лише active) - щоб вимкнений в адмінці вбудований скін не повертався з коду.
+        // Сортування "order" - на клієнті (каталог невеликий, читання публічне).
+        const snap = await getDocs(collection(db, themesCollection));
+        return withCampaignThemes(snap.docs.map((d) => withBuiltIn(toTheme(d.id, d.data()))));
     } catch {
         return BUILT_IN_THEMES;
     }
@@ -235,7 +250,29 @@ export const preloadThemeImages = async (themes: Theme[]): Promise<void> => {
 export const getAllThemes = async (): Promise<Theme[]> => {
     const db = getFirebaseDb();
     const snap = await getDocs(collection(db, themesCollection));
-    return snap.docs.map((d) => toTheme(d.id, d.data())).sort((a, b) => a.order - b.order);
+    return snap.docs.map((d) => withBuiltIn(toTheme(d.id, d.data()))).sort((a, b) => a.order - b.order);
+};
+
+// Перше налаштування вбудованого скіна в адмінці: документ із його id (картинки порожні -
+// у грі лишаються вбудовані, доки в адмінці не завантажать свої). Далі - звичайний updateTheme.
+export const customizeBuiltInTheme = async (theme: Theme, patch: Partial<Omit<Theme, "id" | "createdAt">>): Promise<void> => {
+    const db = getFirebaseDb();
+    await setDoc(
+        doc(db, themesCollection, theme.id),
+        {
+            name: theme.name,
+            ...(theme.nameEn ? { nameEn: theme.nameEn } : {}),
+            backgroundUrl: "",
+            xMarkerUrl: "",
+            oMarkerUrl: "",
+            active: theme.active,
+            order: theme.order,
+            ...(theme.price !== undefined ? { price: theme.price } : {}),
+            createdAt: serverTimestamp(),
+            ...patch,
+        },
+        { merge: true }
+    );
 };
 
 export const createTheme = async (name: string): Promise<string> => {
