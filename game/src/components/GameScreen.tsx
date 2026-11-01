@@ -372,8 +372,8 @@ const TileColumn = styled.div<{ $site?: boolean }>`
 
     /* На сайті плитки трохи більші, ніж у новині. */
     & > button {
-        width: ${({ $site }) => ($site ? 66 : 60)}px;
-        height: ${({ $site }) => ($site ? 66 : 60)}px;
+        width: ${({ $site }) => ($site ? 74 : 60)}px;
+        height: ${({ $site }) => ($site ? 74 : 60)}px;
     }
 
     /* Підказка - праворуч від плитки, у два рядки: назва й правило перемоги. */
@@ -396,8 +396,8 @@ const TileColumn = styled.div<{ $site?: boolean }>`
         }
 
         & > button {
-            width: ${({ $site }) => ($site ? 84 : 78)}px;
-            height: ${({ $site }) => ($site ? 84 : 78)}px;
+            width: ${({ $site }) => ($site ? 94 : 78)}px;
+            height: ${({ $site }) => ($site ? 94 : 78)}px;
         }
     }
 
@@ -916,11 +916,30 @@ export const BoardHolder = styled.div`
     }
 `;
 
-const Boosters = styled.div`
+const Boosters = styled.div<{ $site?: boolean }>`
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     padding-top: 8px;
+
+    /* На сайті кнопки бустерів трохи більші, ніж у новині. */
+    ${({ $site }) =>
+        $site &&
+        css`
+            @media (min-width: 481px) {
+                && ${RoundButton} {
+                    --gb-c: 14px;
+                    width: 60px;
+                    height: 60px;
+                    min-height: 60px;
+                }
+
+                && ${RoundButton} > svg {
+                    width: 28px;
+                    height: 28px;
+                }
+            }
+        `}
 
     @media (min-width: 800px) {
         position: absolute;
@@ -1760,7 +1779,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </TileColumn>
                 )}
                 {quick &&
-                    <Boosters data-tour="boosters">
+                    <Boosters data-tour="boosters" $site={!embed}>
                         {mainButtons}
                         {hasTimer && timerButtons}
                     </Boosters>
