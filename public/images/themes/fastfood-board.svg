@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><pattern id="tile" width="120" height="120" patternUnits="userSpaceOnUse"><rect width="120" height="120" fill="#fff6e4"/><rect width="60" height="60" fill="#9edcc8"/><rect x="60" y="60" width="60" height="60" fill="#9edcc8"/><path d="M0 0.5H120M0 60.5H120M0.5 0V120M60.5 0V120" stroke="#ffffff" stroke-opacity="0.6" stroke-width="2"/></pattern><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="0.1" stop-color="#ffffff" stop-opacity="0"/><stop offset="0.88" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.28"/></linearGradient></defs>
+<rect width="600" height="600" fill="url(#tile)"/>
+<rect width="600" height="600" fill="url(#rim)"/>
+</svg>

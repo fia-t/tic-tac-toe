@@ -522,6 +522,7 @@ const pack: LocalePack = {
         "theme:summer:name": "Piquenique de verão",
         "theme:veggie:name": "Horta",
         "theme:holiday:name": "Festa",
+        "theme:fastfood:name": "Fast food",
         "theme:forest:name": "Floresta",
         "theme:peak:name": "Cume",
         "theme:5dczBLOuEXVOon0MzEI2:name": "Papel",

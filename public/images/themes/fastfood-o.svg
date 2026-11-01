@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><radialGradient id="bun" cx="0.4" cy="0.3" r="0.9"><stop offset="0" stop-color="#ffd08a"/><stop offset="0.6" stop-color="#e89a3c"/><stop offset="1" stop-color="#b8661c"/></radialGradient><linearGradient id="patty" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4a26"/><stop offset="1" stop-color="#4a220c"/></linearGradient><linearGradient id="bunlo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2b45e"/><stop offset="1" stop-color="#c97a2c"/></linearGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#3a1e0a" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><path d="M30 98 Q30 34 100 34 Q170 34 170 98 Z" fill="url(#bun)"/>
+<ellipse cx="70" cy="58" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(-20 70 58)"/><ellipse cx="96" cy="48" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(25 96 48)"/><ellipse cx="124" cy="56" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(-20 124 56)"/><ellipse cx="84" cy="74" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(25 84 74)"/><ellipse cx="112" cy="72" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(-20 112 72)"/><ellipse cx="140" cy="78" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(25 140 78)"/><ellipse cx="58" cy="80" rx="5" ry="2.6" fill="#fff4d6" transform="rotate(-20 58 80)"/>
+<path d="M26 100 Q40 112 56 102 Q72 114 88 102 Q104 114 120 102 Q136 114 152 102 Q164 112 174 100 L174 108 L26 108 Z" fill="#6cc04a"/>
+<rect x="28" y="106" width="144" height="10" rx="3" fill="#ffc72e"/><path d="M40 116 l10 10 l10 -10 M140 116 l10 10 l10 -10" fill="#ffc72e"/>
+<rect x="30" y="114" width="140" height="22" rx="11" fill="url(#patty)"/>
+<rect x="34" y="136" width="132" height="8" rx="4" fill="#e8402e"/>
+<path d="M32 144 H168 Q168 172 100 172 Q32 172 32 144 Z" fill="url(#bunlo)"/>
+<ellipse cx="70" cy="52" rx="22" ry="9" fill="#ffffff" fill-opacity="0.45" transform="rotate(-20 70 52)"/></g>
+</svg>

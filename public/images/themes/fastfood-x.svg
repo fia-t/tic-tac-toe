@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="crust" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7c46a"/><stop offset="1" stop-color="#c9822c"/></linearGradient><linearGradient id="cheese" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe680"/><stop offset="1" stop-color="#ffbf2e"/></linearGradient><radialGradient id="pep" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#ff7a62"/><stop offset="0.6" stop-color="#d8322a"/><stop offset="1" stop-color="#9a1414"/></radialGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#3a1e0a" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><g transform="rotate(-12 100 100)">
+<path d="M100 182 L34 46 Q100 18 166 46 Z" fill="url(#cheese)" stroke="#e8a21c" stroke-width="3" stroke-linejoin="round"/>
+<path d="M30 44 Q100 10 170 44 L164 58 Q100 28 36 58 Z" fill="url(#crust)"/>
+<path d="M58 92 Q60 108 54 116 M136 98 Q140 112 134 122 M96 140 Q100 152 96 160" stroke="#ffbf2e" stroke-width="7" stroke-linecap="round" fill="none"/>
+<circle cx="78" cy="78" r="13" fill="url(#pep)"/><circle cx="122" cy="80" r="12" fill="url(#pep)"/><circle cx="100" cy="116" r="12" fill="url(#pep)"/>
+<circle cx="74" cy="74" r="3" fill="#ffffff" fill-opacity="0.5"/><circle cx="118" cy="76" r="3" fill="#ffffff" fill-opacity="0.5"/><circle cx="96" cy="112" r="3" fill="#ffffff" fill-opacity="0.5"/>
+<path d="M112 100 l6 -6 M84 104 l5 4 M120 132 l-5 5" stroke="#3f8a2a" stroke-width="5" stroke-linecap="round"/>
+</g></g>
+</svg>
