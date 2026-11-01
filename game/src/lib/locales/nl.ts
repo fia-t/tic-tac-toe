@@ -341,7 +341,7 @@ const pack: LocalePack = {
         rewardNoStarTarget: "Alle gehaalde levels hebben al 3 sterren. Haal het volgende campagnelevel om daar sterren bij te krijgen.",
         rewardNoStarYet: "Sterren kun je alleen aan een gehaald level toevoegen. Haal het eerste campagnelevel om daar sterren bij te krijgen.",
         rewardShieldsFull: "Je hebt al het maximum aantal schilden. Speel de dagelijkse uitdaging om je reeks te laten groeien.",
-        giftTitle: "Speel elke dag en krijg cadeaus!",
+        giftTitle: "Speel elke dag en\nkrijg cadeaus!",
         giftHint: "Kom elke dag terug: elke dag zet een kruisje op het bord. Op dag 7 krijg je een skin voor altijd!",
         giftDay: "Dag {n}",
         giftToday: "Vandaag",

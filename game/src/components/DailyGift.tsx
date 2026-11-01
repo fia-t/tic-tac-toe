@@ -15,10 +15,11 @@ import { todayKey } from "@game/lib/daily";
 import { BoosterKind, GIFT_DAYS, WalletState, addBoosters, earnCoins, giftStatus, markGiftClaimed, startSkinTrial, useWallet } from "@game/lib/wallet";
 
 // Подарунок дня - після завантаження гри, раз на день. Тиждень подарунків - ігрове поле 3×3 "Класики":
-// у центрі хрестик, у нижньому правому куті нолик, дні - у решті клітинок. Сьогоднішній подарунок
-// видно, наступні - сюрприз (під підписом дня лише фішка), забраний день закривається хрестиком.
-// Подарунки: монети, бустери в запас (підказка, скасування ходу) і пробний скін; якщо всі скіни є - монети.
-// За рекламу (де вона є) - подвійний подарунок.
+// у центрі хрестик, у нижньому лівому куті нолик, дні - у решті клітинок. Сьогоднішній подарунок
+// видно, наступні - сюрприз (під підписом дня лише фішка), забраний день закривається своєю фішкою.
+// Забрали 7-й день - хрестики на діагоналі світяться, як виграшна лінія.
+// Подарунки: монети, бустери в запас і пробний скін; якщо всі скіни є - монети.
+// За рекламу (де вона є) - подвійний подарунок. Після отримання над полем вистрибує нагорода (за рекламу - зі штампом "×2").
 
 type Boosts = [BoosterKind, number][];
 type Gift = { kind: "coins"; n: number } | { kind: "boosters"; boosts: Boosts } | { kind: "trial"; skin: Theme; hours: number };
@@ -42,10 +43,15 @@ const PLAN: ({ kind: "coins"; n: number } | { kind: "boosters"; boosts: Boosts }
 ];
 const TRIAL_GIFT_HOURS = 24;
 const BOOSTER_NAME = { hint: "boosterHint", undo: "boosterUndo", pause: "boosterPause", freeze: "boosterFreeze" } as const;
-// Фішки "сюрпризу" на днях, що попереду, - сталий візерунок.
-const SURPRISE: ("x" | "o")[] = ["x", "o", "x", "o", "x", "o", "x"];
-// Клітинки поля 0..8: 4 - хрестик, 8 - нолик, дні 1-7 - по черзі в решті (7-й - поруч із ноликом).
-const PIECE_CELLS: Record<number, "x" | "o"> = { 4: "x", 8: "o" };
+// Фішки днів - сталий візерунок: "сюрприз" на днях, що попереду, і позначка забраного дня.
+const SURPRISE: ("x" | "o")[] = ["x", "o", "x", "o", "x", "x", "x"];
+// Клітинки поля 0..8: 4 - хрестик, 6 - нолик, дні 1-7 - по черзі в решті (7-й - в останній клітинці).
+const PIECE_CELLS: Record<number, "x" | "o"> = { 4: "x", 6: "o" };
+// Виграшна діагональ після 7-го дня: день 1, центр, день 7.
+const WIN_LINE = [0, 4, 8];
+// Скільки вікно лишається відкритим після отримання (на 7-й день - довше, щоб побачити виграшну лінію).
+const CLOSE_MS = 2300;
+const CLOSE_LAST_MS = 3000;
 
 const notOwned = (wallet: WalletState) => SHOP_THEMES.filter((skin) => !wallet.owned.includes(skin.id));
 
@@ -75,6 +81,36 @@ const stamp = keyframes`
     0% { opacity: 0; transform: scale(2.2) rotate(-25deg); }
     70% { opacity: 1; transform: scale(0.92) rotate(4deg); }
     100% { opacity: 1; transform: none; }
+`;
+
+const winPulse = keyframes`
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.16); }
+`;
+
+const burstPop = keyframes`
+    0% { opacity: 0; transform: scale(0.2) translateY(40px); }
+    100% { opacity: 1; transform: none; }
+`;
+
+const burstRays = keyframes`
+    0% { opacity: 0; transform: scale(0.4) rotate(0); }
+    20% { opacity: 1; }
+    100% { opacity: 0.9; transform: scale(1) rotate(90deg); }
+`;
+
+const burstX2 = keyframes`
+    0% { opacity: 0; transform: scale(3) rotate(-30deg); }
+    100% { opacity: 1; transform: rotate(10deg); }
+`;
+
+const burstOut = keyframes`
+    to { opacity: 0; transform: translateY(-30px) scale(0.9); }
+`;
+
+const sparkFly = keyframes`
+    from { opacity: 1; transform: translate(0, 0) scale(1); }
+    to { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.3); }
 `;
 
 const Dim = styled(Overlay)`
@@ -111,17 +147,19 @@ const Board = styled.div`
     }
 `;
 
+// Заголовок - не більше двох рядків: у перекладі він розбитий "\n" на дві половини, кожна - свій рядок
+// без переносу; шрифт зменшується з шириною екрана.
 const Title = styled.h2`
     margin: 0;
-    padding: 0 40px;
+    padding: 0 36px;
     text-align: center;
-    font: 800 26px/1.15 var(--font-heading);
+    font: 800 min(24px, 4vw) / 1.2 var(--font-heading);
     color: #5b3413;
     text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
 
-    @media (max-width: 480px) {
-        padding: 0 34px;
-        font-size: 21px;
+    span {
+        display: block;
+        white-space: nowrap;
     }
 `;
 
@@ -149,7 +187,7 @@ const Grid = styled.div`
     }
 `;
 
-const Tile = styled.div<{ $state: "done" | "today" | "next" | "piece" }>`
+const Tile = styled.div<{ $state: "done" | "today" | "next" | "piece"; $win?: boolean }>`
     ${boardTile}
     position: relative;
     aspect-ratio: 1;
@@ -172,6 +210,16 @@ const Tile = styled.div<{ $state: "done" | "today" | "next" | "piece" }>`
         css`
             & > :not(img) {
                 opacity: 0.45;
+            }
+        `}
+    ${({ $win }) =>
+        $win &&
+        css`
+            background: rgba(255, 236, 170, 0.45);
+
+            & > img {
+                animation: ${winPulse} 0.55s ease-in-out 0.5s 3;
+                filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px rgba(255, 210, 60, 1)) drop-shadow(0 0 20px rgba(255, 170, 20, 0.9));
             }
         `}
 
@@ -235,28 +283,21 @@ const SkinPeek = styled.span`
     }
 `;
 
-// Бустери - круглі кремові "кнопки" з іконкою, як під полем; кілька - стовпчиком, кожен з числом.
+// Бустер - іконка з-під поля (без кружечка); кілька - сіткою, кожен з числом.
 const Boost = styled.span<{ $small: boolean }>`
     display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: ${({ $small }) => ($small ? "30px" : "40px")};
-    height: ${({ $small }) => ($small ? "30px" : "40px")};
-    border-radius: 50%;
-    background: linear-gradient(180deg, #fff6e4, #f1d9ac);
-    box-shadow:
-        inset 0 -3px 0 #d8b47c,
-        0 2px 4px rgba(73, 48, 31, 0.25);
     color: #49301f;
 
     svg {
-        width: ${({ $small }) => ($small ? "17px" : "22px")};
-        height: ${({ $small }) => ($small ? "17px" : "22px")};
+        width: ${({ $small }) => ($small ? "24px" : "36px")};
+        height: ${({ $small }) => ($small ? "24px" : "36px")};
     }
 
     @media (max-width: 480px) {
-        width: ${({ $small }) => ($small ? "24px" : "32px")};
-        height: ${({ $small }) => ($small ? "24px" : "32px")};
+        svg {
+            width: ${({ $small }) => ($small ? "18px" : "30px")};
+            height: ${({ $small }) => ($small ? "18px" : "30px")};
+        }
     }
 `;
 
@@ -318,6 +359,173 @@ const AdTag = styled.span`
     pointer-events: none;
 `;
 
+// --- ефект отримання: нагорода вистрибує над полем, за нею крутяться золоті промені, розлітаються іскри ---
+
+const Burst = styled.div`
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+    animation: ${burstOut} 0.35s ease-in 1.85s forwards;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
+const Rays = styled.div<{ $x2: boolean }>`
+    position: absolute;
+    width: ${({ $x2 }) => ($x2 ? "380px" : "300px")};
+    height: ${({ $x2 }) => ($x2 ? "380px" : "300px")};
+    border-radius: 50%;
+    background: repeating-conic-gradient(${({ $x2 }) => ($x2 ? "rgba(255, 170, 40, 0.6)" : "rgba(255, 214, 90, 0.55)")} 0 12deg, transparent 12deg 30deg);
+    mask-image: radial-gradient(circle, #000 25%, transparent 70%);
+    animation: ${burstRays} 2.2s linear both;
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
+const BurstBody = styled.div`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 26px 14px;
+    border-radius: 26px;
+    background: radial-gradient(circle at 50% 35%, #fffaf0, #ffe7b0);
+    box-shadow:
+        0 0 0 4px #fff7e8,
+        0 0 0 7px #f5b82e,
+        0 16px 34px rgba(60, 30, 5, 0.4);
+    color: #49301f;
+    animation: ${burstPop} 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+
+    b {
+        font: 800 40px/1 var(--font-heading);
+        color: #2f8a3e;
+        text-shadow: 0 2px 0 #fff;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        animation: none;
+    }
+`;
+
+const BurstGrid = styled.span`
+    display: grid;
+    grid-template-columns: repeat(2, auto);
+    gap: 6px 18px;
+
+    & > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    && b {
+        font-size: 26px;
+    }
+`;
+
+const X2Tag = styled.span`
+    position: absolute;
+    top: -18px;
+    right: -22px;
+    padding: 2px 10px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #ffc247, #f08a1c);
+    color: #fff;
+    font: 800 30px/1.2 var(--font-heading);
+    text-shadow: 0 2px 0 rgba(140, 60, 0, 0.7);
+    box-shadow:
+        0 0 0 3px #fff7e8,
+        0 4px 10px rgba(73, 48, 31, 0.35);
+    animation: ${burstX2} 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s both;
+`;
+
+const Spark = styled.span`
+    position: absolute;
+    left: calc(50% - 4px);
+    top: calc(50% - 4px);
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    animation: ${sparkFly} 0.9s ease-out both;
+
+    @media (prefers-reduced-motion: reduce) {
+        display: none;
+    }
+`;
+
+const SPARK_COLORS = ["#ffd04d", "#f2a818", "#1fb3d9", "#e8452f", "#2f8a3e"];
+
+const GiftBurst: React.FC<{ gift: Gift; doubled: boolean }> = ({ gift, doubled }) => {
+    const t = useT();
+    const k = doubled ? 2 : 1;
+    // Іскри - сталі напрямки по колу (з невеликим розкидом), за рекламу - удвічі більше й далі.
+    const [sparks] = useState(() => {
+        const count = doubled ? 28 : 14;
+        return Array.from({ length: count }, (_, i) => {
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+            const dist = 90 + Math.random() * (doubled ? 110 : 70);
+            return { dx: Math.cos(angle) * dist, dy: Math.sin(angle) * dist, delay: doubled && i % 2 ? 0.4 : 0.1 };
+        });
+    });
+    const body =
+        gift.kind === "coins" ? (
+            <>
+                <Coin size={64} />
+                <b>+{gift.n * k}</b>
+            </>
+        ) : gift.kind === "trial" ? (
+            <>
+                <SkinPeek style={{ transform: "scale(1.6)", margin: "10px 0" }}>
+                    <img src={gift.skin.xMarkerUrl} alt="" />
+                    <img src={gift.skin.oMarkerUrl} alt="" />
+                </SkinPeek>
+                <b style={{ fontSize: 28 }}>{t("giftTrial", { h: String(gift.hours * k) })}</b>
+            </>
+        ) : gift.boosts.length === 1 ? (
+            <>
+                <Boost $small={false} style={{ transform: "scale(1.7)", margin: "14px 0" }}>
+                    <ActionIcon id={gift.boosts[0][0]} />
+                </Boost>
+                <b>+{gift.boosts[0][1] * k}</b>
+            </>
+        ) : (
+            <BurstGrid>
+                {gift.boosts.map(([kind, n]) => (
+                    <span key={kind}>
+                        <Boost $small={false}>
+                            <ActionIcon id={kind} />
+                        </Boost>
+                        <b>+{n * k}</b>
+                    </span>
+                ))}
+            </BurstGrid>
+        );
+    return (
+        <Burst aria-live="polite">
+            <Rays $x2={doubled} />
+            <BurstBody>
+                {body}
+                {doubled && <X2Tag>×2</X2Tag>}
+            </BurstBody>
+            {sparks.map((s, i) => (
+                <Spark
+                    key={i}
+                    style={{ "--dx": `${s.dx}px`, "--dy": `${s.dy}px`, background: SPARK_COLORS[i % SPARK_COLORS.length], animationDelay: `${s.delay}s` } as React.CSSProperties}
+                />
+            ))}
+        </Burst>
+    );
+};
+
 const pieceUrl = (p: "x" | "o") => assetUrl(`images/themes/classic-${p}.svg`);
 
 export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClose: () => void }> = ({ onRewardedAd, onClose }) => {
@@ -326,6 +534,7 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
     const [today] = useState(todayKey);
     // Що вже забрано в цьому вікні: день із хрестиком, що "падає", і закриття за мить.
     const [claimed, setClaimed] = useState<number | null>(null);
+    const [doubled, setDoubled] = useState(false);
     const [watching, setWatching] = useState(false);
     const status = giftStatus(today, wallet);
     const day = claimed ?? status.day;
@@ -335,14 +544,15 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
 
     useEffect(() => {
         if (claimed === null) return;
-        const timer = setTimeout(onClose, 1300);
+        const timer = setTimeout(onClose, claimed === GIFT_DAYS - 1 ? CLOSE_LAST_MS : CLOSE_MS);
         return () => clearTimeout(timer);
     }, [claimed, onClose]);
 
-    const claim = (doubled: boolean) => {
+    const claim = (double: boolean) => {
         if (claimed !== null) return;
-        grant(todayGift, doubled);
+        grant(todayGift, double);
         markGiftClaimed(today);
+        setDoubled(double);
         setClaimed(status.day);
     };
 
@@ -394,12 +604,13 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
     const tileState = (i: number): "done" | "today" | "next" =>
         claimed !== null ? (i <= claimed ? "done" : "next") : i < day || (i === day && !status.ready) ? "done" : i === day ? "today" : "next";
 
+    const win = claimed === GIFT_DAYS - 1;
     let next = 0;
     const cells = Array.from({ length: 9 }, (_, c) => {
         const piece = PIECE_CELLS[c];
         if (piece)
             return (
-                <Tile key={c} $state="piece">
+                <Tile key={c} $state="piece" $win={win && WIN_LINE.includes(c)}>
                     <Piece $size="70%" src={pieceUrl(piece)} alt="" />
                 </Tile>
             );
@@ -407,10 +618,10 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
         const state = tileState(i);
         const big = i === GIFT_DAYS - 1;
         return (
-            <Tile key={c} $state={state}>
+            <Tile key={c} $state={state} $win={win && WIN_LINE.includes(c)}>
                 <DayLabel $big={big && state !== "done"}>{state === "today" ? t("giftToday") : t("giftDay", { n: String(i + 1) })}</DayLabel>
                 {state === "next" ? <Piece $size="58%" src={pieceUrl(SURPRISE[i])} alt="" /> : content(i === status.day ? todayGift : gifts[i], state === "today")}
-                {state === "done" && <Mark $fresh={i === claimed} src={pieceUrl("x")} alt="" />}
+                {state === "done" && <Mark $fresh={i === claimed} src={pieceUrl(SURPRISE[i])} alt="" />}
             </Tile>
         );
     });
@@ -422,8 +633,15 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
                 <Close onClick={onClose} aria-label={t("close")}>
                     <IconClose size={16} />
                 </Close>
-                <Title id="gift-title">{t("giftTitle")}</Title>
+                <Title id="gift-title">
+                    {t("giftTitle")
+                        .split("\n")
+                        .map((line) => (
+                            <span key={line}>{line}</span>
+                        ))}
+                </Title>
                 <Grid>{cells}</Grid>
+                {claimed !== null && <GiftBurst gift={todayGift} doubled={doubled} />}
                 {status.ready || claimed !== null ? (
                     <Buttons $two={Boolean(onRewardedAd)}>
                         <GameButton tone="green" size="lg" block disabled={claimed !== null || watching} onClick={() => claim(false)}>

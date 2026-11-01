@@ -342,7 +342,7 @@ const pack: LocalePack = {
         rewardNoStarTarget: "Wszystkie ukończone poziomy mają już 3 gwiazdki. Ukończ kolejny poziom kampanii, aby go poprawić.",
         rewardNoStarYet: "Gwiazdkę można dodać tylko do ukończonego poziomu. Ukończ pierwszy poziom kampanii, aby go poprawić.",
         rewardShieldsFull: "Masz już maksimum ochron. Zagraj w wyzwanie dnia, żeby seria rosła.",
-        giftTitle: "Graj codziennie i odbieraj prezenty!",
+        giftTitle: "Graj codziennie i\nodbieraj prezenty!",
         giftHint: "Wracaj codziennie - każdy dzień stawia krzyżyk na planszy. 7. dnia skórka na zawsze!",
         giftDay: "Dzień {n}",
         giftToday: "Dziś",
