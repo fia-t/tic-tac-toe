@@ -168,13 +168,13 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
 
     // Скіни-нагороди кампанії не продаються - у магазині лише ті, що гравець уже отримав (щоб
     // обрати). Евентові: до старту - "Скоро", після кінця - лише в тих, у кого вже є.
-    // Порядок: живі івенти, майбутні івенти, решта.
+    // Порядок: живі івенти, майбутні івенти, решта - від найдешевшого скіна до найдорожчого.
     const nowDate = new Date(now);
     const isReward = (skin: Theme) => CAMPAIGN_THEMES.some((item) => item.id === skin.id) || CAMPAIGN_CHAPTERS.some((chapter) => chapter.rewardSkinId === skin.id);
     const rank = (skin: Theme) => ({ live: 0, soon: 1, none: 2, ended: 2 })[eventStatus(skin, nowDate)];
     const skins = [CLASSIC_THEME, ...themes.filter((theme) => theme.id !== CLASSIC_THEME.id)]
         .filter((skin) => (isReward(skin) || eventStatus(skin, nowDate) === "ended" ? isSkinUnlocked(skin.id, wallet) : true))
-        .sort((a, b) => rank(a) - rank(b));
+        .sort((a, b) => rank(a) - rank(b) || skinPrice(a) - skinPrice(b));
     const equipped = getEquippedSkinId(wallet);
 
     const play = (id: string) => {
