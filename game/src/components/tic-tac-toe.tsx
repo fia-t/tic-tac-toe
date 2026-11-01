@@ -27,6 +27,7 @@ import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
+import { SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameHomeContext, GameScreen, RewardedAdContext, useEmbedCompact } from "@game/components/GameScreen";
@@ -82,6 +83,9 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
 
 // Розділи меню - окремі екрани (як у прототипі); "game" - саме поле.
 type Screen = "home" | "game" | Exclude<NavItem, "home">;
+// Бокові банери на екрані гри - між плитками полів і полем та праворуч від кнопок біля поля.
+const GAME_SIDE_BANNERS: SideBannerLayout = { center: '[data-tour="board"], [data-tour="boosters"]', leftEdge: "[data-ad-left-edge]", topEdge: '[data-tour="bar"]' };
+
 const PAGES: Screen[] = ["campaign", "shop", "awards", "profile"];
 
 type TicTacToeProps = {
@@ -694,7 +698,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <AppColumn ref={topRef}>
                 {/* На екрані партії шапки немає: стрілка "Назад", повний екран і налаштування - у смузі над полем. */}
                 {onGameScreen && themeReady ? (
-                    <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
+                    <>
+                        <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
+                        <SideBanners id="ad-game" layout={GAME_SIDE_BANNERS} />
+                    </>
                 ) : (
                     <>
                         <TopBar

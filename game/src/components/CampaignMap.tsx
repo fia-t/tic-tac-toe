@@ -8,7 +8,8 @@ import { Star } from "@game/components/DailyChallenge";
 import { ModIcon } from "@game/components/GameOptions";
 import { BossPortrait } from "@game/components/CampaignArt";
 import { albumArt } from "@game/components/AlbumArt";
-import { HomeGreeting, HomePage, HomeTabs, InfoTip, Tab, Tabs, type PanelTab } from "@game/components/HomeScreen";
+import { InlineBanner, SideBanners } from "@game/components/AdBanner";
+import { HomeGreeting, HomePage, HomeTabs, MENU_SIDE_BANNERS, InfoTip, Tab, Tabs, type PanelTab } from "@game/components/HomeScreen";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
@@ -607,7 +608,7 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
 
     return (
         // Ті самі відступи, що на головній - вкладки й привітання не стрибають при переході.
-        <HomePage>
+        <HomePage data-ad-center="">
             {/* Вкладки головної згори - кампанія одна з них, звідси ж повертаються до гри з ботом, онлайну чи викликів. */}
             {onHomeTab && (
                 <>
@@ -642,7 +643,7 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
                         const levels = chapterLevels(ci);
                         const done = isChapterDone(ci, progress);
                         const reward = rewardText(chapter, themes, t);
-                        return (
+                        const card = (
                             <Card key={chapter.id} aria-labelledby={`chapter-${chapter.id}`}>
                                 <ChapterHead>
                                     <ChapterArt $src={chapterBackground(chapter)} aria-hidden="true" />
@@ -698,6 +699,15 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
                                 )}
                             </Card>
                         );
+                        // Після першого розділу - рекламний банер порталу.
+                        return ci === 0 ? (
+                            <React.Fragment key={chapter.id}>
+                                {card}
+                                <InlineBanner id="ad-campaign" />
+                            </React.Fragment>
+                        ) : (
+                            card
+                        );
                     })}
 
                 </TabBody>
@@ -738,6 +748,7 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
                 </TabBody>
             )}
 
+            <SideBanners id="ad-campaign" layout={MENU_SIDE_BANNERS} />
             {info !== null && <LevelInfo index={info} onClose={() => setInfo(null)} onStart={onStart} />}
         </HomePage>
     );

@@ -7,6 +7,7 @@ import { DiffButton, DiffGroup, ModIcon, ModifierSelect } from "@game/components
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
+import { InlineBanner, SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { LeagueBadge } from "@game/components/LeagueCup";
 import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread } from "@game/components/pageStyles";
 import { ErrorText } from "@game/components/onlineStyles";
@@ -57,6 +58,9 @@ const TabPanel = styled.div`
         gap: 16px;
     }
 `;
+
+// Бокові банери меню - обабіч колонки, між шапкою й нижнім меню.
+export const MENU_SIDE_BANNERS: SideBannerLayout = { center: "[data-ad-center]", topEdge: "header", bottomEdge: "[data-ad-bottom-edge]" };
 
 // Привітання на широкому екрані - у шапці між ресурсами й повним екраном (сторінка починається
 // одразу з вкладок), на вужчому - над вкладками.
@@ -880,6 +884,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 </LinkButton>
             </Card>
 
+            <InlineBanner id="ad-online" />
+
             <Card aria-labelledby="home-match">
                 <Spread>
                     <h2 id="home-match" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -979,6 +985,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 )}
             </DailyCard>
 
+            <InlineBanner id="ad-daily" />
+
             {/* Модифікатор тижня - під викликом дня: ще одне завдання на цей тиждень. */}
             <Card aria-labelledby="home-weekly">
                 {/* Заголовок - як "Виклик дня" у картці над нею. */}
@@ -1008,7 +1016,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const content: Record<PanelTab, React.ReactNode> = { bot: botTab, online: onlineTab, daily: dailyTab };
 
     return (
-        <HomePage>
+        <HomePage data-ad-center="">
             <HomeGreeting name={name} />
 
             <HomeTabs active={tab} onSelect={setTab} />
@@ -1016,6 +1024,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             <TabPanel role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`}>
                 {content[tab]}
             </TabPanel>
+
+            {/* Реклама порталу - на вкладках онлайну й викликів (гра з ботом має вміщатись без прокрутки). */}
+            {tab !== "bot" && <SideBanners id={`ad-${tab}`} layout={MENU_SIDE_BANNERS} />}
 
             {panel === "match" && <QuickMatch fallbackName={name} onMatched={onRoomReady} onPlayBot={() => play("traditional")} />}
 

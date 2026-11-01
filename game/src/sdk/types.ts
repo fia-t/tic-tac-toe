@@ -45,6 +45,15 @@ export type AggregatorSdk = {
     requestFullscreen?: () => Promise<void>;
     exitFullscreen?: () => Promise<void>;
     onFullscreenChange?: (callback: (isFullscreen: boolean) => void) => () => void;
+    // Рекламні банери в DOM-елементі з цим id (розмір - один із підтримуваних порталом, напр. 300×600).
+    // Результат - див. BannerResult нижче.
+    showBanner?: (id: string, width: number, height: number) => Promise<BannerResult>;
+    clearBanner?: (id: string) => Promise<void>;
+    // Чи є банери в цій версії SDK (див. showBanner).
+    hasBanners?: boolean;
     // Вхід/вихід гравця на порталі; повертає відписку.
     onAuthChange?: (callback: () => void) => () => void;
 };
+
+// Результат показу банера: "cooldown" - той самий слот запитували менш ніж 30 с тому (можна повторити пізніше).
+export type BannerResult = "shown" | "cooldown" | "failed";

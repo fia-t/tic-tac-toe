@@ -5,7 +5,8 @@ import { GlobalStyle, Container } from "@game/components/gameStyles";
 import { addGameEventListener } from "@game/lib/firebase";
 import { PortalGameBridge } from "@game/portal/PortalGameBridge";
 import { PORTAL_ORIGIN } from "@game/portal/config";
-import { sdk } from "./sdk";
+import { sdk, sdkTarget } from "./sdk";
+import { AdBannerContext, type BannerApi } from "@game/components/AdBanner";
 import { lifecycle } from "./sdk/lifecycle";
 import { getDifficulty } from "@game/lib/difficulty";
 import { configureDailyStorage, reloadDaily, DailyState } from "@game/lib/daily";
@@ -34,6 +35,13 @@ const INVITE_ROOM_KEY = "roomId";
 const createInviteLink = sdk.createInviteLink
     ? (roomId: string) => sdk.createInviteLink!({ [INVITE_ROOM_KEY]: roomId })
     : undefined;
+
+// Банери - лише там, де SDK їх має (портал з модулем banner).
+const bannerApi: BannerApi | null =
+    sdk.showBanner && sdk.clearBanner && (sdk.hasBanners ?? true) ? { show: sdk.showBanner, clear: sdk.clearBanner } : null;
+
+// На порталі "Гра з другом" відкривається без реклами: rewarded там - лише за явним вибором гравця ("+" у шапці).
+const beforeFriendOpen = sdkTarget === "portal" ? undefined : () => sdk.showRewardedAd();
 
 export default function App() {
     // Room-екран тут - локальний стан, а не next/navigation роутинг (якого в
@@ -206,13 +214,15 @@ export default function App() {
             {/* Шестерня налаштувань - у шапці самої гри (TopBar). */}
             <PortalGameBridge origin={PORTAL_ORIGIN}>
                 <Container>
-                    <TicTacToe
-                        onRoomReady={setRoomId}
-                        onBeforeFriendOpen={() => sdk.showRewardedAd()}
-                        onReady={handleReady}
-                        getShareLink={sdk.shareLink}
-                        onRewardedAd={sdk.hasRewardedAds ? sdk.showRewardedAd : undefined}
-                    />
+                    <AdBannerContext.Provider value={bannerApi}>
+                        <TicTacToe
+                            onRoomReady={setRoomId}
+                            onBeforeFriendOpen={beforeFriendOpen}
+                            onReady={handleReady}
+                            getShareLink={sdk.shareLink}
+                            onRewardedAd={sdk.hasRewardedAds ? sdk.showRewardedAd : undefined}
+                        />
+                    </AdBannerContext.Provider>
                 </Container>
             </PortalGameBridge>
         </>

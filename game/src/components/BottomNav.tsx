@@ -115,7 +115,7 @@ type BottomNavProps = {
 export const BottomNav: React.FC<BottomNavProps> = ({ current, onNavigate }) => {
     const t = useT();
     return (
-        <Nav aria-label={t("navLabel")}>
+        <Nav aria-label={t("navLabel")} data-ad-bottom-edge="">
             <div>
                 {ITEMS.map((item) => (
                     <NavButton

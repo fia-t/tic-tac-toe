@@ -1,4 +1,5 @@
-import type { AggregatorSdk } from "./types";
+import type { AggregatorSdk, BannerResult } from "./types";
+import { setSoundSuppressed } from "@game/lib/sound";
 
 // QSPlay SDK порталу play.quartsoft.com - https://docs-dev.quartsoft.com/sdk/intro
 // Скрипт https://sdk.quartsoft.com/v1/sdk.js підключається в <head> (game/vite.config.ts,
@@ -36,6 +37,23 @@ type QSPlaySDKApi = {
         addAuthListener: (cb: (payload: { user: SdkUser | null }) => void) => () => void;
         getUserToken: () => Promise<string>;
     };
+    // https://docs-dev.quartsoft.com/sdk/ad-module - promise ніколи не відхиляється, результат - лише в колбеках.
+    ad?: {
+        requestAd: (
+            kind: "midgame" | "rewarded",
+            callbacks?: {
+                adStarted?: () => void;
+                adFinished?: () => void;
+                adRewarded?: () => void;
+                adError?: (error: { code: string; message?: string }) => void;
+            }
+        ) => Promise<void>;
+    };
+    // https://docs-dev.quartsoft.com/sdk/banner-module - відхиляється з SdkError (code: unfilled, cooldown, notVisible...).
+    banner?: {
+        requestBanner: (options: { id: string; width: number; height: number }) => Promise<void>;
+        clearBanner: (id: string) => Promise<void>;
+    };
     data: {
         getItem: <T = DataValue>(key: string) => Promise<T | null>;
         setItem: (key: string, value: DataValue) => Promise<void>;
@@ -71,9 +89,47 @@ export const qsplaySdk: AggregatorSdk = {
     loadingStop: () => void safe("game.loadingStop", () => api()?.game.loadingStop(), undefined),
     gameplayStart: () => void safe("game.gameplayStart", () => api()?.game.gameplayStart(), undefined),
     gameplayStop: () => void safe("game.gameplayStop", () => api()?.game.gameplayStop(), undefined),
-    // Рекламу на порталі показує сам портал (PortalGameBridge) - SDK її не має.
+    // Midgame-рекламу між партіями поки не показуємо.
     showMidgameAd: async () => {},
-    showRewardedAd: async () => true,
+    // Rewarded - лише за явним вибором гравця ("+" біля ресурсів у шапці). true - переглянуто до кінця.
+    showRewardedAd: async () => {
+        const ad = api()?.ad;
+        if (!ad) return false;
+        let rewarded = false;
+        await ad.requestAd("rewarded", {
+            adStarted: () => setSoundSuppressed(true),
+            adRewarded: () => {
+                rewarded = true;
+            },
+            adFinished: () => setSoundSuppressed(false),
+            adError: (error) => {
+                setSoundSuppressed(false);
+                console.warn("[QSPlaySDK] ad.requestAd rewarded failed", error.code);
+            },
+        });
+        return rewarded;
+    },
+    // Модулі ad і banner є не в кожній версії SDK порталу - реклама вмикається, щойно портал їх видасть.
+    get hasRewardedAds() {
+        return Boolean(api()?.ad);
+    },
+    get hasBanners() {
+        return Boolean(api()?.banner);
+    },
+    showBanner: async (id, width, height): Promise<BannerResult> => {
+        const banner = api()?.banner;
+        if (!banner) return "failed";
+        try {
+            await banner.requestBanner({ id, width, height });
+            return "shown";
+        } catch (error) {
+            const code = (error as { code?: string })?.code;
+            // Немає реклами чи вона вимкнена - звичайні ситуації, без попередження.
+            if (code !== "unfilled" && code !== "adsDisabled" && code !== "cooldown") console.warn("[QSPlaySDK] banner.requestBanner failed", code ?? error);
+            return code === "cooldown" ? "cooldown" : "failed";
+        }
+    },
+    clearBanner: (id) => safe("banner.clearBanner", () => api()?.banner?.clearBanner(id), undefined),
 
     setGameContext: (context) => void safe("game.setGameContext", () => api()?.game.setGameContext(context), undefined),
     clearGameContext: () => void safe("game.clearGameContext", () => api()?.game.clearGameContext(), undefined),

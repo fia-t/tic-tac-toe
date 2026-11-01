@@ -17,3 +17,4 @@ const adapters: Record<string, AggregatorSdk> = {
 };
 
 export const sdk: AggregatorSdk = adapters[target] ?? noneSdk;
+export const sdkTarget = target;

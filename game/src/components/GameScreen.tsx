@@ -1710,7 +1710,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <BoardHolder data-tour="board">
                 {board}
                 {wide && quick && (
-                    <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")}>
+                    <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")} data-ad-left-edge="">
                         {MODE_TILES.map((tile) => (
                             <ModeTile
                                 key={tile.id}
