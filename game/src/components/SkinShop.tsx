@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
-import { Card, GREETING_IN_BAR, Muted, Page } from "@game/components/pageStyles";
+import { Card, GREETING_IN_BAR, Muted, Page, barColumnCss } from "@game/components/pageStyles";
 import { InfoTip } from "@game/components/HomeScreen";
 import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice, themeName } from "@game/lib/themes";
 import { chapterName } from "@game/lib/campaignContent";
@@ -161,16 +161,14 @@ const BarTitle = styled.div`
 
     @media ${GREETING_IN_BAR} {
         display: flex;
-        flex: 1 1 auto;
         align-items: center;
-        justify-content: center;
         gap: 10px;
-        min-width: 0;
+        ${barColumnCss}
     }
 
     h1 {
         margin: 0;
-        font-size: 26px;
+        font-size: 30px;
         line-height: 1.05;
         color: #4a2c0c;
     }
