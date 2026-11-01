@@ -20,7 +20,12 @@ export type WalletState = {
     events: Record<string, "on" | "off">;
     // Подарунок дня: скільки днів поточного тижня вже забрано (0-6) і коли востаннє ("YYYY-MM-DD").
     gift?: { day: number; last: string };
+    // Запас бустерів (з подарунка дня): витрачається, коли безкоштовна спроба партії вже використана, - до реклами.
+    boosters?: Partial<Record<BoosterKind, number>>;
 };
+
+export type BoosterKind = "undo" | "hint" | "pause" | "freeze";
+const BOOSTER_KINDS: BoosterKind[] = ["undo", "hint", "pause", "freeze"];
 
 export const FREE_SKIN_ID = "classic";
 const START_COINS = 100;
@@ -59,6 +64,12 @@ const sanitize = (raw: unknown): WalletState => {
         gift:
             r.gift && typeof r.gift.day === "number" && typeof r.gift.last === "string"
                 ? { day: Math.min(GIFT_DAYS - 1, Math.max(0, Math.floor(r.gift.day))), last: r.gift.last }
+                : undefined,
+        boosters:
+            r.boosters && typeof r.boosters === "object"
+                ? Object.fromEntries(
+                      BOOSTER_KINDS.map((kind) => [kind, Math.max(0, Math.floor(Number(r.boosters?.[kind]) || 0))]).filter(([, n]) => (n as number) > 0)
+                  )
                 : undefined,
     };
 };
@@ -205,6 +216,19 @@ const subscribe = (listener: () => void) => {
         listeners.delete(listener);
     };
 };
+export const boosterStock = (kind: BoosterKind, s: WalletState = state): number => s.boosters?.[kind] ?? 0;
+export const addBoosters = (kind: BoosterKind, n: number): void => {
+    if (n <= 0) return;
+    commit({ ...state, boosters: { ...state.boosters, [kind]: boosterStock(kind) + n } });
+};
+// Витратити бустер із запасу. false - запасу немає.
+export const spendBooster = (kind: BoosterKind): boolean => {
+    const n = boosterStock(kind);
+    if (n <= 0) return false;
+    commit({ ...state, boosters: { ...state.boosters, [kind]: n - 1 } });
+    return true;
+};
+
 export const useWallet = (): WalletState => useSyncExternalStore(subscribe, getWallet, () => EMPTY);
 
 export const useLastEarning = (): Earning | null =>

@@ -10,6 +10,7 @@ import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTi
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
+import { BoosterKind, boosterStock, spendBooster, useWallet } from "@game/lib/wallet";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
@@ -1097,7 +1098,7 @@ const PhoneTiles = styled.div`
     gap: 14px;
 `;
 
-const Badge = styled.span<{ $free: boolean }>`
+const Badge = styled.span<{ $free: boolean; $stock?: boolean }>`
     position: absolute;
     top: calc(-1 * var(--gb-c, 13px) - 4px);
     right: calc(-1 * var(--gb-c, 13px) - 6px);
@@ -1111,6 +1112,9 @@ const Badge = styled.span<{ $free: boolean }>`
     text-align: center;
     box-shadow: 0 0 0 2px #fff7e8;
     pointer-events: none;
+
+    /* Бустери із запасу (подарунок дня) - бірюзовий ярлик "×N". */
+    ${({ $stock }) => ($stock ? "background: #0f6f8c;" : "")}
 
     /* Безкоштовні спроби скінчились - помаранчевий ярлик "AD": наступна - за рекламу. */
     ${({ $free }) =>
@@ -1169,10 +1173,10 @@ export const ResultLink = styled.button`
     }
 `;
 
-type BoosterKind = "undo" | "hint" | "pause" | "freeze";
 const ALL_FREE: Record<BoosterKind, boolean> = { undo: true, hint: true, pause: true, freeze: true };
 
-// Бустери: кожен один раз за партію безкоштовно, далі - за rewarded-рекламу (якщо вона є).
+// Бустери: кожен один раз за партію безкоштовно, далі - із запасу (подарунок дня; не в новині),
+// а коли запасу немає - за rewarded-рекламу (якщо вона є).
 // Гра в новині на екрані до 760px - окрема телефонна розкладка (PhoneBar/PhoneOptions), а в самому
 // iframe новини на телефоні (низький, ~370×190) - компактна (CompactSide). Вибір - у JS, а не CSS:
 // так у DOM лише одна смуга, і навчання підсвічує саме її (data-tour).
@@ -1193,6 +1197,9 @@ export const useEmbedCompact = (embed: boolean): boolean => useMedia("(max-width
 
 const useBoosters = (resetKey: unknown) => {
     const rewarded = useContext(RewardedAdContext);
+    const wallet = useWallet();
+    const withStock = !isEmbed();
+    const stock = (kind: BoosterKind) => (withStock ? boosterStock(kind, wallet) : 0);
     const [free, setFree] = useState<Record<BoosterKind, boolean>>(ALL_FREE);
     useEffect(() => {
         setFree(ALL_FREE);
@@ -1205,13 +1212,18 @@ const useBoosters = (resetKey: unknown) => {
             apply();
             return;
         }
+        if (stock(kind) > 0 && spendBooster(kind)) {
+            trackEvent("booster_used", { booster: kind, paid: false, stock: true });
+            apply();
+            return;
+        }
         if (!rewarded) return;
         if (await rewarded()) {
             trackEvent("booster_used", { booster: kind, paid: true });
             apply();
         }
     };
-    return { free, canBuy: Boolean(rewarded), use };
+    return { free, stock, canBuy: Boolean(rewarded), use };
 };
 
 export type BoosterProps = {
@@ -1368,7 +1380,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 </RoundButton>
             );
         const isFree = booster.free[kind];
-        const available = isFree || booster.canBuy;
+        const stock = booster.stock(kind);
+        const available = isFree || stock > 0 || booster.canBuy;
         // "AD" - і там, де реклами ще немає (сайт): видно, що наступна спроба буде за рекламу. У новині - як було.
         const showBadge = available || !embed;
         return (
@@ -1376,13 +1389,13 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 type="button"
                 disabled={!enabled || !available}
                 onClick={() => void booster.use(kind, onUse)}
-                aria-label={`${name} (${isFree ? t("boosterFree") : t("boosterForAd")})`}
+                aria-label={`${name} (${isFree || stock > 0 ? t("boosterFree") : t("boosterForAd")})`}
                 data-tip={name}
             >
                 <ActionIcon id={kind} />
                 {showBadge && (
-                    <Badge $free={isFree} aria-hidden="true">
-                        {isFree ? "1" : "AD"}
+                    <Badge $free={isFree || stock > 0} $stock={!isFree && stock > 0} aria-hidden="true">
+                        {isFree ? "1" : stock > 0 ? `×${stock}` : "AD"}
                     </Badge>
                 )}
             </RoundButton>

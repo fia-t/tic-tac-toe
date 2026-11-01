@@ -341,7 +341,7 @@ const pack: LocalePack = {
         rewardNoStarTarget: "Alle geschafften Level haben schon 3 Sterne. Schaffe das nächste Kampagnenlevel, um dort Sterne aufzustocken.",
         rewardNoStarYet: "Sterne gibt es nur für geschaffte Level. Schaffe das erste Kampagnenlevel, um dort Sterne aufzustocken.",
         rewardShieldsFull: "Du hast schon den maximalen Schutz. Spiele die Tagesaufgabe, damit deine Serie wächst.",
-        giftTitle: "Tagesgeschenk",
+        giftTitle: "Spiel jeden Tag und hol dir Geschenke!",
         giftHint: "Komm jeden Tag wieder - jeder Tag setzt ein Kreuz aufs Feld. An Tag 7 gibt es einen Skin für immer!",
         giftDay: "Tag {n}",
         giftToday: "Heute",

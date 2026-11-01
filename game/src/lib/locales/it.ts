@@ -341,7 +341,7 @@ const pack: LocalePack = {
         rewardNoStarTarget: "Tutti i livelli superati hanno già 3 stelle. Supera il prossimo livello della campagna per migliorarlo.",
         rewardNoStarYet: "Puoi aggiungere stelle solo a un livello superato. Supera il primo livello della campagna per migliorarlo.",
         rewardShieldsFull: "Hai già il massimo degli scudi. Gioca la sfida del giorno per far crescere la serie.",
-        giftTitle: "Regalo del giorno",
+        giftTitle: "Gioca ogni giorno e ricevi regali!",
         giftHint: "Torna ogni giorno: ogni giorno mette una X sul tabellone. Il 7° giorno, una skin per sempre!",
         giftDay: "Giorno {n}",
         giftToday: "Oggi",

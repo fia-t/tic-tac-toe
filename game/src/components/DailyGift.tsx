@@ -7,65 +7,61 @@ import { Overlay, boardTile, hintedCell } from "@game/components/gameStyles";
 import { ModalCloseButton } from "@game/components/onlineStyles";
 import { GameButton } from "@game/components/GameButton";
 import { Coin } from "@game/components/SkinShop";
-import { Flame } from "@game/components/TopBar";
+import { ActionIcon } from "@game/components/GameOptions";
 import { assetUrl } from "@game/lib/assets";
 import { useT } from "@game/lib/i18n";
-import { SHOP_THEMES, Theme, skinPrice, themeName } from "@game/lib/themes";
-import { MAX_STREAK_SHIELDS, addStreakShield, todayKey, useDailyState } from "@game/lib/daily";
-import { GIFT_DAYS, WalletState, earnCoins, giftStatus, grantSkin, markGiftClaimed, startSkinTrial, useWallet } from "@game/lib/wallet";
+import { SHOP_THEMES, Theme, skinPrice } from "@game/lib/themes";
+import { todayKey } from "@game/lib/daily";
+import { BoosterKind, GIFT_DAYS, WalletState, addBoosters, earnCoins, giftStatus, markGiftClaimed, startSkinTrial, useWallet } from "@game/lib/wallet";
 
-// Подарунок дня - після завантаження гри, раз на день. Тиждень подарунків на піщаному полі "Класики":
-// забраний день закреслюється хрестиком, з кутів картки визирають фішки X і O. Подарунки:
-// монети, захист серії вогника, пробний скін і на 7-й день - скін назавжди. Якщо подарунок
-// уже не має сенсу (захистів максимум, усі скіни є) - замість нього монети.
+// Подарунок дня - після завантаження гри, раз на день. Тиждень подарунків - ігрове поле 3×3 "Класики":
+// у центрі хрестик, у нижньому правому куті нолик, дні - у решті клітинок. Сьогоднішній подарунок
+// видно, наступні - сюрприз (під підписом дня лише фішка), забраний день закривається хрестиком.
+// Подарунки: монети, бустери в запас (підказка, скасування ходу) і пробний скін; якщо всі скіни є - монети.
 // За рекламу (де вона є) - подвійний подарунок.
 
-type Gift =
-    | { kind: "coins"; n: number }
-    | { kind: "shield"; n: number }
-    | { kind: "trial"; skin: Theme; hours: number }
-    | { kind: "skin"; skin: Theme; bonus: number };
+type Boosts = [BoosterKind, number][];
+type Gift = { kind: "coins"; n: number } | { kind: "boosters"; boosts: Boosts } | { kind: "trial"; skin: Theme; hours: number };
 
-const PLAN: ({ kind: "coins"; n: number } | { kind: "shield" | "trial" | "skin"; fallback: number })[] = [
+const PLAN: ({ kind: "coins"; n: number } | { kind: "boosters"; boosts: Boosts } | { kind: "trial"; fallback: number })[] = [
     { kind: "coins", n: 50 },
-    { kind: "shield", fallback: 75 },
+    { kind: "boosters", boosts: [["hint", 1]] },
     { kind: "coins", n: 100 },
     { kind: "trial", fallback: 100 },
+    { kind: "boosters", boosts: [["undo", 2]] },
     { kind: "coins", n: 150 },
-    { kind: "coins", n: 200 },
-    { kind: "skin", fallback: 300 },
+    {
+        kind: "boosters",
+        boosts: [
+            ["hint", 3],
+            ["undo", 3],
+            ["pause", 3],
+            ["freeze", 3],
+        ],
+    },
 ];
 const TRIAL_GIFT_HOURS = 24;
-// За рекламу на 7-й день (скін не подвоїш) - ще й монети.
-const SKIN_AD_BONUS = 150;
+const BOOSTER_NAME = { hint: "boosterHint", undo: "boosterUndo", pause: "boosterPause", freeze: "boosterFreeze" } as const;
+// Фішки "сюрпризу" на днях, що попереду, - сталий візерунок.
+const SURPRISE: ("x" | "o")[] = ["x", "o", "x", "o", "x", "o", "x"];
+// Клітинки поля 0..8: 4 - хрестик, 8 - нолик, дні 1-7 - по черзі в решті (7-й - поруч із ноликом).
+const PIECE_CELLS: Record<number, "x" | "o"> = { 4: "x", 8: "o" };
 
 const notOwned = (wallet: WalletState) => SHOP_THEMES.filter((skin) => !wallet.owned.includes(skin.id));
 
-const giftFor = (day: number, wallet: WalletState, shields: number): Gift => {
+const giftFor = (day: number, wallet: WalletState): Gift => {
     const plan = PLAN[day];
-    if (plan.kind === "coins") return plan;
-    const free = notOwned(wallet);
-    if (plan.kind === "shield") return shields < MAX_STREAK_SHIELDS ? { kind: "shield", n: 1 } : { kind: "coins", n: plan.fallback };
-    // Пробний - найдорожчий скін, якого ще немає (покуштувати "преміум"); назавжди - перший за порядком
-    // магазину (спершу скіни-предмети).
-    if (plan.kind === "trial") {
-        const skin = [...free].sort((a, b) => skinPrice(b) - skinPrice(a))[0];
-        return skin ? { kind: "trial", skin, hours: TRIAL_GIFT_HOURS } : { kind: "coins", n: plan.fallback };
-    }
-    const skin = free[0];
-    return skin ? { kind: "skin", skin, bonus: SKIN_AD_BONUS } : { kind: "coins", n: plan.fallback };
+    if (plan.kind !== "trial") return plan;
+    // Пробний - найдорожчий скін, якого ще немає (покуштувати "преміум").
+    const skin = [...notOwned(wallet)].sort((a, b) => skinPrice(b) - skinPrice(a))[0];
+    return skin ? { kind: "trial", skin, hours: TRIAL_GIFT_HOURS } : { kind: "coins", n: plan.fallback };
 };
 
 const grant = (gift: Gift, doubled: boolean) => {
-    if (gift.kind === "coins") earnCoins(doubled ? gift.n * 2 : gift.n);
-    else if (gift.kind === "shield") {
-        addStreakShield();
-        if (doubled) addStreakShield();
-    } else if (gift.kind === "trial") startSkinTrial(gift.skin.id, doubled ? gift.hours * 2 : gift.hours);
-    else {
-        grantSkin(gift.skin.id);
-        if (doubled) earnCoins(gift.bonus);
-    }
+    const k = doubled ? 2 : 1;
+    if (gift.kind === "coins") earnCoins(gift.n * k);
+    else if (gift.kind === "trial") startSkinTrial(gift.skin.id, gift.hours * k);
+    else gift.boosts.forEach(([kind, n]) => addBoosters(kind, n * k));
 };
 
 // --- вигляд ---
@@ -91,9 +87,10 @@ const Board = styled.div`
     inset: 0;
     z-index: 1501;
     margin: auto;
-    width: min(92vw, 540px);
+    width: min(92vw, 460px);
     height: fit-content;
-    max-height: calc(100dvh - 60px);
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
     box-sizing: border-box;
     padding: 22px 18px 18px;
     border: 8px solid transparent;
@@ -114,46 +111,17 @@ const Board = styled.div`
     }
 `;
 
-// Фішки X і O, що визирають з-за верхніх кутів поля.
-const Peek = styled.img<{ $side: "left" | "right" }>`
-    position: absolute;
-    top: -46px;
-    width: 84px;
-    height: 84px;
-    pointer-events: none;
-    ${({ $side }) => ($side === "left" ? "left: 18px; transform: rotate(-14deg);" : "right: 64px; transform: rotate(12deg);")}
-
-    @media (max-width: 480px) {
-        top: -36px;
-        width: 64px;
-        height: 64px;
-    }
-`;
-
-const Head = styled.div`
-    position: relative;
-    text-align: center;
+const Title = styled.h2`
+    margin: 0;
     padding: 0 40px;
-
-    h2 {
-        margin: 0;
-        font: 800 28px/1.1 var(--font-heading);
-        color: #5b3413;
-        text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
-    }
-
-    p {
-        margin: 6px 0 0;
-        font-size: 14px;
-        color: #7a5226;
-    }
+    text-align: center;
+    font: 800 26px/1.15 var(--font-heading);
+    color: #5b3413;
+    text-shadow: 0 2px 0 rgba(255, 255, 255, 0.7);
 
     @media (max-width: 480px) {
         padding: 0 34px;
-
-        h2 {
-            font-size: 23px;
-        }
+        font-size: 21px;
     }
 `;
 
@@ -162,35 +130,49 @@ const Close = styled(ModalCloseButton)`
     right: 10px;
 `;
 
+// Поле 3×3 у заглибленій рамці, як на дошці.
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     margin: 16px 0;
+    padding: 8px;
+    border-radius: 22px;
+    box-shadow:
+        inset 0 4px 10px rgba(90, 50, 10, 0.3),
+        inset 0 0 0 2px rgba(150, 95, 35, 0.3);
 
     @media (max-width: 480px) {
         gap: 7px;
         margin: 12px 0;
+        padding: 6px;
     }
 `;
 
-const Tile = styled.div<{ $state: "done" | "today" | "next"; $wide?: boolean }>`
+const Tile = styled.div<{ $state: "done" | "today" | "next" | "piece" }>`
     ${boardTile}
     position: relative;
+    aspect-ratio: 1;
+    min-width: 0;
     display: flex;
-    flex-direction: ${({ $wide }) => ($wide ? "row" : "column")};
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: ${({ $wide }) => ($wide ? "14px" : "3px")};
-    min-height: ${({ $wide }) => ($wide ? "92px" : "104px")};
-    padding: 8px 6px;
+    gap: 3px;
+    padding: 6px;
     text-align: center;
-    ${({ $wide }) => $wide && "grid-column: 1 / -1;"}
     ${({ $state }) => $state === "today" && hintedCell}
     ${({ $state }) =>
         $state === "today" &&
         css`
             background: rgba(255, 236, 170, 0.55);
+        `}
+    ${({ $state }) =>
+        $state === "done" &&
+        css`
+            & > :not(img) {
+                opacity: 0.45;
+            }
         `}
 
     @media (hover: hover) {
@@ -198,15 +180,15 @@ const Tile = styled.div<{ $state: "done" | "today" | "next"; $wide?: boolean }>`
             background: ${({ $state }) => ($state === "today" ? "rgba(255, 236, 170, 0.55)" : "rgba(255, 255, 255, 0.18)")};
         }
     }
-
-    @media (max-width: 480px) {
-        min-height: ${({ $wide }) => ($wide ? "80px" : "90px")};
-    }
 `;
 
-const DayLabel = styled.span`
+const DayLabel = styled.span<{ $big?: boolean }>`
     font: 800 14px/1 var(--font-heading);
-    color: #6b4318;
+    color: ${({ $big }) => ($big ? "#b8301f" : "#6b4318")};
+
+    @media (max-width: 480px) {
+        font-size: 12px;
+    }
 `;
 
 const Amount = styled.span<{ $today?: boolean }>`
@@ -214,12 +196,11 @@ const Amount = styled.span<{ $today?: boolean }>`
     color: ${({ $today }) => ($today ? "#2f8a3e" : "#5b3413")};
 `;
 
-const Faded = styled.div<{ $done: boolean }>`
-    display: contents;
-
-    & > * {
-        opacity: ${({ $done }) => ($done ? 0.45 : 1)};
-    }
+// Фішка на полі: хрестик у центрі, нолик у кутку і "сюрприз" на днях, що попереду.
+const Piece = styled.img<{ $size: string }>`
+    width: ${({ $size }) => $size};
+    height: auto;
+    pointer-events: none;
 `;
 
 // Забраний день - хрестик "Класики" поверх клітинки, як хід на полі.
@@ -227,7 +208,7 @@ const Mark = styled.img<{ $fresh: boolean }>`
     position: absolute;
     inset: 0;
     margin: auto;
-    width: min(78%, 82px);
+    width: 72%;
     height: auto;
     pointer-events: none;
     ${({ $fresh }) =>
@@ -242,33 +223,67 @@ const SkinPeek = styled.span`
     gap: 2px;
 
     img {
-        width: 38px;
-        height: 38px;
+        width: 34px;
+        height: 34px;
+    }
+
+    @media (max-width: 480px) {
+        img {
+            width: 26px;
+            height: 26px;
+        }
     }
 `;
 
-const SkinBoard = styled.span<{ $bg: string }>`
+// Бустери - круглі кремові "кнопки" з іконкою, як під полем; кілька - стовпчиком, кожен з числом.
+const Boost = styled.span<{ $small: boolean }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    background: url("${({ $bg }) => $bg}") center / cover;
-    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
+    width: ${({ $small }) => ($small ? "30px" : "40px")};
+    height: ${({ $small }) => ($small ? "30px" : "40px")};
+    border-radius: 50%;
+    background: linear-gradient(180deg, #fff6e4, #f1d9ac);
+    box-shadow:
+        inset 0 -3px 0 #d8b47c,
+        0 2px 4px rgba(73, 48, 31, 0.25);
+    color: #49301f;
 
-    img {
-        width: 40px;
-        height: 40px;
+    svg {
+        width: ${({ $small }) => ($small ? "17px" : "22px")};
+        height: ${({ $small }) => ($small ? "17px" : "22px")};
+    }
+
+    @media (max-width: 480px) {
+        width: ${({ $small }) => ($small ? "24px" : "32px")};
+        height: ${({ $small }) => ($small ? "24px" : "32px")};
     }
 `;
 
-const WideText = styled.span`
-    display: flex;
+// Більше двох бустерів (7-й день) - сіткою 2×2.
+const BoostList = styled.span<{ $grid: boolean }>`
+    display: ${({ $grid }) => ($grid ? "grid" : "flex")};
+    grid-template-columns: repeat(2, auto);
     flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
-    text-align: left;
+    align-items: center;
+    gap: ${({ $grid }) => ($grid ? "4px 8px" : "3px")};
+    font: 800 16px/1.1 var(--font-heading);
+    color: #5b3413;
+
+    & > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    @media (max-width: 480px) {
+        gap: ${({ $grid }) => ($grid ? "2px 4px" : "3px")};
+        font-size: ${({ $grid }) => ($grid ? "12px" : "16px")};
+
+        & > span {
+            gap: 2px;
+        }
+    }
 `;
 
 const Buttons = styled.div<{ $two: boolean }>`
@@ -277,37 +292,45 @@ const Buttons = styled.div<{ $two: boolean }>`
     gap: 10px;
 `;
 
-// Щит із вогником - захист серії.
-const ShieldIcon = ({ size = 40 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-        <path d="M20 3 L35 8 V19 C35 28 28 34 20 37 C12 34 5 28 5 19 V8Z" fill="#3a9fd8" stroke="#1d6a9a" strokeWidth="2.2" strokeLinejoin="round" />
-        <path d="M20 6.5 L32 10.5 V19 C32 26 26.5 31 20 33.6Z" fill="#ffffff" fillOpacity="0.18" />
-        <g transform="translate(10.5 9) scale(0.95)">
-            <Flame size={20} />
-        </g>
-    </svg>
-);
+const AdButton = styled.span`
+    position: relative;
+    display: block;
+`;
 
-const AdIcon = () => (
-    <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
-        <rect x="2" y="4" width="20" height="16" rx="5" fill="#1f8fe0" stroke="#fff" strokeWidth="1.6" />
-        <path d="M10 8.5v7l6-3.5z" fill="#fff" />
-    </svg>
-);
+// Ярлик "AD" - як на бустерах: помаранчевий, з кремовим обідком, трохи нахилений.
+const AdTag = styled.span`
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    z-index: 1;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 7px;
+    background: linear-gradient(180deg, #ffc247, #f08a1c);
+    color: #fff;
+    font: 800 13px/22px var(--font-heading);
+    letter-spacing: 0.5px;
+    text-shadow: 0 1px 0 rgba(140, 60, 0, 0.7);
+    box-shadow:
+        0 0 0 2px #fff7e8,
+        0 2px 4px rgba(73, 48, 31, 0.3);
+    transform: rotate(8deg);
+    pointer-events: none;
+`;
+
+const pieceUrl = (p: "x" | "o") => assetUrl(`images/themes/classic-${p}.svg`);
 
 export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClose: () => void }> = ({ onRewardedAd, onClose }) => {
     const t = useT();
     const wallet = useWallet();
-    const daily = useDailyState();
     const [today] = useState(todayKey);
     // Що вже забрано в цьому вікні: день із хрестиком, що "падає", і закриття за мить.
     const [claimed, setClaimed] = useState<number | null>(null);
     const [watching, setWatching] = useState(false);
     const status = giftStatus(today, wallet);
     const day = claimed ?? status.day;
-    const shields = daily.shields ?? 0;
-    const gifts = Array.from({ length: GIFT_DAYS }, (_, i) => giftFor(i, wallet, shields));
-    // Подарунок сьогодні фіксуємо до видачі: після grantSkin "найдешевший скін без власника" вже інший.
+    const gifts = Array.from({ length: GIFT_DAYS }, (_, i) => giftFor(i, wallet));
+    // Подарунок сьогодні фіксуємо до видачі: після неї "найдорожчий скін без власника" вже інший.
     const [todayGift] = useState(() => gifts[status.day]);
 
     useEffect(() => {
@@ -333,89 +356,86 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
         }
     };
 
-    const label = (gift: Gift): string =>
-        gift.kind === "coins"
-            ? `+${gift.n}`
-            : gift.kind === "shield"
-            ? t("giftShield")
-            : gift.kind === "trial"
-            ? t("giftTrial", { h: String(gift.hours) })
-            : t("giftSkin");
-
-    const icon = (gift: Gift) =>
-        gift.kind === "coins" ? (
-            <Coin size={gift.n >= 150 ? 44 : 38} />
-        ) : gift.kind === "shield" ? (
-            <ShieldIcon size={42} />
-        ) : (
-            <SkinPeek>
-                <img src={gift.skin.xMarkerUrl} alt="" />
-                <img src={gift.skin.oMarkerUrl} alt="" />
-            </SkinPeek>
+    const content = (gift: Gift, today: boolean) => {
+        if (gift.kind === "boosters") {
+            const small = gift.boosts.length > 1;
+            return (
+                <BoostList $grid={gift.boosts.length > 2}>
+                    {gift.boosts.map(([kind, n]) => (
+                        <span key={kind} title={t(BOOSTER_NAME[kind])}>
+                            <Boost $small={small}>
+                                <ActionIcon id={kind} />
+                            </Boost>
+                            {small && `+${n}`}
+                        </span>
+                    ))}
+                    {!small && <Amount $today={today}>+{gift.boosts[0][1]}</Amount>}
+                </BoostList>
+            );
+        }
+        const icon =
+            gift.kind === "coins" ? (
+                <Coin size={gift.n >= 150 ? 40 : 34} />
+            ) : (
+                <SkinPeek>
+                    <img src={gift.skin.xMarkerUrl} alt="" />
+                    <img src={gift.skin.oMarkerUrl} alt="" />
+                </SkinPeek>
+            );
+        const label = gift.kind === "trial" ? t("giftTrial", { h: String(gift.hours) }) : `+${gift.n}`;
+        return (
+            <>
+                {icon}
+                <Amount $today={today}>{label}</Amount>
+            </>
         );
+    };
 
     const tileState = (i: number): "done" | "today" | "next" =>
-        claimed !== null ? (i <= claimed ? "done" : "next") : i < day ? "done" : i === day ? "today" : "next";
+        claimed !== null ? (i <= claimed ? "done" : "next") : i < day || (i === day && !status.ready) ? "done" : i === day ? "today" : "next";
+
+    let next = 0;
+    const cells = Array.from({ length: 9 }, (_, c) => {
+        const piece = PIECE_CELLS[c];
+        if (piece)
+            return (
+                <Tile key={c} $state="piece">
+                    <Piece $size="70%" src={pieceUrl(piece)} alt="" />
+                </Tile>
+            );
+        const i = next++;
+        const state = tileState(i);
+        const big = i === GIFT_DAYS - 1;
+        return (
+            <Tile key={c} $state={state}>
+                <DayLabel $big={big && state !== "done"}>{state === "today" ? t("giftToday") : t("giftDay", { n: String(i + 1) })}</DayLabel>
+                {state === "next" ? <Piece $size="58%" src={pieceUrl(SURPRISE[i])} alt="" /> : content(i === status.day ? todayGift : gifts[i], state === "today")}
+                {state === "done" && <Mark $fresh={i === claimed} src={pieceUrl("x")} alt="" />}
+            </Tile>
+        );
+    });
 
     return createPortal(
         <>
             <Dim onClick={onClose} />
             <Board role="dialog" aria-modal="true" aria-labelledby="gift-title">
-                <Peek $side="left" src={assetUrl("images/themes/classic-x.svg")} alt="" />
-                <Peek $side="right" src={assetUrl("images/themes/classic-o.svg")} alt="" />
                 <Close onClick={onClose} aria-label={t("close")}>
                     <IconClose size={16} />
                 </Close>
-                <Head>
-                    <h2 id="gift-title">{t("giftTitle")}</h2>
-                    <p>{t("giftHint")}</p>
-                </Head>
-                <Grid>
-                    {gifts.map((gift, i) => {
-                        const state = tileState(i);
-                        const shown = i === status.day ? todayGift : gift;
-                        const last = i === GIFT_DAYS - 1;
-                        const mark = state === "done" && <Mark $fresh={i === claimed} src={assetUrl("images/themes/classic-x.svg")} alt="" />;
-                        if (last && shown.kind === "skin") {
-                            return (
-                                <Tile key={i} $state={state} $wide>
-                                    <Faded $done={state === "done"}>
-                                        <SkinBoard $bg={shown.skin.backgroundUrl}>
-                                            <img src={shown.skin.xMarkerUrl} alt="" />
-                                            <img src={shown.skin.oMarkerUrl} alt="" />
-                                        </SkinBoard>
-                                        <WideText>
-                                            <DayLabel>{state === "today" ? t("giftToday") : t("giftDay", { n: String(i + 1) })}</DayLabel>
-                                            <Amount $today={state === "today"}>{themeName(shown.skin)}</Amount>
-                                            <span style={{ fontSize: 13, color: "#7a5226" }}>{t("giftSkin")}</span>
-                                        </WideText>
-                                    </Faded>
-                                    {mark}
-                                </Tile>
-                            );
-                        }
-                        return (
-                            <Tile key={i} $state={state} $wide={last}>
-                                <Faded $done={state === "done"}>
-                                    <DayLabel>{state === "today" ? t("giftToday") : t("giftDay", { n: String(i + 1) })}</DayLabel>
-                                    {icon(shown)}
-                                    <Amount $today={state === "today"}>{label(shown)}</Amount>
-                                </Faded>
-                                {mark}
-                            </Tile>
-                        );
-                    })}
-                </Grid>
+                <Title id="gift-title">{t("giftTitle")}</Title>
+                <Grid>{cells}</Grid>
                 {status.ready || claimed !== null ? (
                     <Buttons $two={Boolean(onRewardedAd)}>
                         <GameButton tone="green" size="lg" block disabled={claimed !== null || watching} onClick={() => claim(false)}>
                             {t("giftClaim")}
                         </GameButton>
                         {onRewardedAd && (
-                            <GameButton tone="amber" size="lg" block disabled={claimed !== null || watching} onClick={() => void watch()}>
-                                <AdIcon />
-                                {todayGift.kind === "skin" ? `+${todayGift.bonus}` : t("giftDouble")}
-                            </GameButton>
+                            <AdButton>
+                                <GameButton tone="amber" size="lg" block disabled={claimed !== null || watching} onClick={() => void watch()}>
+                                    {t("giftDouble")}
+                                </GameButton>
+                                <AdTag aria-hidden="true">AD</AdTag>
+                            </AdButton>
                         )}
                     </Buttons>
                 ) : (
