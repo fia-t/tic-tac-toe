@@ -21,7 +21,8 @@ import {
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
 import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
-import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
+import { getEquippedSkinId, getWallet, setEventSkins, useWallet } from "@game/lib/wallet";
+import { DailyGift, isGiftReady } from "@game/components/DailyGift";
 import { ShopBarTitle, ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
@@ -164,6 +165,18 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     useEffect(() => {
         if (!embed && onGameScreen && themeReady && isNewPlayer && !isTutorialDone()) setTutorialOpen(true);
     }, [embed, onGameScreen, themeReady, isNewPlayer]);
+    // Подарунок дня - після завантаження гри, у меню (новачок, що стартує одразу на полі, побачить його,
+    // коли вперше вийде в меню). Раз за сесію; гаманець до цього моменту вже прочитано зі сховища.
+    const [giftOpen, setGiftOpen] = useState(false);
+    const giftShown = useRef(false);
+    useEffect(() => {
+        if (embed || onGameScreen || !themeReady || giftShown.current) return;
+        const timer = setTimeout(() => {
+            giftShown.current = true;
+            if (isGiftReady(getWallet())) setGiftOpen(true);
+        }, 700);
+        return () => clearTimeout(timer);
+    }, [embed, onGameScreen, themeReady]);
     // Гра з новини: короткий туторіал при першому відкритті (свій ключ - незалежно від сайту).
     // Кроки збираються після рендеру поля: крок "повний екран" - лише якщо кнопка є.
     const [embedSteps, setEmbedSteps] = useState<TutorialStep[] | null>(null);
@@ -730,6 +743,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <DailyChallenge onStart={goToGame} getShareLink={getShareLink} onMenu={goToMenu} />
             <CampaignResults onStart={goToGame} onMenu={goToMenu} themes={availableThemes} />
             <ProfilePanels />
+            {giftOpen && <DailyGift onRewardedAd={onRewardedAd} onClose={() => setGiftOpen(false)} />}
             <MatchInvite hidden={onGameScreen} />
             {tutorialOpen && onGameScreen && <Tutorial onDone={() => setTutorialOpen(false)} />}
         </RewardedAdContext.Provider>

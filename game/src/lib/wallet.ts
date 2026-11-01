@@ -18,6 +18,8 @@ export type WalletState = {
     // Івентові скіни, які гра вже обрала гравцеві ("on") і вже повернула на "Класику" після
     // кінця ("off") - щоб робити це лише раз і не перебивати власний вибір гравця.
     events: Record<string, "on" | "off">;
+    // Подарунок дня: скільки днів поточного тижня вже забрано (0-6) і коли востаннє ("YYYY-MM-DD").
+    gift?: { day: number; last: string };
 };
 
 export const FREE_SKIN_ID = "classic";
@@ -38,6 +40,9 @@ const REWARDS = {
 // Монети за перегляд rewarded-реклами (кнопки "+" біля зірок, монет і вогника в шапці).
 export const AD_REWARD_COINS = 50;
 
+// Подарунок дня - тиждень із 7 подарунків по колу (див. DailyGift.tsx).
+export const GIFT_DAYS = 7;
+
 const startState = (): WalletState => ({ coins: START_COINS, owned: [FREE_SKIN_ID], equipped: FREE_SKIN_ID, trials: {}, events: {} });
 const EMPTY = startState();
 
@@ -51,6 +56,10 @@ const sanitize = (raw: unknown): WalletState => {
         equipped: typeof r.equipped === "string" ? r.equipped : FREE_SKIN_ID,
         trials: r.trials && typeof r.trials === "object" ? (r.trials as Record<string, number>) : {},
         events: r.events && typeof r.events === "object" ? (r.events as Record<string, "on" | "off">) : {},
+        gift:
+            r.gift && typeof r.gift.day === "number" && typeof r.gift.last === "string"
+                ? { day: Math.min(GIFT_DAYS - 1, Math.max(0, Math.floor(r.gift.day))), last: r.gift.last }
+                : undefined,
     };
 };
 
@@ -169,9 +178,25 @@ export const setEventSkins = (value: EventSkins): void => {
     applyEventSkins();
 };
 
-export const startSkinTrial = (id: string): void => {
-    commit({ ...state, trials: { ...state.trials, [id]: Date.now() + TRIAL_HOURS * 3_600_000 }, equipped: id });
+export const startSkinTrial = (id: string, hours: number = TRIAL_HOURS): void => {
+    commit({ ...state, trials: { ...state.trials, [id]: Date.now() + hours * 3_600_000 }, equipped: id });
     trackEvent("skin_trial", { skin: id });
+};
+
+// --- подарунок дня ---
+
+// Номер подарунка, який чекає (0 - перший день тижня), і чи його вже забрано сьогодні.
+export const giftStatus = (today: string, s: WalletState = state): { day: number; ready: boolean } => {
+    const gift = s.gift ?? { day: 0, last: "" };
+    return { day: gift.day, ready: gift.last !== today };
+};
+
+// Позначає сьогоднішній подарунок забраним (саму нагороду видає DailyGift); після 7-го - знову з першого.
+export const markGiftClaimed = (today: string): void => {
+    const { day, ready } = giftStatus(today);
+    if (!ready) return;
+    commit({ ...state, gift: { day: (day + 1) % GIFT_DAYS, last: today } });
+    trackEvent("daily_gift", { day: day + 1 });
 };
 
 const subscribe = (listener: () => void) => {
