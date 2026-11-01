@@ -124,6 +124,17 @@ export const recordLevelStars = (levelId: string, stars: number): number => {
     return stars - previous;
 };
 
+// Куди додати зірку за рекламу: пройдений рівень із найменшою кількістю зірок (1-2), найраніший.
+// null - пройдених рівнів без 3 зірок немає.
+export const starBoostTarget = (s: CampaignState = state): { index: number; level: CampaignLevel; stars: number } | null => {
+    let best: { index: number; level: CampaignLevel; stars: number } | null = null;
+    CAMPAIGN_LEVELS.forEach((level, index) => {
+        const stars = s.stars[level.id] ?? 0;
+        if (stars >= 1 && stars < 3 && (!best || stars < best.stars)) best = { index, level, stars };
+    });
+    return best;
+};
+
 export const chapterLevels = (chapter: number): CampaignLevel[] => CAMPAIGN_LEVELS.filter((level) => level.chapter === chapter);
 
 export const chapterStars = (chapter: number, s: CampaignState = state): number =>

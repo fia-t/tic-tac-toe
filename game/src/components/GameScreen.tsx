@@ -1105,12 +1105,31 @@ const Badge = styled.span<{ $free: boolean }>`
     height: 20px;
     padding: 0 5px;
     border-radius: 999px;
-    background: ${({ $free }) => ($free ? "#2f8a3e" : "#49301f")};
+    background: #2f8a3e;
     color: #fff7e8;
-    font: 700 ${({ $free }) => ($free ? 12 : 11)}px/20px var(--font-body);
+    font: 700 12px/20px var(--font-body);
     text-align: center;
     box-shadow: 0 0 0 2px #fff7e8;
     pointer-events: none;
+
+    /* Безкоштовні спроби скінчились - помаранчевий ярлик "AD": наступна - за рекламу. */
+    ${({ $free }) =>
+        $free
+            ? ""
+            : `
+        top: calc(-1 * var(--gb-c, 13px) - 6px);
+        right: calc(-1 * var(--gb-c, 13px) - 12px);
+        height: 22px;
+        padding: 0 6px;
+        border-radius: 7px;
+        background: linear-gradient(180deg, #ffc247, #f08a1c);
+        color: #fff;
+        font: 800 13px/22px var(--font-heading);
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 0 rgba(140, 60, 0, 0.7);
+        box-shadow: 0 0 0 2px #fff7e8, 0 2px 4px rgba(73, 48, 31, 0.3);
+        transform: rotate(8deg);
+    `}
 `;
 
 // Відлік на кнопці діючого бустера: секунди паузи (помаранчеві) або ходи заморозки (сині).
@@ -1350,6 +1369,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             );
         const isFree = booster.free[kind];
         const available = isFree || booster.canBuy;
+        // "AD" - і там, де реклами ще немає (сайт): видно, що наступна спроба буде за рекламу. У новині - як було.
+        const showBadge = available || !embed;
         return (
             <RoundButton
                 type="button"
@@ -1359,7 +1380,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 data-tip={name}
             >
                 <ActionIcon id={kind} />
-                {available && (
+                {showBadge && (
                     <Badge $free={isFree} aria-hidden="true">
                         {isFree ? "1" : "AD"}
                     </Badge>
@@ -1710,7 +1731,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <BoardHolder data-tour="board">
                 {board}
                 {wide && quick && (
-                    <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")} data-ad-left-edge="">
+                    <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")}>
                         {MODE_TILES.map((tile) => (
                             <ModeTile
                                 key={tile.id}

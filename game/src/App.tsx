@@ -20,9 +20,9 @@ import { refreshPortalUser, setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 
-// Кожна 3-тя завершена партія - тригер midgame-реклами. Частіше відчувалось би
-// каральним, рідше - агрегатор недоотримує рекламні покази, за які й платить.
-const MIDGAME_AD_EVERY = 3;
+// Після кожних 5 зіграних партій - midgame-реклама перед наступною (6-ю) партією: не посеред
+// результату, а коли гравець сам починає нову гру. Ліміти частоти перевіряє ще й портал.
+const MIDGAME_AD_EVERY = 5;
 
 // Invite-лінк "Гри з другом" веде на сайт (/play/<roomId>), а не на origin, з якого
 // віддано цей білд - у самому білді маршруту /play немає. На порталі замість нього
@@ -52,6 +52,7 @@ export default function App() {
     // (і випадкове імʼя гравця обралось би не з того мовного пулу).
     const [startupChecked, setStartupChecked] = useState(!sdk.getInviteParams && !sdk.getLocale);
     const finishedCount = useRef(0);
+    const midgameDue = useRef(false);
     const panel = useOpenPanel();
 
     // Відкрите вікно поверх гри (налаштування, магазин, нагороди...) - пауза: порталу gameplayStop,
@@ -104,6 +105,18 @@ export default function App() {
             });
         }
 
+        // Початок партії: якщо настала черга - спершу реклама (геймплей стоїть), потім гра.
+        const startGameplay = () => {
+            if (!midgameDue.current) {
+                lifecycle.setGameplay(true);
+                return;
+            }
+            midgameDue.current = false;
+            void sdk.showMidgameAd().finally(() => {
+                if (getScreen() === "game") lifecycle.setGameplay(true);
+            });
+        };
+
         const unsubscribeEvents = addGameEventListener((name, params) => {
             const mode = params?.mode ?? params?.gameMode;
             switch (name) {
@@ -115,11 +128,11 @@ export default function App() {
                 case "game_restart":
                     // У меню вибір рівня/модифікатора - не гра; час гри рахується лише на полі.
                     if (getScreen() !== "game") break;
-                    lifecycle.setGameplay(true);
+                    startGameplay();
                     sdk.setGameContext?.({ screen: "game", mode, difficulty: getDifficulty(), stats: getProfile().stats });
                     break;
                 case "open_game":
-                    lifecycle.setGameplay(true);
+                    startGameplay();
                     break;
                 case "tutorial_shown":
                     lifecycle.setPaused("tutorial", true);
@@ -138,9 +151,7 @@ export default function App() {
                     sdk.setGameContext?.({ screen: "result", mode, result, difficulty: getDifficulty(), stats: getProfile().stats });
                     if (name === "game_finished") {
                         finishedCount.current += 1;
-                        if (finishedCount.current % MIDGAME_AD_EVERY === 0) {
-                            void sdk.showMidgameAd();
-                        }
+                        if (finishedCount.current % MIDGAME_AD_EVERY === 0) midgameDue.current = true;
                     }
                     break;
                 }

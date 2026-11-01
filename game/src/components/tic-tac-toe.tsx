@@ -22,7 +22,7 @@ import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
 import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
 import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
-import { ShopPage } from "@game/components/SkinShop";
+import { ShopBarTitle, ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
@@ -83,8 +83,8 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
 
 // Розділи меню - окремі екрани (як у прототипі); "game" - саме поле.
 type Screen = "home" | "game" | Exclude<NavItem, "home">;
-// Бокові банери на екрані гри - між плитками полів і полем та праворуч від кнопок біля поля.
-const GAME_SIDE_BANNERS: SideBannerLayout = { center: '[data-tour="board"], [data-tour="boosters"]', leftEdge: "[data-ad-left-edge]", topEdge: '[data-tour="bar"]' };
+// Банер на екрані гри - лише праворуч від кнопок біля поля (замість лівого - відео між партіями, див. App.tsx).
+const GAME_SIDE_BANNERS: SideBannerLayout = { center: '[data-tour="board"], [data-tour="boosters"]', topEdge: '[data-tour="bar"]', rightOnly: true };
 
 const PAGES: Screen[] = ["campaign", "shop", "awards", "profile"];
 
@@ -707,7 +707,13 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                         <TopBar
                             onDaily={openDaily}
                             crumb={crumb}
-                            greeting={screen === "home" || screen === "campaign" ? <HomeGreeting name={shownName} inBar /> : null}
+                            greeting={
+                                screen === "home" || screen === "campaign" ? (
+                                    <HomeGreeting name={shownName} inBar />
+                                ) : screen === "shop" ? (
+                                    <ShopBarTitle />
+                                ) : null
+                            }
                         />
                         {content}
                     </>

@@ -60,19 +60,17 @@ export type DailyState = {
     last: string | null;
     streak: number;
     results: Record<string, DailyResult>;
+    // Захисти серії (за рекламу): кожен рятує серію за один пропущений день.
+    shields?: number;
 };
+
+export const MAX_STREAK_SHIELDS = 2;
 
 // --- дати (локальний день гравця) ---
 
 const dateKey = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 export const todayKey = (): string => dateKey(new Date());
-const yesterdayKey = (): string => {
-    const d = new Date();
-    d.setDate(d.getDate() - 1);
-    return dateKey(d);
-};
-
 // Номер виклику: 1 = 1 січня 2026. Обидві дати парсяться як UTC-північ, тож різниця
 // завжди ціла кількість діб, незалежно від часового поясу.
 export const dayNumber = (key = todayKey()): number =>
@@ -136,6 +134,7 @@ const sanitize = (raw: unknown): DailyState => {
         last: typeof r.last === "string" ? r.last : null,
         streak: typeof r.streak === "number" && r.streak >= 0 ? Math.floor(r.streak) : 0,
         results: r.results && typeof r.results === "object" ? r.results : {},
+        shields: typeof r.shields === "number" && r.shields > 0 ? Math.min(MAX_STREAK_SHIELDS, Math.floor(r.shields)) : 0,
     };
 };
 
@@ -165,19 +164,37 @@ const pruned = (results: Record<string, DailyResult>): Record<string, DailyResul
     return Object.fromEntries(keys.map((k) => [k, results[k]]));
 };
 
+// Скільки днів пропущено з останнього виклику (0 - грав учора, -1 - сьогодні).
+const missedDays = (s: DailyState): number => (s.last ? dayNumber(todayKey()) - dayNumber(s.last) - 1 : Infinity);
+
+// Серія живе, якщо кожен пропущений день покриває захист.
+const streakAlive = (s: DailyState): boolean => missedDays(s) <= (s.shields ?? 0);
+
 export const recordDailyResult = (result: DailyResult): DailyState => {
     const today = todayKey();
     if (state.results[today]) return state;
-    const streak = state.last === yesterdayKey() ? state.streak + 1 : 1;
-    state = { last: today, streak, results: pruned({ ...state.results, [today]: result }) };
+    const alive = streakAlive(state);
+    const streak = alive ? state.streak + 1 : 1;
+    // Пропущені дні "з'їдають" захисти.
+    const shields = alive ? (state.shields ?? 0) - Math.max(0, missedDays(state)) : (state.shields ?? 0);
+    state = { last: today, streak, results: pruned({ ...state.results, [today]: result }), shields };
     notify();
     void backend.save(state);
     return state;
 };
 
-// Серія "згасає", якщо пропущено день: показуємо 0, хоча збережене число лишається до наступної гри.
-export const currentStreak = (s: DailyState = state): number =>
-    s.last === todayKey() || s.last === yesterdayKey() ? s.streak : 0;
+// Серія "згасає", якщо пропущено день без захисту: показуємо 0, хоча збережене число лишається до наступної гри.
+export const currentStreak = (s: DailyState = state): number => (streakAlive(s) ? s.streak : 0);
+
+// +1 захист серії (за рекламу). false - уже максимум.
+export const addStreakShield = (): boolean => {
+    const shields = state.shields ?? 0;
+    if (shields >= MAX_STREAK_SHIELDS) return false;
+    state = { ...state, shields: shields + 1 };
+    notify();
+    void backend.save(state);
+    return true;
+};
 
 const getState = () => state;
 export const getDailyState = (): DailyState => state;

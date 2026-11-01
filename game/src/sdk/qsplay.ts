@@ -89,8 +89,16 @@ export const qsplaySdk: AggregatorSdk = {
     loadingStop: () => void safe("game.loadingStop", () => api()?.game.loadingStop(), undefined),
     gameplayStart: () => void safe("game.gameplayStart", () => api()?.game.gameplayStart(), undefined),
     gameplayStop: () => void safe("game.gameplayStop", () => api()?.game.gameplayStop(), undefined),
-    // Midgame-рекламу між партіями поки не показуємо.
-    showMidgameAd: async () => {},
+    // Midgame - між партіями (див. App.tsx), лише після game.gameplayStop(); помилки (cooldown тощо) - не страшно.
+    showMidgameAd: async () => {
+        const ad = api()?.ad;
+        if (!ad) return;
+        await ad.requestAd("midgame", {
+            adStarted: () => setSoundSuppressed(true),
+            adFinished: () => setSoundSuppressed(false),
+            adError: () => setSoundSuppressed(false),
+        });
+    },
     // Rewarded - лише за явним вибором гравця ("+" біля ресурсів у шапці). true - переглянуто до кінця.
     showRewardedAd: async () => {
         const ad = api()?.ad;

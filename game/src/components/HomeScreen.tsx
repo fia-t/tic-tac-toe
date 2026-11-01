@@ -9,7 +9,7 @@ import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
 import { InlineBanner, SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { LeagueBadge } from "@game/components/LeagueCup";
-import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread } from "@game/components/pageStyles";
+import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread, GREETING_IN_BAR } from "@game/components/pageStyles";
 import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
@@ -62,9 +62,6 @@ const TabPanel = styled.div`
 // Бокові банери меню - обабіч колонки, між шапкою й нижнім меню.
 export const MENU_SIDE_BANNERS: SideBannerLayout = { center: "[data-ad-center]", topEdge: "header", bottomEdge: "[data-ad-bottom-edge]" };
 
-// Привітання на широкому екрані - у шапці між ресурсами й повним екраном (сторінка починається
-// одразу з вкладок), на вужчому - над вкладками.
-export const GREETING_IN_BAR = "(min-width: 1100px)";
 
 const Hero = styled.section<{ $bar?: boolean }>`
     display: flex;

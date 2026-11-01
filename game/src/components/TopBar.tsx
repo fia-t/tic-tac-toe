@@ -10,7 +10,7 @@ import { CAMPAIGN_LEVELS, totalStars, useCampaign } from "@game/lib/campaign";
 import { currentStreak, useDailyState } from "@game/lib/daily";
 import { AD_REWARD_COINS, useLastEarning, useWallet } from "@game/lib/wallet";
 import { RewardedAdContext } from "@game/components/GameScreen";
-import { RewardPopup } from "@game/components/RewardPopup";
+import { RewardPopup, type RewardKind } from "@game/components/RewardPopup";
 import { openPanel } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
 
@@ -306,8 +306,8 @@ const EarnBubble = styled.span`
 `;
 
 // Зірка займає ~3/4 свого viewBox, тож 36px - та сама видима висота, що в монети 28px і вогника 28px.
-const StarIcon = () => (
-    <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
+const StarIcon = ({ size = 36 }: { size?: number }) => (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2.5l2.6 6.1 6.6.5-5 4.3 1.6 6.4L12 16.4 6.2 19.8l1.6-6.4-5-4.3 6.6-.5z" fill="#1fb3d9" stroke="#0f6f8c" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
 );
@@ -371,12 +371,17 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
     const stars = totalStars(campaign);
     const streak = currentStreak(daily);
 
-    // "+" біля кожної плашки - один і той самий попап з rewarded-рекламою за монети (поки - заглушка).
+    // "+" біля кожної плашки - попап про цей ресурс і що за нього дасть реклама.
     const rewarded = useContext(RewardedAdContext);
-    const [rewardOpen, setRewardOpen] = useState(false);
-    const plusLabel = rewarded ? t("coinsForAd", { n: String(AD_REWARD_COINS) }) : t("rewardTitle");
-    const plus = (
-        <PlusButton type="button" onClick={() => setRewardOpen(true)} aria-label={plusLabel} data-tip={plusLabel}>
+    const [reward, setReward] = useState<RewardKind | null>(null);
+    const PLUS_LABEL: Record<RewardKind, string> = {
+        streak: t("rewardTitleStreak"),
+        stars: t("rewardTitleStars"),
+        coins: rewarded ? t("coinsForAd", { n: String(AD_REWARD_COINS) }) : t("rewardTitleCoins"),
+    };
+    const REWARD_ICON: Record<RewardKind, React.ReactNode> = { streak: <Flame size={40} />, stars: <StarIcon size={50} />, coins: <Coin size={40} /> };
+    const plus = (kind: RewardKind) => (
+        <PlusButton type="button" onClick={() => setReward(kind)} aria-label={PLUS_LABEL[kind]} data-tip={PLUS_LABEL[kind]}>
             <PlusIcon />
         </PlusButton>
     );
@@ -398,7 +403,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
                     <Flame size={28} />
                     <span>{streak}</span>
                 </Pill>
-                {plus}
+                {plus("streak")}
             </Stat>
             <Stat>
                 <Pill
@@ -410,7 +415,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
                     <StarIcon />
                     <span>{stars}</span>
                 </Pill>
-                {plus}
+                {plus("stars")}
             </Stat>
             <Stat>
                 <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} data-tip={t("tipCoins")}>
@@ -418,13 +423,13 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
                     <span>{wallet.coins}</span>
                     {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
                 </Pill>
-                {plus}
+                {plus("coins")}
             </Stat>
             {greeting}
             <Spacer />
             <FullscreenButton />
             <SettingsButton inline />
-            {rewardOpen && <RewardPopup onRewardedAd={rewarded} onClose={() => setRewardOpen(false)} />}
+            {reward && <RewardPopup kind={reward} icon={REWARD_ICON[reward]} onRewardedAd={rewarded} onClose={() => setReward(null)} />}
         </Bar>
     );
 };

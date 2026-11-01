@@ -129,6 +129,8 @@ export type SideBannerLayout = {
     // Що обмежує банер згори (шапка) і знизу (нижнє меню).
     topEdge: string;
     bottomEdge?: string;
+    // Лише правий банер (на екрані гри лівий заважав би плиткам полів).
+    rightOnly?: boolean;
 };
 
 const placeSides = (layout: SideBannerLayout): [SideSlot | null, SideSlot | null] => {
@@ -149,7 +151,7 @@ const placeSides = (layout: SideBannerLayout): [SideSlot | null, SideSlot | null
             top: Math.round(top + (band - height) / 2),
         };
     };
-    return [place(leftStart, center.left), place(center.right, document.documentElement.clientWidth)];
+    return [layout.rightOnly ? null : place(leftStart, center.left), place(center.right, document.documentElement.clientWidth)];
 };
 
 const SideBox = styled.div`
@@ -163,14 +165,14 @@ export const SideBanners: React.FC<{
 }> = ({ id, layout }) => {
     const api = useContext(AdBannerContext);
     const [slots, setSlots] = useState<[SideSlot | null, SideSlot | null]>([null, null]);
-    const { center, leftEdge, topEdge, bottomEdge } = layout;
+    const { center, leftEdge, topEdge, bottomEdge, rightOnly } = layout;
 
     useEffect(() => {
         if (!api) return;
         let frame = 0;
         const update = () => {
             cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(() => setSlots(placeSides({ center, leftEdge, topEdge, bottomEdge })));
+            frame = requestAnimationFrame(() => setSlots(placeSides({ center, leftEdge, topEdge, bottomEdge, rightOnly })));
         };
         update();
         // Розкладка ще може осісти (картинки, шрифти) - перемірюємо при будь-якій зміні розміру сторінки.
@@ -182,7 +184,7 @@ export const SideBanners: React.FC<{
             observer.disconnect();
             window.removeEventListener("resize", update);
         };
-    }, [api, center, leftEdge, topEdge, bottomEdge]);
+    }, [api, center, leftEdge, topEdge, bottomEdge, rightOnly]);
 
     if (!api) return null;
     return (
