@@ -26,6 +26,28 @@ export const AppColumn = styled.div`
     font: 500 15px/1.45 var(--font-body);
 `;
 
+// Сторінки меню: шапка й нижнє меню стоять на місці, прокручується лише область сторінки між ними.
+// Колонка - на всю висоту вікна гри; поля по боках - під тіні карток, які інакше обрізала б прокрутка.
+export const MenuColumn = styled(AppColumn)`
+    height: 100%;
+    min-height: 0;
+`;
+
+export const MenuScroll = styled.div`
+    flex: 1 1 auto;
+    min-height: 0;
+    margin-inline: calc(-1 * var(--shell-x));
+    padding: 10px var(--shell-x) 0;
+    /* Картки м'яко зникають під шапкою, а не обрізаються рівною лінією. */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 83, 47, 0.45) transparent;
+`;
+
 // Спільні стилі сторінок меню (головна, кампанія, магазин, нагороди, профіль) - як у прототипі:
 // кремові картки з м'якою нижньою кромкою на небі гри.
 

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><pattern id="gh" width="80" height="80" patternUnits="userSpaceOnUse"><rect width="80" height="80" fill="#f2fbff"/><rect width="40" height="80" fill="#4fa8e0" fill-opacity="0.45"/><rect width="80" height="40" fill="#4fa8e0" fill-opacity="0.45"/></pattern><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="0.1" stop-color="#ffffff" stop-opacity="0"/><stop offset="0.88" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.28"/></linearGradient></defs>
+<rect width="600" height="600" fill="url(#gh)"/>
+<rect width="600" height="600" fill="url(#rim)"/>
+</svg>

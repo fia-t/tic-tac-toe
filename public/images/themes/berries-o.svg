@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><radialGradient id="blue" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#8fa6ff"/><stop offset="0.5" stop-color="#4a4fc4"/><stop offset="1" stop-color="#1f1f66"/></radialGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#10103a" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><circle cx="100" cy="106" r="66" fill="url(#blue)"/>
+<circle cx="100" cy="106" r="66" fill="#ffffff" fill-opacity="0.12"/>
+<polygon points="100.0,30.0 105.3,42.7 119.0,43.8 108.6,52.8 111.8,66.2 100.0,59.0 88.2,66.2 91.4,52.8 81.0,43.8 94.7,42.7" fill="#2a2468"/><circle cx="100" cy="50" r="7" fill="#151238"/>
+<ellipse cx="74" cy="82" rx="18" ry="9" fill="#ffffff" fill-opacity="0.5" transform="rotate(-35 74 82)"/></g>
+</svg>

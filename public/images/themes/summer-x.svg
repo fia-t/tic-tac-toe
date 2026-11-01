@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="flesh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff6a7a"/><stop offset="1" stop-color="#e8283e"/></linearGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#0f3a5a" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><g transform="translate(100 116) scale(1.18) translate(-100 -100)"><path d="M16 64 Q100 196 184 64Z" fill="#2f8a2a"/><path d="M24 64 Q100 182 176 64Z" fill="#c8f0a8"/><path d="M32 64 Q100 168 168 64Z" fill="url(#flesh)"/>
+<ellipse cx="64" cy="82" rx="4" ry="7" fill="#2a1408" transform="rotate(-30 64 82)"/><ellipse cx="100" cy="90" rx="4" ry="7" fill="#2a1408" transform="rotate(0 100 90)"/><ellipse cx="136" cy="82" rx="4" ry="7" fill="#2a1408" transform="rotate(30 136 82)"/><ellipse cx="82" cy="112" rx="4" ry="7" fill="#2a1408" transform="rotate(-20 82 112)"/><ellipse cx="118" cy="112" rx="4" ry="7" fill="#2a1408" transform="rotate(20 118 112)"/><ellipse cx="100" cy="136" rx="4" ry="7" fill="#2a1408" transform="rotate(0 100 136)"/>
+<path d="M36 70 H164" stroke="#ffffff" stroke-opacity="0.35" stroke-width="5" stroke-linecap="round"/></g></g>
+</svg>

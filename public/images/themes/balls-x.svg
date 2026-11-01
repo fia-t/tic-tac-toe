@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><clipPath id="ball"><circle cx="100" cy="100" r="74"/></clipPath><radialGradient id="wb" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#ffffff"/><stop offset="0.7" stop-color="#eef0f3"/><stop offset="1" stop-color="#a9b0bb"/></radialGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#1a3a10" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><circle cx="100" cy="100" r="74" fill="url(#wb)"/>
+<g clip-path="url(#ball)" fill="#1e2228"><polygon points="100.0,76.0 122.8,92.6 114.1,119.4 85.9,119.4 77.2,92.6"/>
+<polygon points="100.0,52.0 79.1,36.8 87.1,12.2 112.9,12.2 120.9,36.8"/><polygon points="145.7,85.2 153.6,60.6 179.5,60.6 187.5,85.2 166.6,100.4"/><polygon points="128.2,138.8 154.1,138.8 162.1,163.4 141.1,178.6 120.2,163.4"/><polygon points="71.8,138.8 79.8,163.4 58.9,178.6 37.9,163.4 45.9,138.8"/><polygon points="54.3,85.2 33.4,100.4 12.5,85.2 20.5,60.6 46.4,60.6"/></g>
+<g stroke="#1e2228" stroke-width="3" clip-path="url(#ball)"><path d="M100.0 76.0 L100.0 50.0"/><path d="M122.8 92.6 L147.6 84.5"/><path d="M114.1 119.4 L129.4 140.5"/><path d="M85.9 119.4 L70.6 140.5"/><path d="M77.2 92.6 L52.4 84.5"/></g>
+<ellipse cx="74" cy="66" rx="20" ry="9" fill="#ffffff" fill-opacity="0.6" transform="rotate(-35 74 66)"/></g>
+</svg>

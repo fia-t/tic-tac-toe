@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><pattern id="mow" width="200" height="600" patternUnits="userSpaceOnUse"><rect width="100" height="600" fill="#5cb048"/><rect x="100" width="100" height="600" fill="#4f9f3d"/></pattern><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="0.1" stop-color="#ffffff" stop-opacity="0"/><stop offset="0.88" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.28"/></linearGradient></defs>
+<rect width="600" height="600" fill="url(#mow)"/><g fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="6"><circle cx="300" cy="300" r="110"/><path d="M300 0V600"/><rect x="-10" y="170" width="90" height="260"/><rect x="520" y="170" width="90" height="260"/></g><circle cx="300" cy="300" r="8" fill="#ffffff" fill-opacity="0.8"/>
+<rect width="600" height="600" fill="url(#rim)"/>
+</svg>

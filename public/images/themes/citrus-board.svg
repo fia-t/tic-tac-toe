@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><linearGradient id="wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9a066"/><stop offset="0.5" stop-color="#c48a50"/><stop offset="1" stop-color="#b47940"/></linearGradient><pattern id="pl" width="600" height="100" patternUnits="userSpaceOnUse"><rect width="600" height="100" fill="url(#wood)"/><path d="M0 99.5H600" stroke="#7a4a22" stroke-width="3"/><path d="M40 30 Q200 20 360 34 T600 28M0 64 Q160 74 320 60 T600 70" fill="none" stroke="#9a6532" stroke-opacity="0.35" stroke-width="2"/></pattern><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.3"/><stop offset="0.1" stop-color="#ffffff" stop-opacity="0"/><stop offset="0.88" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.28"/></linearGradient></defs>
+<rect width="600" height="600" fill="url(#pl)"/>
+<rect width="600" height="600" fill="url(#rim)"/>
+</svg>

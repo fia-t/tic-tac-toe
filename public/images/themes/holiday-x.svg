@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5ab0ff"/><stop offset="1" stop-color="#1f5fc4"/></linearGradient><linearGradient id="lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7cc4ff"/><stop offset="1" stop-color="#2f74d8"/></linearGradient><linearGradient id="rib" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff09a"/><stop offset="1" stop-color="#e0a412"/></linearGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#06200f" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><rect x="40" y="88" width="120" height="92" rx="8" fill="url(#box)"/><rect x="30" y="66" width="140" height="30" rx="8" fill="url(#lid)"/>
+<rect x="88" y="66" width="24" height="114" fill="url(#rib)"/><rect x="30" y="74" width="140" height="0" />
+<path d="M100 66 C70 30 44 44 58 62 C66 72 90 68 100 66Z M100 66 C130 30 156 44 142 62 C134 72 110 68 100 66Z" fill="url(#rib)" stroke="#c98a10" stroke-width="2"/>
+<circle cx="100" cy="64" r="9" fill="#ffd64a"/><ellipse cx="52" cy="76" rx="10" ry="4" fill="#ffffff" fill-opacity="0.5" transform="rotate(0 52 76)"/></g>
+</svg>

@@ -134,6 +134,16 @@ const shopTheme = (id: string, name: string, nameEn: string, price: number, orde
     price,
 });
 export const SHOP_THEMES: Theme[] = [
+    // Предмети замість X і O (як "Коробка" чи "Пісок і море").
+    shopTheme("berries", "Ягоди", "Berries", 200, 890),
+    shopTheme("citrus", "Цитрус", "Citrus", 200, 891),
+    shopTheme("balls", "М'ячі", "Ball Game", 250, 892),
+    shopTheme("forestfind", "Лісові скарби", "Forest Finds", 250, 893),
+    shopTheme("bakery", "Пекарня", "Bakery", 300, 894),
+    shopTheme("summer", "Літній пікнік", "Summer Picnic", 300, 895),
+    shopTheme("veggie", "Город", "Veggie Patch", 350, 896),
+    shopTheme("holiday", "Свято", "Holiday", 400, 897),
+    // Стилізовані X і O.
     shopTheme("chalk", "Крейда", "Chalkboard", 150, 900),
     shopTheme("pixel", "Піксель", "Pixel", 200, 901),
     shopTheme("ice", "Крижаний", "Frost", 250, 902),

@@ -28,7 +28,7 @@ import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game
 import { AwardsBarTitle, AwardsPage, ProfileBarTitle, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
-import { AppColumn, ShellVars } from "@game/components/pageStyles";
+import { AppColumn, MenuColumn, MenuScroll, ShellVars } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameHomeContext, GameScreen, RewardedAdContext, useEmbedCompact } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
@@ -140,6 +140,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Вогник серії в шапці - прокрутити головну до картки виклику дня.
     const [focusDaily, setFocusDaily] = useState(0);
     const topRef = useRef<HTMLDivElement>(null);
+    // Область прокрутки сторінок меню (між шапкою й нижнім меню).
+    const menuScrollRef = useRef<HTMLDivElement>(null);
     const profile = useProfile();
     // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
     // шукати, як почати гру. Меню - логотип у шапці.
@@ -194,6 +196,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Новий екран - з початку сторінки.
     useEffect(() => {
         scrollGameTo(topRef.current);
+        menuScrollRef.current?.scrollTo({ top: 0 });
     }, [screen]);
 
     // Звідки прийшли в партію (розділ меню, а на головній - її вкладка): у шапці під час гри
@@ -542,7 +545,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     const navigate = (item: NavItem) => {
         if (item === "home") {
-            if (screen === "home") scrollGameTo(topRef.current, { smooth: true });
+            if (screen === "home") menuScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
             else goToMenu();
             return;
         }
@@ -695,15 +698,14 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     return (
         <RewardedAdContext.Provider value={onRewardedAd}>
             <ShellVars />
-            <AppColumn ref={topRef}>
-                {/* На екрані партії шапки немає: стрілка "Назад", повний екран і налаштування - у смузі над полем. */}
-                {onGameScreen && themeReady ? (
-                    <>
-                        <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
-                        <SideBanners id="ad-game" layout={GAME_SIDE_BANNERS} />
-                    </>
-                ) : (
-                    <>
+            {/* На екрані партії шапки немає: стрілка "Назад", повний екран і налаштування - у смузі над полем. */}
+            {onGameScreen && themeReady ? (
+                <AppColumn ref={topRef}>
+                    <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
+                    <SideBanners id="ad-game" layout={GAME_SIDE_BANNERS} />
+                </AppColumn>
+            ) : (
+                    <MenuColumn ref={topRef}>
                         <TopBar
                             onDaily={openDaily}
                             crumb={crumb}
@@ -719,10 +721,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                                 ) : null
                             }
                         />
-                        {content}
-                    </>
-                )}
-            </AppColumn>
+                        {/* Шапка й нижнє меню на місці - прокручується лише сторінка. */}
+                        <MenuScroll ref={menuScrollRef}>{content}</MenuScroll>
+                    </MenuColumn>
+            )}
             {/* На екрані партії нижнього меню немає: вихід у меню - логотип у шапці. */}
             {screen !== "game" && <BottomNav current={screen} onNavigate={navigate} />}
             <DailyChallenge onStart={goToGame} getShareLink={getShareLink} onMenu={goToMenu} />

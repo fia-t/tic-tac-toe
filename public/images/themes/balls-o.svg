@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><clipPath id="ball"><circle cx="100" cy="100" r="74"/></clipPath><radialGradient id="bb" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#ffb070"/><stop offset="0.55" stop-color="#f07a22"/><stop offset="1" stop-color="#a8460c"/></radialGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#1a3a10" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><circle cx="100" cy="100" r="74" fill="url(#bb)"/>
+<g clip-path="url(#ball)" fill="none" stroke="#3a1a08" stroke-width="5"><path d="M26 100H174M100 26V174"/><path d="M48 44 Q80 100 48 156"/><path d="M152 44 Q120 100 152 156"/></g>
+<ellipse cx="72" cy="66" rx="20" ry="9" fill="#ffffff" fill-opacity="0.45" transform="rotate(-35 72 66)"/></g>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><radialGradient id="nut" cx="0.36" cy="0.3" r="0.85"><stop offset="0" stop-color="#e8b070"/><stop offset="0.55" stop-color="#b9732e"/><stop offset="1" stop-color="#7a4512"/></radialGradient><pattern id="scale" width="12" height="10" patternUnits="userSpaceOnUse"><rect width="12" height="10" fill="#8a5a2a"/><path d="M0 10 Q6 0 12 10" fill="#a8743c" stroke="#6e4418" stroke-width="1.2"/></pattern><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#3a1e0a" flood-opacity="0.38"/></filter></defs>
+<g filter="url(#shadow)"><path d="M46 86 C44 150 80 184 100 184 C120 184 156 150 154 86Z" fill="url(#nut)"/>
+<path d="M30 92 C28 52 64 34 100 34 C136 34 172 52 170 92 Q100 108 30 92Z" fill="url(#scale)" stroke="#5e3a14" stroke-width="3"/>
+<path d="M96 36 Q94 18 106 12" stroke="#5e3a14" stroke-width="8" stroke-linecap="round" fill="none"/>
+<ellipse cx="74" cy="126" rx="10" ry="22" fill="#ffffff" fill-opacity="0.35" transform="rotate(-10 74 126)"/></g>
+</svg>
