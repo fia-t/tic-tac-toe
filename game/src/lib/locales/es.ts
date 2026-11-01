@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Completa todos los niveles de la Playa",
         awardsTitle: "Premios",
         awardsHint: "Cada logro da monedas.",
+        infoAwards: "Los premios son logros por jugar: primera victoria, rachas, empates con el Maestro, victorias online, desafíos diarios, skins. Cada uno da monedas y la barra bajo su nombre muestra cuánto te falta.",
         awardsAll: "Todos los premios",
         awardsReward: "+{n} {n:moneda|monedas}",
         profileTitle: "Perfil",

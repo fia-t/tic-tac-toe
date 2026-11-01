@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Completa tutti i livelli della Spiaggia",
         awardsTitle: "Premi",
         awardsHint: "Ogni obiettivo dà monete.",
+        infoAwards: "I premi sono traguardi di gioco: prima vittoria, serie, pareggi col Maestro, vittorie online, sfide del giorno, skin. Ognuno dà monete e la barra sotto il nome mostra quanto manca.",
         awardsAll: "Tutti i premi",
         awardsReward: "+{n} {n:moneta|monete}",
         profileTitle: "Profilo",

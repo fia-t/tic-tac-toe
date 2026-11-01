@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Voltooi alle Strand-levels",
         awardsTitle: "Beloningen",
         awardsHint: "Elke prestatie levert munten op.",
+        infoAwards: "Beloningen zijn prestaties voor het spelen: eerste winst, reeksen, gelijkspel tegen de Meester, online winst, dagelijkse uitdagingen, skins. Elke prestatie levert munten op; de balk onder de naam toont je voortgang.",
         awardsAll: "Alle beloningen",
         awardsReward: "+{n} {n:munt|munten}",
         profileTitle: "Profiel",

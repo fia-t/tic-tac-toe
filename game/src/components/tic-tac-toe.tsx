@@ -715,7 +715,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                                 ) : screen === "awards" ? (
                                     <AwardsBarTitle />
                                 ) : screen === "profile" ? (
-                                    <ProfileBarTitle fallbackName={shownName} />
+                                    <ProfileBarTitle />
                                 ) : null
                             }
                         />

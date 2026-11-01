@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Schließe alle Strand-Level ab",
         awardsTitle: "Belohnungen",
         awardsHint: "Jeder Erfolg bringt Münzen.",
+        infoAwards: "Belohnungen sind Erfolge fürs Spielen: erster Sieg, Serien, Remis gegen den Meister, Online-Siege, Tagesaufgaben, Skins. Jeder Erfolg bringt Münzen, der Balken unter dem Namen zeigt deinen Fortschritt.",
         awardsAll: "Alle Belohnungen",
         awardsReward: "+{n} {n:Münze|Münzen}",
         profileTitle: "Profil",

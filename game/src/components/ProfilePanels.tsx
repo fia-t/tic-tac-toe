@@ -3,10 +3,10 @@ import { IconClose, IconEdit } from "@game/components/GameIcons";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
-import { BarSlot, PageBarTitle, PageOnly } from "@game/components/BarTitle";
+import { PageBarTitle, PageTitle } from "@game/components/BarTitle";
 import { GameButton } from "@game/components/GameButton";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
-import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
+import { Card, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
 import { LeagueBadge, LeagueLadder } from "@game/components/LeagueCup";
 import { InfoTip } from "@game/components/HomeScreen";
 import { Star } from "@game/components/DailyChallenge";
@@ -151,12 +151,7 @@ export const AwardsPage = () => {
     return (
         <Page>
             {/* На широкому екрані заголовок - у шапці (див. AwardsBarTitle). */}
-            <PageOnly>
-                <Card aria-labelledby="awards-title">
-                    <h2 id="awards-title">{t("awardsTitle")}</h2>
-                    <Muted>{t("awardsHint")}</Muted>
-                </Card>
-            </PageOnly>
+            <PageTitle title={t("awardsTitle")} hint={t("infoAwards")} />
             <Card aria-label={t("awardsTitle")}>
                 {ACHIEVEMENTS.map((a) => {
                     const [have, need] = a.progress(profile);
@@ -188,8 +183,8 @@ export const AwardsPage = () => {
     );
 };
 
-// Ім'я (з олівцем), рівень і ліга - у картці профілю, а на широкому екрані - у шапці (ProfileBarTitle).
-const ProfileIdentity = ({ fallbackName, inBar = false }: { fallbackName: string | null; inBar?: boolean }) => {
+// Ім'я (з олівцем), рівень і ліга - перша картка профілю. Досвід до наступного рівня - у підказці на рівні.
+const ProfileIdentity = ({ fallbackName }: { fallbackName: string | null }) => {
     const t = useT();
     const profile = useProfile();
     const myRating = useMyRating();
@@ -204,12 +199,14 @@ const ProfileIdentity = ({ fallbackName, inBar = false }: { fallbackName: string
         setProfileName(draft);
         setEditing(false);
     };
-    const Title = inBar ? "h1" : "h2";
-    const titleId = inBar ? "profile-bar-title" : "profile-title";
+    const level = levelForXp(profile.xp);
+    const [from, to] = levelBounds(level);
+    const xpText = t("profileXp", { n: String(profile.xp - from), total: String(to - from), next: String(level + 1) });
+    const titleId = "profile-title";
     return (
         // Ім'я, рівень і ліга - в одному ряду, рівень і ліга - по правому краю;
         // якщо ім'я не вміщається (телефон), рівень і ліга переходять під нього.
-        <Spread style={inBar ? { width: "100%", flexWrap: "nowrap" } : undefined}>
+        <Spread>
             {editing ? (
                 <NameInput
                     id={titleId}
@@ -226,16 +223,16 @@ const ProfileIdentity = ({ fallbackName, inBar = false }: { fallbackName: string
                 />
             ) : (
                 <Row style={{ minWidth: 0, flexWrap: "nowrap", gap: 8 }}>
-                    <Title id={titleId} style={{ minWidth: 0, overflowWrap: "break-word" }}>
+                    <h2 id={titleId} style={{ minWidth: 0, overflowWrap: "break-word" }}>
                         {shownName}
-                    </Title>
+                    </h2>
                     <NameEditButton type="button" onClick={startEdit} aria-label={t("profileRename")} title={t("profileRename")}>
                         <IconEdit size={16} />
                     </NameEditButton>
                 </Row>
             )}
             <Row style={{ flexShrink: 0, flexWrap: "nowrap", gap: 6 }}>
-                <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
+                <InfoPill title={xpText}>{t("profileLevel", { n: String(level) })}</InfoPill>
                 <LeagueBadge rating={myRating.rating} played={myRating.played} withRating compact />
             </Row>
         </Spread>
@@ -244,21 +241,18 @@ const ProfileIdentity = ({ fallbackName, inBar = false }: { fallbackName: string
 
 export const AwardsBarTitle = () => {
     const t = useT();
-    return <PageBarTitle title={t("awardsTitle")} hint={t("awardsHint")} />;
+    return <PageBarTitle title={t("awardsTitle")} hint={t("infoAwards")} />;
 };
 
-export const ProfileBarTitle = ({ fallbackName }: { fallbackName: string | null }) => (
-    <BarSlot>
-        <ProfileIdentity fallbackName={fallbackName} inBar />
-    </BarSlot>
-);
+export const ProfileBarTitle = () => {
+    const t = useT();
+    return <PageBarTitle title={t("nav_profile")} />;
+};
 
 export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) => {
     const t = useT();
     const profile = useProfile();
     const myRating = useMyRating();
-    const level = levelForXp(profile.xp);
-    const [from, to] = levelBounds(level);
     const s = profile.stats;
     const stats: [string, number][] = [
         ["stat_games", s.games],
@@ -268,19 +262,12 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
         ["stat_masterDraws", s.masterDraws],
         ["stat_onlineWins", s.onlineWins],
     ];
-    const xpText = t("profileXp", { n: String(profile.xp - from), total: String(to - from), next: String(level + 1) });
     return (
         <Page>
-            <Card aria-label={t("nav_profile")}>
-                {/* На широкому екрані ім'я, рівень і ліга - у шапці (ProfileBarTitle), тут лише досвід. */}
-                <PageOnly>
-                    <Eyebrow>{t("nav_profile")}</Eyebrow>
-                    <ProfileIdentity fallbackName={fallbackName} />
-                </PageOnly>
-                <Progress role="img" aria-label={xpText}>
-                    <i style={{ width: `${((profile.xp - from) / (to - from)) * 100}%` }} />
-                </Progress>
-                <Muted>{xpText}</Muted>
+            {/* На широкому екрані заголовок - у шапці (див. ProfileBarTitle). */}
+            <PageTitle title={t("nav_profile")} />
+            <Card aria-labelledby="profile-title">
+                <ProfileIdentity fallbackName={fallbackName} />
             </Card>
             <Card aria-labelledby="profile-stats">
                 <h3 id="profile-stats">{t("profileStats")}</h3>

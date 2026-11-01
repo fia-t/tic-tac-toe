@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
-import { Card, Muted, Page } from "@game/components/pageStyles";
-import { PageBarTitle, PageOnly } from "@game/components/BarTitle";
+import { Muted, Page } from "@game/components/pageStyles";
+import { PageBarTitle, PageTitle } from "@game/components/BarTitle";
 import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice, themeName } from "@game/lib/themes";
 import { chapterName } from "@game/lib/campaignContent";
 import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
@@ -205,12 +205,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
     return (
         <Page>
             {/* На широкому екрані заголовок - у шапці (див. ShopBarTitle). */}
-            <PageOnly>
-                <Card aria-labelledby="shop-title">
-                    <h2 id="shop-title">{t("shopTitle")}</h2>
-                    <Muted>{t("shopHint")}</Muted>
-                </Card>
-            </PageOnly>
+            <PageTitle title={t("shopTitle")} hint={t("shopHint")} />
 
             <Grid aria-label={t("shopTitle")}>
                 {skins.map((skin) => {

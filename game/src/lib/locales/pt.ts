@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Conclua todos os níveis da Praia",
         awardsTitle: "Prêmios",
         awardsHint: "Cada conquista dá moedas.",
+        infoAwards: "Prêmios são conquistas por jogar: primeira vitória, sequências, empates com o Mestre, vitórias online, desafios do dia, skins. Cada um dá moedas, e a barra sob o nome mostra quanto falta.",
         awardsAll: "Todos os prêmios",
         awardsReward: "+{n} {n:moeda|moedas}",
         profileTitle: "Perfil",

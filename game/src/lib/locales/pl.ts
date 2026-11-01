@@ -219,6 +219,7 @@ const pack: LocalePack = {
         achDesc_beach: "Ukończ wszystkie poziomy Plaży",
         awardsTitle: "Nagrody",
         awardsHint: "Każde osiągnięcie daje monety.",
+        infoAwards: "Nagrody to osiągnięcia za grę: pierwsza wygrana, serie, remisy z Mistrzem, wygrane online, wyzwania dnia, skórki. Każde daje monety, a pasek pod nazwą pokazuje, ile zostało.",
         awardsAll: "Wszystkie nagrody",
         awardsReward: "+{n} {n:moneta|monety|monet}",
         profileTitle: "Profil",

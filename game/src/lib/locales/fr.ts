@@ -218,6 +218,7 @@ const pack: LocalePack = {
         achDesc_beach: "Termine tous les niveaux de la Plage",
         awardsTitle: "Récompenses",
         awardsHint: "Chaque succès rapporte des pièces.",
+        infoAwards: "Les récompenses sont des succès de jeu : première victoire, séries, nuls contre le Maître, victoires en ligne, défis du jour, skins. Chacun rapporte des pièces, et la barre sous son nom montre ta progression.",
         awardsAll: "Toutes les récompenses",
         awardsReward: "+{n} {n:pièce|pièces}",
         profileTitle: "Profil",
