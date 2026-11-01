@@ -391,7 +391,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Jouer avec un ami en ligne",
         homeFriendHint: "On crée une salle avec ce plateau et ce modificateur - envoie le lien à ton ami.",
         homeFriendHaveCode: "J'ai un code de salle",
-        homeMatchHint: "Le match rapide cherche un vrai adversaire ; les joueurs dans le menu reçoivent une invitation. Les victoires font monter ton classement et ta ligue.",
         dailySpec: "Règles du défi",
         weeklySpec: "Règles de la partie",
         dailyField: "Plateau",

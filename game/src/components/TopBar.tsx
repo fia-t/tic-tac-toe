@@ -305,15 +305,16 @@ const EarnBubble = styled.span`
     animation: ${rise} 1.8s ease-out forwards;
 `;
 
+// Зірка займає ~3/4 свого viewBox, тож 36px - та сама видима висота, що в монети 28px і вогника 28px.
 const StarIcon = () => (
-    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width="36" height="36" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M12 2.5l2.6 6.1 6.6.5-5 4.3 1.6 6.4L12 16.4 6.2 19.8l1.6-6.4-5-4.3 6.6-.5z" fill="#1fb3d9" stroke="#0f6f8c" strokeWidth="1.4" strokeLinejoin="round" />
     </svg>
 );
 
-// Полум'я тонше за зірку й монету - тож, щоб візуально були однакові, вогник трохи більший.
+// viewBox обрізаний по самому полум'ю: size - його справжня висота, як у монети й зірки того ж розміру.
 export const Flame = ({ size = 22 }: { size?: number }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="#e8662f" aria-hidden="true">
+    <svg width={size} height={size} viewBox="4.5 1.5 15 16" fill="#e8662f" aria-hidden="true">
         <path d="M12 2c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z" />
     </svg>
 );
@@ -348,9 +349,11 @@ type TopBarProps = {
     onDaily: () => void;
     // Під час партії: назва таба, з якого прийшли, і повернення туди.
     crumb?: { label: string; onClick: () => void } | null;
+    // Привітання головної й кампанії - між ресурсами й повним екраном (лише на широкому екрані).
+    greeting?: React.ReactNode;
 };
 
-export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
+export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
     const t = useT();
     const campaign = useCampaign();
     const wallet = useWallet();
@@ -392,7 +395,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
             )}
             <Stat>
                 <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
-                    <Flame size={32} />
+                    <Flame size={28} />
                     <span>{streak}</span>
                 </Pill>
                 {plus}
@@ -417,6 +420,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
                 </Pill>
                 {plus}
             </Stat>
+            {greeting}
             <Spacer />
             <FullscreenButton />
             <SettingsButton inline />

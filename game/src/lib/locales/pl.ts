@@ -392,7 +392,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Graj ze znajomym online",
         homeFriendHint: "Utworzymy pokój z tą planszą i modyfikatorem - wyślij znajomemu link.",
         homeFriendHaveCode: "Mam kod pokoju",
-        homeMatchHint: "Szybki mecz szuka prawdziwego przeciwnika; gracze w menu dostają zaproszenie. Wygrane podnoszą twój ranking i ligę.",
         dailySpec: "Zasady wyzwania",
         weeklySpec: "Zasady gry",
         dailyField: "Plansza",

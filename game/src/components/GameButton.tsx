@@ -149,7 +149,8 @@ export const gameButtonCss = (
     min-height: var(--gb-h);
     ${options.square ? "width: var(--gb-h); height: var(--gb-h); padding: 0;" : "padding: 0 max(2px, calc(var(--gb-px) - var(--gb-c)));"}
     font: inherit;
-    font-size: var(--gb-fs);
+    /* --btn-fs-add - надбавка до шрифту кнопок у межах розділу (напр. меню головної), за замовчуванням 0. */
+    font-size: calc(var(--gb-fs) + var(--btn-fs-add, 0px));
     font-weight: 800;
     line-height: 1.1;
     text-align: center;

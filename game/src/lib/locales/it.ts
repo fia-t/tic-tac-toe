@@ -391,7 +391,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Gioca online con un amico",
         homeFriendHint: "Creeremo una stanza con questo tabellone e modificatore - manda il link al tuo amico.",
         homeFriendHaveCode: "Ho un codice stanza",
-        homeMatchHint: "Il match rapido cerca un avversario reale; i giocatori nel menu ricevono un invito. Le vittorie alzano il tuo punteggio e la tua lega.",
         dailySpec: "Regole della sfida",
         weeklySpec: "Regole della partita",
         dailyField: "Tabellone",

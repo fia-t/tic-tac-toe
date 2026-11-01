@@ -391,7 +391,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Jogar com um amigo online",
         homeFriendHint: "Vamos criar uma sala com este tabuleiro e modificador - envie o link ao seu amigo.",
         homeFriendHaveCode: "Tenho um código de sala",
-        homeMatchHint: "A partida rápida procura um adversário real; jogadores no menu recebem um convite. Vitórias aumentam seu rating e sua liga.",
         dailySpec: "Regras do desafio",
         weeklySpec: "Regras da partida",
         dailyField: "Tabuleiro",

@@ -391,7 +391,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Online mit einem Freund spielen",
         homeFriendHint: "Wir erstellen einen Raum mit diesem Feld und Modifikator - schick deinem Freund den Link.",
         homeFriendHaveCode: "Ich habe einen Raumcode",
-        homeMatchHint: "Das schnelle Match sucht einen echten Gegner; Spieler im Menü bekommen eine Einladung. Siege verbessern deine Wertung und Liga.",
         dailySpec: "Regeln der Herausforderung",
         weeklySpec: "Spielregeln",
         dailyField: "Feld",

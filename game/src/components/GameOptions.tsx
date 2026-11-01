@@ -62,14 +62,14 @@ export const DiffButton = styled.button<{ $level: Difficulty }>`
         --gb-c: 13px;
         min-height: 46px;
         padding: 0 8px;
-        font-size: 15px;
+        font-size: calc(15px + var(--btn-fs-add, 0px));
     }
 
     @media (max-width: 480px) {
         && {
             min-height: 42px;
             padding: 0 5px;
-            font-size: 14px;
+            font-size: calc(14px + var(--btn-fs-add, 0px));
         }
     }
 
@@ -322,7 +322,7 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
         max-width: 100%;
         min-height: var(--mod-h, 40px);
         padding: 0 4px;
-        font-size: 14px;
+        font-size: calc(14px + var(--btn-fs-add, 0px));
     }
 
     & > span {
@@ -370,11 +370,11 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
             }
 
             & > span > b {
-                font-size: 15px;
+                font-size: calc(15px + var(--btn-fs-add, 0px));
             }
 
             & > span > small {
-                font-size: 12px;
+                font-size: calc(12px + var(--btn-fs-add, 0px));
                 font-weight: 600;
                 opacity: 0.85;
             }
@@ -392,7 +392,7 @@ const ModToggle = styled.button<{ $desc?: boolean }>`
             --gb-c: 11px;
             width: var(--mod-w-sm, 188px);
             min-height: var(--mod-h-sm, 36px);
-            font-size: 13px;
+            font-size: calc(13px + var(--btn-fs-add, 0px));
         }
     }
 `;

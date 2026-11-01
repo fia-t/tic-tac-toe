@@ -24,7 +24,7 @@ import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages
 import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
 import { ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
-import { HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
+import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
@@ -697,7 +697,11 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                     <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
                 ) : (
                     <>
-                        <TopBar onDaily={openDaily} crumb={crumb} />
+                        <TopBar
+                            onDaily={openDaily}
+                            crumb={crumb}
+                            greeting={screen === "home" || screen === "campaign" ? <HomeGreeting name={shownName} inBar /> : null}
+                        />
                         {content}
                     </>
                 )}

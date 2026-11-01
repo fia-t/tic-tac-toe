@@ -34,6 +34,8 @@ import { useMyRating } from "@game/lib/matchmaking";
 // Між блоками головної - трохи більший відступ, ніж на інших сторінках (на телефоні - менший).
 export const HomePage = styled(Page)`
     gap: 20px;
+    /* Кнопки меню - з більшим текстом, ніж у грі (див. --btn-fs-add у GameButton). */
+    --btn-fs-add: 3px;
 
     @media (max-width: 480px) {
         gap: 16px;
@@ -56,7 +58,11 @@ const TabPanel = styled.div`
     }
 `;
 
-const Hero = styled.section`
+// Привітання на широкому екрані - у шапці між ресурсами й повним екраном (сторінка починається
+// одразу з вкладок), на вужчому - над вкладками.
+export const GREETING_IN_BAR = "(min-width: 1100px)";
+
+const Hero = styled.section<{ $bar?: boolean }>`
     display: flex;
     align-items: center;
     gap: 14px;
@@ -80,6 +86,32 @@ const Hero = styled.section`
             text-overflow: ellipsis;
         }
     }
+
+    ${({ $bar }) =>
+        $bar
+            ? `
+        display: none;
+        @media ${GREETING_IN_BAR} {
+            display: flex;
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: center;
+            gap: 12px;
+        }
+        h1 {
+            flex: 0 1 auto;
+            font-size: 26px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        & > div { margin-left: 0; }
+    `
+            : `
+        @media ${GREETING_IN_BAR} {
+            display: none;
+        }
+    `}
 `;
 
 const HeroBadges = styled.div`
@@ -112,7 +144,7 @@ export const Tab = styled.button`
     border: none;
     border-radius: 14px;
     background: transparent;
-    font: 800 14px/1.1 var(--font-body);
+    font: 800 16px/1.1 var(--font-body);
     color: #7a5530;
     cursor: pointer;
 
@@ -128,7 +160,7 @@ export const Tab = styled.button`
     }
 
     @media (max-width: 420px) {
-        font-size: 12px;
+        font-size: 13px;
     }
 
     @media (max-height: 820px) {
@@ -421,10 +453,6 @@ const EyebrowInfo = styled(Eyebrow)`
     gap: 6px;
 `;
 
-const Center = styled(Muted)`
-    text-align: center;
-`;
-
 const LinkButton = styled.button`
     align-self: center;
     padding: 2px 4px;
@@ -610,12 +638,12 @@ export const saveTab = (value: PanelTab): void => {
 };
 
 // Привітання з рівнем і лігою над вкладками головної - і на самій головній, і на екрані кампанії.
-export const HomeGreeting: React.FC<{ name: string | null }> = ({ name }) => {
+export const HomeGreeting: React.FC<{ name: string | null; inBar?: boolean }> = ({ name, inBar = false }) => {
     const t = useT();
     const profile = useProfile();
     const myRating = useMyRating();
     return (
-        <Hero>
+        <Hero $bar={inBar}>
             <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
             <HeroBadges>
                 <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
@@ -643,8 +671,8 @@ export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => v
                         onSelect(item.id);
                     }}
                 >
-                    {item.id === "daily" && <Flame size={20} />}
-                    {item.id === "campaign" && <Star on size={18} />}
+                    {item.id === "daily" && <Flame size={17} />}
+                    {item.id === "campaign" && <Star on size={22} />}
                     {t(item.label)}
                 </Tab>
             ))}
@@ -834,7 +862,11 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const onlineTab = (
         <>
             <Card aria-labelledby="home-friend">
-                <h2 id="home-friend">{t("homeFriendOnline")}</h2>
+                {/* Пояснення - під "?", а не під кнопкою. */}
+                <h2 id="home-friend" style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    {t("homeFriendOnline")}
+                    <InfoTip text={t("homeFriendHint")} />
+                </h2>
                 {modePicker("home-friend-board", friendMode, setFriendMode)}
                 <ModGroup>
                     {modSelect("home-friend-mod", friendModifier, friendAllowed, setFriendMod, "left", modInfo(friendModifier))}
@@ -843,7 +875,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     {friendBusy ? t("creating") : t("homeFriend")}
                 </GameButton>
                 {friendError && <ErrorText>{friendError}</ErrorText>}
-                <Center>{t("homeFriendHint")}</Center>
                 <LinkButton type="button" onClick={() => setJoinOpen(true)}>
                     {t("homeFriendHaveCode")}
                 </LinkButton>
@@ -861,7 +892,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <GameButton tone="primary" size="lg" block onClick={() => openPanel("match")}>
                     {t("homeMatch")}
                 </GameButton>
-                <Muted>{t("homeMatchHint")}</Muted>
                 <GameButton size="lg" onClick={() => openPanel("leaderboard")}>
                     {t("homeLeaderboard")}
                 </GameButton>

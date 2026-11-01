@@ -391,7 +391,6 @@ const pack: LocalePack = {
         homeFriendOnline: "Online met een vriend spelen",
         homeFriendHint: "We maken een kamer met dit bord en deze modifier - stuur de link naar je vriend.",
         homeFriendHaveCode: "Ik heb een kamercode",
-        homeMatchHint: "Een snelle match zoekt een echte tegenstander; spelers in het menu krijgen een uitnodiging. Winst verhoogt je rating en competitie.",
         dailySpec: "Regels van de uitdaging",
         weeklySpec: "Spelregels",
         dailyField: "Bord",
