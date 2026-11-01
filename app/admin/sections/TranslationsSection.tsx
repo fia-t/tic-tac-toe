@@ -16,7 +16,7 @@ import {
     type TranslationOverrides,
 } from "@game/lib/i18n";
 import { getAllCampaignChapters, type CampaignChapterDef } from "@game/lib/campaignContent";
-import { CAMPAIGN_THEMES, CLASSIC_THEME, getAllThemes, type Theme } from "@game/lib/themes";
+import { BUILT_IN_THEMES, CLASSIC_THEME, getAllThemes, type Theme } from "@game/lib/themes";
 import { SEO_EN, SEO_TRANSLATIONS, seoLabel } from "@/app/lib/seo/translations";
 import { PillButton, ErrorText } from "@game/components/onlineStyles";
 import { Section, SectionTitle, FilterBar, FilterButton, TableWrap, Table, Th, Td, EmptyState, CheckboxLabel } from "@/app/admin/adminStyles";
@@ -155,8 +155,8 @@ export const TranslationsSection: React.FC = () => {
     useEffect(() => {
         getAllCampaignChapters().then(setChapters).catch(() => setChapters([]));
         getAllThemes()
-            .then((list) => setThemes([CLASSIC_THEME, ...list, ...CAMPAIGN_THEMES.filter((theme) => !list.some((item) => item.id === theme.id))]))
-            .catch(() => setThemes([CLASSIC_THEME, ...CAMPAIGN_THEMES]));
+            .then((list) => setThemes([CLASSIC_THEME, ...list, ...BUILT_IN_THEMES.filter((theme) => !list.some((item) => item.id === theme.id))]))
+            .catch(() => setThemes([CLASSIC_THEME, ...BUILT_IN_THEMES]));
     }, []);
 
     // Вбудований переклад обраної мови й правки до нього з Firestore.

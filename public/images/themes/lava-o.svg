@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><radialGradient id="magma" cx="0.38" cy="0.32" r="0.8"><stop offset="0" stop-color="#ffe082"/><stop offset="0.5" stop-color="#ff7043"/><stop offset="1" stop-color="#b71c1c"/></radialGradient><filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feFlood flood-color="#ff4a00"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<g filter="url(#glow)"><circle cx="100" cy="100" r="60" fill="none" stroke="url(#magma)" stroke-width="40"/></g>
+<path d="M60 70 L78 82 L74 98M138 124 L122 128 L118 146M120 52 L112 66" fill="none" stroke="#4a1a0e" stroke-opacity="0.55" stroke-width="5" stroke-linecap="round"/>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+<defs><linearGradient id="silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset="0.5" stop-color="#c9d2de"/><stop offset="1" stop-color="#7c8799"/></linearGradient><radialGradient id="sap" cx="0.38" cy="0.32" r="0.8"><stop offset="0" stop-color="#b3e0ff"/><stop offset="0.5" stop-color="#1e6fe8"/><stop offset="1" stop-color="#0a2a6e"/></radialGradient><filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="9" stdDeviation="7" flood-color="#1a0630" flood-opacity="0.5"/></filter></defs>
+<g filter="url(#shadow)"><circle cx="100" cy="98" r="62" fill="none" stroke="url(#silver)" stroke-width="40"/>
+<circle cx="100.0" cy="36.0" r="11" fill="url(#sap)" stroke="#ffffff" stroke-width="3"/><circle cx="153.7" cy="129.0" r="11" fill="url(#sap)" stroke="#ffffff" stroke-width="3"/><circle cx="46.3" cy="129.0" r="11" fill="url(#sap)" stroke="#ffffff" stroke-width="3"/>
+<path d="M52 72 A58 58 0 0 1 116 40" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="11" stroke-linecap="round"/></g>
+</svg>

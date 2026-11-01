@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><radialGradient id="bg" cx="0.5" cy="0.38" r="0.9"><stop offset="0" stop-color="#6b2fa0"/><stop offset="0.65" stop-color="#45186e"/><stop offset="1" stop-color="#260b40"/></radialGradient>
+<pattern id="dia" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M30 4 L56 30 L30 56 L4 30Z" fill="none" stroke="#f3c64f" stroke-opacity="0.25" stroke-width="1.5"/><circle cx="30" cy="30" r="2.5" fill="#f3c64f" fill-opacity="0.45"/></pattern><linearGradient id="rim" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/><stop offset="0.12" stop-color="#ffffff" stop-opacity="0"/><stop offset="0.88" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.3"/></linearGradient></defs>
+<rect width="600" height="600" fill="url(#bg)"/><rect width="600" height="600" fill="url(#dia)"/><rect width="600" height="600" fill="url(#rim)"/>
+</svg>

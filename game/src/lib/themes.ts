@@ -120,8 +120,33 @@ export const CAMPAIGN_THEMES: Theme[] = [
     campaignTheme("forest", "Лісовий", "Forest", "forest", 1001),
     campaignTheme("peak", "Гірський", "Mountain Peak", "mountains", 1002),
 ];
-// Теми з бази + вбудовані скіни кампанії (тема з бази з тим самим id має пріоритет).
-const withCampaignThemes = (themes: Theme[]): Theme[] => [...themes, ...CAMPAIGN_THEMES.filter((theme) => !themes.some((item) => item.id === theme.id))];
+// Вбудовані скіни магазину за монети: фон і фішки - SVG у public/images/themes (<id>-board/x/o.svg).
+const shopTheme = (id: string, name: string, nameEn: string, price: number, order: number): Theme => ({
+    id,
+    name,
+    nameEn,
+    backgroundUrl: assetUrl(`images/themes/${id}-board.svg`),
+    xMarkerUrl: assetUrl(`images/themes/${id}-x.svg`),
+    oMarkerUrl: assetUrl(`images/themes/${id}-o.svg`),
+    active: true,
+    order,
+    createdAt: null,
+    price,
+});
+export const SHOP_THEMES: Theme[] = [
+    shopTheme("chalk", "Крейда", "Chalkboard", 150, 900),
+    shopTheme("pixel", "Піксель", "Pixel", 200, 901),
+    shopTheme("ice", "Крижаний", "Frost", 250, 902),
+    shopTheme("candy", "Цукерки", "Candy", 300, 903),
+    shopTheme("garden", "Квітковий", "Blossom", 350, 904),
+    shopTheme("neon", "Неон", "Neon", 400, 905),
+    shopTheme("lava", "Вулкан", "Volcano", 500, 906),
+    shopTheme("space", "Космос", "Space", 600, 907),
+    shopTheme("royal", "Королівський", "Royal", 800, 908),
+];
+export const BUILT_IN_THEMES: Theme[] = [...SHOP_THEMES, ...CAMPAIGN_THEMES];
+// Теми з бази + вбудовані скіни магазину й кампанії (тема з бази з тим самим id має пріоритет).
+const withCampaignThemes = (themes: Theme[]): Theme[] => [...themes, ...BUILT_IN_THEMES.filter((theme) => !themes.some((item) => item.id === theme.id))];
 
 const themesCollection = "themes";
 
@@ -145,7 +170,7 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
 // (потрібно гравцю ще до старту гри). Тиха відмова на будь-яку помилку -
 // відсутність тем ніколи не повинна ламати гру, лише вмикати DEFAULT_THEME.
 export const getActiveThemes = async (): Promise<Theme[]> => {
-    if (!isFirebaseConfigured) return CAMPAIGN_THEMES;
+    if (!isFirebaseConfigured) return BUILT_IN_THEMES;
     try {
         const db = getFirebaseDb();
         // Сортування "order" - на клієнті, а не через Firestore orderBy, щоб не
@@ -159,7 +184,7 @@ export const getActiveThemes = async (): Promise<Theme[]> => {
                 .sort((a, b) => a.order - b.order)
         );
     } catch {
-        return CAMPAIGN_THEMES;
+        return BUILT_IN_THEMES;
     }
 };
 

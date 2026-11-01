@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><pattern id="chk" width="60" height="60" patternUnits="userSpaceOnUse"><rect width="60" height="60" fill="#1b2a5c"/><rect width="30" height="30" fill="#223470"/><rect x="30" y="30" width="30" height="30" fill="#223470"/></pattern></defs>
+<rect width="600" height="600" fill="url(#chk)"/>
+<g fill="#ffe14d" fill-opacity="0.6"><rect x="90" y="90" width="10" height="10"/><rect x="480" y="150" width="10" height="10"/><rect x="150" y="480" width="10" height="10"/><rect x="510" y="510" width="10" height="10"/></g>
+</svg>

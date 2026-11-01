@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" preserveAspectRatio="xMidYMid slice">
+<defs><radialGradient id="bg" cx="0.5" cy="0.4" r="0.9"><stop offset="0" stop-color="#4a2a22"/><stop offset="0.65" stop-color="#2a1714"/><stop offset="1" stop-color="#140a09"/></radialGradient><filter id="glow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7" result="b"/><feFlood flood-color="#ff6a00"/><feComposite in2="b" operator="in" result="g"/><feMerge><feMergeNode in="g"/><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="600" height="600" fill="url(#bg)"/>
+<g filter="url(#glow)" fill="none" stroke="#ff9a2e" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.85">
+<path d="M0 120 L80 140 L130 110 L210 160 L260 150"/><path d="M600 80 L520 130 L470 120 L430 190"/><path d="M40 600 L90 520 L170 500 L200 430"/><path d="M600 470 L520 460 L460 520 L390 530 L350 600"/><path d="M300 0 L320 60 L290 100"/></g>
+</svg>
