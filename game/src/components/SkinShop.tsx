@@ -2,8 +2,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
-import { Card, GREETING_IN_BAR, Muted, Page, barColumnCss } from "@game/components/pageStyles";
-import { InfoTip } from "@game/components/HomeScreen";
+import { Card, Muted, Page } from "@game/components/pageStyles";
+import { PageBarTitle, PageOnly } from "@game/components/BarTitle";
 import { CAMPAIGN_THEMES, CLASSIC_THEME, Theme, eventDaysLeft, eventStatus, shortDate, skinPrice, themeName } from "@game/lib/themes";
 import { chapterName } from "@game/lib/campaignContent";
 import { CAMPAIGN_CHAPTERS, useCampaign } from "@game/lib/campaign";
@@ -149,39 +149,9 @@ type ShopPageProps = {
     onPlay: () => void;
 };
 
-// Заголовок магазину: на широкому екрані - у шапці (ShopBarTitle), картка зі сторінки тоді прихована.
-const TitleCard = styled(Card)`
-    @media ${GREETING_IN_BAR} {
-        display: none;
-    }
-`;
-
-const BarTitle = styled.div`
-    display: none;
-
-    @media ${GREETING_IN_BAR} {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        ${barColumnCss}
-    }
-
-    h1 {
-        margin: 0;
-        font-size: 30px;
-        line-height: 1.05;
-        color: #4a2c0c;
-    }
-`;
-
 export const ShopBarTitle = () => {
     const t = useT();
-    return (
-        <BarTitle>
-            <h1>{t("shopTitle")}</h1>
-            <InfoTip text={t("shopHint")} />
-        </BarTitle>
-    );
+    return <PageBarTitle title={t("shopTitle")} hint={t("shopHint")} />;
 };
 
 export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay }) => {
@@ -234,10 +204,13 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
 
     return (
         <Page>
-            <TitleCard aria-labelledby="shop-title">
-                <h2 id="shop-title">{t("shopTitle")}</h2>
-                <Muted>{t("shopHint")}</Muted>
-            </TitleCard>
+            {/* На широкому екрані заголовок - у шапці (див. ShopBarTitle). */}
+            <PageOnly>
+                <Card aria-labelledby="shop-title">
+                    <h2 id="shop-title">{t("shopTitle")}</h2>
+                    <Muted>{t("shopHint")}</Muted>
+                </Card>
+            </PageOnly>
 
             <Grid aria-label={t("shopTitle")}>
                 {skins.map((skin) => {

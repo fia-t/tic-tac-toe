@@ -3,6 +3,7 @@ import { IconClose, IconEdit } from "@game/components/GameIcons";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
+import { BarSlot, PageBarTitle, PageOnly } from "@game/components/BarTitle";
 import { GameButton } from "@game/components/GameButton";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
@@ -149,10 +150,13 @@ export const AwardsPage = () => {
     useCampaign();
     return (
         <Page>
-            <Card aria-labelledby="awards-title">
-                <h2 id="awards-title">{t("awardsTitle")}</h2>
-                <Muted>{t("awardsHint")}</Muted>
-            </Card>
+            {/* На широкому екрані заголовок - у шапці (див. AwardsBarTitle). */}
+            <PageOnly>
+                <Card aria-labelledby="awards-title">
+                    <h2 id="awards-title">{t("awardsTitle")}</h2>
+                    <Muted>{t("awardsHint")}</Muted>
+                </Card>
+            </PageOnly>
             <Card aria-label={t("awardsTitle")}>
                 {ACHIEVEMENTS.map((a) => {
                     const [have, need] = a.progress(profile);
@@ -184,6 +188,71 @@ export const AwardsPage = () => {
     );
 };
 
+// Ім'я (з олівцем), рівень і ліга - у картці профілю, а на широкому екрані - у шапці (ProfileBarTitle).
+const ProfileIdentity = ({ fallbackName, inBar = false }: { fallbackName: string | null; inBar?: boolean }) => {
+    const t = useT();
+    const profile = useProfile();
+    const myRating = useMyRating();
+    const shownName = playerName(profile) ?? fallbackName ?? t("player");
+    const [editing, setEditing] = useState(false);
+    const [draft, setDraft] = useState("");
+    const startEdit = () => {
+        setDraft(shownName);
+        setEditing(true);
+    };
+    const saveName = () => {
+        setProfileName(draft);
+        setEditing(false);
+    };
+    const Title = inBar ? "h1" : "h2";
+    const titleId = inBar ? "profile-bar-title" : "profile-title";
+    return (
+        // Ім'я, рівень і ліга - в одному ряду, рівень і ліга - по правому краю;
+        // якщо ім'я не вміщається (телефон), рівень і ліга переходять під нього.
+        <Spread style={inBar ? { width: "100%", flexWrap: "nowrap" } : undefined}>
+            {editing ? (
+                <NameInput
+                    id={titleId}
+                    autoFocus
+                    maxLength={40}
+                    value={draft}
+                    aria-label={t("profileRename")}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onBlur={saveName}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") saveName();
+                        if (e.key === "Escape") setEditing(false);
+                    }}
+                />
+            ) : (
+                <Row style={{ minWidth: 0, flexWrap: "nowrap", gap: 8 }}>
+                    <Title id={titleId} style={{ minWidth: 0, overflowWrap: "break-word" }}>
+                        {shownName}
+                    </Title>
+                    <NameEditButton type="button" onClick={startEdit} aria-label={t("profileRename")} title={t("profileRename")}>
+                        <IconEdit size={16} />
+                    </NameEditButton>
+                </Row>
+            )}
+            <Row style={{ flexShrink: 0, flexWrap: "nowrap", gap: 6 }}>
+                <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
+                <LeagueBadge rating={myRating.rating} played={myRating.played} withRating compact />
+            </Row>
+        </Spread>
+    );
+};
+
+export const AwardsBarTitle = () => {
+    const t = useT();
+    return <PageBarTitle title={t("awardsTitle")} hint={t("awardsHint")} />;
+};
+
+export const ProfileBarTitle = ({ fallbackName }: { fallbackName: string | null }) => (
+    <BarSlot>
+        <ProfileIdentity fallbackName={fallbackName} inBar />
+    </BarSlot>
+);
+
 export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) => {
     const t = useT();
     const profile = useProfile();
@@ -199,54 +268,15 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
         ["stat_masterDraws", s.masterDraws],
         ["stat_onlineWins", s.onlineWins],
     ];
-    const shownName = playerName(profile) ?? fallbackName ?? t("player");
-    const [editing, setEditing] = useState(false);
-    const [draft, setDraft] = useState("");
-    const startEdit = () => {
-        setDraft(shownName);
-        setEditing(true);
-    };
-    const saveName = () => {
-        setProfileName(draft);
-        setEditing(false);
-    };
     const xpText = t("profileXp", { n: String(profile.xp - from), total: String(to - from), next: String(level + 1) });
     return (
         <Page>
-            <Card aria-labelledby="profile-title">
-                <Eyebrow>{t("nav_profile")}</Eyebrow>
-                {/* Ім'я, рівень і ліга - в одному ряду, рівень і ліга - по правому краю;
-                    якщо ім'я не вміщається (телефон), рівень і ліга переходять під нього. */}
-                <Spread>
-                    {editing ? (
-                        <NameInput
-                            id="profile-title"
-                            autoFocus
-                            maxLength={40}
-                            value={draft}
-                            aria-label={t("profileRename")}
-                            onChange={(e) => setDraft(e.target.value)}
-                            onBlur={saveName}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") saveName();
-                                if (e.key === "Escape") setEditing(false);
-                            }}
-                        />
-                    ) : (
-                        <Row style={{ minWidth: 0, flexWrap: "nowrap", gap: 8 }}>
-                            <h2 id="profile-title" style={{ minWidth: 0, overflowWrap: "break-word" }}>
-                                {shownName}
-                            </h2>
-                            <NameEditButton type="button" onClick={startEdit} aria-label={t("profileRename")} title={t("profileRename")}>
-                                <IconEdit size={16} />
-                            </NameEditButton>
-                        </Row>
-                    )}
-                    <Row style={{ flexShrink: 0, flexWrap: "nowrap", gap: 6 }}>
-                        <InfoPill>{t("profileLevel", { n: String(level) })}</InfoPill>
-                        <LeagueBadge rating={myRating.rating} played={myRating.played} withRating compact />
-                    </Row>
-                </Spread>
+            <Card aria-label={t("nav_profile")}>
+                {/* На широкому екрані ім'я, рівень і ліга - у шапці (ProfileBarTitle), тут лише досвід. */}
+                <PageOnly>
+                    <Eyebrow>{t("nav_profile")}</Eyebrow>
+                    <ProfileIdentity fallbackName={fallbackName} />
+                </PageOnly>
                 <Progress role="img" aria-label={xpText}>
                     <i style={{ width: `${((profile.xp - from) / (to - from)) * 100}%` }} />
                 </Progress>

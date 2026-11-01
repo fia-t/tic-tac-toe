@@ -25,7 +25,7 @@ import { getEquippedSkinId, setEventSkins, useWallet } from "@game/lib/wallet";
 import { ShopBarTitle, ShopPage } from "@game/components/SkinShop";
 import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
-import { AwardsPage, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
+import { AwardsBarTitle, AwardsPage, ProfileBarTitle, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { AppColumn, ShellVars } from "@game/components/pageStyles";
@@ -712,6 +712,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                                     <HomeGreeting name={shownName} inBar />
                                 ) : screen === "shop" ? (
                                     <ShopBarTitle />
+                                ) : screen === "awards" ? (
+                                    <AwardsBarTitle />
+                                ) : screen === "profile" ? (
+                                    <ProfileBarTitle fallbackName={shownName} />
                                 ) : null
                             }
                         />
