@@ -103,6 +103,10 @@ export const Tabs = styled.div<{ $cols?: number }>`
 `;
 
 export const Tab = styled.button`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 42px;
     padding: 9px 4px;
     border: none;
@@ -639,6 +643,8 @@ export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => v
                         onSelect(item.id);
                     }}
                 >
+                    {item.id === "daily" && <Flame size={20} />}
+                    {item.id === "campaign" && <Star on size={18} />}
                     {t(item.label)}
                 </Tab>
             ))}

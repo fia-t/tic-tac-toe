@@ -117,8 +117,11 @@ export const InfoPill = styled.span`
     min-height: 40px;
     padding: 0 12px;
     border-radius: 14px;
-    background: rgba(255, 247, 232, 0.72);
-    box-shadow: inset 0 0 0 1.5px rgba(139, 101, 60, 0.22);
+    /* Втоплена плашка (як лічильники в шапці) - щоб не плутати з кнопками. */
+    background: rgba(214, 178, 124, 0.32);
+    box-shadow:
+        inset 0 3px 4px rgba(92, 51, 23, 0.22),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.55);
     color: #7a5530;
     font-size: 14px;
     font-weight: 800;

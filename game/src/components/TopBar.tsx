@@ -178,73 +178,82 @@ const Crumb = styled.button`
     }
 `;
 
-// Кнопки шапки - стриманіші (38 px), щоб не перетягували увагу з гри. Іконка велика й виступає
-// за лівий край плашки (місце під виступ - відступ зліва).
+// Лічильники шапки - не кнопки, а втоплені плашки (кнопки тут лише "+"). Іконка велика й виступає
+// за лівий край плашки; натискання все одно відкриває розділ лічильника.
 const Pill = styled.button`
-    ${gameButtonCss("sm")}
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 58px;
+    height: 34px;
+    margin-left: 20px;
+    padding: 0 18px 0 0;
+    border: none;
+    border-radius: 12px;
+    background: #efd9b0;
+    box-shadow:
+        inset 0 3px 4px rgba(92, 51, 23, 0.3),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.5),
+        0 1px 0 rgba(255, 255, 255, 0.75);
+    color: #6b4523;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: #7a5530;
-    margin-left: 10px;
-
-    /* && - сильніше за мобільні розміри gameButtonCss (вони в @media). */
-    && {
-        --gb-c: 12px;
-        height: 38px;
-        min-height: 38px;
-        padding: 0 4px 0 0;
-        gap: 6px;
-        font-size: 15px;
-    }
+    cursor: pointer;
 
     & > svg {
         flex-shrink: 0;
-        margin-left: -22px;
+        margin-left: -14px;
         filter: drop-shadow(0 2px 1px rgba(92, 51, 23, 0.3));
     }
 
-    /* Що означає лічильник - тултіп при наведенні чи фокусі (натискання відкриває його розділ).
-       Плашки - біля лівого краю шапки, тож тултіп вирівняний по лівому краю кнопки (не виходить за екран). */
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
+
+    /* Що означає лічильник - тултіп при наведенні чи фокусі.
+       Плашки - біля лівого краю шапки, тож тултіп вирівняний по лівому краю (не виходить за екран). */
     ${tipCss}
 
     &::after {
-        left: calc(-1 * var(--gb-c, 0px) - 12px);
+        left: -14px;
         right: auto;
         transform: none;
     }
 
     @media (max-width: 420px) {
-        margin-left: 6px;
-
-        && {
-            --gb-c: 11px;
-            height: 40px;
-            min-height: 40px;
-            padding: 0 3px 0 0;
-            gap: 4px;
-        }
+        min-width: 0;
+        height: 32px;
+        margin-left: 14px;
+        padding-right: 14px;
+        gap: 4px;
 
         & > svg {
-            margin-left: -18px;
+            margin-left: -12px;
         }
     }
 `;
 
-// Плашка з кнопкою "+" праворуч.
+// Плашка з кнопкою "+", що трохи заходить на її правий край.
 const Stat = styled.span`
     position: relative;
     display: inline-flex;
     align-items: center;
-    /* "+" поруч із плашкою, а не поверх: при наведенні плашка піднімається й не підлазить під нього. */
-    gap: 4px;
 
-    ${Pill} {
-        padding-right: 10px;
+    /* Наведена плашка лишається під своїм "+" (тултіп і так над усім). */
+    ${Pill}:hover, ${Pill}:focus-visible {
+        z-index: auto;
     }
 `;
 
 // Об'ємна зелена кнопка - та сама текстура, що в "Легкого" рівня бота (а не круглий значок, схожий на монету).
 const PlusButton = styled.button`
     ${gameButtonCss("sm", { square: true, tone: "green" })}
+    z-index: 1;
+    margin-left: -8px;
 
     && {
         --gb-c: 8px;
@@ -382,6 +391,13 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
                 </CrumbSlot>
             )}
             <Stat>
+                <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
+                    <Flame size={32} />
+                    <span>{streak}</span>
+                </Pill>
+                {plus}
+            </Stat>
+            <Stat>
                 <Pill
                     type="button"
                     onClick={() => openPanel("campaign")}
@@ -398,13 +414,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
                     <Coin size={28} />
                     <span>{wallet.coins}</span>
                     {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
-                </Pill>
-                {plus}
-            </Stat>
-            <Stat>
-                <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
-                    <Flame size={32} />
-                    <span>{streak}</span>
                 </Pill>
                 {plus}
             </Stat>
