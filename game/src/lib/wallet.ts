@@ -35,8 +35,8 @@ const REWARDS = {
     dailyStreakCap: 7,
 };
 
-// Монети за перегляд rewarded-реклами (кнопка "+" біля монет у шапці).
-export const AD_REWARD_COINS = 20;
+// Монети за перегляд rewarded-реклами (кнопки "+" біля зірок, монет і вогника в шапці).
+export const AD_REWARD_COINS = 50;
 
 const startState = (): WalletState => ({ coins: START_COINS, owned: [FREE_SKIN_ID], equipped: FREE_SKIN_ID, trials: {}, events: {} });
 const EMPTY = startState();

@@ -32,7 +32,7 @@ import { useMyRating } from "@game/lib/matchmaking";
 // матч. Саме поле - окремий екран (GameScreen).
 
 // Між блоками головної - трохи більший відступ, ніж на інших сторінках (на телефоні - менший).
-const HomePage = styled(Page)`
+export const HomePage = styled(Page)`
     gap: 20px;
 
     @media (max-width: 480px) {
@@ -605,6 +605,22 @@ export const saveTab = (value: PanelTab): void => {
     }
 };
 
+// Привітання з рівнем і лігою над вкладками головної - і на самій головній, і на екрані кампанії.
+export const HomeGreeting: React.FC<{ name: string | null }> = ({ name }) => {
+    const t = useT();
+    const profile = useProfile();
+    const myRating = useMyRating();
+    return (
+        <Hero>
+            <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
+            <HeroBadges>
+                <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
+                <LeagueBadge rating={myRating.rating} played={myRating.played} compact />
+            </HeroBadges>
+        </Hero>
+    );
+};
+
 // Вкладки головної - і на самій головній, і над екраном кампанії (щоб звідти було видно, як повернутись).
 export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => void }> = ({ active, onSelect }) => {
     const t = useT();
@@ -957,13 +973,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
 
     return (
         <HomePage>
-            <Hero>
-                <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
-                <HeroBadges>
-                    <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
-                    <LeagueBadge rating={myRating.rating} played={myRating.played} compact />
-                </HeroBadges>
-            </Hero>
+            <HomeGreeting name={name} />
 
             <HomeTabs active={tab} onSelect={setTab} />
 

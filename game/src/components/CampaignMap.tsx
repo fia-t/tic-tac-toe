@@ -3,12 +3,12 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { buttonTone, gameButtonCss, GameButton } from "@game/components/GameButton";
 import { ResultPopup, RewardBase, RoundSummary, rewardsSince, snapshotRewards } from "@game/components/ResultPopup";
-import { Card, Eyebrow, InfoPill, Muted, Page, Spread } from "@game/components/pageStyles";
+import { Card, Eyebrow, InfoPill, Muted, Spread } from "@game/components/pageStyles";
 import { Star } from "@game/components/DailyChallenge";
 import { ModIcon } from "@game/components/GameOptions";
 import { BossPortrait } from "@game/components/CampaignArt";
 import { albumArt } from "@game/components/AlbumArt";
-import { HomeTabs, InfoTip, Tab, Tabs, type PanelTab } from "@game/components/HomeScreen";
+import { HomeGreeting, HomePage, HomeTabs, InfoTip, Tab, Tabs, type PanelTab } from "@game/components/HomeScreen";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
@@ -443,6 +443,8 @@ type CampaignProps = {
     themes?: Theme[];
     // Вкладка головної, обрана над екраном кампанії (З ботом / Онлайн / Виклики).
     onHomeTab?: (tab: PanelTab) => void;
+    // Ім'я гравця для привітання над вкладками (як на головній).
+    name?: string | null;
 };
 
 const rewardText = (chapter: CampaignChapterDef, themes: Theme[] | undefined, t: ReturnType<typeof useT>): string => {
@@ -580,7 +582,7 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
     );
 };
 
-export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeTab }) => {
+export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeTab, name = null }) => {
     const t = useT();
     const progress = useCampaign();
     const current = currentLevelIndex(progress);
@@ -604,9 +606,15 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
     }, [progress.stars]);
 
     return (
-        <Page>
+        // Ті самі відступи, що на головній - вкладки й привітання не стрибають при переході.
+        <HomePage>
             {/* Вкладки головної згори - кампанія одна з них, звідси ж повертаються до гри з ботом, онлайну чи викликів. */}
-            {onHomeTab && <HomeTabs active="campaign" onSelect={(id) => id !== "campaign" && onHomeTab(id)} />}
+            {onHomeTab && (
+                <>
+                    <HomeGreeting name={name} />
+                    <HomeTabs active="campaign" onSelect={(id) => id !== "campaign" && onHomeTab(id)} />
+                </>
+            )}
             <Tabs $cols={2} role="tablist" aria-label={t("campaignTitle")}>
                 {(["chapters", "album"] as const).map((id) => (
                     <Tab key={id} type="button" role="tab" id={`campaign-tab-${id}`} aria-selected={tab === id} aria-controls="campaign-tabpanel" onClick={() => setTab(id)}>
@@ -731,7 +739,7 @@ export const CampaignPage: React.FC<CampaignProps> = ({ onStart, themes, onHomeT
             )}
 
             {info !== null && <LevelInfo index={info} onClose={() => setInfo(null)} onStart={onStart} />}
-        </Page>
+        </HomePage>
     );
 };
 

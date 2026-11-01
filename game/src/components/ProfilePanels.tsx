@@ -3,6 +3,7 @@ import { IconClose, IconEdit } from "@game/components/GameIcons";
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
+import { GameButton } from "@game/components/GameButton";
 import { ModalCard, ModalCloseButton, ModalTitle, ModalSubtitle, PillButton } from "@game/components/onlineStyles";
 import { Card, Eyebrow, InfoPill, Muted, Page, Progress, Row, Spread } from "@game/components/pageStyles";
 import { LeagueBadge, LeagueLadder } from "@game/components/LeagueCup";
@@ -11,7 +12,7 @@ import { Star } from "@game/components/DailyChallenge";
 import { ACHIEVEMENTS, levelBounds, levelForXp, setProfileName, useProfile } from "@game/lib/profile";
 import { useCampaign } from "@game/lib/campaign";
 import { useWallet } from "@game/lib/wallet";
-import { closePanel, useOpenPanel, useToasts } from "@game/lib/ui";
+import { closePanel, openPanel, useOpenPanel, useToasts } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
 import { playerName } from "@game/lib/names";
 import { LeaderboardRow, fetchLeaderboard, useMyRating } from "@game/lib/matchmaking";
@@ -80,6 +81,13 @@ const AchIcon = ({ id, on }: { id: string; on: boolean }) =>
     ) : (
         <Star on={on} size={26} />
     );
+
+// Медалі досягнень рядком у профілі - отримані кольорові, решта сірі; повний список - на сторінці "Нагороди".
+const MedalRow = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+`;
 
 // Олівець біля імені й поле для нового імені в картці профілю.
 const NameEditButton = styled.button`
@@ -254,6 +262,28 @@ export const ProfilePage = ({ fallbackName }: { fallbackName: string | null }) =
                         </Stat>
                     ))}
                 </Stats>
+            </Card>
+            <Card aria-labelledby="profile-awards">
+                <Spread>
+                    <h3 id="profile-awards">{t("awardsTitle")}</h3>
+                    <InfoPill>
+                        {ACHIEVEMENTS.filter((a) => profile.achieved[a.id]).length} / {ACHIEVEMENTS.length}
+                    </InfoPill>
+                </Spread>
+                <MedalRow>
+                    {ACHIEVEMENTS.map((a) => {
+                        const done = Boolean(profile.achieved[a.id]);
+                        const name = t(`ach_${a.id}` as Parameters<typeof t>[0]);
+                        return (
+                            <Medal key={a.id} $on={done} role="img" aria-label={name} title={name}>
+                                <AchIcon id={a.id} on={done} />
+                            </Medal>
+                        );
+                    })}
+                </MedalRow>
+                <GameButton size="sm" onClick={() => openPanel("awards")}>
+                    {t("awardsAll")}
+                </GameButton>
             </Card>
             <Card aria-labelledby="profile-leagues">
                 {/* Як рахується рейтинг - під "?", щоб не було стіни тексту одразу під ім'ям. */}

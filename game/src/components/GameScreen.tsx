@@ -644,21 +644,22 @@ const GoalBanner = styled.div`
        кнопки поруч; розмір тексту підбирає GameScreen, щоб ціль уміщалась. */
     flex: 1 1 0;
     min-width: 0;
-    height: 46px;
-    padding: 4px 4px 4px 14px;
-    border-radius: 999px;
+    /* Не нижча за кнопки поруч; довша ціль - до трьох рядків читабельного розміру. */
+    min-height: 46px;
+    padding: 4px 4px 4px 16px;
+    border-radius: 24px;
     background: linear-gradient(155deg, #ffe3a3, #f5c96a);
     box-shadow: 3px 3px 6px rgba(101, 72, 35, 0.25);
     color: #4a2c0c;
-    font-size: 14px;
+    font-size: 17px;
     font-weight: 800;
 
     & > span {
         flex: 1 1 auto;
         min-width: 0;
-        max-height: 37px;
+        max-height: 3.45em;
         overflow: hidden;
-        line-height: 1.1;
+        line-height: 1.15;
     }
 `;
 
@@ -1481,14 +1482,14 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         return () => window.removeEventListener("resize", place);
     }, [mode, timerRunning]);
 
-    // Ціль виклику: найбільший шрифт (14-10px), з яким вона вміщається у два-три рядки плашки.
+    // Ціль виклику: найбільший шрифт (17-13px), з яким вона вміщається в три рядки плашки.
     // Плашка є і в широкій, і у вузькій розкладці - підбираємо в кожній.
     useLayoutEffect(() => {
         const texts = [...document.querySelectorAll<HTMLElement>("[data-goal-text]")];
         if (!texts.length) return;
         const fit = () => {
             for (const text of texts) {
-                for (let size = 14; size >= 10; size--) {
+                for (let size = 17; size >= 13; size--) {
                     text.style.fontSize = `${size}px`;
                     if (text.scrollHeight <= text.clientHeight) break;
                 }

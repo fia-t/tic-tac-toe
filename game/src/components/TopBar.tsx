@@ -8,8 +8,9 @@ import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel
 import { assetUrl } from "@game/lib/assets";
 import { CAMPAIGN_LEVELS, totalStars, useCampaign } from "@game/lib/campaign";
 import { currentStreak, useDailyState } from "@game/lib/daily";
-import { AD_REWARD_COINS, earnCoins, useLastEarning, useWallet } from "@game/lib/wallet";
+import { AD_REWARD_COINS, useLastEarning, useWallet } from "@game/lib/wallet";
 import { RewardedAdContext } from "@game/components/GameScreen";
+import { RewardPopup } from "@game/components/RewardPopup";
 import { openPanel } from "@game/lib/ui";
 import { useT } from "@game/lib/i18n";
 
@@ -228,28 +229,28 @@ const Pill = styled.button`
     }
 `;
 
-// Монети з кнопкою "+" (зелений кружечок, що заходить на правий край плашки).
-const Wallet = styled.span`
+// Плашка з кнопкою "+" праворуч.
+const Stat = styled.span`
     position: relative;
     display: inline-flex;
     align-items: center;
+    /* "+" поруч із плашкою, а не поверх: при наведенні плашка піднімається й не підлазить під нього. */
+    gap: 4px;
 
     ${Pill} {
-        padding-right: 18px;
+        padding-right: 10px;
     }
 `;
 
 // Об'ємна зелена кнопка - та сама текстура, що в "Легкого" рівня бота (а не круглий значок, схожий на монету).
 const PlusButton = styled.button`
     ${gameButtonCss("sm", { square: true, tone: "green" })}
-    z-index: 1;
-    margin-left: -14px;
 
     && {
-        --gb-c: 9px;
-        width: 32px;
-        height: 32px;
-        min-height: 32px;
+        --gb-c: 8px;
+        width: 28px;
+        height: 28px;
+        min-height: 28px;
     }
 
     ${tipCss}
@@ -266,7 +267,7 @@ const PlusButton = styled.button`
 `;
 
 const PlusIcon = () => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" aria-hidden="true" style={{ filter: "drop-shadow(0 1px 0 rgba(10, 50, 15, 0.6))" }}>
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" aria-hidden="true" style={{ filter: "drop-shadow(0 1px 0 rgba(10, 50, 15, 0.6))" }}>
         <path d="M12 4v16M4 12h16" />
     </svg>
 );
@@ -358,22 +359,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
     const stars = totalStars(campaign);
     const streak = currentStreak(daily);
 
-    // "+" біля монет: є rewarded-реклама - монети за перегляд; немає (сайт, портал) - магазин.
+    // "+" біля кожної плашки - один і той самий попап з rewarded-рекламою за монети (поки - заглушка).
     const rewarded = useContext(RewardedAdContext);
-    const [watching, setWatching] = useState(false);
-    const getCoins = async () => {
-        if (!rewarded) {
-            openPanel("shop");
-            return;
-        }
-        setWatching(true);
-        try {
-            if (await rewarded()) earnCoins(AD_REWARD_COINS);
-        } finally {
-            setWatching(false);
-        }
-    };
-    const plusLabel = rewarded ? t("coinsForAd", { n: String(AD_REWARD_COINS) }) : t("tipCoins");
+    const [rewardOpen, setRewardOpen] = useState(false);
+    const plusLabel = rewarded ? t("coinsForAd", { n: String(AD_REWARD_COINS) }) : t("rewardTitle");
+    const plus = (
+        <PlusButton type="button" onClick={() => setRewardOpen(true)} aria-label={plusLabel} data-tip={plusLabel}>
+            <PlusIcon />
+        </PlusButton>
+    );
 
     return (
         <Bar>
@@ -387,32 +381,37 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb }) => {
                     </Crumb>
                 </CrumbSlot>
             )}
-            <Pill
-                type="button"
-                onClick={() => openPanel("campaign")}
-                aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
-                data-tip={t("tipStars", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
-            >
-                <StarIcon />
-                <span>{stars}</span>
-            </Pill>
-            <Wallet>
+            <Stat>
+                <Pill
+                    type="button"
+                    onClick={() => openPanel("campaign")}
+                    aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
+                    data-tip={t("tipStars", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
+                >
+                    <StarIcon />
+                    <span>{stars}</span>
+                </Pill>
+                {plus}
+            </Stat>
+            <Stat>
                 <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} data-tip={t("tipCoins")}>
                     <Coin size={28} />
                     <span>{wallet.coins}</span>
                     {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
                 </Pill>
-                <PlusButton type="button" onClick={() => void getCoins()} disabled={watching} aria-label={plusLabel} data-tip={plusLabel}>
-                    <PlusIcon />
-                </PlusButton>
-            </Wallet>
-            <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
-                <Flame size={32} />
-                <span>{streak}</span>
-            </Pill>
+                {plus}
+            </Stat>
+            <Stat>
+                <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
+                    <Flame size={32} />
+                    <span>{streak}</span>
+                </Pill>
+                {plus}
+            </Stat>
             <Spacer />
             <FullscreenButton />
             <SettingsButton inline />
+            {rewardOpen && <RewardPopup onRewardedAd={rewarded} onClose={() => setRewardOpen(false)} />}
         </Bar>
     );
 };

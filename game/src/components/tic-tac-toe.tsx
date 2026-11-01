@@ -575,6 +575,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             <CampaignPage
                 onStart={goToGame}
                 themes={availableThemes}
+                name={shownName}
                 onHomeTab={(tab) => {
                     saveTab(tab);
                     goToMenu();
