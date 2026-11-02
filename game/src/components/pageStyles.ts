@@ -46,7 +46,23 @@ export const MenuScroll = styled.div`
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: rgba(128, 83, 47, 0.45) transparent;
+
+    /* Головна й кампанія: привітання й вкладки нерухомі, прокручується їхня власна область
+       (HomeScroll) - тут без відступу зверху (привітання ближче до шапки) і без маски. */
+    &:has(> [data-fixed-head]) {
+        padding-top: 0;
+        -webkit-mask-image: none;
+        mask-image: none;
+        overflow: hidden;
+    }
 `;
+
+// Прокрутка сторінки меню на початок: і сама MenuScroll, і внутрішня область (HomeScroll).
+export const scrollMenuTop = (scroll: HTMLElement | null, behavior: ScrollBehavior = "auto") => {
+    if (!scroll) return;
+    scroll.scrollTo({ top: 0, behavior });
+    scroll.querySelectorAll<HTMLElement>("[data-menu-scroll]").forEach((inner) => inner.scrollTo({ top: 0, behavior }));
+};
 
 // Спільні стилі сторінок меню (головна, кампанія, магазин, нагороди, профіль) - як у прототипі:
 // кремові картки з м'якою нижньою кромкою на небі гри.

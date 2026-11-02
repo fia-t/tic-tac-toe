@@ -29,7 +29,7 @@ import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game
 import { AwardsBarTitle, AwardsPage, ProfileBarTitle, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
 import { SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
-import { AppColumn, MenuColumn, MenuScroll, ShellVars } from "@game/components/pageStyles";
+import { AppColumn, MenuColumn, MenuScroll, ShellVars, scrollMenuTop } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameHomeContext, GameScreen, RewardedAdContext, useEmbedCompact } from "@game/components/GameScreen";
 import { MatchInvite } from "@game/components/MatchInvite";
@@ -209,7 +209,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Новий екран - з початку сторінки.
     useEffect(() => {
         scrollGameTo(topRef.current);
-        menuScrollRef.current?.scrollTo({ top: 0 });
+        scrollMenuTop(menuScrollRef.current);
     }, [screen]);
 
     // Звідки прийшли в партію (розділ меню, а на головній - її вкладка): у шапці під час гри
@@ -558,7 +558,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
 
     const navigate = (item: NavItem) => {
         if (item === "home") {
-            if (screen === "home") menuScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+            if (screen === "home") scrollMenuTop(menuScrollRef.current, "smooth");
             else goToMenu();
             return;
         }

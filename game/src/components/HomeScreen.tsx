@@ -47,6 +47,33 @@ export const HomePage = styled(Page)`
     @media (max-height: 820px) {
         gap: 12px;
     }
+
+    /* Привітання й вкладки стоять на місці: сторінка - на всю висоту області між шапкою
+       й нижнім меню, прокручується лише HomeScroll під вкладками (MenuScroll сам не крутиться
+       і не має верхнього відступу - див. data-fixed-head у pageStyles). */
+    height: 100%;
+    min-height: 0;
+    padding-bottom: 0;
+`;
+
+// Прокручувана частина головної й кампанії - усе під вкладками. Поля по боках - під тіні
+// карток; зверху - м'яке зникання під вкладками (у зоні відступу, тож картки не блякнуть).
+export const HomeScroll = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: inherit;
+    flex: 1 1 auto;
+    min-height: 0;
+    margin: -12px calc(-1 * var(--shell-x)) 0;
+    /* Місце під нижнє меню, як у Page. */
+    padding: 12px var(--shell-x) 96px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 12px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 83, 47, 0.45) transparent;
 `;
 
 const TabPanel = styled.div`
@@ -1000,14 +1027,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
     const content: Record<PanelTab, React.ReactNode> = { bot: botContent, online: onlineTab, daily: dailyTab };
 
     return (
-        <HomePage data-ad-center="">
+        <HomePage data-ad-center="" data-fixed-head="">
             <HomeGreeting name={name} />
 
             <HomeTabs active={tab} onSelect={setTab} />
 
-            <TabPanel role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`}>
-                {content[tab]}
-            </TabPanel>
+            {/* key - нова вкладка відкривається з початку, а не з прокрутки попередньої. */}
+            <HomeScroll key={tab} data-menu-scroll="">
+                <TabPanel role="tabpanel" id="home-tabpanel" aria-labelledby={`home-tab-${tab}`}>
+                    {content[tab]}
+                </TabPanel>
+            </HomeScroll>
 
             {/* Реклама порталу - на вкладках онлайну й викликів (гра з ботом має вміщатись без прокрутки). */}
             {tab !== "bot" && <SideBanners id={`ad-${tab}`} layout={MENU_SIDE_BANNERS} />}

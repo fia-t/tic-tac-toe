@@ -218,6 +218,12 @@ const BarGroup = styled.div`
     min-width: 0;
 `;
 
+// Складність бота: назва рівня без "..." - група не стискається, інакше стрілка вилазить
+// за кнопку (повний екран, вузька смуга). Стискається модифікатор - у нього є "...".
+const DiffGroup = styled(BarGroup)`
+    flex: none;
+`;
+
 const BarGroupRow = styled.div`
     display: flex;
     align-items: center;
@@ -1484,12 +1490,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     );
     // Складність бота (сайт) - список, як у модифікатора.
     const diffSelect = goHome && (
-        <BarGroup>
+        <DiffGroup>
             <BarLabel id="bar-bot" $hidden>
                 {t("barBot")}
             </BarLabel>
             <DifficultySelect value={difficulty} labelledBy="bar-bot" onPick={pickDifficulty} />
-        </BarGroup>
+        </DiffGroup>
     );
     const modGroup = (menuAlign: "left" | "auto") => (
         <BarGroup>
