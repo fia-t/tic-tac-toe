@@ -1361,18 +1361,30 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <ActionIcon id="back" />
         </RoundButton>
     );
-    const actionButtons = (
+    const restartButton = (
+        <RoundButton type="button" onClick={restart} disabled={restartDisabled} aria-label={restartLabel} data-tip={restartLabel}>
+            <ActionIcon id="restart" />
+        </RoundButton>
+    );
+    // У грі з новини (iframe) - лише партія з ботом, без онлайн-кімнат.
+    const friendButton = !isEmbed() && (
+        <RoundButton type="button" onClick={() => void openFriend()} aria-label={t("playWithFriend")} data-tip={t("playWithFriend")}>
+            <ActionIcon id="friend" />
+        </RoundButton>
+    );
+    // На сайті ліворуч - "Назад", повний екран і налаштування, праворуч - гра з другом і "Заново";
+    // у новині - як було: дії ліворуч, повний екран праворуч.
+    const actionButtons = goHome ? (
         <>
             {homeButton}
-            <RoundButton type="button" onClick={restart} disabled={restartDisabled} aria-label={restartLabel} data-tip={restartLabel}>
-                <ActionIcon id="restart" />
-            </RoundButton>
-            {/* У грі з новини (iframe) - лише партія з ботом, без онлайн-кімнат. */}
-            {!isEmbed() && (
-                <RoundButton type="button" onClick={() => void openFriend()} aria-label={t("playWithFriend")} data-tip={t("playWithFriend")}>
-                    <ActionIcon id="friend" />
-                </RoundButton>
-            )}
+            <FullscreenButton round />
+            <SettingsButton round />
+        </>
+    ) : (
+        <>
+            {homeButton}
+            {restartButton}
+            {friendButton}
         </>
     );
 
@@ -1724,8 +1736,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 на сайті - ще налаштування. */}
                             {wide && (
                                 <BarFull>
-                                    <FullscreenButton round nudge={embed && mode !== "traditional"} />
-                                    {goHome && <SettingsButton round />}
+                                    {goHome ? (
+                                        <>
+                                            {friendButton}
+                                            {restartButton}
+                                        </>
+                                    ) : <FullscreenButton round nudge={embed && mode !== "traditional"} />}
                                 </BarFull>
                             )}
                                 </>

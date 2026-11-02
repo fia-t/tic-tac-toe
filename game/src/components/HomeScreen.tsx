@@ -840,6 +840,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             </GameButton>
         </BotCard>
     );
+    const botContent = (
+        <>
+            {botTab}
+            <InlineBanner id="ad-bot" />
+        </>
+    );
 
     const onlineTab = (
         <>
@@ -991,7 +997,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
         </>
     );
 
-    const content: Record<PanelTab, React.ReactNode> = { bot: botTab, online: onlineTab, daily: dailyTab };
+    const content: Record<PanelTab, React.ReactNode> = { bot: botContent, online: onlineTab, daily: dailyTab };
 
     return (
         <HomePage data-ad-center="">
