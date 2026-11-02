@@ -16,9 +16,10 @@ const SDK_SCRIPTS: Record<Target, string> = {
     // QSPlay SDK порталу play.quartsoft.com - https://docs-dev.quartsoft.com/sdk/intro
     // (v1 = версія протоколу, змінюється лише при несумісних змінах).
     // На тестовому порталі (play-dev.quartsoft.com) - тестовий SDK: лише в ньому поки є модулі
-    // реклами (ad) і банерів (banner). Портал визначаємо за адресою батьківської сторінки iframe;
+    // реклами (ad) і банерів (banner). Тестовий портал - якщо будь-яка зі сторінок над грою (гра може
+    // бути вкладена через проміжну сторінку), referrer чи сама адреса гри - на тестовому домені (*dev*.quartsoft.com).
     // document.write - щоб SDK, як і звичайний <script>, завантажився до коду гри.
-    portal: `<script>(function(){var p="";try{p=(location.ancestorOrigins&&location.ancestorOrigins[0])||document.referrer||""}catch(e){}var dev=/\\/\\/[^/]*-dev\\.quartsoft\\.com/.test(p);document.write('<script src="https://sdk'+(dev?"-dev":"")+'.quartsoft.com/v1/sdk.js"><\\/script>')})()</script>`,
+    portal: `<script>(function(){var list=[location.href,document.referrer||""];try{var a=location.ancestorOrigins;for(var i=0;a&&i<a.length;i++)list.push(a[i])}catch(e){}var dev=list.some(function(u){var h=(String(u).split("/")[2]||"").toLowerCase();return h.indexOf("dev")>=0&&/quartsoft\\.com$/.test(h)});window.__QSPLAY_SDK_ENV=dev?"dev":"prod";console.info("[QSPlaySDK] "+window.__QSPLAY_SDK_ENV+" SDK",list);document.write('<script src="https://sdk'+(dev?"-dev":"")+'.quartsoft.com/v1/sdk.js"><\\/script>')})()</script>`,
     itch: "",
     // CrazyGames HTML5 v2 SDK - https://docs.crazygames.com/sdk/html5-v2/intro/
     crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v2.js"></script>',

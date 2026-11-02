@@ -42,7 +42,7 @@ const Bar = styled.header`
     }
 `;
 
-// Розпірка: повний екран і налаштування - біля правого краю.
+// Розпірка: ресурси - біля правого краю.
 const Spacer = styled.span`
     flex: 1 1 auto;
 `;
@@ -398,6 +398,11 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
                     </Crumb>
                 </CrumbSlot>
             )}
+            {/* Ліворуч - повний екран і налаштування, далі заголовок сторінки; ресурси - біля правого краю. */}
+            <FullscreenButton />
+            <SettingsButton inline />
+            {greeting}
+            <Spacer />
             <Stat>
                 <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
                     <Flame size={28} />
@@ -425,10 +430,6 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
                 </Pill>
                 {plus("coins")}
             </Stat>
-            {greeting}
-            <Spacer />
-            <FullscreenButton />
-            <SettingsButton inline />
             {reward && <RewardPopup kind={reward} icon={REWARD_ICON[reward]} onRewardedAd={rewarded} onClose={() => setReward(null)} />}
         </Bar>
     );

@@ -9,7 +9,7 @@ import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
 import { InlineBanner, SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { LeagueBadge } from "@game/components/LeagueCup";
-import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread, GREETING_IN_BAR, GREETING_IN_BAR_FLEX, GREETING_ANY_BAR, barColumnCss, barFlexCss } from "@game/components/pageStyles";
+import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread, GREETING_IN_BAR, barColumnCss } from "@game/components/pageStyles";
 import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
@@ -18,7 +18,7 @@ import { isEmbed } from "@game/lib/embed";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
-import { levelForXp, useProfile } from "@game/lib/profile";
+import { useProfile } from "@game/lib/profile";
 import { dailyReward } from "@game/lib/wallet";
 import { openPanel, useOpenPanel } from "@game/lib/ui";
 import { createRoom, onlineModifiers } from "@game/lib/onlineGame";
@@ -96,10 +96,6 @@ const Hero = styled.section<{ $bar?: boolean }>`
             display: flex;
             ${barColumnCss}
         }
-        @media ${GREETING_IN_BAR_FLEX} {
-            display: flex;
-            ${barFlexCss}
-        }
         h1 {
             white-space: nowrap;
             overflow: hidden;
@@ -107,18 +103,10 @@ const Hero = styled.section<{ $bar?: boolean }>`
         }
     `
             : `
-        @media ${GREETING_ANY_BAR} {
+        @media ${GREETING_IN_BAR} {
             display: none;
         }
     `}
-`;
-
-const HeroBadges = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    margin-left: auto;
 `;
 
 // Вкладки розділів - як перемикач складності: вибрана - горіхова. Також на екрані кампанії
@@ -636,18 +624,13 @@ export const saveTab = (value: PanelTab): void => {
     }
 };
 
-// Привітання з рівнем і лігою над вкладками головної - і на самій головній, і на екрані кампанії.
+// Привітання над вкладками головної - і на самій головній, і на екрані кампанії.
 export const HomeGreeting: React.FC<{ name: string | null; inBar?: boolean }> = ({ name, inBar = false }) => {
     const t = useT();
-    const profile = useProfile();
-    const myRating = useMyRating();
+    // Рівень і ліга - у профілі; у привітанні лише ім'я (так воно вміщається в шапку й на ноутбуці).
     return (
         <Hero $bar={inBar}>
             <h1>{t("homeGreeting", { name: name ?? t("player") })}</h1>
-            <HeroBadges>
-                <InfoPill>{t("profileLevel", { n: String(levelForXp(profile.xp)) })}</InfoPill>
-                <LeagueBadge rating={myRating.rating} played={myRating.played} compact />
-            </HeroBadges>
         </Hero>
     );
 };
