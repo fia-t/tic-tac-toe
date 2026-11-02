@@ -15,7 +15,10 @@ type Target = (typeof TARGETS)[number];
 const SDK_SCRIPTS: Record<Target, string> = {
     // QSPlay SDK порталу play.quartsoft.com - https://docs-dev.quartsoft.com/sdk/intro
     // (v1 = версія протоколу, змінюється лише при несумісних змінах).
-    portal: '<script src="https://sdk.quartsoft.com/v1/sdk.js"></script>',
+    // На тестовому порталі (play-dev.quartsoft.com) - тестовий SDK: лише в ньому поки є модулі
+    // реклами (ad) і банерів (banner). Портал визначаємо за адресою батьківської сторінки iframe;
+    // document.write - щоб SDK, як і звичайний <script>, завантажився до коду гри.
+    portal: `<script>(function(){var p="";try{p=(location.ancestorOrigins&&location.ancestorOrigins[0])||document.referrer||""}catch(e){}var dev=/\\/\\/[^/]*-dev\\.quartsoft\\.com/.test(p);document.write('<script src="https://sdk'+(dev?"-dev":"")+'.quartsoft.com/v1/sdk.js"><\\/script>')})()</script>`,
     itch: "",
     // CrazyGames HTML5 v2 SDK - https://docs.crazygames.com/sdk/html5-v2/intro/
     crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v2.js"></script>',
