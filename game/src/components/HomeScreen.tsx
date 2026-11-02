@@ -9,7 +9,7 @@ import { Star, startDailyChallenge } from "@game/components/DailyChallenge";
 import { Flame } from "@game/components/TopBar";
 import { InlineBanner, SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { LeagueBadge } from "@game/components/LeagueCup";
-import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread, GREETING_IN_BAR, barColumnCss } from "@game/components/pageStyles";
+import { Card, Eyebrow, InfoPill, Muted, Page, Row, Spread, GREETING_IN_BAR, GREETING_IN_BAR_FLEX, GREETING_ANY_BAR, barColumnCss, barFlexCss } from "@game/components/pageStyles";
 import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
@@ -96,6 +96,10 @@ const Hero = styled.section<{ $bar?: boolean }>`
             display: flex;
             ${barColumnCss}
         }
+        @media ${GREETING_IN_BAR_FLEX} {
+            display: flex;
+            ${barFlexCss}
+        }
         h1 {
             white-space: nowrap;
             overflow: hidden;
@@ -103,7 +107,7 @@ const Hero = styled.section<{ $bar?: boolean }>`
         }
     `
             : `
-        @media ${GREETING_IN_BAR} {
+        @media ${GREETING_ANY_BAR} {
             display: none;
         }
     `}

@@ -55,6 +55,21 @@ export const MenuScroll = styled.div`
 // (ліворуч - над лівим краєм блоків, праворуч - над правим), сторінка починається одразу з вкладок
 // чи карток. Вужче колонка налазила б на ресурси в шапці - тоді заголовок на самій сторінці.
 export const GREETING_IN_BAR = "(min-width: 1520px)";
+// Середній екран (ноутбук): колонка ще налазить на ресурси, але в шапці вистачає місця - заголовок
+// у шапці одразу після ресурсів (до кнопок праворуч), трохи меншим шрифтом.
+export const GREETING_IN_BAR_FLEX = "(min-width: 1200px) and (max-width: 1519px)";
+// Заголовок у шапці (будь-яким способом) - на самій сторінці його не дублюємо.
+export const GREETING_ANY_BAR = "(min-width: 1200px)";
+export const barFlexCss = `
+    position: static;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 14px;
+
+    h1 {
+        font-size: 26px;
+    }
+`;
 
 // Заголовок у шапці по ширині колонки (шапка - на всю ширину вікна, колонка - по центру).
 export const barColumnCss = `

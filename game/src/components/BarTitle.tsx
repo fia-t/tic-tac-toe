@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import styled from "styled-components";
-import { GREETING_IN_BAR, barColumnCss } from "@game/components/pageStyles";
+import { GREETING_ANY_BAR, GREETING_IN_BAR, GREETING_IN_BAR_FLEX, barColumnCss, barFlexCss } from "@game/components/pageStyles";
 import { InfoTip } from "@game/components/HomeScreen";
 
 // Заголовки сторінок меню (скіни, нагороди, профіль) на широкому екрані - у шапці по ширині
@@ -15,6 +15,13 @@ export const BarSlot = styled.div`
         align-items: center;
         gap: 10px;
         ${barColumnCss}
+    }
+
+    @media ${GREETING_IN_BAR_FLEX} {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        ${barFlexCss}
     }
 
     h1 {
@@ -47,7 +54,7 @@ const InPage = styled.div`
         }
     }
 
-    @media ${GREETING_IN_BAR} {
+    @media ${GREETING_ANY_BAR} {
         display: none;
     }
 `;
