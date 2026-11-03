@@ -955,6 +955,8 @@ const Boosters = styled.div<{ $site?: boolean }>`
         flex-direction: column;
         gap: 14px;
         padding: 0;
+        /* Вище за бічний банер (SideBox, z-index 5) - тултіпи праворуч від кнопок лягають поверх реклами. */
+        z-index: 6;
 
         /* Тултіпи колонки - праворуч від кнопок. */
         & > button::after {

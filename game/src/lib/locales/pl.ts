@@ -516,6 +516,7 @@ const pack: LocalePack = {
         "theme:space:name": "Kosmos",
         "theme:royal:name": "Królewski",
         "theme:berries:name": "Jagody",
+        "theme:bouquet:name": "Bukiet",
         "theme:citrus:name": "Cytrusy",
         "theme:balls:name": "Piłki",
         "theme:forestfind:name": "Leśne skarby",

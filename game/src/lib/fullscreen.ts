@@ -26,19 +26,49 @@ const browserProvider: FullscreenProvider = {
     },
 };
 
+// Вікно гри займає весь екран пристрою - отже, гра розгорнута, навіть якщо портал про це не
+// повідомив (напр. гра з другом відкрилась уже на весь екран, і подія прийшла до підписки).
+// На телефоні вікно браузера й так на весь екран - там цій ознаці не віримо.
+const fillsScreen = (): boolean => {
+    if (typeof window === "undefined" || !window.screen) return false;
+    if (window.matchMedia?.("(pointer: coarse)").matches) return false;
+    return window.innerWidth >= window.screen.width - 1 && window.innerHeight >= window.screen.height - 1;
+};
+
 let provider: FullscreenProvider | null = null;
+// Що останнім повідомив портал/браузер.
+let reported = false;
 let current = false;
 const listeners = new Set<(value: boolean) => void>();
 let unsubscribe: (() => void) | null = null;
+let resizeBound = false;
 
 const active = (): FullscreenProvider => provider ?? browserProvider;
+
+const publish = () => {
+    const next = reported || fillsScreen();
+    if (next === current) return;
+    current = next;
+    listeners.forEach((listener) => listener(next));
+};
 
 const watch = () => {
     unsubscribe?.();
     unsubscribe = active().subscribe((value) => {
-        current = value;
-        listeners.forEach((listener) => listener(value));
+        reported = value;
+        publish();
     });
+    // Розмір вікна - запасна ознака: вихід/вхід у повний екран завжди змінює розмір iframe.
+    if (!resizeBound) {
+        resizeBound = true;
+        window.addEventListener("resize", () => {
+            // Портал міг пропустити подію виходу - якщо вікно вже не на весь екран, гра не розгорнута.
+            const coarse = window.matchMedia?.("(pointer: coarse)").matches;
+            if (reported && !coarse && !fillsScreen() && !document.fullscreenElement) reported = false;
+            publish();
+        });
+    }
+    publish();
 };
 
 export const setFullscreenProvider = (next: FullscreenProvider): void => {
@@ -52,11 +82,17 @@ export const isFullscreenSupported = (): boolean =>
 
 export const toggleFullscreen = async (): Promise<void> => {
     try {
-        if (current) await active().exit();
-        else await active().request();
+        if (current) {
+            await active().exit();
+            reported = false;
+        } else {
+            await active().request();
+        }
     } catch (error) {
         console.warn("[fullscreen] failed", error);
     }
+    // Якщо портал не надіслав подію - стан звіряємо з розміром вікна після анімації розгортання.
+    setTimeout(publish, 400);
 };
 
 export const useFullscreen = (): boolean => {

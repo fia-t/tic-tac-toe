@@ -143,6 +143,7 @@ export const SHOP_THEMES: Theme[] = [
     shopTheme("veggie", "Город", "Veggie Patch", 350, 896),
     shopTheme("holiday", "Свято", "Holiday", 400, 897),
     shopTheme("fastfood", "Фастфуд", "Fast Food", 300, 898),
+    shopTheme("bouquet", "Букет", "Bouquet", 350, 899),
     // Стилізовані X і O.
     shopTheme("chalk", "Крейда", "Chalkboard", 150, 900),
     shopTheme("pixel", "Піксель", "Pixel", 200, 901),
