@@ -234,9 +234,12 @@ const RewardStat: React.FC<{ icon: React.ReactNode; value: number; prefix?: stri
     );
 };
 
-const XpStar = () => (
+// Досвід - фіолетовий кристал (не зірка: зірку плутали із зірками рівня кампанії).
+const XpGem = () => (
     <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 2.5l2.6 6.1 6.6.5-5 4.3 1.6 6.4L12 16.4 6.2 19.8l1.6-6.4-5-4.3 6.6-.5z" fill="#1fb3d9" stroke="#0f6f8c" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M7 3.5h10l4.5 5.5L12 21 2.5 9z" fill="#9b6bdf" stroke="#5b3596" strokeWidth="1.4" strokeLinejoin="round" />
+        <path d="M2.5 9h19M7 3.5L9.5 9 12 21l2.5-12L17 3.5" fill="none" stroke="#5b3596" strokeWidth="1.1" strokeLinejoin="round" />
+        <path d="M9.5 9L12 3.5 14.5 9z" fill="#c7a6f2" />
     </svg>
 );
 
@@ -344,7 +347,7 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                 )}
                 <Rewards role="list">
                     <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
-                    <RewardStat icon={<XpStar />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
+                    <RewardStat icon={<XpGem />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}

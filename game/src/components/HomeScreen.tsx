@@ -820,7 +820,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 {t("modifierLabel")}
                 <InfoTip text={id === "home-friend-mod" ? t("infoModFriend") : t("infoMod")} />
             </EyebrowInfo>
-            <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} plain onPick={onPick} />
+            <ModifierSelect value={active} options={allowed} weekly={weekly} labelledBy={id} menuAlign={menuAlign} plain floating onPick={onPick} />
             {info}
         </OptGroup>
     );

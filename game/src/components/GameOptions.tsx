@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { DIFFICULTIES, type Difficulty } from "@game/lib/difficulty";
@@ -513,6 +514,7 @@ export const ModifierSelect = ({
     menuAlign = "right",
     withDesc = false,
     plain = false,
+    floating = false,
     onPick,
 }: {
     value: Modifier | null;
@@ -524,30 +526,87 @@ export const ModifierSelect = ({
     withDesc?: boolean;
     // Світла кнопка, як бустери (гра з новини), замість коричневої "вибраної".
     plain?: boolean;
+    // Список - у body поверх усього (головна: інакше він у прокручуваній області під нижнім меню
+    // і саму область розтягує до прокрутки). Стає під кнопкою, закривається при прокрутці.
+    floating?: boolean;
     onPick: (m: Modifier | null) => void;
 }) => {
     const t = useT();
     const [open, setOpen] = useState(false);
+    const [at, setAt] = useState<React.CSSProperties | null>(null);
     const ref = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
     const name = (m: Modifier | null) => (m ? t(`modifier_${m}`) : t("modifier_none"));
     const desc = (m: Modifier | null) => (m ? t(`modifierDesc_${m}`) : t("modifierNoneDesc"));
 
-    // Список закривається кліком поза ним і Escape.
+    const toggle = () => {
+        if (open) return setOpen(false);
+        if (floating && ref.current) {
+            const r = ref.current.getBoundingClientRect();
+            const w = Math.min(300, window.innerWidth - 32);
+            const want = menuAlign === "left" ? r.left - 12 : r.right + 12 - w;
+            const left = Math.max(12, Math.min(window.innerWidth - w - 12, want));
+            const top = r.bottom + 8;
+            setAt({ position: "fixed", top, left, right: "auto", width: w, zIndex: 1700, maxHeight: window.innerHeight - top - 12 });
+        }
+        setOpen(true);
+    };
+
+    // Список закривається кліком поза ним і Escape (плаваючий - ще й прокруткою сторінки).
     useEffect(() => {
         if (!open) return;
+        const inside = (target: EventTarget | null) => ref.current?.contains(target as Node) || menuRef.current?.contains(target as Node);
         const onDown = (event: PointerEvent) => {
-            if (!ref.current?.contains(event.target as Node)) setOpen(false);
+            if (!inside(event.target)) setOpen(false);
         };
         const onKey = (event: KeyboardEvent) => {
             if (event.key === "Escape") setOpen(false);
         };
+        const onScroll = (event: Event) => {
+            if (!inside(event.target)) setOpen(false);
+        };
+        const onResize = () => setOpen(false);
         document.addEventListener("pointerdown", onDown);
         document.addEventListener("keydown", onKey);
+        if (floating) {
+            window.addEventListener("scroll", onScroll, true);
+            window.addEventListener("resize", onResize);
+        }
         return () => {
             document.removeEventListener("pointerdown", onDown);
             document.removeEventListener("keydown", onKey);
+            window.removeEventListener("scroll", onScroll, true);
+            window.removeEventListener("resize", onResize);
         };
-    }, [open]);
+    }, [open, floating]);
+
+    const menu = (
+        <ModMenu ref={menuRef} role="menu" aria-labelledby={labelledBy} $align={menuAlign} style={floating && at ? at : undefined}>
+            {[null, ...options].map((m) => (
+                <ModOption
+                    key={m ?? "none"}
+                    type="button"
+                    role="menuitemradio"
+                    aria-checked={value === m}
+                    onClick={() => {
+                        onPick(m);
+                        setOpen(false);
+                    }}
+                >
+                    <i>
+                        <ModIcon id={m} size={20} />
+                    </i>
+                    <span>
+                        <b>
+                            {name(m)}
+                            {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
+                        </b>
+                        <small>{desc(m)}</small>
+                    </span>
+                </ModOption>
+            ))}
+        </ModMenu>
+    );
 
     return (
         <ModPicker ref={ref}>
@@ -561,7 +620,7 @@ export const ModifierSelect = ({
                 data-selected={plain ? undefined : true}
                 $desc={withDesc}
                 title={withDesc ? `${name(value)} · ${desc(value)}` : undefined}
-                onClick={() => setOpen((v) => !v)}
+                onClick={toggle}
             >
                 <ModIcon id={value} size={20} />
                 {withDesc ? (
@@ -574,33 +633,7 @@ export const ModifierSelect = ({
                 )}
                 <Chevron />
             </ModToggle>
-            {open && (
-                <ModMenu role="menu" aria-labelledby={labelledBy} $align={menuAlign}>
-                    {[null, ...options].map((m) => (
-                        <ModOption
-                            key={m ?? "none"}
-                            type="button"
-                            role="menuitemradio"
-                            aria-checked={value === m}
-                            onClick={() => {
-                                onPick(m);
-                                setOpen(false);
-                            }}
-                        >
-                            <i>
-                                <ModIcon id={m} size={20} />
-                            </i>
-                            <span>
-                                <b>
-                                    {name(m)}
-                                    {m && m === weekly && <em>{t("weeklyModifierTag")}</em>}
-                                </b>
-                                <small>{desc(m)}</small>
-                            </span>
-                        </ModOption>
-                    ))}
-                </ModMenu>
-            )}
+            {open && (floating ? createPortal(menu, document.body) : menu)}
         </ModPicker>
     );
 };
