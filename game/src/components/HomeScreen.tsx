@@ -889,7 +889,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 <ModGroup>
                     {modSelect("home-friend-mod", friendModifier, friendAllowed, setFriendMod, "left", modInfo(friendModifier))}
                 </ModGroup>
-                <GameButton tone="primary" size="lg" block disabled={friendBusy} onClick={() => void playFriend()}>
+                <GameButton tone="primary" size="lg" block attract disabled={friendBusy} onClick={() => void playFriend()}>
                     {friendBusy ? t("creating") : t("homeFriend")}
                 </GameButton>
                 {friendError && <ErrorText>{friendError}</ErrorText>}
@@ -909,7 +909,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                     <LeagueBadge rating={myRating.rating} played={myRating.played} withRating />
                 </Spread>
                 <OnlineNow />
-                <GameButton tone="primary" size="lg" block onClick={() => openPanel("match")}>
+                <GameButton tone="primary" size="lg" block attract onClick={() => openPanel("match")}>
                     {t("homeMatch")}
                 </GameButton>
                 <GameButton size="lg" onClick={() => openPanel("leaderboard")}>
