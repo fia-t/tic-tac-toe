@@ -14,6 +14,7 @@ import { ErrorText } from "@game/components/onlineStyles";
 import { assetUrl } from "@game/lib/assets";
 import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import { useT } from "@game/lib/i18n";
+import { useFullscreen } from "@game/lib/fullscreen";
 import { isEmbed } from "@game/lib/embed";
 import { currentStreak, dayOfYear, templateForDay, todayKey, useDailyState } from "@game/lib/daily";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
@@ -705,6 +706,7 @@ type HomeScreenProps = {
 export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPlay, onRoomReady, onBeforeFriendOpen, focusDaily }) => {
     const t = useT();
     const [tab, setTabState] = useState<PanelTab>(readTab);
+    const fullscreen = useFullscreen();
     const [mode, setMode] = useState<GameModeKey>(initialMode);
     // Гра з другом - свій вибір поля й модифікатора, не чіпає налаштувань гри з ботом.
     const [friendMode, setFriendMode] = useState<GameModeKey>(initialMode);
@@ -1039,8 +1041,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                 </TabPanel>
             </HomeScroll>
 
-            {/* Реклама порталу - на вкладках онлайну й викликів (гра з ботом має вміщатись без прокрутки). */}
-            {tab !== "bot" && <SideBanners id={`ad-${tab}`} layout={MENU_SIDE_BANNERS} />}
+            {/* Бокова реклама порталу - на онлайні й викликах завжди, на грі з ботом лише на повному екрані
+                (там обабіч колонки багато вільного місця; банери поза колонкою, прокрутки не додають). */}
+            {(tab !== "bot" || fullscreen) && <SideBanners id={`ad-${tab}`} layout={MENU_SIDE_BANNERS} />}
 
             {panel === "match" && <QuickMatch fallbackName={name} onMatched={onRoomReady} onPlayBot={() => play("traditional")} />}
 
