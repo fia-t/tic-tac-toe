@@ -90,6 +90,57 @@ const TabPanel = styled.div`
 // Бокові банери меню - обабіч колонки, між шапкою й нижнім меню.
 export const MENU_SIDE_BANNERS: SideBannerLayout = { center: "[data-ad-center]", topEdge: "header", bottomEdge: "[data-ad-bottom-edge]" };
 
+// Заклик до головної дії: раз на цикл по кнопці пробігає відблиск, а навколо розходиться м'яке
+// кільце; решту часу кнопка стоїть спокійно (постійний рух дратує й перестає помічатись).
+// Перший цикл - через ~1.5 с після появи. Під курсором чи фокусом анімація стоїть: людина вже
+// взаємодіє. Масштаб не анімуємо - на 9-slice основі від нього проступають шви між частинами.
+const CTA_CYCLE = "5s";
+const ctaShine = keyframes`
+    0%, 30% { background-position: 130% 0; }
+    58%, 100% { background-position: -30% 0; }
+`;
+const ctaRing = keyframes`
+    0%, 34% { box-shadow: 0 0 0 0 rgba(26, 109, 122, 0.45); }
+    70%, 100% { box-shadow: 0 0 0 12px rgba(26, 109, 122, 0); }
+`;
+const PlayCta = styled(GameButton)`
+    /* Шари на всю кнопку разом з бортиком (inset - мінус товщина border-image), заокруглені як основа. */
+    &::before,
+    &::after {
+        content: "";
+        position: absolute;
+        inset: calc(-1 * var(--gb-c) + 2px);
+        border-radius: calc(var(--gb-c) * 0.85);
+        pointer-events: none;
+        animation: 5s ease-in-out 1.5s infinite;
+    }
+    &::before {
+        animation-name: ${ctaRing};
+        animation-duration: ${CTA_CYCLE};
+    }
+    &::after {
+        background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.32) 50%, transparent 62%) no-repeat;
+        background-size: 250% 100%;
+        background-position: 130% 0;
+        animation-name: ${ctaShine};
+        animation-duration: ${CTA_CYCLE};
+    }
+
+    &:hover::before,
+    &:hover::after,
+    &:focus-visible::before,
+    &:focus-visible::after {
+        animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &::before,
+        &::after {
+            display: none;
+        }
+    }
+`;
+
 
 const Hero = styled.section<{ $bar?: boolean }>`
     display: flex;
@@ -864,9 +915,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             </OptGroup>
             {modSelect("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], pickModifier, "right", modInfo(activeModifier))}
             </OptRow>
-            <GameButton tone="primary" size="lg" block onClick={() => play(mode)}>
+            <PlayCta tone="primary" size="lg" block onClick={() => play(mode)}>
                 {t("homePlay")}
-            </GameButton>
+            </PlayCta>
         </BotCard>
     );
     const botContent = (
