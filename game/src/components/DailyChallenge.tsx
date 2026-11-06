@@ -271,7 +271,7 @@ export const DailyChallenge: React.FC<DailyChallengeProps> = ({ onStart, getShar
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 8 }}>
                             {!todayResult && view.kind === "info" && (
-                                <PillButton type="button" onClick={start}>
+                                <PillButton type="button" data-attract="" onClick={start}>
                                     {t("dailyPlay")}
                                 </PillButton>
                             )}

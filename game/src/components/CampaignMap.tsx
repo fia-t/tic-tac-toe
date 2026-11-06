@@ -571,6 +571,7 @@ const LevelInfo: React.FC<{ index: number; onClose: () => void; onStart: (mode: 
                     tone="primary"
                     size="lg"
                     block
+                    attract
                     onClick={() => {
                         onClose();
                         startCampaignLevel(index, onStart);

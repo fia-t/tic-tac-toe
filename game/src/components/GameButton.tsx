@@ -1,6 +1,6 @@
 "use client";
 import React, { forwardRef } from "react";
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { assetUrl } from "@game/lib/assets";
 
 // Єдина кнопка проєкту. Форма - завжди еталонна плитка public/images/ui/button-base-gold.png
@@ -97,7 +97,56 @@ export const gameButtonFace = css`
     }
 `;
 
+// Заклик до дії для кнопок "Грати" (атрибут data-attract): по кнопці повільно перетікає її ж колір -
+// основний, темніший, основний, світліший - без білих спалахів і кілець. Шар лежить під текстом
+// (isolation + z-index: -1 - над основою кнопки, але під написом). Під курсором чи фокусом хвиля
+// стоїть: людина вже взаємодіє. Масштаб не анімуємо - на 9-slice основі від нього проступають шви.
+const attractWave = keyframes`
+    from { background-position: 0% 0; }
+    to { background-position: 200% 0; }
+`;
+const attract = css`
+    &[data-attract] {
+        isolation: isolate;
+    }
+    &[data-attract]::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        /* На всю кнопку разом з бортиком (inset - мінус товщина border-image), заокруглено як основа. */
+        inset: calc(-1 * var(--gb-c) + 2px);
+        border-radius: calc(var(--gb-c) * 0.85);
+        pointer-events: none;
+        /* Плитка вдвічі ширша за кнопку, зсув рівно на плитку - хвиля йде безшовно по колу. */
+        background: linear-gradient(
+                100deg,
+                transparent 0%,
+                rgba(6, 52, 60, 0.34) 25%,
+                transparent 50%,
+                rgba(120, 214, 218, 0.3) 75%,
+                transparent 100%
+            )
+            repeat-x;
+        background-size: 200% 100%;
+        animation: ${attractWave} 7s linear infinite;
+    }
+    &[data-attract]:hover::after,
+    &[data-attract]:focus-visible::after {
+        animation-play-state: paused;
+    }
+    &[data-attract]:disabled::after {
+        display: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+        &[data-attract]::after {
+            display: none;
+        }
+    }
+`;
+
 const states = css`
+    ${attract}
+
     @media (hover: hover) {
         /* Тіні під кнопкою немає; при наведенні - ледь помітна. */
         &:hover:not(:disabled) {
@@ -203,10 +252,12 @@ export type GameButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
     // Активний (вибраний) стан - для перемикачів без aria-pressed.
     selected?: boolean;
     icon?: React.ReactNode;
+    // Кнопка "Грати" - м'яка хвиля кольору як заклик до дії (див. attract).
+    attract?: boolean;
 };
 
 export const GameButton = forwardRef<HTMLButtonElement, GameButtonProps>(function GameButton(
-    { size = "md", mobileSize, square = false, block = false, tone = "default", selected, icon, children, type = "button", ...rest },
+    { size = "md", mobileSize, square = false, block = false, tone = "default", selected, icon, attract, children, type = "button", ...rest },
     ref
 ) {
     const iconOnly = icon !== undefined && (children === undefined || children === null || children === false);
@@ -220,6 +271,7 @@ export const GameButton = forwardRef<HTMLButtonElement, GameButtonProps>(functio
             $mobile={mobileSize}
             data-tone={tone === "default" ? undefined : tone}
             data-selected={selected ? "true" : undefined}
+            data-attract={attract ? "" : undefined}
             {...rest}
         >
             {iconOnly ? (

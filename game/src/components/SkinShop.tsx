@@ -247,7 +247,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
                                 <>
                                     {/* Обраний скін - "Грати" (одразу в партію); інший - "Обрати" (лише вибір). */}
                                     {isOn ? (
-                                        <GameButton tone="primary" size="lg" block onClick={() => play(skin.id)}>
+                                        <GameButton tone="primary" size="lg" block attract onClick={() => play(skin.id)}>
                                             {t("homePlay")}
                                         </GameButton>
                                     ) : (

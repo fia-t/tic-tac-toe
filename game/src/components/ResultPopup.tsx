@@ -351,7 +351,7 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}
-                <PrimaryButton type="button" onClick={onRestart} disabled={restartDisabled}>
+                <PrimaryButton type="button" data-attract="" onClick={onRestart} disabled={restartDisabled}>
                     {restartLabel ?? t("playAgain")}
                 </PrimaryButton>
                 {secondary && (

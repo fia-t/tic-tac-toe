@@ -90,50 +90,6 @@ const TabPanel = styled.div`
 // Бокові банери меню - обабіч колонки, між шапкою й нижнім меню.
 export const MENU_SIDE_BANNERS: SideBannerLayout = { center: "[data-ad-center]", topEdge: "header", bottomEdge: "[data-ad-bottom-edge]" };
 
-// Заклик до головної дії: по кнопці повільно перетікає її ж колір - основний, темніший, основний,
-// світліший - без білих спалахів і кілець (м'яко, не агресивно). Шар лежить під текстом
-// (isolation + z-index: -1 - над основою кнопки, але під написом). Під курсором чи фокусом хвиля
-// стоїть: людина вже взаємодіє. Масштаб не анімуємо - на 9-slice основі від нього проступають шви.
-const ctaWave = keyframes`
-    from { background-position: 0% 0; }
-    to { background-position: 200% 0; }
-`;
-const PlayCta = styled(GameButton)`
-    isolation: isolate;
-
-    /* Шар на всю кнопку разом з бортиком (inset - мінус товщина border-image), заокруглений як основа. */
-    &::after {
-        content: "";
-        position: absolute;
-        z-index: -1;
-        inset: calc(-1 * var(--gb-c) + 2px);
-        border-radius: calc(var(--gb-c) * 0.85);
-        pointer-events: none;
-        /* Плитка вдвічі ширша за кнопку, зсув рівно на плитку - хвиля йде безшовно по колу. */
-        background: linear-gradient(
-                100deg,
-                transparent 0%,
-                rgba(6, 52, 60, 0.34) 25%,
-                transparent 50%,
-                rgba(120, 214, 218, 0.3) 75%,
-                transparent 100%
-            )
-            repeat-x;
-        background-size: 200% 100%;
-        animation: ${ctaWave} 7s linear infinite;
-    }
-
-    &:hover::after,
-    &:focus-visible::after {
-        animation-play-state: paused;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        &::after {
-            display: none;
-        }
-    }
-`;
 
 
 const Hero = styled.section<{ $bar?: boolean }>`
@@ -909,9 +865,9 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
             </OptGroup>
             {modSelect("home-mod", activeModifier, MODIFIERS_BY_MODE[mode], pickModifier, "right", modInfo(activeModifier))}
             </OptRow>
-            <PlayCta tone="primary" size="lg" block onClick={() => play(mode)}>
+            <GameButton tone="primary" size="lg" block attract onClick={() => play(mode)}>
                 {t("homePlay")}
-            </PlayCta>
+            </GameButton>
         </BotCard>
     );
     const botContent = (
@@ -1037,7 +993,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ name, initialMode, onPla
                         <Muted>{t("homeDailyNext")}</Muted>
                     </>
                 ) : (
-                    <GameButton tone="primary" size="lg" block onClick={() => startDailyChallenge(onPlay)}>
+                    <GameButton tone="primary" size="lg" block attract onClick={() => startDailyChallenge(onPlay)}>
                         {t("homeDailyPlay", { n: String(dailyReward(streak + 1)) })}
                     </GameButton>
                 )}
