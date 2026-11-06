@@ -60,12 +60,14 @@ export const useRoundSummary = (cells: unknown[], playerMarker: string): RoundSu
     };
 };
 
+// Тексти вікна трохи більші за звичайні модалки (і кнопки - через --btn-fs-add).
 const Card = styled(ModalCard)`
     text-align: center;
+    --btn-fs-add: 2px;
 `;
 
 const Eyebrow = styled.div`
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -74,7 +76,7 @@ const Eyebrow = styled.div`
 
 const Title = styled.h2<{ $result: "win" | "lose" | "draw" }>`
     margin: 4px 0 10px;
-    font-size: clamp(26px, 7vw, 32px);
+    font-size: clamp(29px, 7.8vw, 36px);
     font-weight: 900;
     color: ${({ $result }) => ($result === "win" ? "#0f6f8c" : $result === "lose" ? "#b32f1c" : "#49301f")};
 `;
@@ -103,7 +105,7 @@ const Stat = styled.div`
     background: rgba(255, 238, 205, 0.7);
 
     b {
-        font-size: 20px;
+        font-size: 23px;
         font-weight: 900;
         color: #49301f;
         font-variant-numeric: tabular-nums;
@@ -111,7 +113,7 @@ const Stat = styled.div`
 
     small {
         grid-column: 1 / -1;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
         color: #7a5a35;
     }
@@ -132,8 +134,8 @@ const spark = keyframes`
 const StatIcon = styled.span<{ $phase: "wait" | "in" | "static" }>`
     display: inline-grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 30px;
+    height: 30px;
     ${({ $phase }) => ($phase === "wait" ? "opacity: 0; transform: scale(0.3);" : "")}
     animation: ${({ $phase }) => ($phase === "in" ? iconIn : "none")} 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 `;
@@ -151,7 +153,7 @@ const Spark = styled.span`
 
 const SPARK_COLORS: [string, string][] = [
     ["#ffd04d", "#f2a818"],
-    ["#8fe3f5", "#1fb3d9"],
+    ["#c7a6f2", "#9b6bdf"],
     ["#e7c08a", "#b07a45"],
 ];
 
@@ -236,7 +238,7 @@ const RewardStat: React.FC<{ icon: React.ReactNode; value: number; prefix?: stri
 
 // Досвід - фіолетовий кристал (не зірка: зірку плутали із зірками рівня кампанії).
 const XpGem = () => (
-    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
         <path d="M7 3.5h10l4.5 5.5L12 21 2.5 9z" fill="#9b6bdf" stroke="#5b3596" strokeWidth="1.4" strokeLinejoin="round" />
         <path d="M2.5 9h19M7 3.5L9.5 9 12 21l2.5-12L17 3.5" fill="none" stroke="#5b3596" strokeWidth="1.1" strokeLinejoin="round" />
         <path d="M9.5 9L12 3.5 14.5 9z" fill="#c7a6f2" />
@@ -245,7 +247,7 @@ const XpGem = () => (
 
 // Ходи - сліди: два відбитки ступні.
 const Steps = () => (
-    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true">
+    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
         <g fill="#9a6232">
             <ellipse cx="6.8" cy="16.8" rx="3.3" ry="5.2" transform="rotate(-10 6.8 16.8)" />
             <circle cx="4.2" cy="9.6" r="1.3" />
@@ -305,7 +307,7 @@ const StarIcon = ({ on }: { on: boolean }) => (
 const Extra = styled.div`
     margin: 0 0 10px;
     color: #4a2c0c;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
 `;
 
@@ -346,7 +348,7 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                     </StarsRow>
                 )}
                 <Rewards role="list">
-                    <RewardStat icon={<Coin size={26} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
+                    <RewardStat icon={<Coin size={30} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
                     <RewardStat icon={<XpGem />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
                 </Rewards>
