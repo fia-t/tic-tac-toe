@@ -90,51 +90,45 @@ const TabPanel = styled.div`
 // Бокові банери меню - обабіч колонки, між шапкою й нижнім меню.
 export const MENU_SIDE_BANNERS: SideBannerLayout = { center: "[data-ad-center]", topEdge: "header", bottomEdge: "[data-ad-bottom-edge]" };
 
-// Заклик до головної дії: раз на цикл по кнопці пробігає відблиск, а навколо розходиться м'яке
-// кільце; решту часу кнопка стоїть спокійно (постійний рух дратує й перестає помічатись).
-// Перший цикл - через ~1.5 с після появи. Під курсором чи фокусом анімація стоїть: людина вже
-// взаємодіє. Масштаб не анімуємо - на 9-slice основі від нього проступають шви між частинами.
-const CTA_CYCLE = "5s";
-const ctaShine = keyframes`
-    0%, 30% { background-position: 130% 0; }
-    58%, 100% { background-position: -30% 0; }
-`;
-const ctaRing = keyframes`
-    0%, 34% { box-shadow: 0 0 0 0 rgba(26, 109, 122, 0.45); }
-    70%, 100% { box-shadow: 0 0 0 12px rgba(26, 109, 122, 0); }
+// Заклик до головної дії: по кнопці повільно перетікає її ж колір - основний, темніший, основний,
+// світліший - без білих спалахів і кілець (м'яко, не агресивно). Шар лежить під текстом
+// (isolation + z-index: -1 - над основою кнопки, але під написом). Під курсором чи фокусом хвиля
+// стоїть: людина вже взаємодіє. Масштаб не анімуємо - на 9-slice основі від нього проступають шви.
+const ctaWave = keyframes`
+    from { background-position: 0% 0; }
+    to { background-position: 200% 0; }
 `;
 const PlayCta = styled(GameButton)`
-    /* Шари на всю кнопку разом з бортиком (inset - мінус товщина border-image), заокруглені як основа. */
-    &::before,
+    isolation: isolate;
+
+    /* Шар на всю кнопку разом з бортиком (inset - мінус товщина border-image), заокруглений як основа. */
     &::after {
         content: "";
         position: absolute;
+        z-index: -1;
         inset: calc(-1 * var(--gb-c) + 2px);
         border-radius: calc(var(--gb-c) * 0.85);
         pointer-events: none;
-        animation: 5s ease-in-out 1.5s infinite;
-    }
-    &::before {
-        animation-name: ${ctaRing};
-        animation-duration: ${CTA_CYCLE};
-    }
-    &::after {
-        background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.32) 50%, transparent 62%) no-repeat;
-        background-size: 250% 100%;
-        background-position: 130% 0;
-        animation-name: ${ctaShine};
-        animation-duration: ${CTA_CYCLE};
+        /* Плитка вдвічі ширша за кнопку, зсув рівно на плитку - хвиля йде безшовно по колу. */
+        background: linear-gradient(
+                100deg,
+                transparent 0%,
+                rgba(6, 52, 60, 0.34) 25%,
+                transparent 50%,
+                rgba(120, 214, 218, 0.3) 75%,
+                transparent 100%
+            )
+            repeat-x;
+        background-size: 200% 100%;
+        animation: ${ctaWave} 7s linear infinite;
     }
 
-    &:hover::before,
     &:hover::after,
-    &:focus-visible::before,
     &:focus-visible::after {
         animation-play-state: paused;
     }
 
     @media (prefers-reduced-motion: reduce) {
-        &::before,
         &::after {
             display: none;
         }
