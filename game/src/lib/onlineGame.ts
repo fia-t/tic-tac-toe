@@ -127,7 +127,13 @@ export type RoomDoc = {
     // Реванш рейтингового матчу: коли попросили (запит живе REMATCH_WAIT_MS) і хто ходив першим.
     rematchAt?: Timestamp | null;
     starter?: PlayerSymbol;
+    // Номер партії в кімнаті: кожна нова (старт і реванш) - монетка "хто ходить першим" у обох
+    // гравців; хто починає, вже записано в currentPlayer. Немає - стара кімната, без монетки.
+    round?: number;
 };
+
+// Монетка: хто ходить першим у новій партії.
+export const coinStarter = (): PlayerSymbol => (Math.random() < 0.5 ? "X" : "O");
 
 const ROOM_ID_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // без 0/O/1/I, щоб не плутати на слух/оком
 const ROOM_ID_LENGTH = 6;
@@ -266,9 +272,13 @@ export const joinRoom = async (
         else throw new RoomFullError("Кімната вже заповнена.");
 
         const nextStatus: RoomStatus = room.players.X && symbol === "O" ? "playing" : room.status;
+        // Партія починається - монетка вирішує, хто ходить першим.
+        const starting = nextStatus === "playing" && room.status !== "playing";
+        const starter = coinStarter();
 
         tx.update(ref, {
             [`players.${symbol}`]: { uid, lastSeen: Timestamp.now() },
+            ...(starting ? { currentPlayer: starter, starter, round: (room.round ?? 0) + 1 } : {}),
             status: nextStatus,
             leftPlayer: null,
             lastActivity: serverTimestamp(),
@@ -395,11 +405,14 @@ export const requestRematch = async (roomId: string, symbol: PlayerSymbol): Prom
         const rematch = { ...room.rematch, [symbol]: true };
 
         if (rematch.X && rematch.O) {
+            const starter = coinStarter();
             tx.update(ref, {
                 board: freshBoard(room.gameMode, room.modifier ?? null),
                 hist: EMPTY_HISTORY,
                 mole: EMPTY_MOLE,
-                currentPlayer: "X",
+                currentPlayer: starter,
+                starter,
+                round: (room.round ?? 0) + 1,
                 winner: null,
                 status: "playing",
                 leftPlayer: null,

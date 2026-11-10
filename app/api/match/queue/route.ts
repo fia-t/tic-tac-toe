@@ -106,7 +106,9 @@ export const POST = (request: Request) =>
                 return { status: "waiting" };
             }
 
-            // Кімната - у тому ж форматі, що й "Гра з другом", плюс rated-поля. Ходить першим той, хто чекав довше.
+            // Кімната - у тому ж форматі, що й "Гра з другом", плюс rated-поля. Хто ходить першим - монетка
+            // (обидва клієнти показують її анімацію для round 1). X - той, хто чекав довше.
+            const starter = Math.random() < 0.5 ? "X" : "O";
             let roomRef = db.collection(ROOMS).doc(generateRoomId());
             for (let attempt = 0; attempt < 3 && (await tx.get(roomRef)).exists; attempt++) roomRef = db.collection(ROOMS).doc(generateRoomId());
             const other = opponent.data;
@@ -114,7 +116,9 @@ export const POST = (request: Request) =>
                 roomId: roomRef.id,
                 gameMode: MODE,
                 board: Array(9).fill(null),
-                currentPlayer: "X",
+                currentPlayer: starter,
+                starter,
+                round: 1,
                 players: { X: { uid: other.uid, lastSeen: now }, O: { uid, lastSeen: now } },
                 winner: null,
                 status: "playing",

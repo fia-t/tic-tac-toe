@@ -1,6 +1,6 @@
 "use client";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
-import React, { useState, useMemo } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import styled from "styled-components";
 import {
     UltimateBoardContainer,
@@ -35,6 +35,7 @@ import { TIMER_SECONDS, effectiveModifier, useModifierChoice } from "@game/lib/m
 import { getDailyRun } from "@game/lib/daily";
 import { isEmbed } from "@game/lib/embed";
 import { useMoveTimer } from "@game/components/MoveTimer";
+import { CoinToss, useBotCoinToss } from "@game/components/CoinToss";
 
 const HintMiniCell = styled(MiniCell)<{ $hint: boolean }>`
     ${({ $hint }) => ($hint ? hintedCell : "")}
@@ -193,6 +194,9 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
     const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
     const [hintCell, setHintCell] = useState<number | null>(null);
     const [round, setRound] = useState(0);
+    // Поточна партія для відкладених ходів бота: після рестарту старий хід не застосовується.
+    const roundRef = useRef(round);
+    roundRef.current = round;
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -257,28 +261,32 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
         setActiveBoard(nextActiveBoard);
 
-        if (mover === "player") {
-            setCurrentTurn("ai");
-            setTimeout(() => {
-                const aiMove = pickAiMove(boardsAfterMove, updatedMiniResults, nextActiveBoard, playerMarker, aiMarker, getDifficulty());
-                if (!aiMove) return;
-                const [aiBoardIndex, aiRow, aiCol] = aiMove;
+        if (mover === "player") aiReply(boardsAfterMove, updatedMiniResults, nextActiveBoard);
+        else setCurrentTurn("player");
+    };
 
-                const boardsAfterAiMove = boardsAfterMove.map((mini, index) =>
-                    index === aiBoardIndex
-                        ? mini.map((r, ri) => r.map((cell, ci) => (ri === aiRow && ci === aiCol ? aiMarker : cell)))
-                        : mini
-                );
+    // Хід бота - у відповідь гравцю або першим у партії (випала монетка).
+    const aiReply = (boardsNow: Grid3[], miniNow: MetaResult[], active: number | null) => {
+        const startedRound = roundRef.current;
+        setCurrentTurn("ai");
+        setTimeout(() => {
+            if (roundRef.current !== startedRound) return;
+            const aiMove = pickAiMove(boardsNow, miniNow, active, playerMarker, aiMarker, getDifficulty());
+            if (!aiMove) return;
+            const [aiBoardIndex, aiRow, aiCol] = aiMove;
 
-                finishMove(boardsAfterAiMove, updatedMiniResults, aiBoardIndex, aiRow, aiCol, "ai");
-            }, 500);
-        } else {
-            setCurrentTurn("player");
-        }
+            const boardsAfterAiMove = boardsNow.map((mini, index) =>
+                index === aiBoardIndex
+                    ? mini.map((r, ri) => r.map((cell, ci) => (ri === aiRow && ci === aiCol ? aiMarker : cell)))
+                    : mini
+            );
+
+            finishMove(boardsAfterAiMove, miniNow, aiBoardIndex, aiRow, aiCol, "ai");
+        }, 500);
     };
 
     const handleCellClick = (boardIndex: number, row: number, col: number) => {
-        if (!themeReady || isGameOver || currentTurn !== "player") return;
+        if (!themeReady || isGameOver || currentTurn !== "player" || coin.tossing) return;
         if (miniResults[boardIndex] !== null) return;
         if (activeBoard !== null && activeBoard !== boardIndex) return;
         if (boards[boardIndex][row][col] !== null) return;
@@ -296,8 +304,14 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     // Модифікатор "таймер": не встиг - випадковий дозволений хід у дозволеному полі.
     const modifier = effectiveModifier("difficult", modifierChoice);
+    // Монетка "хто ходить першим" - на початку кожної звичайної партії (без виклику дня/кампанії й
+    // новини); поки відкриті правила Ultimate - чекає.
+    const freshBoard = !isGameOver && boards.every((grid) => grid.every((row) => row.every((cell) => cell === null)));
+    const coin = useBotCoinToss(round, themeReady && !rules.open && !getDailyRun() && !isEmbed() && freshBoard, () =>
+        aiReply(boards, miniResults, null)
+    );
     const timerLeft = useMoveTimer(
-        modifier === "timer" && themeReady && !isGameOver && currentTurn === "player",
+        modifier === "timer" && themeReady && !isGameOver && currentTurn === "player" && !coin.tossing,
         boards,
         TIMER_SECONDS,
         () => {
@@ -347,6 +361,8 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
+        : coin.tossing
+        ? t("coinToss")
         : currentTurn === "ai"
         ? t(isEmbed() ? "quartyThinking" : "aiThinking")
         : activeBoard === null
@@ -355,7 +371,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
 
     // Три міні-поля переможної лінії на "великому" полі - підсвічуються після перемоги.
     const metaWinningBoards = winner ? winningIndexSet(toMetaGrid(miniResults, playerMarker, aiMarker), 3) : undefined;
-    const playerTurn = !isGameOver && currentTurn === "player";
+    const playerTurn = !isGameOver && currentTurn === "player" && !coin.tossing;
 
     return (
         <>
@@ -386,6 +402,18 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                 over={isGameOver}
                 timer={modifier === "timer" ? timerLeft : null}
                 onShowResult={() => setShowResultPopup(true)}
+                overlay={
+                    coin.toss && (
+                        <CoinToss
+                            key={coin.toss.round}
+                            mine={!coin.toss.aiFirst}
+                            myMarker={playerMarker}
+                            opponentMarker={aiMarker}
+                            caption={coin.toss.aiFirst ? t("coinBotFirst") : t("coinYouFirst")}
+                            onDone={coin.finish}
+                        />
+                    )
+                }
                 boosters={{
                     canUndo: playerTurn && undoStack.length > 0,
                     canHint: playerTurn,
@@ -399,7 +427,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                             const result = miniResults[boardIndex];
                             const isActive =
                                 !isGameOver &&
-                                currentTurn === "player" &&
+                                playerTurn &&
                                 result === null &&
                                 (activeBoard === null || activeBoard === boardIndex);
 

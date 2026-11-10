@@ -1283,6 +1283,8 @@ type GameScreenProps = {
     boosters: BoosterProps;
     // Повторно відкрити вікно результату (якщо його закрили).
     onShowResult?: () => void;
+    // Шар поверх поля (монетка "хто ходить першим").
+    overlay?: React.ReactNode;
 };
 
 const FRIEND_MODE: Record<GameModeKey, "3x3" | "5x5" | "9x9"> = { traditional: "3x3", five: "5x5", difficult: "9x9" };
@@ -1309,6 +1311,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     board,
     boosters,
     onShowResult,
+    overlay,
 }) => {
     const t = useT();
     const goHome = useContext(GameHomeContext);
@@ -1613,7 +1616,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     if (compact)
         return (
             <GameRoot $embed $compact>
-                <BoardHolder data-tour="board">{board}</BoardHolder>
+                <BoardHolder data-tour="board">
+                    {board}
+                    {overlay}
+                </BoardHolder>
                 <CompactSide data-tour="bar">
                     <PhoneRow>
                         <RoundButton type="button" onClick={restart} aria-label={restartLabel} data-tip={restartLabel}>
@@ -1668,7 +1674,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </RowTimer>
                 )}
 
-                <BoardHolder data-tour="board">{board}</BoardHolder>
+                <BoardHolder data-tour="board">
+                    {board}
+                    {overlay}
+                </BoardHolder>
 
                 <PhoneOptions>
                     <PhoneTiles role="group" aria-label={t("barBoard")}>
@@ -1786,6 +1795,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
             <BoardHolder data-tour="board">
                 {board}
+                {overlay}
                 {wide && quick && (
                     <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")}>
                         {MODE_TILES.map((tile) => (

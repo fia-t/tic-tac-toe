@@ -22,6 +22,7 @@ import { playSound } from "@game/lib/sound";
 import { ratedMove, ratedRematch, rememberRating } from "@game/lib/matchmaking";
 import { REMATCH_WAIT_MS } from "@game/lib/rating";
 import { TurnAlert, formatClock, useRatedTurnClock } from "@game/components/RatedTurnTimer";
+import { CoinToss } from "@game/components/CoinToss";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
 // Клітинка онлайн-поля; з модифікатором "кріт" - тремтить там, де наступним ходом виросте горбок.
@@ -65,7 +66,22 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     const t = useT();
     const size = BOARD_SIZE[room.gameMode];
     const isFinished = room.status === "finished";
-    const myTurn = room.status === "playing" && room.currentPlayer === mySymbol;
+
+    // Монетка "хто ходить першим": на кожну нову партію кімнати (room.round) - в обох гравців,
+    // поки на полі ще немає фішок. Хто починає, вже записано в currentPlayer.
+    const hasMarks = room.board.some((cell) => cell === "X" || cell === "O");
+    const [coinRound, setCoinRound] = useState<number | null>(null);
+    const seenRound = useRef<number | null>(null);
+    const freshRound = room.status === "playing" && Boolean(room.round) && !hasMarks;
+    useEffect(() => {
+        if (!freshRound || seenRound.current === room.round) return;
+        seenRound.current = room.round ?? null;
+        setCoinRound(room.round ?? null);
+    }, [freshRound, room.round]);
+    // До ефекту (перший кадр нової партії) поле теж заблоковане.
+    const tossing = freshRound && (coinRound === room.round || seenRound.current !== room.round);
+
+    const myTurn = room.status === "playing" && room.currentPlayer === mySymbol && !tossing;
     // Захист для кімнат, створених до появи тем (theme могло не бути в документі).
     const theme = room.theme ?? DEFAULT_THEME;
     const markerSrc: Record<PlayerSymbol, string> = {
@@ -218,6 +234,8 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
     };
     const status = isFinished
         ? resultLabel ?? ""
+        : tossing
+        ? t("coinToss")
         : turnRemaining !== null
         ? t(myTurn ? "turnClockMine" : "turnClockTheirs", { t: formatClock(turnRemaining) })
         : myTurn
@@ -331,6 +349,16 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                         );
                     })}
                 </OnlineBoardContainer>
+                {tossing && coinRound === room.round && (
+                    <CoinToss
+                        key={coinRound}
+                        mine={room.currentPlayer === mySymbol}
+                        myMarker={markerSrc[mySymbol]}
+                        opponentMarker={markerSrc[mySymbol === "X" ? "O" : "X"]}
+                        caption={room.currentPlayer === mySymbol ? t("coinYouFirst") : t("coinOpponentFirst", { name: names[room.currentPlayer] })}
+                        onDone={() => setCoinRound(null)}
+                    />
+                )}
             </BoardHolder>
 
             {moveError && <div style={{ color: "#b8382a", fontWeight: 700 }}>{t("matchMoveError")}</div>}

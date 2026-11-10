@@ -1,6 +1,6 @@
 "use client";
 import { ResultPopup, useRoundSummary } from "@game/components/ResultPopup";
-import React, { useState, useMemo } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import styled from "styled-components";
 import { MoundTile, moleWarnCss } from "@game/components/MoleTiles";
 import { hintedCell } from "@game/components/gameStyles";
@@ -29,6 +29,7 @@ import { STONES_COUNT, TIMER_SECONDS, effectiveModifier, useModifierChoice } fro
 import { getDailyRun } from "@game/lib/daily";
 import { isEmbed } from "@game/lib/embed";
 import { useMoveTimer } from "@game/components/MoveTimer";
+import { CoinToss, useBotCoinToss } from "@game/components/CoinToss";
 
 // Камінь (модифікатор "каміння") - нейтральна клітинка, яку не можна зайняти.
 const StoneTile = styled.div`
@@ -131,6 +132,9 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     const [undoStack, setUndoStack] = useState<Snapshot[]>([]);
     const [hintCell, setHintCell] = useState<number | null>(null);
     const [round, setRound] = useState(0);
+    // Поточна партія для відкладених ходів бота: після рестарту старий хід не застосовується.
+    const roundRef = useRef(round);
+    roundRef.current = round;
 
     const playerMarker = theme.xMarkerUrl;
     const aiMarker = theme.oMarkerUrl;
@@ -189,10 +193,16 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         setMole(moleAfter);
         playSound("move");
         if (turn.outcome) return finishRuleGame(turn);
+        ruleAiReply(turn.grid, turn.hist, moleAfter);
+    };
 
+    // Хід бота з модифікатором правил - у відповідь гравцю або першим (випала монетка).
+    const ruleAiReply = (grid: Grid3, history: ModHistory, moleAfter: MoleState) => {
+        const startedRound = roundRef.current;
         setIsAiTurn(true);
         setTimeout(() => {
-            const replied = playTurn(turn.grid, turn.hist, rules, WIN_LENGTH, markers, "O", { difficulty: getDifficulty() });
+            if (roundRef.current !== startedRound) return;
+            const replied = playTurn(grid, history, rules, WIN_LENGTH, markers, "O", { difficulty: getDifficulty() });
             setIsAiTurn(false);
             if (!replied) return;
             const { turn: reply, mole: moleReply } = afterMove(replied, moleAfter);
@@ -205,7 +215,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
     };
 
     const handleCellClick = (row: number, col: number) => {
-        if (!themeReady || isGameOver || isAiTurn) return;
+        if (!themeReady || isGameOver || isAiTurn || coin.tossing) return;
         // З гравітацією натискання будь-якої клітинки стовпця кидає фішку в нього.
         if (ruleMode) {
             handleRuleClick(row, col);
@@ -238,8 +248,15 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
             return;
         }
 
+        aiReply(updatedPlayerBoard);
+    };
+
+    // Хід бота - у відповідь гравцю або першим у партії (випала монетка).
+    const aiReply = (updatedPlayerBoard: Grid3) => {
+        const startedRound = roundRef.current;
         setIsAiTurn(true);
         setTimeout(() => {
+            if (roundRef.current !== startedRound) return;
             const [aiRow, aiCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker, getDifficulty());
             if (aiRow === -1 || aiCol === -1) {
                 setIsAiTurn(false);
@@ -269,8 +286,14 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
         }, 500);
     };
 
+    // Монетка "хто ходить першим" - на початку кожної звичайної партії (без виклику дня/кампанії й новини).
+    const freshBoard = !isGameOver && hist.moves === 0 && !board.some((row) => row.some((cell) => cell === playerMarker || cell === aiMarker));
+    const coin = useBotCoinToss(round, themeReady && !getDailyRun() && !isEmbed() && freshBoard, () =>
+        ruleMode ? ruleAiReply(board, hist, mole) : aiReply(board)
+    );
+
     const timerLeft = useMoveTimer(
-        modifier === "timer" && themeReady && !isAiTurn && !isGameOver,
+        modifier === "timer" && themeReady && !isAiTurn && !coin.tossing && !isGameOver,
         board,
         TIMER_SECONDS,
         () => {
@@ -323,10 +346,11 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
 
     const statusText = isGameOver
         ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
+        : coin.tossing ? t("coinToss")
         : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
 
     const winningCells = winner ? winningIndexSet(board, WIN_LENGTH) : undefined;
-    const playerTurn = !isGameOver && !isAiTurn;
+    const playerTurn = !isGameOver && !isAiTurn && !coin.tossing;
 
     return (
         <>
@@ -355,6 +379,18 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                 over={isGameOver}
                 timer={modifier === "timer" ? timerLeft : null}
                 onShowResult={() => setShowResultPopup(true)}
+                overlay={
+                    coin.toss && (
+                        <CoinToss
+                            key={coin.toss.round}
+                            mine={!coin.toss.aiFirst}
+                            myMarker={playerMarker}
+                            opponentMarker={aiMarker}
+                            caption={coin.toss.aiFirst ? t("coinBotFirst") : t("coinYouFirst")}
+                            onDone={coin.finish}
+                        />
+                    )
+                }
                 boosters={{
                     canUndo: playerTurn && undoStack.length > 0,
                     canHint: playerTurn,
@@ -372,7 +408,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                                     key={index}
                                     $hint={hintCell === index}
                                     $warn={isMole && !isGameOver && mole.warn === index}
-                                    $disabled={!themeReady || isGameOver || isAiTurn || (cell !== null && !rules.gravity)}
+                                    $disabled={!themeReady || isGameOver || isAiTurn || coin.tossing || (cell !== null && !rules.gravity)}
                                     onClick={() => handleCellClick(row, col)}
                                 >
                                     {cell === STONE ? (

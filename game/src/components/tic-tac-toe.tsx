@@ -51,6 +51,7 @@ import { useMoveTimer } from "@game/components/MoveTimer";
 import { useDailyRun } from "@game/lib/daily";
 import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
+import { CoinToss, useBotCoinToss } from "@game/components/CoinToss";
 
 const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string, difficulty: Difficulty): [number, number] => {
     // Легкий: інколи просто випадковий хід. Майстер: мінімакс (непереможний).
@@ -136,6 +137,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const [hintCell, setHintCell] = useState<number | null>(null);
     // Номер партії 3×3 - нова партія знову дає безкоштовні бустери.
     const [round, setRound] = useState(0);
+    // Поточна партія для відкладених ходів бота: після рестарту старий хід не застосовується.
+    const roundRef = useRef(round);
+    roundRef.current = round;
     // Гра відкривається на головному меню; "game" - саме поле, решта - розділи нижнього меню.
     const [screen, setScreen] = useState<Screen>(embed ? "game" : "home");
     // Вогник серії в шапці - прокрутити головну до картки виклику дня.
@@ -305,11 +309,20 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         // eslint-disable-next-line react-hooks/exhaustive-deps -- скидаємо лише на новий старт
     }, [runId]);
 
+    // Монетка "хто ходить першим" - на початку кожної звичайної партії 3×3 з ботом. Без неї:
+    // виклик дня й кампанія (головоломки з ходом гравця), гра з новини, перша партія новачка (туторіал).
+    const freshBoard = winner === null && !isNoWinner && board.every((row) => row.every((cell) => cell === null));
+    const coin = useBotCoinToss(
+        round,
+        gameMode === "traditional" && onGameScreen && themeReady && !dailyActive && !embed && !isNewPlayer && freshBoard,
+        () => (ruleMode ? ruleAiReply(board, hist) : aiReply(board))
+    );
+
     // Модифікатор "таймер" для 3×3 (5×5 і Ultimate мають власні). Хук - до раннього
     // return нижче; сам випадковий хід підставляється пізніше через ref.
     const timeoutMoveRef = useRef<() => void>(() => {});
     const timerLeft = useMoveTimer(
-        gameMode === "traditional" && onGameScreen && modifier3 === "timer" && themeReady && !isAiTurn && winner === null && !isNoWinner,
+        gameMode === "traditional" && onGameScreen && modifier3 === "timer" && themeReady && !isAiTurn && !coin.tossing && winner === null && !isNoWinner,
         board,
         TIMER_SECONDS,
         () => timeoutMoveRef.current(),
@@ -419,10 +432,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
         setHist(turn.hist);
         playSound("move");
         if (turn.outcome) return finishRuleGame(turn);
+        ruleAiReply(turn.grid, turn.hist);
+    };
 
+    // Хід бота з модифікатором правил - у відповідь гравцю або першим (випала монетка).
+    const ruleAiReply = (grid: Grid3, history: ModHistory) => {
+        const startedRound = roundRef.current;
         setIsAiTurn(true);
         setTimeout(() => {
-            const reply = playTurn(turn.grid, turn.hist, rules3, 3, markers, "O", { difficulty: getDifficulty() });
+            if (roundRef.current !== startedRound) return;
+            const reply = playTurn(grid, history, rules3, 3, markers, "O", { difficulty: getDifficulty() });
             setIsAiTurn(false);
             if (!reply) return;
             setBoard(reply.grid);
@@ -433,7 +452,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     };
 
     const handleOnClick = (row: number, col: number) => {
-        if (!themeReady || board[row][col] || isGameOver || isAiTurn) return;
+        if (!themeReady || board[row][col] || isGameOver || isAiTurn || coin.tossing) return;
         if (ruleMode) {
             handleRuleClick(row, col);
             return;
@@ -467,9 +486,16 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             return;
         }
 
+        aiReply(updatedPlayerBoard);
+    };
+
+    // Хід бота - у відповідь гравцю або першим у партії (випала монетка).
+    const aiReply = (updatedPlayerBoard: Grid3) => {
+        const startedRound = roundRef.current;
         // Блокуємо клітинки на час "ходу" бота, щоб гравець не встиг клікнути двічі поспіль.
         setIsAiTurn(true);
         setTimeout(() => {
+            if (roundRef.current !== startedRound) return;
             const [computerRow, computerCol] = makeComputerMove(updatedPlayerBoard, playerMarker, aiMarker, getDifficulty());
             if (computerRow === -1 || computerCol === -1) {
                 setIsAiTurn(false);
@@ -639,8 +665,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     } else {
         const statusText = isGameOver
             ? winner === "X" ? t("resultWin") : winner ? t(isEmbed() ? "quartyWins" : "resultLose") : t("resultDraw")
+            : coin.tossing ? t("coinToss")
             : isAiTurn ? t(isEmbed() ? "quartyThinking" : "aiThinking") : t("yourTurn");
-        const playerTurn = !isGameOver && !isAiTurn;
+        const playerTurn = !isGameOver && !isAiTurn && !coin.tossing;
         content = (
             <>
                 {/* Вікно результату. Закриття лише ховає його - дошка лишається заблокованою до рестарту. */}
@@ -668,6 +695,18 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                     over={isGameOver}
                     timer={modifier3 === "timer" ? timerLeft : null}
                     onShowResult={() => setShowResultPopup(true)}
+                    overlay={
+                        coin.toss && (
+                            <CoinToss
+                                key={coin.toss.round}
+                                mine={!coin.toss.aiFirst}
+                                myMarker={playerMarker}
+                                opponentMarker={aiMarker}
+                                caption={coin.toss.aiFirst ? t("coinBotFirst") : t("coinYouFirst")}
+                                onDone={coin.finish}
+                            />
+                        )
+                    }
                     boosters={{
                         canUndo: playerTurn && undoStack.length > 0,
                         canHint: playerTurn,

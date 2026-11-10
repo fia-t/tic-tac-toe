@@ -39,6 +39,7 @@ export async function POST(request: Request) {
                 rematchAt?: Timestamp | null;
                 leftPlayer?: Side | null;
                 starter?: Side;
+                round?: number;
             };
             if (!room.rated) return { error: "not_rated", status: 400 };
             const symbol: Side | null = room.players.X?.uid === uid ? "X" : room.players.O?.uid === uid ? "O" : null;
@@ -63,13 +64,14 @@ export async function POST(request: Request) {
                 return { ok: true, started: false, status: 200 };
             }
 
-            const lastStarter: Side = room.starter ?? "X";
-            const starter: Side = room.winner === "X" ? "O" : room.winner === "O" ? "X" : lastStarter === "X" ? "O" : "X";
+            // Хто ходить першим у реванші - монетка (клієнти показують її анімацію для нового round).
+            const starter: Side = Math.random() < 0.5 ? "X" : "O";
             const size = BOARD_SIZE[room.gameMode];
             tx.update(roomRef, {
                 board: Array(size * size).fill(null),
                 currentPlayer: starter,
                 starter,
+                round: (room.round ?? 1) + 1,
                 winner: null,
                 status: "playing",
                 rematch: { X: false, O: false },
