@@ -67,6 +67,9 @@ const Lift = styled.div`
     width: clamp(84px, 26%, 128px);
     aspect-ratio: 1;
     perspective: 700px;
+    /* Тінь - тут, а не на самій монетці: filter на ній вимикає preserve-3d, і зворотний бік
+       (фішка суперника) ніколи не було б видно. */
+    filter: drop-shadow(0 8px 10px rgba(73, 48, 31, 0.35));
     animation: ${toss} ${SPIN_MS}ms cubic-bezier(0.3, 0.7, 0.4, 1) both;
 
     @media (prefers-reduced-motion: reduce) {
@@ -81,7 +84,6 @@ const Coin = styled.div<{ $end: number }>`
     height: 100%;
     transform-style: preserve-3d;
     animation: ${spin} ${SPIN_MS}ms cubic-bezier(0.2, 0.6, 0.25, 1) both;
-    filter: drop-shadow(0 8px 10px rgba(73, 48, 31, 0.35));
 
     @media (prefers-reduced-motion: reduce) {
         animation: none;
