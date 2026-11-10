@@ -32,8 +32,32 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ? process.env.NEXT_PUBLIC_SITE
 // Ключ, під яким roomId їде в invite-параметрах порталу (game.inviteLink/getInviteParams).
 const INVITE_ROOM_KEY = "roomId";
 
+// JSON -> base64url, як кодує game.inviteLink() (https://docs-dev.quartsoft.com/sdk/game-module).
+const encodeInvite = (params: Record<string, string>): string => {
+    const bytes = new TextEncoder().encode(JSON.stringify(params));
+    let binary = "";
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+};
+
+// Портал на game.inviteLink() для гостя відкриває вікно входу, і гра з другом блокується.
+// Тож гостю запрошення збираємо самі: посилання на гру з game.shareLink() (входу не вимагає)
+// + ?invite=<base64url JSON> - той самий формат, тож getInviteParams() у друга його прочитає.
+// Не вийшло - null, і PlayRoomClient бере фолбек `${SITE_URL}/play/<roomId>`.
 const createInviteLink = sdk.createInviteLink
-    ? (roomId: string) => sdk.createInviteLink!({ [INVITE_ROOM_KEY]: roomId })
+    ? async (roomId: string) => {
+          const params = { [INVITE_ROOM_KEY]: roomId };
+          if (!sdk.getUser || (await sdk.getUser())) return sdk.createInviteLink!(params);
+          const share = await sdk.shareLink?.();
+          if (!share) return null;
+          try {
+              const url = new URL(share);
+              url.searchParams.set("invite", encodeInvite(params));
+              return url.toString();
+          } catch {
+              return null;
+          }
+      }
     : undefined;
 
 // Банери - лише там, де SDK їх має (портал з модулем banner).
