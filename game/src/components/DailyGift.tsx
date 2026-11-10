@@ -124,9 +124,11 @@ const Board = styled.div`
     inset: 0;
     z-index: 1501;
     margin: auto;
-    width: min(92vw, 460px);
+    /* Плитки квадратні, тож висота картки росте з шириною: на низькому екрані (портал) звужуємо
+       картку за висотою, щоб усе вміщалось без скролу. */
+    width: min(92vw, 460px, calc(100dvh - 150px));
     height: fit-content;
-    max-height: calc(100dvh - 24px);
+    max-height: calc(100dvh - 16px);
     overflow-y: auto;
     box-sizing: border-box;
     padding: 22px 18px 18px;
@@ -145,6 +147,12 @@ const Board = styled.div`
 
     @media (max-width: 480px) {
         padding: 18px 12px 12px;
+    }
+
+    @media (max-height: 640px) {
+        width: min(92vw, 460px, calc(100dvh - 140px));
+        padding: 12px 14px 12px;
+        border-width: 6px;
     }
 `;
 
@@ -184,6 +192,12 @@ const Grid = styled.div`
     @media (max-width: 480px) {
         gap: 7px;
         margin: 12px 0;
+        padding: 6px;
+    }
+
+    @media (max-height: 640px) {
+        gap: 7px;
+        margin: 8px 0 10px;
         padding: 6px;
     }
 `;
