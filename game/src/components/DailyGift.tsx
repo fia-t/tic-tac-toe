@@ -1,4 +1,5 @@
 "use client";
+import { watchRewardedAd } from "@game/lib/adTracking";
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
@@ -560,7 +561,7 @@ export const DailyGift: React.FC<{ onRewardedAd?: () => Promise<boolean>; onClos
         if (!onRewardedAd || watching) return;
         setWatching(true);
         try {
-            if (await onRewardedAd()) claim(true);
+            if (await watchRewardedAd("gift_double", onRewardedAd)) claim(true);
         } finally {
             setWatching(false);
         }

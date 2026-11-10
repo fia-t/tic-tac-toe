@@ -1,4 +1,5 @@
 "use client";
+import { watchRewardedAd } from "@game/lib/adTracking";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
@@ -629,6 +630,18 @@ const ModeTile = styled.button`
         filter: drop-shadow(0 0 1.5px rgba(215, 248, 255, 1)) drop-shadow(0 0 5px rgba(31, 179, 217, 0.95));
     }
 
+    /* Онлайн посеред партії: інші поля приглушені й не натискаються (тултіп пояснює чому). */
+    &:disabled {
+        cursor: not-allowed;
+    }
+
+    &:disabled img,
+    &:disabled:hover img {
+        opacity: 0.45;
+        transform: none;
+        filter: grayscale(0.6);
+    }
+
     &:focus-visible {
         outline: 3px solid #1fb3d9;
         outline-offset: 2px;
@@ -1245,7 +1258,7 @@ const useBoosters = (resetKey: unknown) => {
             return;
         }
         if (!rewarded) return;
-        if (await rewarded()) {
+        if (await watchRewardedAd("booster", rewarded, { booster: kind })) {
             trackEvent("booster_used", { booster: kind, paid: true });
             apply();
         }
@@ -1285,6 +1298,21 @@ type GameScreenProps = {
     onShowResult?: () => void;
     // Шар поверх поля (монетка "хто ходить першим").
     overlay?: React.ReactNode;
+    // Онлайн-кімната (гра з другом, швидкий матч): той самий екран, але поле й модифікатор - з кімнати,
+    // без бота, складності й бустерів.
+    online?: OnlineScreen;
+};
+
+export type OnlineScreen = {
+    modifier: Modifier | null;
+    // Зміна поля / модифікатора (в обох гравців одразу). Немає - рейтинговий матч, вибору немає.
+    onChange?: (mode: GameModeKey, modifier: Modifier | null) => void;
+    // Посеред партії поле й модифікатор не міняє ніхто.
+    locked: boolean;
+    // Ім'я ліворуч на табло (замість "Бот").
+    leftName: string;
+    // Кнопка "Заново": реванш після партії.
+    restart: { label: string; onClick: () => void; disabled: boolean };
 };
 
 const FRIEND_MODE: Record<GameModeKey, "3x3" | "5x5" | "9x9"> = { traditional: "3x3", five: "5x5", difficult: "9x9" };
@@ -1312,13 +1340,19 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     boosters,
     onShowResult,
     overlay,
+    online,
 }) => {
     const t = useT();
     const goHome = useContext(GameHomeContext);
-    const run = useDailyRun();
+    const dailyRun = useDailyRun();
+    // В онлайн-кімнаті виклику дня / кампанії немає, навіть якщо їх відкрито в меню.
+    const run = online ? null : dailyRun;
     const difficulty = useDifficulty();
     const choice = useModifierChoice();
-    const activeModifier = effectiveModifier(mode, choice);
+    const activeModifier = online ? online.modifier : effectiveModifier(mode, choice);
+    // Онлайн: посеред партії (і в рейтинговому матчі) поле й модифікатор не змінюються.
+    const setupLocked = Boolean(online && (online.locked || !online.onChange));
+    const lockTip = online && !online.onChange ? t("roomSetupRated") : t("roomSetupLocked");
     // У грі з новини акції "модифікатор тижня" немає - мітку в списку не показуємо.
     const weekly = isEmbed() ? undefined : weeklyModifier();
     // У новині замість довгої підказки першого ходу - короткий статус "Твій хід" (у вузькому iframe - один рядок).
@@ -1335,8 +1369,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     // У виклику дня "Заново" недоступне, поки партію не зіграно (виклик не переграється);
     // рівень кампанії можна почати знову будь-коли.
-    const restartDisabled = run?.kind === "daily" && !run.finished;
+    const restartDisabled = online ? online.restart.disabled : run?.kind === "daily" && !run.finished;
     const restart = () => {
+        if (online) return online.restart.onClick();
         if (run?.kind === "campaign") {
             setDailyRun({ ...run, id: nextRunId(), finished: false });
             trackEvent("campaign_level_started", { level: run.template.id });
@@ -1352,11 +1387,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
     const pickModifier = (value: Modifier | null) => {
         if (value === activeModifier) return;
+        if (online) return void (setupLocked || online.onChange?.(mode, value));
         trackEvent("select_modifier", { modifier: value ?? "none", mode });
         setModifier(value);
     };
     const pickMode = (target: GameModeKey) => {
         if (target === mode) return;
+        if (online) {
+            if (setupLocked) return;
+            // Модифікатор, якого на новому полі немає, - знімаємо.
+            return void online.onChange?.(target, activeModifier && MODIFIERS_BY_MODE[target].includes(activeModifier) ? activeModifier : null);
+        }
         trackEvent("select_mode", { mode: target });
         onSetMode(target);
     };
@@ -1366,7 +1407,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const compact = useEmbedCompact(embed);
     // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
     const wide = embed || goHome !== null;
-    const restartLabel = over ? t("playAgain") : t("restart");
+    const restartLabel = online ? online.restart.label : over ? t("playAgain") : t("restart");
     const homeButton = goHome && (
         <RoundButton type="button" data-tour="menu" onClick={goHome} aria-label={t("back")} data-tip={t("back")}>
             <ActionIcon id="back" />
@@ -1378,7 +1419,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </RoundButton>
     );
     // У грі з новини (iframe) - лише партія з ботом, без онлайн-кімнат.
-    const friendButton = !isEmbed() && (
+    const friendButton = !isEmbed() && !online && (
         <RoundButton type="button" onClick={() => void openFriend()} aria-label={t("playWithFriend")} data-tip={t("playWithFriend")}>
             <ActionIcon id="friend" />
         </RoundButton>
@@ -1446,7 +1487,18 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
     // Список модифікаторів: у новині на ширшому екрані модифікатор зліва - список від його лівого краю.
     const modSelect = (menuAlign: "left" | "auto") => (
-        <ModifierSelect value={activeModifier} options={MODIFIERS_BY_MODE[mode]} weekly={weekly} labelledBy="bar-mod" menuAlign={menuAlign} withDesc plain={wide} onPick={pickModifier} />
+        <ModifierSelect
+            value={activeModifier}
+            options={MODIFIERS_BY_MODE[mode]}
+            weekly={online ? undefined : weekly}
+            labelledBy="bar-mod"
+            menuAlign={menuAlign}
+            withDesc
+            plain={wide}
+            disabled={setupLocked}
+            disabledTip={lockTip}
+            onPick={pickModifier}
+        />
     );
     const turnLine = (
         <TurnLine
@@ -1486,7 +1538,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </BarScore>
     ) : (
         <BarScore>
-            <span>{t("ai")}</span>
+            <span>{online ? online.leftName : t("ai")}</span>
             <b>{score.ai}</b>
             <span>—</span>
             <b>{score.human}</b>
@@ -1494,7 +1546,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </BarScore>
     );
     // Складність бота (сайт) - список, як у модифікатора.
-    const diffSelect = goHome && (
+    const diffSelect = goHome && !online && (
         <DiffGroup>
             <BarLabel id="bar-bot" $hidden>
                 {t("barBot")}
@@ -1540,7 +1592,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         return () => window.removeEventListener("resize", fit);
     }, [status, showFirstHint, timerBoost.expired, over, myTurn]);
     // Підказка на плитці поля в новині: назва й правило перемоги (замість окремого "?").
-    const tileTip = (tile: (typeof MODE_TILES)[number]) => `${t(tile.label)}\n${t(`boardRule_${tile.id}`)}`;
+    // Онлайн 9×9 - не "9 малих полів", а 5 в ряд на всьому полі.
+    const tileTip = (tile: (typeof MODE_TILES)[number]) =>
+        online && tile.id === "difficult" ? `9×9\n${t("boardRule_online9")}` : `${t(tile.label)}\n${t(`boardRule_${tile.id}`)}`;
     // Колонка плиток поля - строго під кнопкою "Заново" (по центру кнопки).
     const tileColumn = useRef<HTMLDivElement>(null);
     useLayoutEffect(() => {
@@ -1605,11 +1659,21 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         </>
     );
 
-    const modeTiles = MODE_TILES.map((tile) => (
-        <ModeTile key={tile.id} type="button" aria-pressed={mode === tile.id} aria-label={t(tile.label)} data-tip={tileTip(tile)} onClick={() => pickMode(tile.id)}>
+    // Плитка поля; онлайн посеред партії - вимкнена (вибране поле лишається яскравим).
+    const renderTile = (tile: (typeof MODE_TILES)[number]) => (
+        <ModeTile
+            key={tile.id}
+            type="button"
+            aria-pressed={mode === tile.id}
+            aria-label={t(tile.label)}
+            data-tip={setupLocked && mode !== tile.id ? lockTip : tileTip(tile)}
+            disabled={setupLocked && mode !== tile.id}
+            onClick={() => pickMode(tile.id)}
+        >
             <img src={assetUrl(tile.img)} alt="" />
         </ModeTile>
-    ));
+    );
+    const modeTiles = MODE_TILES.map(renderTile);
 
     // Гра в новині на телефоні, у самому iframe новини: поле зліва; справа - "Заново", бустери й
     // повний екран, рахунок, статус ходу (з таймером - смуга таймера), плитки поля й модифікатор.
@@ -1716,18 +1780,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                 {t("barBoard")}
                             </BarLabel>
                             <BarGroupRow role="group" aria-labelledby="bar-board" style={{ position: "relative", gap: 10 }}>
-                                {MODE_TILES.map((tile) => (
-                                    <ModeTile
-                                        key={tile.id}
-                                        type="button"
-                                        aria-pressed={mode === tile.id}
-                                        aria-label={t(tile.label)}
-                                        data-tip={tileTip(tile)}
-                                        onClick={() => pickMode(tile.id)}
-                                    >
-                                        <img src={assetUrl(tile.img)} alt="" />
-                                    </ModeTile>
-                                ))}
+                                {modeTiles}
                             </BarGroupRow>
                             {embed && <BarStatus>{turnLine}</BarStatus>}
                         </BarGroup>
@@ -1783,7 +1836,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             <NarrowScoreTop $inBar>
                 <ScorePill>
                     {isHalloweenEmbed() && <ScoreCobweb />}
-                    <span>{t("ai")}</span>
+                    <span>{online ? online.leftName : t("ai")}</span>
                     <b>{score.ai}</b>
                     <span>—</span>
                     <b>{score.human}</b>
@@ -1798,21 +1851,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 {overlay}
                 {wide && quick && (
                     <TileColumn ref={tileColumn} $site={!embed} role="group" aria-label={t("barBoard")}>
-                        {MODE_TILES.map((tile) => (
-                            <ModeTile
-                                key={tile.id}
-                                type="button"
-                                aria-pressed={mode === tile.id}
-                                aria-label={t(tile.label)}
-                                data-tip={tileTip(tile)}
-                                onClick={() => pickMode(tile.id)}
-                            >
-                                <img src={assetUrl(tile.img)} alt="" />
-                            </ModeTile>
-                        ))}
+                        {modeTiles}
                     </TileColumn>
                 )}
-                {quick &&
+                {quick && !online &&
                     <Boosters data-tour="boosters" $site={!embed}>
                         {mainButtons}
                         {hasTimer && timerButtons}

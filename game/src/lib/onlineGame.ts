@@ -28,7 +28,8 @@ import { EMPTY_HISTORY, EMPTY_MOLE, MOUND, MoleState, ModHistory, ModRules, STON
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, STONES_COUNT } from "@game/lib/modifiers";
 
 // Модифікатори гри з другом - ті самі, що й проти бота, за відповідністю режимів.
-const ONLINE_MODE_KEY: Record<OnlineGameMode, GameModeKey> = { "3x3": "traditional", "5x5": "five", "9x9": "difficult" };
+export const ONLINE_MODE_KEY: Record<OnlineGameMode, GameModeKey> = { "3x3": "traditional", "5x5": "five", "9x9": "difficult" };
+export const MODE_KEY_ONLINE: Record<GameModeKey, OnlineGameMode> = { traditional: "3x3", five: "5x5", difficult: "9x9" };
 // "Кріт" теж: його випадковий крок робить клієнт, що ходить, у тій самій транзакції, що й хід, -
 // горбки й попередження записуються в кімнату, тож обидва гравці бачать однакове поле.
 export const onlineModifiers = (mode: OnlineGameMode): Modifier[] => MODIFIERS_BY_MODE[ONLINE_MODE_KEY[mode]];
@@ -426,6 +427,47 @@ export const requestRematch = async (roomId: string, symbol: PlayerSymbol): Prom
             trackEvent("online_rematch_requested", { gameMode: room.gameMode });
         }
     });
+};
+
+// Чи можна зараз міняти поле й модифікатор кімнати: лише гра з другом і лише поза партією -
+// поки чекаємо друга, до першого ходу (монетка) або після кінця. Посеред партії - ніхто.
+export const canChangeRoomSetup = (room: RoomDoc): boolean =>
+    !room.rated && (room.status !== "playing" || !room.board.some((cell) => cell === "X" || cell === "O"));
+
+// Зміна поля / модифікатора будь-ким із гравців - у обох оновлюється "наживо" (підписка на кімнату).
+// Чекаємо друга - лише нові налаштування; обидва тут - одразу нова партія з монеткою. Рахунок лишається.
+export const changeRoomSetup = async (roomId: string, gameMode: OnlineGameMode, modifier: Modifier | null): Promise<void> => {
+    const roomModifier = modifier && onlineModifiers(gameMode).includes(modifier) ? modifier : null;
+    const db = getFirebaseDb();
+    const ref = doc(db, roomsCollection, roomId.toUpperCase());
+
+    await runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        if (!snap.exists()) return;
+        const room = snap.data() as RoomDoc;
+        // Поки думали - друг уже зробив хід: партію не обриваємо.
+        if (!canChangeRoomSetup(room)) return;
+        if (room.gameMode === gameMode && (room.modifier ?? null) === roomModifier) return;
+
+        const base = {
+            gameMode,
+            modifier: roomModifier,
+            board: freshBoard(gameMode, roomModifier),
+            hist: EMPTY_HISTORY,
+            mole: EMPTY_MOLE,
+            winner: null,
+            rematch: { X: false, O: false },
+            lastActivity: serverTimestamp(),
+            expiresAt: expiresAtTimestamp(),
+        };
+        if (room.players.X && room.players.O) {
+            const starter = coinStarter();
+            tx.update(ref, { ...base, status: "playing", currentPlayer: starter, starter, round: (room.round ?? 0) + 1 });
+        } else {
+            tx.update(ref, base);
+        }
+    });
+    trackEvent("online_setup_changed", { gameMode, modifier: roomModifier ?? "none" });
 };
 
 export const sendHeartbeat = async (roomId: string, symbol: PlayerSymbol): Promise<void> => {

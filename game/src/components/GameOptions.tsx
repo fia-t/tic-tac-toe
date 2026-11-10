@@ -515,6 +515,8 @@ export const ModifierSelect = ({
     withDesc = false,
     plain = false,
     floating = false,
+    disabled = false,
+    disabledTip,
     onPick,
 }: {
     value: Modifier | null;
@@ -529,10 +531,17 @@ export const ModifierSelect = ({
     // Список - у body поверх усього (головна: інакше він у прокручуваній області під нижнім меню
     // і саму область розтягує до прокрутки). Стає під кнопкою, закривається при прокрутці.
     floating?: boolean;
+    // Онлайн-кімната посеред партії: змінювати не можна (disabledTip - чому).
+    disabled?: boolean;
+    disabledTip?: string;
     onPick: (m: Modifier | null) => void;
 }) => {
     const t = useT();
     const [open, setOpen] = useState(false);
+    // Друг зробив хід, поки список відкритий, - закриваємо.
+    useEffect(() => {
+        if (disabled) setOpen(false);
+    }, [disabled]);
     const [at, setAt] = useState<React.CSSProperties | null>(null);
     const ref = useRef<HTMLDivElement>(null);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -619,7 +628,8 @@ export const ModifierSelect = ({
                 // (у грі з новини - світла, як бустери).
                 data-selected={plain ? undefined : true}
                 $desc={withDesc}
-                title={withDesc ? `${name(value)} · ${desc(value)}` : undefined}
+                title={disabled && disabledTip ? disabledTip : withDesc ? `${name(value)} · ${desc(value)}` : undefined}
+                disabled={disabled}
                 onClick={toggle}
             >
                 <ModIcon id={value} size={20} />

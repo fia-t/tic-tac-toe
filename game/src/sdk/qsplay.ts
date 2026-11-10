@@ -1,5 +1,8 @@
 import type { AggregatorSdk, BannerResult } from "./types";
 import { setSoundSuppressed } from "@game/lib/sound";
+import { t } from "@game/lib/i18n";
+import { showToast } from "@game/lib/ui";
+import { reportAdOutcome } from "@game/lib/adTracking";
 
 // QSPlay SDK порталу play.quartsoft.com - https://docs-dev.quartsoft.com/sdk/intro
 // Скрипт https://sdk.quartsoft.com/v1/sdk.js підключається в <head> (game/vite.config.ts,
@@ -104,6 +107,7 @@ export const qsplaySdk: AggregatorSdk = {
         const ad = api()?.ad;
         if (!ad) return false;
         let rewarded = false;
+        let failed = false;
         await ad.requestAd("rewarded", {
             adStarted: () => setSoundSuppressed(true),
             adRewarded: () => {
@@ -111,10 +115,15 @@ export const qsplaySdk: AggregatorSdk = {
             },
             adFinished: () => setSoundSuppressed(false),
             adError: (error) => {
+                failed = true;
                 setSoundSuppressed(false);
                 console.warn("[QSPlaySDK] ad.requestAd rewarded failed", error.code);
             },
         });
+        // Без цього кнопки "за рекламу" (24 год скіна, монети, зірка...) при порожній рекламі
+        // мовчки нічого не робили - гравець думав, що вони зламані.
+        reportAdOutcome(rewarded ? "rewarded" : failed ? "unavailable" : "not_finished");
+        if (!rewarded) showToast(t(failed ? "adUnavailable" : "adNotFinished"));
         return rewarded;
     },
     // Модулі ad і banner є не в кожній версії SDK порталу - реклама вмикається, щойно портал їх видасть.

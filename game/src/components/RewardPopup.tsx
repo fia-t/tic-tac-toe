@@ -1,4 +1,5 @@
 "use client";
+import { watchRewardedAd } from "@game/lib/adTracking";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
@@ -141,7 +142,7 @@ export const RewardPopup: React.FC<{ kind: RewardKind; icon: React.ReactNode; on
         if (!onRewardedAd) return;
         setWatching(true);
         try {
-            if (await onRewardedAd()) {
+            if (await watchRewardedAd(kind, onRewardedAd)) {
                 content.grant();
                 onClose();
             }

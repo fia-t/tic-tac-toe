@@ -1,17 +1,31 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
-import { OnlineBoardContainer, OnlineCell, WaitingText } from "@game/components/onlineStyles";
-import { BoardHolder, GameRoot, ResultLink, ScorePill, ScoreTop, TurnLine, TurnMark } from "@game/components/GameScreen";
+import { OnlineBoardContainer, OnlineCell } from "@game/components/onlineStyles";
+import { MiniBoardWrapper, UltimateBoardContainer } from "@game/components/gameStyles";
+import { BoosterProps, GameScreen } from "@game/components/GameScreen";
 import { ResultPopup } from "@game/components/ResultPopup";
 import { useWallet } from "@game/lib/wallet";
 import { useProfile } from "@game/lib/profile";
 import { openPanel } from "@game/lib/ui";
 import styled from "styled-components";
-import { RoomDoc, PlayerSymbol, ROOM_MOUND, ROOM_STONE, makeMove, requestRematch, roomGrid, roomRules } from "@game/lib/onlineGame";
+import {
+    MODE_KEY_ONLINE,
+    ONLINE_MODE_KEY,
+    RoomDoc,
+    PlayerSymbol,
+    ROOM_MOUND,
+    ROOM_STONE,
+    canChangeRoomSetup,
+    changeRoomSetup,
+    makeMove,
+    requestRematch,
+    roomGrid,
+    roomRules,
+} from "@game/lib/onlineGame";
 import { MoundTile, moleWarnCss } from "@game/components/MoleTiles";
 import { EMPTY_HISTORY, fadingCells, randomLegalCell } from "@game/components/modEngine";
-import { MoveTimerBar, useMoveTimer } from "@game/components/MoveTimer";
-import { TIMER_SECONDS } from "@game/lib/modifiers";
+import { useMoveTimer } from "@game/components/MoveTimer";
+import { GameModeKey, Modifier, TIMER_SECONDS } from "@game/lib/modifiers";
 import { BOARD_SIZE, WIN_LENGTH } from "@game/components/onlineGameLogic";
 import { winningIndexSet } from "@game/components/gameLogic";
 import { trackEvent } from "@game/lib/firebase";
@@ -41,16 +55,18 @@ const StoneTile = styled.div`
         0 4px 6px rgba(0, 0, 0, 0.2);
 `;
 
-// Модифікатор кімнати - під рядком рахунку.
-const ModLine = styled.div`
-    width: var(--board-w);
-    color: #7a5530;
-    font-size: 13px;
-    line-height: 1.35;
+// Бустерів онлайн немає (смуга бустерів прихована) - заглушка для GameScreen.
+const NO_BOOSTERS: BoosterProps = { canUndo: false, canHint: false, onUndo: () => {}, onHint: () => {}, resetKey: null };
 
-    strong {
-        color: #49301f;
-    }
+// Помилка рейтингового ходу - під полем.
+const MoveError = styled.div`
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(100% + 6px);
+    color: #b8382a;
+    font-weight: 700;
+    text-align: center;
 `;
 
 type OnlineBoardProps = {
@@ -60,9 +76,11 @@ type OnlineBoardProps = {
     uid: string;
     // Вихід із кімнати в меню (кнопка у вікні результату).
     onExit: () => void;
+    // Картка запрошення поверх поля, поки друг не прийшов.
+    invite?: React.ReactNode;
 };
 
-export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol, uid, onExit }) => {
+export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol, uid, onExit, invite }) => {
     const t = useT();
     const size = BOARD_SIZE[room.gameMode];
     const isFinished = room.status === "finished";
@@ -251,10 +269,66 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
             ? t("matchRated")
             : undefined;
 
-    // Як у партії з ботом: рахунок ліворуч над полем, у тому ж рядку - підказка, а після кінця
-    // партії праворуч - "Грати ще раз" (рейтинговий матч - "Результат").
+    // mini - клітинка всередині блоку гіга-поля (менше скруглення, як у MiniCell бота).
+    const renderCell = (index: number, mini: boolean) => {
+        const cell = room.board[index];
+        const disabled = !myTurn || isFinished || (cell !== null && !gravity);
+        return (
+            <MoleCell
+                key={index}
+                $disabled={disabled}
+                $warn={room.modifier === "mole" && !isFinished && room.mole?.warn === index}
+                onClick={() => handleCellClick(index)}
+                style={mini ? { borderRadius: 7 } : undefined}
+            >
+                {cell === ROOM_STONE ? (
+                    <StoneTile role="img" aria-label={t("modifier_stones")} />
+                ) : cell === ROOM_MOUND ? (
+                    <MoundTile role="img" aria-label={t("moleMound", { n: String(room.mole?.mounds.find((m) => m.index === index)?.ttl ?? 0) })}>
+                        <b>{room.mole?.mounds.find((m) => m.index === index)?.ttl}</b>
+                    </MoundTile>
+                ) : (
+                    cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} fading={fading?.has(index)} />
+                )}
+            </MoleCell>
+        );
+    };
+
+    const boardNode =
+        size === 9 ? (
+            // Гіга-поле - 9 блоків 3×3, як у грі з ботом. Лише вигляд: правила ті самі
+            // (5 в ряд на всьому полі), тож лінії й далі йдуть крізь межі блоків.
+            <UltimateBoardContainer $backgroundUrl={theme.backgroundUrl}>
+                {Array.from({ length: 9 }, (_, block) => (
+                    <MiniBoardWrapper key={block} $isActive={false}>
+                        {Array.from({ length: 9 }, (_, i) => {
+                            const row = Math.floor(block / 3) * 3 + Math.floor(i / 3);
+                            const col = (block % 3) * 3 + (i % 3);
+                            return renderCell(row * 9 + col, true);
+                        })}
+                    </MiniBoardWrapper>
+                ))}
+            </UltimateBoardContainer>
+        ) : (
+            <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
+                {room.board.map((_, index) => renderCell(index, false))}
+            </OnlineBoardContainer>
+        );
+
+    // Поле й модифікатор міняє будь-хто з двох, але лише поза партією (див. canChangeRoomSetup).
+    const changeSetup = (mode: GameModeKey, modifier: Modifier | null) => void changeRoomSetup(roomId, MODE_KEY_ONLINE[mode], modifier);
+    const restartLabel = opponentGone ? t("newOpponent") : myRematchReady ? t("waitingRematch") : room.rated ? t("rematchButton") : t("playAgain");
+    const waiting = room.status === "waiting";
+    const shownStatus = waiting
+        ? t("waitingPlayer")
+        : isFinished && !opponentGone && opponentRematchReady && !myRematchReady
+        ? t("opponentWantsRematch")
+        : status;
+
+    // Той самий екран, що й гра з ботом: смуга над полем (назад, повний екран, налаштування,
+    // модифікатор, рахунок, хід, "Заново" = реванш), плитки полів ліворуч. Табло: суперник ліворуч, ти праворуч.
     return (
-        <GameRoot $timer={room.modifier === "timer" && !isFinished}>
+        <>
             {popupOpen && (
                 <ResultPopup
                     result={myResult}
@@ -274,94 +348,58 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
                     }
                     onClose={() => setPopupOpen(false)}
                     onRestart={opponentGone ? newOpponent : rematch}
-                    restartLabel={
-                        opponentGone ? t("newOpponent") : myRematchReady ? t("waitingRematch") : room.rated ? t("rematchButton") : t("playAgain")
-                    }
+                    restartLabel={restartLabel}
                     restartDisabled={!opponentGone && myRematchReady}
                     secondary={room.rated && !opponentGone ? { label: t("newOpponent"), onClick: newOpponent } : undefined}
                     onMenu={onExit}
                 />
             )}
 
-            <ScoreTop>
-                <ScorePill>
-                    <span>{names.X}</span>
-                    <b>{score.X}</b>
-                    <span>—</span>
-                    <b>{score.O}</b>
-                    <span>{names.O}</span>
-                </ScorePill>
-                <TurnLine key={status} $mine={myTurn && !isFinished} role="status" aria-live="polite">
-                    {myTurn && !isFinished && (
-                        <TurnMark>
-                            <img src={markerSrc[mySymbol]} alt="" />
-                        </TurnMark>
-                    )}
-                    {status}
-                </TurnLine>
-                {isFinished &&
-                    (opponentGone ? (
-                        <ResultLink type="button" onClick={newOpponent}>
-                            {t("newOpponent")}
-                        </ResultLink>
-                    ) : myRematchReady ? (
-                        <WaitingText style={{ margin: 0, flexShrink: 0 }}>{t("waitingRematch")}</WaitingText>
-                    ) : (
-                        <ResultLink type="button" onClick={rematch}>
-                            {t("playAgain")}
-                        </ResultLink>
-                    ))}
-            </ScoreTop>
-
-            {room.modifier && (
-                <ModLine>
-                    <strong>{t(`modifier_${room.modifier}`)}</strong> · {t(`modifierDesc_${room.modifier}`)}
-                </ModLine>
-            )}
-            {room.modifier === "timer" && myTurn && !isFinished && (
-                <div style={{ width: "var(--board-w)" }}>
-                    <MoveTimerBar fraction={timerLeft} seconds={TIMER_SECONDS} />
-                </div>
-            )}
-
-            {isFinished && !opponentGone && opponentRematchReady && !myRematchReady && (
-                <div style={{ width: "var(--board-w)", fontSize: 13, fontWeight: 700, color: "#7a5a35" }}>{t("opponentWantsRematch")}</div>
-            )}
-
             <TurnAlert room={room} mySymbol={mySymbol} remaining={turnRemaining} />
 
-            <BoardHolder>
-                <OnlineBoardContainer $size={size} $backgroundUrl={theme.backgroundUrl}>
-                    {room.board.map((cell, index) => {
-                        const disabled = !myTurn || isFinished || (cell !== null && !gravity);
-                        return (
-                            <MoleCell key={index} $disabled={disabled} $warn={room.modifier === "mole" && !isFinished && room.mole?.warn === index} onClick={() => handleCellClick(index)}>
-                                {cell === ROOM_STONE ? (
-                                    <StoneTile role="img" aria-label={t("modifier_stones")} />
-                                ) : cell === ROOM_MOUND ? (
-                                    <MoundTile role="img" aria-label={t("moleMound", { n: String(room.mole?.mounds.find((m) => m.index === index)?.ttl ?? 0) })}>
-                                        <b>{room.mole?.mounds.find((m) => m.index === index)?.ttl}</b>
-                                    </MoundTile>
-                                ) : (
-                                    cell && <GamePiece src={markerSrc[cell as PlayerSymbol]} alt={cell} winning={winningCells?.has(index)} fading={fading?.has(index)} />
-                                )}
-                            </MoleCell>
-                        );
-                    })}
-                </OnlineBoardContainer>
-                {tossing && coinRound === room.round && (
-                    <CoinToss
-                        key={coinRound}
-                        mine={room.currentPlayer === mySymbol}
-                        myMarker={markerSrc[mySymbol]}
-                        opponentMarker={markerSrc[mySymbol === "X" ? "O" : "X"]}
-                        caption={room.currentPlayer === mySymbol ? t("coinYouFirst") : t("coinOpponentFirst", { name: names[room.currentPlayer] })}
-                        onDone={() => setCoinRound(null)}
-                    />
-                )}
-            </BoardHolder>
-
-            {moveError && <div style={{ color: "#b8382a", fontWeight: 700 }}>{t("matchMoveError")}</div>}
-        </GameRoot>
+            <GameScreen
+                mode={ONLINE_MODE_KEY[room.gameMode]}
+                onSetMode={() => {}}
+                onRestart={() => {}}
+                onRoomReady={() => {}}
+                score={{ ai: score[opponentSymbol], human: score[mySymbol] }}
+                humanName={names[mySymbol]}
+                status={shownStatus}
+                myTurn={myTurn && !isFinished}
+                turnMarker={markerSrc[mySymbol]}
+                over={isFinished}
+                timer={room.modifier === "timer" && myTurn && !isFinished ? timerLeft : null}
+                board={boardNode}
+                boosters={NO_BOOSTERS}
+                onShowResult={isFinished ? () => setPopupOpen(true) : undefined}
+                overlay={
+                    <>
+                        {invite}
+                        {tossing && coinRound === room.round && (
+                            <CoinToss
+                                key={coinRound}
+                                mine={room.currentPlayer === mySymbol}
+                                myMarker={markerSrc[mySymbol]}
+                                opponentMarker={markerSrc[opponentSymbol]}
+                                caption={room.currentPlayer === mySymbol ? t("coinYouFirst") : t("coinOpponentFirst", { name: names[room.currentPlayer] })}
+                                onDone={() => setCoinRound(null)}
+                            />
+                        )}
+                        {moveError && <MoveError>{t("matchMoveError")}</MoveError>}
+                    </>
+                }
+                online={{
+                    modifier: room.modifier ?? null,
+                    onChange: room.rated ? undefined : changeSetup,
+                    locked: !canChangeRoomSetup(room),
+                    leftName: names[opponentSymbol],
+                    restart: {
+                        label: restartLabel,
+                        onClick: opponentGone ? newOpponent : rematch,
+                        disabled: !isFinished || (!opponentGone && myRematchReady),
+                    },
+                }}
+            />
+        </>
     );
 };

@@ -241,7 +241,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // openPanel - розділи тут окремі екрани, тож панель перемикає екран.
     const panel = useOpenPanel();
     useEffect(() => {
-        if (!panel || !PAGES.includes(panel as Screen)) return;
+        if (!panel) return;
+        // Розділ чи вікно, відкрите кнопкою в шапці / посиланням (нижнє меню - у navigate).
+        trackEvent("nav_open", { screen: panel, via: "button" });
+        if (!PAGES.includes(panel as Screen)) return;
         closePanel();
         endDailyRun();
         setScreen(panel as Screen);
@@ -583,6 +586,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     };
 
     const navigate = (item: NavItem) => {
+        trackEvent("nav_open", { screen: item, via: "bottom_nav" });
         if (item === "home") {
             if (screen === "home") scrollMenuTop(menuScrollRef.current, "smooth");
             else goToMenu();

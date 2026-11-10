@@ -11,6 +11,7 @@ import { getProfile, useProfile } from "@game/lib/profile";
 import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
 import { isEmbed } from "@game/lib/embed";
+import { trackEvent } from "@game/lib/firebase";
 import { EmbedResult } from "@game/components/EmbedResult";
 
 // Вікно після партії проти ШІ (як у прототипі): режим і результат по центру, нагороди -
@@ -328,12 +329,17 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
     const t = useT();
     // Гра з новини (iframe): без нагород і "До меню", для хелловінського скіна - анімація.
     if (isEmbed()) return <EmbedResult result={result} onClose={onClose} onRestart={onRestart} />;
+    // Яку дію обрали після партії - видно, де гравці зупиняються (меню / закрили) чи грають далі.
+    const act = (action: "restart" | "secondary" | "menu" | "close", run: () => void) => () => {
+        trackEvent("result_action", { action, result });
+        run();
+    };
     const heading = title ?? (result === "win" ? t("resultWin") : result === "lose" ? t("resultLose") : t("resultDraw"));
     return (
         <>
-            <Overlay onClick={onClose} style={{ zIndex: 1600 }} />
+            <Overlay onClick={act("close", onClose)} style={{ zIndex: 1600 }} />
             <Card role="dialog" aria-modal="true" aria-labelledby="result-title" onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
-                <ModalCloseButton type="button" onClick={onClose} aria-label={t("close")}>
+                <ModalCloseButton type="button" onClick={act("close", onClose)} aria-label={t("close")}>
                     <IconClose size={16} />
                 </ModalCloseButton>
                 <Eyebrow>{eyebrow ?? t("homeQuick")}</Eyebrow>
@@ -353,16 +359,16 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}
-                <PrimaryButton type="button" data-attract="" onClick={onRestart} disabled={restartDisabled}>
+                <PrimaryButton type="button" data-attract="" onClick={act("restart", onRestart)} disabled={restartDisabled}>
                     {restartLabel ?? t("playAgain")}
                 </PrimaryButton>
                 {secondary && (
-                    <PillButton type="button" onClick={secondary.onClick}>
+                    <PillButton type="button" onClick={act("secondary", secondary.onClick)}>
                         {secondary.label}
                     </PillButton>
                 )}
                 {onMenu && (
-                    <PillButton type="button" $variant="ghost" onClick={onMenu}>
+                    <PillButton type="button" $variant="ghost" onClick={act("menu", onMenu)}>
                         {t("backToMenu")}
                     </PillButton>
                 )}

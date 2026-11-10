@@ -1,4 +1,5 @@
 "use client";
+import { watchRewardedAd } from "@game/lib/adTracking";
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
@@ -198,7 +199,7 @@ export const ShopPage: React.FC<ShopPageProps> = ({ themes, onRewardedAd, onPlay
 
     const trial = async (id: string) => {
         if (!onRewardedAd) return;
-        const watched = await onRewardedAd();
+        const watched = await watchRewardedAd("skin_trial", onRewardedAd, { skin: id });
         if (watched) startSkinTrial(id);
     };
 

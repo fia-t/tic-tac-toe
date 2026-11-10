@@ -1,4 +1,5 @@
 "use client";
+import { trackEvent } from "@game/lib/firebase";
 import React, { useContext, useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { gameButtonCss } from "@game/components/GameButton";
@@ -215,12 +216,12 @@ const Pill = styled.button`
     }
 
     /* Що означає лічильник - тултіп при наведенні чи фокусі.
-       Плашки - біля лівого краю шапки, тож тултіп вирівняний по лівому краю (не виходить за екран). */
+       Плашки - біля правого краю шапки, тож тултіп вирівняний по правому краю (не виходить за екран). */
     ${tipCss}
 
     &::after {
-        left: -14px;
-        right: auto;
+        left: auto;
+        right: 0;
         transform: none;
     }
 
@@ -264,9 +265,10 @@ const PlusButton = styled.button`
 
     ${tipCss}
 
+    /* Як і в плашок - від правого краю, інакше в останнього "+" тултіп обрізається. */
     &::after {
-        left: calc(-1 * var(--gb-c, 0px));
-        right: auto;
+        left: auto;
+        right: calc(-1 * var(--gb-c, 0px));
         transform: none;
     }
 
@@ -381,7 +383,15 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
     };
     const REWARD_ICON: Record<RewardKind, React.ReactNode> = { streak: <Flame size={40} />, stars: <StarIcon size={50} />, coins: <Coin size={40} /> };
     const plus = (kind: RewardKind) => (
-        <PlusButton type="button" onClick={() => setReward(kind)} aria-label={PLUS_LABEL[kind]} data-tip={PLUS_LABEL[kind]}>
+        <PlusButton
+            type="button"
+            onClick={() => {
+                setReward(kind);
+                trackEvent("reward_popup_open", { kind });
+            }}
+            aria-label={PLUS_LABEL[kind]}
+            data-tip={PLUS_LABEL[kind]}
+        >
             <PlusIcon />
         </PlusButton>
     );

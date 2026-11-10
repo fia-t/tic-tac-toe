@@ -20,7 +20,8 @@ import {
     OpponentLeftCard,
 } from "@game/components/onlineStyles";
 import { OnlineBoard } from "@game/components/OnlineBoard";
-import { isFirebaseConfigured } from "@game/lib/firebase";
+import { GameHomeContext } from "@game/components/GameScreen";
+import { isFirebaseConfigured, trackEvent } from "@game/lib/firebase";
 import {
     ensureAnonymousUser,
     joinRoom,
@@ -45,6 +46,22 @@ const RoomBody = styled.div`
     justify-content: center;
     gap: 12px;
     padding-bottom: 24px;
+`;
+
+// Картка запрошення - поверх поля (квадрат зверху BoardHolder, як і монетка), не над смугою.
+const InviteOverlay = styled.div`
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    aspect-ratio: 1;
+    z-index: 15;
+    display: grid;
+    place-items: center;
+    padding: 12px;
+    box-sizing: border-box;
+    border-radius: 18px;
+    background: rgba(73, 48, 31, 0.22);
 `;
 
 const RoomShell: React.FC<{ onHome: () => void; children: React.ReactNode }> = ({ onHome, children }) => (
@@ -188,18 +205,20 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
     const opponentLastSeenMs = opponent?.lastSeen?.toMillis?.() ?? null;
     const opponentStale = opponentLastSeenMs !== null && now - opponentLastSeenMs > PRESENCE_TIMEOUT_MS;
     const opponentExplicitlyLeft = Boolean(room && opponentSymbol && room.leftPlayer === opponentSymbol);
-    const showOpponentLeft =
+    const opponentGone =
         Boolean(room) &&
         room?.status !== "waiting" &&
         // Рейтингова партія: замість цього вікна - відлік часу на хід і технічна перемога.
         !room?.rated &&
         Boolean(opponent) &&
-        (opponentExplicitlyLeft || opponentStale) &&
-        !leftBannerDismissed;
+        (opponentExplicitlyLeft || opponentStale);
+    const showOpponentLeft = opponentGone && !leftBannerDismissed;
 
+    // "Почекати" ховає вікно, доки суперник не повернеться; пішов знову - вікно знову.
+    // (Раніше скидалось від самого showOpponentLeft - і вікно поверталось одразу.)
     useEffect(() => {
-        if (!showOpponentLeft) setLeftBannerDismissed(false);
-    }, [showOpponentLeft]);
+        if (!opponentGone) setLeftBannerDismissed(false);
+    }, [opponentGone]);
 
     const origin = siteUrl ?? (typeof window !== "undefined" ? window.location.origin : "");
     const inviteLink = customInviteLink ?? `${origin}/play/${roomId}`;
@@ -207,6 +226,8 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
     const handleCopy = async () => {
         try {
             await navigator.clipboard.writeText(inviteLink);
+            // Чи посилання взагалі кудись понесли (portal - invite-лінк порталу, а не сайту).
+            trackEvent("invite_copied", { portal: Boolean(customInviteLink) });
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
@@ -285,10 +306,11 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
         );
     }
 
-    if (room.status === "waiting") {
-        return (
-            <RoomShell onHome={handleReturnToMenu}>
-                <ModalCard style={{ position: "static", transform: "none" }}>
+    // Поки друг не прийшов - запрошення поверх поля; поле й модифікатор уже можна вибирати.
+    const invite =
+        room.status === "waiting" ? (
+            <InviteOverlay>
+                <ModalCard style={{ position: "static", transform: "none", width: "min(100%, 380px)" }}>
                     <RoomCodeBadge>{roomId}</RoomCodeBadge>
                     <ModalTitle>{t("inviteTitle")}</ModalTitle>
                     <InviteLinkRow>
@@ -303,13 +325,18 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                         {t("backToMenu")}
                     </PillButton>
                 </ModalCard>
-            </RoomShell>
-        );
-    }
+            </InviteOverlay>
+        ) : null;
 
+    // Кімната - той самий екран, що й гра з ботом (без шапки з логотипом): "Назад" у смузі над полем виходить із кімнати.
     return (
-        <RoomShell onHome={handleReturnToMenu}>
-            <OnlineBoard roomId={roomId} room={room} mySymbol={mySymbol} uid={uid} onExit={handleReturnToMenu} />
+        <Container>
+            <ShellVars />
+            <AppColumn>
+                <GameHomeContext.Provider value={handleReturnToMenu}>
+                    <OnlineBoard roomId={roomId} room={room} mySymbol={mySymbol} uid={uid} onExit={handleReturnToMenu} invite={invite} />
+                </GameHomeContext.Provider>
+            </AppColumn>
 
             {showOpponentLeft && (
                 <OpponentLeftCard>
@@ -324,6 +351,6 @@ export const PlayRoomClient: React.FC<PlayRoomClientProps> = ({
                     </div>
                 </OpponentLeftCard>
             )}
-        </RoomShell>
+        </Container>
     );
 };

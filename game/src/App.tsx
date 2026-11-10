@@ -19,6 +19,7 @@ import { setPortalTokenProvider } from "@game/lib/matchmaking";
 import { refreshPortalUser, setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
+import { watchRewardedAd } from "@game/lib/adTracking";
 
 // Після кожних 5 зіграних партій - midgame-реклама перед наступною (6-ю) партією: не посеред
 // результату, а коли гравець сам починає нову гру. Ліміти частоти перевіряє ще й портал.
@@ -65,7 +66,7 @@ const bannerApi: BannerApi | null =
     sdk.showBanner && sdk.clearBanner && (sdk.hasBanners ?? true) ? { show: sdk.showBanner, clear: sdk.clearBanner } : null;
 
 // На порталі "Гра з другом" відкривається без реклами: rewarded там - лише за явним вибором гравця ("+" у шапці).
-const beforeFriendOpen = sdkTarget === "portal" ? undefined : () => sdk.showRewardedAd();
+const beforeFriendOpen = sdkTarget === "portal" ? undefined : () => watchRewardedAd("friend_game", sdk.showRewardedAd);
 
 export default function App() {
     // Room-екран тут - локальний стан, а не next/navigation роутинг (якого в
