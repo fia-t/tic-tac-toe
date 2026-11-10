@@ -84,7 +84,7 @@ const Title = styled.h2<{ $result: "win" | "lose" | "draw" }>`
 
 const Rewards = styled.div`
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     margin: 0 0 8px;
     padding: 10px 4px;
@@ -237,15 +237,6 @@ const RewardStat: React.FC<{ icon: React.ReactNode; value: number; prefix?: stri
     );
 };
 
-// Досвід - фіолетовий кристал (не зірка: зірку плутали із зірками рівня кампанії).
-const XpGem = () => (
-    <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M7 3.5h10l4.5 5.5L12 21 2.5 9z" fill="#9b6bdf" stroke="#5b3596" strokeWidth="1.4" strokeLinejoin="round" />
-        <path d="M2.5 9h19M7 3.5L9.5 9 12 21l2.5-12L17 3.5" fill="none" stroke="#5b3596" strokeWidth="1.1" strokeLinejoin="round" />
-        <path d="M9.5 9L12 3.5 14.5 9z" fill="#c7a6f2" />
-    </svg>
-);
-
 // Ходи - сліди: два відбитки ступні.
 const Steps = () => (
     <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
@@ -355,8 +346,7 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                 )}
                 <Rewards role="list">
                     <RewardStat icon={<Coin size={30} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
-                    <RewardStat icon={<XpGem />} value={summary.xp} prefix="+" label={t("resultXp")} order={1} count />
-                    <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={2} count={false} />
+                    <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={1} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}
                 <PrimaryButton type="button" data-attract="" onClick={act("restart", onRestart)} disabled={restartDisabled}>
