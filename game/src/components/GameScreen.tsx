@@ -2,6 +2,7 @@
 import { watchRewardedAd } from "@game/lib/adTracking";
 import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled, { css, keyframes } from "styled-components";
+import { winterIce, winterIcicleRight } from "@game/components/themeFxStyles";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
 import { ActionIcon, DifficultySelect, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
@@ -349,6 +350,7 @@ const StatusSlot = styled.div`
     display: flex;
     height: 46px;
     align-items: center;
+    ${winterIcicleRight}
 
     /* Плашка - кольору рахунку, завжди висотою на два рядки; довга фраза переноситься, коротка -
        більшим шрифтом (розмір підбирає GameScreen). */
@@ -363,6 +365,7 @@ const StatusSlot = styled.div`
         text-shadow: none;
         text-align: center;
         line-height: 1.1;
+        ${winterIce()}
     }
 `;
 
@@ -789,6 +792,7 @@ export const ScorePill = styled.div`
     font-size: 14px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
+    ${winterIce()}
 
     b {
         color: #b32f1c;

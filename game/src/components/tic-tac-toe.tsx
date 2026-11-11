@@ -130,8 +130,9 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const equippedSkinId = getEquippedSkinId(useWallet());
     const skinId = embed?.skinId ?? equippedSkinId;
     const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
-    // Оформлення скіна (сніг, бурульки, колір виграшу) - на всю гру, поки його вибрано; не в грі з новини.
-    useEffect(() => setThemeFx(embed ? undefined : theme.fx), [embed, theme.fx]);
+    // Оформлення скіна (сніг, бурульки, колір виграшу) - на всю гру, поки його вибрано; у грі з
+    // новини - за скіном із посилання (лише скіни з оформленням, інших новин не зачіпає).
+    useEffect(() => setThemeFx(theme.fx), [theme.fx]);
     // Пул імен завантажено - ім'я гравця з пулу можна показати мовою гри.
     const [, setNamesLoaded] = useState(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });

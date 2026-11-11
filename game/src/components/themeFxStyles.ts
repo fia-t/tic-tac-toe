@@ -118,3 +118,33 @@ export const winterBackdrop = css`
         }
     }
 `;
+
+// Бурулька, що звисає з правого краю плашки (статус партії).
+export const winterIcicleRight = css`
+    ${WINTER} & {
+        position: relative;
+    }
+    ${WINTER} &::after {
+        content: "";
+        position: absolute;
+        right: 14px;
+        top: calc(100% - 3px);
+        width: 46px;
+        height: 22px;
+        background: ${ICICLES} 0 0 / 62px 22px no-repeat;
+        filter: drop-shadow(0 2px 2px rgba(60, 120, 170, 0.25));
+        pointer-events: none;
+        z-index: 3;
+    }
+`;
+
+// Обледеніння плашки (рамка, а не лише тінь: тінь статусу анімується): крижана облямівка, іній по краях і глянцевий відблиск зверху.
+export const winterIce = (shadow?: string) => css`
+    ${WINTER} & {
+        border: 2px solid rgba(160, 210, 240, 0.95);
+        box-shadow:
+            inset 0 0 0 1px rgba(255, 255, 255, 0.75),
+            inset 0 0 12px rgba(150, 205, 245, 0.7)${shadow ? `, ${shadow}` : ""};
+        background-image: linear-gradient(180deg, rgba(225, 243, 255, 0.95) 0%, rgba(236, 248, 255, 0) 55%, rgba(195, 228, 250, 0.5) 100%);
+    }
+`;
