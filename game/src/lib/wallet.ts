@@ -184,6 +184,9 @@ const applyEventSkins = () => {
 };
 
 // Викликається, щойно завантажено каталог тем (і повторно застосовується після завантаження гаманця).
+// Скін івенту, що йде зараз (null - івенту немає або каталог ще не завантажено).
+export const getLiveEventSkinId = (): string | null => eventSkins?.live?.id ?? null;
+
 export const setEventSkins = (value: EventSkins): void => {
     eventSkins = value;
     applyEventSkins();

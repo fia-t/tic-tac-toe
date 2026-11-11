@@ -12,7 +12,7 @@ import { MoveTimerBar, freezeMoveTimer, frozenTurns, pauseMoveTimer, resetMoveTi
 import { assetUrl } from "@game/lib/assets";
 import { trackEvent } from "@game/lib/firebase";
 import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
-import { BoosterKind, boosterStock, spendBooster, useWallet } from "@game/lib/wallet";
+import { BoosterKind, FREE_SKIN_ID, boosterStock, equipSkin, getEquippedSkinId, getLiveEventSkinId, spendBooster, useWallet } from "@game/lib/wallet";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
@@ -34,12 +34,14 @@ export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefi
 // Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
-export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean }>`
+export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean; $switch?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
     --timer-h: ${({ $timer }) => ($timer ? "38px" : "0px")};
-    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h))));
+    /* Рядок "святкова / класична тема" під полем (під час івенту). */
+    --switch-h: ${({ $switch }) => ($switch ? "34px" : "0px")};
+    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h) - var(--switch-h))));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -48,7 +50,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
     padding-bottom: 16px;
 
     @media (min-width: 800px) {
-        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h))));
+        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h) - var(--switch-h))));
     }
 
     /* Гра в новині й екран партії на сайті: шапки немає - поле займає всю висоту iframe (чи екрана
@@ -58,7 +60,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
         css`
             /* До 800px смуга у два рядки, бустери - рядком під полем: усе це вміщається по висоті
                iframe без прокрутки. */
-            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h) - var(--switch-h))));
 
             /* Знизу - лише відступ контейнера (12px): інакше вміст на кілька пікселів вищий за
                iframe і з'являлась смуга прокрутки. */
@@ -76,12 +78,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
             --mod-menu-s: 14px;
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h) - var(--switch-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2)));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2 - var(--switch-h))));
                 --tip-fs: 21px;
                 --tip-pad: 8px 16px;
             }
@@ -91,7 +93,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
     ${({ $phone }) =>
         $phone &&
         css`
-            --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h) - var(--switch-h))));
             gap: 10px;
             /* По вертикальному центру екрана (AppColumn - flex-колонка). */
             margin-block: auto;
@@ -767,6 +769,24 @@ export const ScoreTop = styled.div<{ $wide?: boolean }>`
     }
 `;
 
+// Перемикач святкова / класична тема під полем - як посилання, щоб не сперечатися з кнопками гри.
+const ThemeSwitch = styled.button`
+    height: 26px;
+    padding: 0 10px;
+    border: none;
+    background: none;
+    color: #0f6f8c;
+    font: 800 15px/26px var(--font-heading);
+    text-decoration: underline dotted rgba(15, 111, 140, 0.55);
+    text-underline-offset: 4px;
+    cursor: pointer;
+
+    &:hover {
+        color: #0a5a72;
+        text-decoration-style: solid;
+    }
+`;
+
 // Сайт: на ширшому екрані рахунок і підказка - у смузі (крім виклику дня й рівня кампанії).
 const NarrowScoreTop = styled(ScoreTop)<{ $inBar?: boolean }>`
     @media (min-width: 761px) {
@@ -1407,6 +1427,22 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
 
     const embed = isEmbed();
+    // Під час івенту - під полем перемикач між святковою темою і "Класикою" (навіть поки івент іде).
+    // Тема змінює фішки, тож після перемикання - нова партія (інакше на полі змішались би скіни).
+    const liveEventSkin = getLiveEventSkinId();
+    const equippedSkin = getEquippedSkinId(useWallet());
+    const themeSwitch =
+        !embed && !online && liveEventSkin && (equippedSkin === liveEventSkin || equippedSkin === FREE_SKIN_ID)
+            ? equippedSkin === liveEventSkin
+                ? { label: t("eventThemeBack"), target: FREE_SKIN_ID }
+                : { label: t("eventThemeGo"), target: liveEventSkin }
+            : null;
+    const switchTheme = () => {
+        if (!themeSwitch) return;
+        trackEvent("event_theme_switch", { to: themeSwitch.target === FREE_SKIN_ID ? "classic" : "event" });
+        equipSkin(themeSwitch.target);
+        restart();
+    };
     const phone = usePhoneEmbed(embed);
     const compact = useEmbedCompact(embed);
     // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
@@ -1757,7 +1793,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         );
 
     return (
-        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide}>
+        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide} $switch={Boolean(themeSwitch)}>
             <Bar data-tour="bar" $embed={wide} $site={!embed}>
                 {wide ? (
                     <>
@@ -1865,6 +1901,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     </Boosters>
                 }
             </BoardHolder>
+
+            {themeSwitch && (
+                <ThemeSwitch type="button" onClick={switchTheme}>
+                    {themeSwitch.label}
+                </ThemeSwitch>
+            )}
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
         </GameRoot>

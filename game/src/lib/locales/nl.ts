@@ -334,6 +334,8 @@ const pack: LocalePack = {
         rewardWatch: "Advertentie bekijken",
         adUnavailable: "Er zijn nu geen advertenties beschikbaar. Probeer het later opnieuw.",
         adNotFinished: "De beloning krijg je alleen als je de advertentie tot het einde bekijkt.",
+        eventThemeBack: "Terug naar het klassieke thema",
+        eventThemeGo: "Naar het feestthema",
         rewardCoins: "+{n} munten",
         rewardTitleCoins: "Munten voor een advertentie",
         rewardTitleStars: "Een ster voor een advertentie",

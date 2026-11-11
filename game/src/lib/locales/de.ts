@@ -334,6 +334,8 @@ const pack: LocalePack = {
         rewardWatch: "Werbung ansehen",
         adUnavailable: "Werbung ist gerade nicht verfügbar. Versuch es später noch einmal.",
         adNotFinished: "Die Belohnung gibt es nur, wenn du die Werbung bis zum Ende ansiehst.",
+        eventThemeBack: "Zurück zum klassischen Design",
+        eventThemeGo: "Zum Festtagsdesign wechseln",
         rewardCoins: "+{n} Münzen",
         rewardTitleCoins: "Münzen für Werbung",
         rewardTitleStars: "Ein Stern für Werbung",
