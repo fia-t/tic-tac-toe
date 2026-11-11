@@ -4,7 +4,7 @@ import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, u
 import styled, { css, keyframes } from "styled-components";
 import { winterIce, winterIcicleRight } from "@game/components/themeFxStyles";
 import { buttonTone, gameButtonCss } from "@game/components/GameButton";
-import { ActionIcon, DifficultySelect, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
+import { ActionIcon, DifficultySelect, ModIcon, ModPicker, ModifierSelect, RoundButton, tipCss } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
 import { InfoTip } from "@game/components/HomeScreen";
 import { levelTitle } from "@game/lib/campaignContent";
@@ -1031,9 +1031,27 @@ const SitePhoneHead = styled.div`
         height: 44px;
         min-height: 44px;
     }
+
+    @media (max-width: 380px) {
+        gap: 5px;
+
+        && ${RoundButton} {
+            --gb-c: 8px;
+            width: 40px;
+            height: 40px;
+            min-height: 40px;
+        }
+    }
 `;
 
 const SitePhoneTitle = styled.h1`
+    /* Вузький телефон: назва дрібніше, щоб уміщалась поруч із чотирма кнопками. */
+    @media (max-width: 380px) {
+        && {
+            font-size: 17px;
+        }
+    }
+
     flex: 1 1 auto;
     min-width: 0;
     margin: 0 0 0 4px;
@@ -1141,13 +1159,16 @@ const DockItem = styled.div`
         height: 26px;
     }
 
-    /* Підпис дублює aria-label кнопки - для читачів екрана прихований. */
+    /* Підпис дублює aria-label кнопки - для читачів екрана прихований. Один рядок: панель
+       не росте в висоту на жодній мові. */
     & > span {
         max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
         color: #5b3f22;
         font: 800 13px/1.15 var(--font-body);
         text-align: center;
-        overflow-wrap: anywhere;
     }
 `;
 
@@ -1163,7 +1184,7 @@ const SheetBackdrop = styled.div`
 const SheetPanel = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
     width: 100%;
     max-height: calc(100dvh - 24px);
     overflow-y: auto;
@@ -1183,6 +1204,20 @@ const SheetPanel = styled.div`
         margin: 0 0 8px;
         color: #7a5530;
         font: 800 15px/1.2 var(--font-body);
+    }
+
+    /* Низький екран (до 620px): щільніше, щоб аркуш і тут вміщався без прокрутки. */
+    @media (max-height: 620px) {
+        gap: 8px;
+
+        h3 {
+            margin-bottom: 5px;
+        }
+
+        img {
+            width: 34px;
+            height: 34px;
+        }
     }
 `;
 
@@ -1228,8 +1263,8 @@ const SheetChoice = styled.button<{ $on: boolean }>`
     cursor: pointer;
 
     img {
-        width: 52px;
-        height: 52px;
+        width: 46px;
+        height: 46px;
         object-fit: contain;
     }
 
@@ -1246,68 +1281,78 @@ const SheetNote = styled.p`
     font-weight: 600;
 `;
 
-const SheetList = styled.div`
-    overflow: hidden;
-    border: 2px solid #ebcb98;
-    border-radius: 16px;
-    background: #fff;
+// Модифікатори - сіткою по два (іконка й назва), опис вибраного - під сіткою: так аркуш з усіма
+// виборами вміщається на екран телефона без прокрутки на будь-якій мові.
+const SheetMods = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
 `;
 
-const SheetRow = styled.button<{ $on: boolean }>`
+const SheetChip = styled.button<{ $on: boolean }>`
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 52px;
-    padding: 9px 14px;
-    border: 0;
-    border-bottom: 1px solid #f6e2b8;
+    gap: 8px;
+    min-width: 0;
+    min-height: 46px;
+    padding: 4px 10px;
+    border: ${({ $on }) => ($on ? "3px solid #0f6f8c" : "2px solid #ebcb98")};
+    border-radius: 14px;
     background: ${({ $on }) => ($on ? "#e6f4f8" : "#fff")};
     color: #4a2c0c;
+    font: ${({ $on }) => ($on ? 900 : 800)} 15px/1.12 var(--font-body);
     text-align: left;
     cursor: pointer;
 
-    &:last-child {
-        border-bottom: 0;
+    & > svg {
+        flex-shrink: 0;
+        color: ${({ $on }) => ($on ? "#0f6f8c" : "#7a5530")};
+    }
+
+    & > span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    /* Модифікатор тижня - помаранчева мітка в куточку (повна назва - в описі під сіткою). */
+    em {
+        position: absolute;
+        top: -7px;
+        right: 6px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #e8662f;
+        box-shadow: 0 0 0 2px #fff7e8;
     }
 
     &:disabled {
         opacity: 0.45;
         cursor: default;
     }
+`;
 
-    &::before {
-        content: "";
-        flex-shrink: 0;
-        box-sizing: border-box;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        border: ${({ $on }) => ($on ? "6px solid #0f6f8c" : "2px solid #b08a5f")};
-    }
+const SheetModNote = styled.p`
+    min-height: calc(2 * 1.3em);
+    margin: 8px 0 0;
+    color: #5b3f22;
+    font: 600 14px/1.3 var(--font-body);
 
     b {
-        display: block;
-        font: 800 16px/1.2 var(--font-body);
-    }
-
-    small {
-        display: block;
-        margin-top: 2px;
-        color: #5b3f22;
-        font: 600 14px/1.3 var(--font-body);
+        color: #4a2c0c;
+        font-weight: 800;
     }
 
     em {
         display: inline-block;
-        margin-left: 8px;
-        padding: 1px 8px;
+        margin-right: 6px;
+        padding: 0 8px;
         border-radius: 10px;
         background: #e8662f;
         color: #fff;
-        font: 900 12px/1.5 var(--font-body);
+        font: 900 12px/1.6 var(--font-body);
         font-style: normal;
-        vertical-align: 1px;
     }
 `;
 
@@ -2131,10 +2176,12 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         const dockBooster = (kind: BoosterKind, enabled: boolean, onUse: () => void) => (
             <DockItem key={kind}>
                 {boosterButton(kind, enabled, onUse)}
-                <span aria-hidden="true">{BOOSTER_NAME[kind]}</span>
+                <span aria-hidden="true">{DOCK_NAME[kind]}</span>
             </DockItem>
         );
         const showBoosters = quick && !online;
+        // Короткі підписи під кнопками панелі (повна назва - в aria-label і тултіпі кнопки).
+        const DOCK_NAME: Record<BoosterKind, string> = { undo: t("dockUndo"), hint: t("dockHint"), pause: t("dockPause"), freeze: t("dockFreeze") };
         return (
             <GameRoot $sitePhone $timer={timerRunning} $switch={Boolean(themeSwitch)}>
                 <SitePhoneHead data-tour="bar">
@@ -2199,7 +2246,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     {showBoosters && hasTimer && dockBooster("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
                     <DockItem>
                         {restartButton}
-                        <span aria-hidden="true">{restartLabel}</span>
+                        <span aria-hidden="true">{online || over ? restartLabel : t("dockRestart")}</span>
                     </DockItem>
                 </SitePhoneDock>
 
@@ -2256,9 +2303,9 @@ export const GameScreen: React.FC<GameScreenProps> = ({
 
                             <section>
                                 <h3>{t("modifierLabel")}</h3>
-                                <SheetList>
+                                <SheetMods>
                                     {[null, ...MODIFIERS_BY_MODE[mode]].map((value) => (
-                                        <SheetRow
+                                        <SheetChip
                                             key={value ?? "none"}
                                             type="button"
                                             $on={activeModifier === value}
@@ -2266,16 +2313,16 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                                             disabled={setupLocked && activeModifier !== value}
                                             onClick={() => pickModifier(value)}
                                         >
-                                            <span>
-                                                <b>
-                                                    {t(`modifier_${value ?? "none"}` as Parameters<typeof t>[0])}
-                                                    {value !== null && value === weekly && <em>{t("homeWeekly")}</em>}
-                                                </b>
-                                                {value && <small>{t(`modifierDesc_${value}` as Parameters<typeof t>[0])}</small>}
-                                            </span>
-                                        </SheetRow>
+                                            <ModIcon id={value} size={20} />
+                                            <span>{t(`modifier_${value ?? "none"}` as Parameters<typeof t>[0])}</span>
+                                            {value !== null && value === weekly && <em title={t("homeWeekly")} />}
+                                        </SheetChip>
                                     ))}
-                                </SheetList>
+                                </SheetMods>
+                                <SheetModNote aria-live="polite">
+                                    {activeModifier !== null && activeModifier === weekly && <em>{t("homeWeekly")}</em>}
+                                    <b>{modName}</b> · {activeModifier ? t(`modifierDesc_${activeModifier}` as Parameters<typeof t>[0]) : t("modifierNoneDesc")}
+                                </SheetModNote>
                             </section>
 
                             <SheetDone type="button" onClick={() => setSetupOpen(false)}>

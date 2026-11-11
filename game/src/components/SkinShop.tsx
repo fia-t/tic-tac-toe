@@ -1,6 +1,6 @@
 "use client";
 import { watchRewardedAd } from "@game/lib/adTracking";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useId, useState } from "react";
 import styled from "styled-components";
 import { GameButton } from "@game/components/GameButton";
 import { Muted, Page } from "@game/components/pageStyles";
@@ -17,24 +17,29 @@ import { useT } from "@game/lib/i18n";
 // Лічильник монет - у верхньому ряду (TopBar).
 
 // Монета: темніший край знизу, світлий обідок, внутрішнє коло й відблиск - як у прототипі.
-export const Coin = ({ size = 20 }: { size?: number }) => (
+// Свої id градієнтів у кожної монети: зі спільним id монета брала градієнт із першої в документі, а коли
+// та прихована (display: none) - градієнт не малювався, і монета ставала коричневою.
+export const Coin = ({ size = 20 }: { size?: number }) => {
+    const id = useId().replace(/:/g, "");
+    return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true" style={{ flexShrink: 0 }}>
         <defs>
-            <linearGradient id="coin-rim" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`coin-rim-${id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#ffe590" />
                 <stop offset="1" stopColor="#e19912" />
             </linearGradient>
-            <linearGradient id="coin-face" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={`coin-face-${id}`} x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0" stopColor="#ffcf4d" />
                 <stop offset="1" stopColor="#f2a818" />
             </linearGradient>
         </defs>
         <circle cx="12" cy="12.6" r="11" fill="#b5700a" />
-        <circle cx="12" cy="11.6" r="10.6" fill="url(#coin-rim)" />
-        <circle cx="12" cy="11.6" r="7.6" fill="url(#coin-face)" stroke="#c7850f" strokeWidth="1" />
+        <circle cx="12" cy="11.6" r="10.6" fill={`url(#coin-rim-${id})`} />
+        <circle cx="12" cy="11.6" r="7.6" fill={`url(#coin-face-${id})`} stroke="#c7850f" strokeWidth="1" />
         <path d="M5.2 8.2a7.6 7.6 0 0 1 4.4-4" stroke="#fff" strokeOpacity="0.85" strokeWidth="1.4" fill="none" strokeLinecap="round" />
     </svg>
-);
+    );
+};
 
 const Grid = styled.section`
     display: grid;

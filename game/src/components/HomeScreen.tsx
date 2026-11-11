@@ -178,10 +178,23 @@ export const Tab = styled.button`
         outline-offset: 2px;
     }
 
+    /* Вузький телефон: довгі назви (нім. "Herausforderungen") переносяться по складах, а не налазять
+       на сусідню вкладку. */
     @media (max-width: 420px) {
+        /* Іконка (вогник, зірка) - над назвою: назві лишається вся ширина вкладки. */
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+        padding: 4px 3px;
         font-size: 15px;
         line-height: 1.05;
         text-align: center;
+        hyphens: auto;
+        overflow-wrap: anywhere;
+
+        & > svg {
+            flex-shrink: 0;
+        }
     }
 
     @media (max-height: 820px) {
@@ -692,8 +705,9 @@ export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => v
                         onSelect(item.id);
                     }}
                 >
-                    {item.id === "daily" && <Flame size={17} />}
-                    {item.id === "campaign" && <Star on size={22} />}
+                    {/* Вогник і зірка - однакової видимої висоти (зірка займає ~3/4 свого viewBox). */}
+                    {item.id === "daily" && <Flame size={18} />}
+                    {item.id === "campaign" && <Star on size={24} />}
                     {t(item.label)}
                 </Tab>
             ))}
