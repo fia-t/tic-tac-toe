@@ -130,10 +130,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const equippedSkinId = getEquippedSkinId(useWallet());
     const skinId = embed?.skinId ?? equippedSkinId;
     const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
-    // Оформлення (сніг, бурульки, колір виграшу) - від обраного скіна; фон і декор - ще й від івенту,
-    // що йде зараз (навіть на "Класиці"). У грі з новини - лише за скіном із посилання.
+    // Оформлення (сніг, бурульки, колір виграшу) - від обраного скіна або від івенту, що йде зараз
+    // (тоді на всіх темах, навіть на "Класиці"). У грі з новини - лише за скіном із посилання.
     const eventFx = embed ? undefined : availableThemes.find((item) => item.active && item.fx && eventStatus(item) === "live")?.fx;
-    useEffect(() => setThemeFx(theme.fx ?? eventFx, theme.fx), [theme.fx, eventFx]);
+    useEffect(() => setThemeFx(theme.fx ?? eventFx), [theme.fx, eventFx]);
     // Пул імен завантажено - ім'я гравця з пулу можна показати мовою гри.
     const [, setNamesLoaded] = useState(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });
