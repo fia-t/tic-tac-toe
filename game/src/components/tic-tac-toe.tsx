@@ -20,7 +20,7 @@ import {
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
-import { CLASSIC_THEME, Theme, eventSkinsOf, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
+import { CLASSIC_THEME, Theme, eventSkinsOf, eventStatus, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
 import { getEquippedSkinId, getWallet, setEventSkins, useWallet } from "@game/lib/wallet";
 import { DailyGift, isGiftReady } from "@game/components/DailyGift";
 import { ShopBarTitle, ShopPage } from "@game/components/SkinShop";
@@ -130,9 +130,10 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const equippedSkinId = getEquippedSkinId(useWallet());
     const skinId = embed?.skinId ?? equippedSkinId;
     const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
-    // Оформлення скіна (сніг, бурульки, колір виграшу) - на всю гру, поки його вибрано; у грі з
-    // новини - за скіном із посилання (лише скіни з оформленням, інших новин не зачіпає).
-    useEffect(() => setThemeFx(theme.fx), [theme.fx]);
+    // Оформлення (сніг, бурульки, колір виграшу) - від обраного скіна; фон і декор - ще й від івенту,
+    // що йде зараз (навіть на "Класиці"). У грі з новини - лише за скіном із посилання.
+    const eventFx = embed ? undefined : availableThemes.find((item) => item.active && item.fx && eventStatus(item) === "live")?.fx;
+    useEffect(() => setThemeFx(theme.fx ?? eventFx, theme.fx), [theme.fx, eventFx]);
     // Пул імен завантажено - ім'я гравця з пулу можна показати мовою гри.
     const [, setNamesLoaded] = useState(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });

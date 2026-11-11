@@ -1,10 +1,17 @@
 import type { ThemeFx } from "@game/lib/themes";
 
-// Оформлення вибраного скіна (сніг, бурульки, колір виграшу) вмикається атрибутом на <html>:
-// стилі компонентів реагують на :root[data-fx="..."] (див. components/themeFxStyles.ts).
-export const setThemeFx = (fx: ThemeFx | undefined): void => {
-    if (typeof document === "undefined") return;
+// Оформлення гри вмикається атрибутами на <html>, стилі реагують на них (components/themeFxStyles.ts):
+// - data-fx: фон і декор (сніг, бурульки, іній) - від обраного скіна або від івенту, що йде зараз
+//   (тоді навіть на "Класиці");
+// - data-fx-glow: колір світіння виграшу - лише від обраного скіна (стосується його фішок).
+const setAttr = (name: "fx" | "fxGlow", value: ThemeFx | undefined) => {
     const root = document.documentElement;
-    if (fx) root.dataset.fx = fx;
-    else delete root.dataset.fx;
+    if (value) root.dataset[name] = value;
+    else delete root.dataset[name];
+};
+
+export const setThemeFx = (decor: ThemeFx | undefined, glow: ThemeFx | undefined = decor): void => {
+    if (typeof document === "undefined") return;
+    setAttr("fx", decor);
+    setAttr("fxGlow", glow);
 };

@@ -3,6 +3,7 @@ import { css, keyframes } from "styled-components";
 // Зимове оформлення скіна (theme.fx === "winter"): усе - лише CSS під :root[data-fx="winter"],
 // без зміни розмітки, тож для інших скінів нічого не змінюється.
 export const WINTER = ':root[data-fx="winter"]';
+const WINTER_GLOW = ':root[data-fx-glow="winter"]';
 
 const svg = (body: string, w: number, h: number) =>
     `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>`)}")`;
@@ -76,9 +77,11 @@ export const winterBackdrop = css`
     --win-glow-a: rgba(255, 210, 60, 1);
     --win-glow-b: rgba(255, 170, 20, 0.9);
 
-    ${WINTER} & {
+    ${WINTER_GLOW} & {
         --win-glow-a: rgba(150, 220, 255, 1);
         --win-glow-b: rgba(40, 150, 255, 0.9);
+    }
+    ${WINTER} & {
         isolation: isolate;
         background-color: #d9ecfa;
         background-image:
