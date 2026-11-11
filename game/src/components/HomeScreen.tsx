@@ -151,6 +151,13 @@ export const Tabs = styled.div<{ $cols?: number }>`
     box-shadow: inset 0 -3px 0 #ebcb98;
     ${winterIcicles}
     ${winterFrost("inset 0 -3px 0 #ebcb98")}
+
+    /* Вузький телефон: рівні колонки не вміщають назв з іконками - вкладки беруть ширину за текстом
+       і стоять в один рядок (довгу назву, як нім. "Herausforderungen", переносить по складах). */
+    @media (max-width: 420px) {
+        display: flex;
+        gap: 2px;
+    }
 `;
 
 export const Tab = styled.button`
@@ -181,12 +188,12 @@ export const Tab = styled.button`
     /* Вузький телефон: довгі назви (нім. "Herausforderungen") переносяться по складах, а не налазять
        на сусідню вкладку. */
     @media (max-width: 420px) {
-        /* Іконка (вогник, зірка) - над назвою: назві лишається вся ширина вкладки. */
-        flex-direction: column;
-        gap: 1px;
+        /* Вкладка шириною за своїм текстом (див. Tabs), іконка - в рядку з назвою. */
+        flex: 1 1 auto;
+        gap: 3px;
         min-width: 0;
-        padding: 4px 3px;
-        font-size: 15px;
+        padding: 4px 6px;
+        font-size: 14px;
         line-height: 1.05;
         text-align: center;
         hyphens: auto;
@@ -706,8 +713,8 @@ export const HomeTabs: React.FC<{ active: HomeTab; onSelect: (tab: HomeTab) => v
                     }}
                 >
                     {/* Вогник і зірка - однакової видимої висоти (зірка займає ~3/4 свого viewBox). */}
-                    {item.id === "daily" && <Flame size={18} />}
-                    {item.id === "campaign" && <Star on size={24} />}
+                    {item.id === "daily" && <Flame size={16} />}
+                    {item.id === "campaign" && <Star on size={20} />}
                     {t(item.label)}
                 </Tab>
             ))}
