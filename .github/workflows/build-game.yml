@@ -4,7 +4,7 @@
 #
 # Потрібно в Settings -> Secrets and variables -> Actions цього репозиторію:
 #   secret   FIREBASE_SERVICE_ACCOUNT  - JSON ключа service account (Firestore + Storage запис)
-#   variables NEXT_PUBLIC_FIREBASE_*    - ті самі публічні значення, що й у .env.local/Vercel
+#   variables NEXT_PUBLIC_FIREBASE_*, NEXT_PUBLIC_GAMEANALYTICS_* - ті самі публічні значення, що й у .env.local/Vercel
 #             NEXT_PUBLIC_FIRESTORE_DATABASE_ID, NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_PORTAL_ORIGIN
 name: Build game
 
@@ -43,6 +43,8 @@ jobs:
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
       NEXT_PUBLIC_FIREBASE_APP_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_APP_ID }}
       NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ vars.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+      NEXT_PUBLIC_GAMEANALYTICS_GAME_KEY: ${{ vars.NEXT_PUBLIC_GAMEANALYTICS_GAME_KEY }}
+      NEXT_PUBLIC_GAMEANALYTICS_SECRET_KEY: ${{ vars.NEXT_PUBLIC_GAMEANALYTICS_SECRET_KEY }}
       NEXT_PUBLIC_FIRESTORE_DATABASE_ID: ${{ vars.NEXT_PUBLIC_FIRESTORE_DATABASE_ID }}
       NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
       NEXT_PUBLIC_PORTAL_ORIGIN: ${{ vars.NEXT_PUBLIC_PORTAL_ORIGIN }}

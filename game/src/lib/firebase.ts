@@ -4,6 +4,7 @@ import { Auth, getAuth } from "firebase/auth";
 import { Firestore, getFirestore } from "firebase/firestore";
 import { FirebaseStorage, getStorage } from "firebase/storage";
 import { Analytics, getAnalytics, isSupported, logEvent } from "firebase/analytics";
+import { trackGameAnalytics } from "@game/lib/gameAnalytics";
 
 // Публічна (не секретна) конфігурація Firebase Web SDK - значення підставляються
 // збіркою Next.js з .env.local (мають префікс NEXT_PUBLIC_, інакше недоступні в браузері).
@@ -28,8 +29,7 @@ let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
-let analytics: Analytics | null = null;
-let analyticsCheckStarted = false;
+let analyticsReady: Promise<Analytics | null> | null = null;
 
 // Лінива ініціалізація - щоб build/SSR не падав, якщо .env.local ще не заповнений
 // (наприклад, при першому локальному запуску до налаштування Firebase-проєкту).
@@ -71,20 +71,16 @@ export const getFirebaseStorage = (): FirebaseStorage => {
 // Google Analytics, увімкненого у Firebase-проєкті) та середовище його підтримує
 // (isSupported повертає false, напр. у деяких приватних режимах браузера) -
 // тому виклик "тихий": відсутність аналітики ніколи не повинна ламати гру.
-const ensureAnalytics = async (): Promise<Analytics | null> => {
-    if (typeof window === "undefined" || !isFirebaseConfigured || !firebaseConfig.measurementId) return null;
-    if (analytics) return analytics;
-    if (analyticsCheckStarted) return null;
-    analyticsCheckStarted = true;
-
-    try {
-        const supported = await isSupported();
-        if (!supported) return null;
-        analytics = getAnalytics(getFirebaseApp());
-        return analytics;
-    } catch {
-        return null;
+// Один спільний Promise: події, що прийшли, поки isSupported() ще перевіряється, чекають на нього,
+// а не губляться (раніше перші події після старту гри відкидались).
+const ensureAnalytics = (): Promise<Analytics | null> => {
+    if (typeof window === "undefined" || !isFirebaseConfigured || !firebaseConfig.measurementId) return Promise.resolve(null);
+    if (!analyticsReady) {
+        analyticsReady = isSupported()
+            .then((supported) => (supported ? getAnalytics(getFirebaseApp()) : null))
+            .catch(() => null);
     }
+    return analyticsReady;
 };
 
 // Опційні підписники на всі ігрові події, що вже й так проходять через trackEvent
@@ -104,6 +100,7 @@ export const addGameEventListener = (fn: GameEventListener): (() => void) => {
 export const trackEvent = (name: string, params?: Record<string, unknown>): void => {
     listeners.forEach((fn) => fn(name, params));
     if (isLocalDev) return;
+    trackGameAnalytics(name, params);
     void ensureAnalytics().then((instance) => {
         if (instance) logEvent(instance, name, params);
     });
