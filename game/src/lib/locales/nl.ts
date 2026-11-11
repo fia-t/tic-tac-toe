@@ -336,6 +336,8 @@ const pack: LocalePack = {
         adNotFinished: "De beloning krijg je alleen als je de advertentie tot het einde bekijkt.",
         eventThemeBack: "Terug naar het klassieke thema",
         eventThemeGo: "Naar het feestthema",
+        gameSetup: "Spelinstellingen",
+        gameSetupPlay: "Spelen",
         rewardCoins: "+{n} munten",
         rewardTitleCoins: "Munten voor een advertentie",
         rewardTitleStars: "Een ster voor een advertentie",

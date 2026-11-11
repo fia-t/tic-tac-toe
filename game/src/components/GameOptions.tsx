@@ -500,6 +500,16 @@ const ModOption = styled.button`
     }
 `;
 
+const PHONE_SHEET = "(max-width: 560px)";
+
+// Затемнення під списком-аркушем на телефоні (клік по ньому - "поза списком", закриває).
+const SheetShade = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 1690;
+    background: rgba(40, 24, 8, 0.55);
+`;
+
 const Chevron = () => (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M5 9l7 7 7-7" />
@@ -550,6 +560,27 @@ export const ModifierSelect = ({
 
     const toggle = () => {
         if (open) return setOpen(false);
+        // Телефон: список - аркушем знизу на всю ширину, з крупнішим текстом (затемнення - під ним).
+        if (floating && window.matchMedia(PHONE_SHEET).matches) {
+            setAt({
+                position: "fixed",
+                top: "auto",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                width: "100%",
+                maxHeight: "80dvh",
+                zIndex: 1700,
+                padding: "12px 12px calc(16px + env(safe-area-inset-bottom, 0px))",
+                borderRadius: "24px 24px 0 0",
+                gap: 4,
+                ["--mod-menu-b" as string]: "17px",
+                ["--mod-menu-s" as string]: "14px",
+                ["--mod-opt-pad" as string]: "10px 10px",
+            });
+            setOpen(true);
+            return;
+        }
         if (floating && ref.current) {
             const r = ref.current.getBoundingClientRect();
             const w = Math.min(300, window.innerWidth - 32);
@@ -643,7 +674,16 @@ export const ModifierSelect = ({
                 )}
                 <Chevron />
             </ModToggle>
-            {open && (floating ? createPortal(menu, document.body) : menu)}
+            {open &&
+                (floating
+                    ? createPortal(
+                          <>
+                              {at?.bottom === 0 && <SheetShade aria-hidden="true" />}
+                              {menu}
+                          </>,
+                          document.body
+                      )
+                    : menu)}
         </ModPicker>
     );
 };

@@ -336,6 +336,8 @@ const pack: LocalePack = {
         adNotFinished: "La récompense n’est donnée que si tu regardes la pub jusqu’au bout.",
         eventThemeBack: "Revenir au thème classique",
         eventThemeGo: "Passer au thème festif",
+        gameSetup: "Réglages de la partie",
+        gameSetupPlay: "Jouer",
         rewardCoins: "+{n} pièces",
         rewardTitleCoins: "Des pièces contre une pub",
         rewardTitleStars: "Une étoile contre une pub",

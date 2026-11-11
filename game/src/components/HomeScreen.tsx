@@ -179,12 +179,14 @@ export const Tab = styled.button`
     }
 
     @media (max-width: 420px) {
-        font-size: 13px;
+        font-size: 15px;
+        line-height: 1.05;
+        text-align: center;
     }
 
     @media (max-height: 820px) {
-        min-height: 36px;
-        padding: 7px 4px;
+        min-height: 40px;
+        padding: 6px 4px;
     }
 `;
 
@@ -255,7 +257,7 @@ const ModeButton = styled.button`
     }
 
     @media (max-height: 700px) {
-        font-size: 13px;
+        font-size: 14px;
 
         img {
             max-width: 64px;
@@ -289,7 +291,7 @@ const OptGroup = styled.div`
 // Опис вибраного - завжди в один рядок: довгий обрізається "…", повний текст у title.
 const OptInfo = styled.div`
     color: #7a5530;
-    font-size: 14px;
+    font-size: 15px;
     line-height: 1.35;
     white-space: nowrap;
     overflow: hidden;
@@ -470,6 +472,11 @@ const EyebrowInfo = styled(Eyebrow)`
     display: inline-flex;
     align-items: center;
     gap: 6px;
+
+    /* Телефон: підписи груп крупніше. */
+    @media (max-width: 560px) {
+        font-size: 14px;
+    }
 `;
 
 const LinkButton = styled.button`

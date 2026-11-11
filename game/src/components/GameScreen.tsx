@@ -16,7 +16,7 @@ import { BoosterKind, FREE_SKIN_ID, boosterStock, equipSkin, getEquippedSkinId, 
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
 import { useT } from "@game/lib/i18n";
-import { Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
+import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
 import { GameModeKey, MODIFIERS_BY_MODE, Modifier, TIMER_SECONDS, effectiveModifier, setModifier, useModifierChoice, weeklyModifier } from "@game/lib/modifiers";
 
@@ -34,7 +34,7 @@ export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefi
 // Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
-export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean; $switch?: boolean }>`
+export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean; $switch?: boolean; $sitePhone?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
@@ -97,6 +97,18 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
             gap: 10px;
             /* По вертикальному центру екрана (AppColumn - flex-колонка). */
             margin-block: auto;
+        `}
+
+    /* Телефон на сайті й порталі: над полем шапка (44), рядок виборів (52) і рахунок (44), під полем -
+       панель дій (~110) і відступи; колонка на всю висоту - панель дій притиснута донизу. */
+    ${({ $sitePhone }) =>
+        $sitePhone &&
+        css`
+            --board-w: min(100%, max(220px, calc(100dvh - 318px - var(--timer-h) - var(--switch-h))));
+            flex: 1 0 auto;
+            gap: 10px;
+            padding-top: 8px;
+            padding-bottom: 10px;
         `}
 
     /* Гра в новині на телефоні в самому iframe (~370×190): поле зліва на всю висоту, кнопки - справа. */
@@ -1004,6 +1016,307 @@ const Boosters = styled.div<{ $site?: boolean }>`
     }
 `;
 
+// Телефон на сайті й порталі (до 560px): угорі лише навігація, вибори партії - один рядок-кнопка,
+// що відкриває аркуш знизу; рахунок і статус - над полем; бустери й "Заново" - у панелі під пальцем.
+const SitePhoneHead = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+
+    && ${RoundButton} {
+        --gb-c: 9px;
+        width: 44px;
+        height: 44px;
+        min-height: 44px;
+    }
+`;
+
+const SitePhoneTitle = styled.h1`
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0 0 0 4px;
+    color: #4a2c0c;
+    font: 900 19px/1.2 var(--font-heading);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+`;
+
+const SetupChip = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 52px;
+    padding: 0 14px 0 8px;
+    border: 2px solid #ebcb98;
+    border-radius: 16px;
+    background: var(--score-bg, #fff7e8);
+    box-shadow: inset 0 -3px 0 #ebcb98;
+    color: #4a2c0c;
+    font: 800 16px/1.2 var(--font-body);
+    text-align: left;
+    cursor: pointer;
+
+    img {
+        width: 36px;
+        height: 36px;
+        object-fit: contain;
+        flex-shrink: 0;
+    }
+
+    span {
+        flex: 1 1 auto;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &:disabled {
+        cursor: default;
+        opacity: 0.85;
+    }
+
+    &:disabled > svg {
+        display: none;
+    }
+`;
+
+const SitePhoneStatus = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 44px;
+
+    && ${ScorePill} {
+        max-width: 52%;
+        min-height: 44px;
+        padding: 4px 12px;
+        font-size: 16px;
+    }
+
+    && ${ScorePill} b {
+        font-size: 20px;
+    }
+
+    && ${TurnLine} {
+        font-size: 17px;
+    }
+`;
+
+const SitePhoneDock = styled.div`
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 2px;
+    width: 100%;
+    margin-top: auto;
+    padding: 10px 4px 8px;
+    border: 2px solid #ebcb98;
+    border-radius: 22px;
+    background: var(--score-bg, #fff7e8);
+    box-shadow: 0 -2px 12px rgba(74, 44, 12, 0.08);
+`;
+
+const DockItem = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+
+    && ${RoundButton} {
+        --gb-c: 11px;
+        width: 54px;
+        height: 54px;
+        min-height: 54px;
+    }
+
+    && ${RoundButton} > svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    /* Підпис дублює aria-label кнопки - для читачів екрана прихований. */
+    & > span {
+        max-width: 100%;
+        color: #5b3f22;
+        font: 800 13px/1.15 var(--font-body);
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+`;
+
+const SheetBackdrop = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    background: rgba(40, 24, 8, 0.55);
+`;
+
+const SheetPanel = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    padding: 10px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    border-radius: 26px 26px 0 0;
+    background: #fff7e8;
+    color: #4a2c0c;
+    font: 500 16px/1.35 var(--font-body);
+    box-shadow: 0 -8px 24px rgba(40, 20, 10, 0.25);
+
+    h2 {
+        margin: 0;
+        font: 900 22px/1.2 var(--font-heading);
+    }
+
+    h3 {
+        margin: 0 0 8px;
+        color: #7a5530;
+        font: 800 15px/1.2 var(--font-body);
+    }
+`;
+
+const SheetHead = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+`;
+
+const SheetClose = styled.button`
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 50%;
+    background: #f6e2b8;
+    color: #4a2c0c;
+    cursor: pointer;
+`;
+
+const SheetGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+`;
+
+const SheetChoice = styled.button<{ $on: boolean }>`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    min-height: 48px;
+    padding: 6px 4px;
+    border: ${({ $on }) => ($on ? "3px solid #0f6f8c" : "2px solid #ebcb98")};
+    border-radius: 14px;
+    background: ${({ $on }) => ($on ? "#e6f4f8" : "#fff")};
+    color: #4a2c0c;
+    font: ${({ $on }) => ($on ? 900 : 800)} 16px/1.15 var(--font-body);
+    cursor: pointer;
+
+    img {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+`;
+
+const SheetNote = styled.p`
+    margin: 6px 0 0;
+    color: #5b3f22;
+    font-size: 14px;
+    font-weight: 600;
+`;
+
+const SheetList = styled.div`
+    overflow: hidden;
+    border: 2px solid #ebcb98;
+    border-radius: 16px;
+    background: #fff;
+`;
+
+const SheetRow = styled.button<{ $on: boolean }>`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 52px;
+    padding: 9px 14px;
+    border: 0;
+    border-bottom: 1px solid #f6e2b8;
+    background: ${({ $on }) => ($on ? "#e6f4f8" : "#fff")};
+    color: #4a2c0c;
+    text-align: left;
+    cursor: pointer;
+
+    &:last-child {
+        border-bottom: 0;
+    }
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
+    }
+
+    &::before {
+        content: "";
+        flex-shrink: 0;
+        box-sizing: border-box;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: ${({ $on }) => ($on ? "6px solid #0f6f8c" : "2px solid #b08a5f")};
+    }
+
+    b {
+        display: block;
+        font: 800 16px/1.2 var(--font-body);
+    }
+
+    small {
+        display: block;
+        margin-top: 2px;
+        color: #5b3f22;
+        font: 600 14px/1.3 var(--font-body);
+    }
+
+    em {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 1px 8px;
+        border-radius: 10px;
+        background: #e8662f;
+        color: #fff;
+        font: 900 12px/1.5 var(--font-body);
+        font-style: normal;
+        vertical-align: 1px;
+    }
+`;
+
+const SheetDone = styled.button`
+    ${gameButtonCss("lg")}
+    ${buttonTone("green")}
+    width: 100%;
+`;
+
 // Гра в новині на телефоні (до 760px, зазвичай на весь екран після заставки "Грати"): шириною поля.
 // Перший ряд - повний екран, рахунок, "Заново"; другий - бустери й статус ходу.
 const PhoneBar = styled.div`
@@ -1340,6 +1653,8 @@ export type OnlineScreen = {
 };
 
 const FRIEND_MODE: Record<GameModeKey, "3x3" | "5x5" | "9x9"> = { traditional: "3x3", five: "5x5", difficult: "9x9" };
+// Коротка назва поля в рядку виборів на телефоні.
+const BOARD_SHORT: Record<GameModeKey, string> = { traditional: "3×3", five: "5×5", difficult: "9×9" };
 const MODE_TILES: { id: GameModeKey; img: string; label: "modeClassic" | "modeFive" | "tooltipHard" }[] = [
     { id: "traditional", img: "images/traditional.png", label: "modeClassic" },
     { id: "five", img: "images/game-5x5.png", label: "modeFive" },
@@ -1445,6 +1760,17 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     };
     const phone = usePhoneEmbed(embed);
     const compact = useEmbedCompact(embed);
+    // Телефон на сайті й порталі (не новина): окрема розкладка з аркушем виборів партії.
+    const sitePhone = useMedia("(max-width: 560px)", !embed && goHome !== null);
+    const [setupOpen, setSetupOpen] = useState(false);
+    const sheetClose = useRef<HTMLButtonElement>(null);
+    useEffect(() => {
+        if (!setupOpen) return;
+        sheetClose.current?.focus();
+        const onKey = (event: KeyboardEvent) => event.key === "Escape" && setSetupOpen(false);
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [setupOpen]);
     // Розкладка гри з новини: у новині й на сайті (стрілка "Назад" замість шапки).
     const wide = embed || goHome !== null;
     const restartLabel = online ? online.restart.label : over ? t("playAgain") : t("restart");
@@ -1791,6 +2117,178 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                 </PhoneOptions>
             </GameRoot>
         );
+
+    // Телефон на сайті й порталі: шапка (назад, назва, гра з другом, повний екран, налаштування),
+    // рядок-кнопка з полем / складністю / модифікатором (аркуш знизу), рахунок і статус, поле,
+    // панель бустерів і "Заново" внизу під пальцем.
+    if (sitePhone) {
+        const title = online ? t("homeOnline") : run ? t(run.kind === "campaign" ? "homeCampaign" : "homeDaily") : t("homeQuick");
+        const tile = MODE_TILES.find((item) => item.id === mode) ?? MODE_TILES[0];
+        const modName = t(`modifier_${activeModifier ?? "none"}` as Parameters<typeof t>[0]);
+        const setupText = [BOARD_SHORT[mode], online ? null : t(`difficulty_${difficulty}` as Parameters<typeof t>[0]), modName]
+            .filter(Boolean)
+            .join(" · ");
+        const dockBooster = (kind: BoosterKind, enabled: boolean, onUse: () => void) => (
+            <DockItem key={kind}>
+                {boosterButton(kind, enabled, onUse)}
+                <span aria-hidden="true">{BOOSTER_NAME[kind]}</span>
+            </DockItem>
+        );
+        const showBoosters = quick && !online;
+        return (
+            <GameRoot $sitePhone $timer={timerRunning} $switch={Boolean(themeSwitch)}>
+                <SitePhoneHead data-tour="bar">
+                    {homeButton}
+                    <SitePhoneTitle>{title}</SitePhoneTitle>
+                    {friendButton}
+                    <FullscreenButton round />
+                    <SettingsButton round />
+                </SitePhoneHead>
+
+                {quick ? (
+                    <SetupChip
+                        type="button"
+                        aria-haspopup="dialog"
+                        aria-label={`${t("gameSetup")}: ${setupText}`}
+                        title={setupLocked ? lockTip : undefined}
+                        disabled={setupLocked}
+                        onClick={() => setSetupOpen(true)}
+                    >
+                        <img src={assetUrl(tile.img)} alt="" />
+                        <span>{setupText}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </SetupChip>
+                ) : (
+                    goalBanner
+                )}
+
+                <SitePhoneStatus>
+                    <ScorePill>
+                        <span>{online ? online.leftName : t("ai")}</span>
+                        <b>{score.ai}</b>
+                        <span>:</span>
+                        <b>{score.human}</b>
+                        <span>{humanName ?? t("player")}</span>
+                    </ScorePill>
+                    {turnLine}
+                </SitePhoneStatus>
+
+                {timerRunning && (
+                    <RowTimer>
+                        <MoveTimerBar fraction={timer} seconds={TIMER_SECONDS} boosts />
+                    </RowTimer>
+                )}
+
+                <BoardHolder data-tour="board">
+                    {board}
+                    {overlay}
+                </BoardHolder>
+
+                {themeSwitch && (
+                    <ThemeSwitch type="button" onClick={switchTheme}>
+                        {themeSwitch.label}
+                    </ThemeSwitch>
+                )}
+
+                <SitePhoneDock data-tour="boosters">
+                    {showBoosters && dockBooster("undo", boosters.canUndo, boosters.onUndo)}
+                    {showBoosters && dockBooster("hint", boosters.canHint, boosters.onHint)}
+                    {showBoosters && hasTimer && dockBooster("pause", boosters.canHint && !timerBoost.firstFree && !timerBoost.paused && !timerBoost.frozenNow, pauseMoveTimer)}
+                    {showBoosters && hasTimer && dockBooster("freeze", boosters.canHint && !timerBoost.firstFree && !timerBoost.frozenNow, freezeMoveTimer)}
+                    <DockItem>
+                        {restartButton}
+                        <span aria-hidden="true">{restartLabel}</span>
+                    </DockItem>
+                </SitePhoneDock>
+
+                {setupOpen && (
+                    <SheetBackdrop onClick={(event) => event.target === event.currentTarget && setSetupOpen(false)}>
+                        <SheetPanel role="dialog" aria-modal="true" aria-labelledby="game-setup-title">
+                            <SheetHead>
+                                <h2 id="game-setup-title">{t("gameSetup")}</h2>
+                                <SheetClose ref={sheetClose} type="button" aria-label={t("close")} onClick={() => setSetupOpen(false)}>
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" aria-hidden="true">
+                                        <path d="M6 6l12 12M18 6 6 18" />
+                                    </svg>
+                                </SheetClose>
+                            </SheetHead>
+
+                            <section>
+                                <h3>{t("barBoard")}</h3>
+                                <SheetGrid>
+                                    {MODE_TILES.map((item) => (
+                                        <SheetChoice
+                                            key={item.id}
+                                            type="button"
+                                            $on={mode === item.id}
+                                            aria-pressed={mode === item.id}
+                                            disabled={setupLocked && mode !== item.id}
+                                            onClick={() => pickMode(item.id)}
+                                        >
+                                            <img src={assetUrl(item.img)} alt="" />
+                                            {online && item.id === "difficult" ? "9×9" : t(item.label)}
+                                        </SheetChoice>
+                                    ))}
+                                </SheetGrid>
+                            </section>
+
+                            {!online && (
+                                <section>
+                                    <h3>{t("barBot")}</h3>
+                                    <SheetGrid>
+                                        {DIFFICULTIES.map((level) => (
+                                            <SheetChoice
+                                                key={level}
+                                                type="button"
+                                                $on={difficulty === level}
+                                                aria-pressed={difficulty === level}
+                                                onClick={() => pickDifficulty(level)}
+                                            >
+                                                {t(`difficulty_${level}` as Parameters<typeof t>[0])}
+                                            </SheetChoice>
+                                        ))}
+                                    </SheetGrid>
+                                    <SheetNote>{t(`diffNote_${difficulty}` as Parameters<typeof t>[0])}</SheetNote>
+                                </section>
+                            )}
+
+                            <section>
+                                <h3>{t("modifierLabel")}</h3>
+                                <SheetList>
+                                    {[null, ...MODIFIERS_BY_MODE[mode]].map((value) => (
+                                        <SheetRow
+                                            key={value ?? "none"}
+                                            type="button"
+                                            $on={activeModifier === value}
+                                            aria-pressed={activeModifier === value}
+                                            disabled={setupLocked && activeModifier !== value}
+                                            onClick={() => pickModifier(value)}
+                                        >
+                                            <span>
+                                                <b>
+                                                    {t(`modifier_${value ?? "none"}` as Parameters<typeof t>[0])}
+                                                    {value !== null && value === weekly && <em>{t("homeWeekly")}</em>}
+                                                </b>
+                                                {value && <small>{t(`modifierDesc_${value}` as Parameters<typeof t>[0])}</small>}
+                                            </span>
+                                        </SheetRow>
+                                    ))}
+                                </SheetList>
+                            </section>
+
+                            <SheetDone type="button" onClick={() => setSetupOpen(false)}>
+                                {t("gameSetupPlay")}
+                            </SheetDone>
+                        </SheetPanel>
+                    </SheetBackdrop>
+                )}
+
+                {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
+            </GameRoot>
+        );
+    }
 
     return (
         <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide} $switch={Boolean(themeSwitch)}>
