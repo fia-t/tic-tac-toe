@@ -37,6 +37,18 @@ const ModEdgeRow = styled(ModRow)`
     padding: 2px 0 32px;
     margin-bottom: -32px;
 
+    /* Телефон: усі сім іконок в один ряд без горизонтальної прокрутки - кнопки менші. */
+    @media (max-width: 480px) {
+        gap: 3px;
+
+        && > button {
+            --gb-c: 10px;
+            width: min(40px, calc((100vw - 92px) / 7));
+            height: min(40px, calc((100vw - 92px) / 7));
+            min-height: 0;
+        }
+    }
+
     & > button:nth-child(-n + 2)::after {
         left: calc(-1 * var(--gb-c, 0px));
         transform: none;

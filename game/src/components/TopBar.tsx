@@ -1,6 +1,6 @@
 "use client";
 import { trackEvent } from "@game/lib/firebase";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { gameButtonCss } from "@game/components/GameButton";
 import { tipCss } from "@game/components/GameOptions";
@@ -277,6 +277,139 @@ const PlusButton = styled.button`
     }
 `;
 
+// Вузький екран (до 420px): три плашки з "+" не вміщаються - замість них одна кнопка з компактними
+// лічильниками; натискання відкриває список: кожен ресурс (перехід у його розділ) і його "+".
+const WIDE_STATS = "(min-width: 421px)";
+
+const WideStats = styled.span`
+    display: contents;
+
+    @media (max-width: 420px) {
+        display: none;
+    }
+`;
+
+const ResWrap = styled.div`
+    position: relative;
+    display: none;
+
+    @media (max-width: 420px) {
+        display: block;
+    }
+`;
+
+const ResToggle = styled.button`
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 8px 0 10px;
+    border: none;
+    border-radius: 12px;
+    background: #efd9b0;
+    box-shadow:
+        inset 0 3px 4px rgba(92, 51, 23, 0.3),
+        0 1px 0 rgba(255, 255, 255, 0.75);
+    color: #6b4523;
+    font: 800 15px/1 var(--font-body);
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+
+    & > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    & > svg:last-of-type {
+        transition: transform 0.15s ease;
+    }
+
+    &[aria-expanded="true"] > svg:last-of-type {
+        transform: rotate(180deg);
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: 2px;
+    }
+`;
+
+const ResMenu = styled.div`
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: min(280px, calc(100vw - 24px));
+    padding: 8px;
+    border-radius: 16px;
+    background: #fff7e8;
+    box-shadow:
+        inset 0 0 0 2px #ebcb98,
+        0 14px 30px rgba(73, 48, 31, 0.25);
+`;
+
+const ResRow = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding-right: 10px;
+`;
+
+const ResLink = styled.button`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 48px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    background: transparent;
+    color: #49301f;
+    text-align: left;
+    cursor: pointer;
+
+    & > svg {
+        flex-shrink: 0;
+    }
+
+    span {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    b {
+        font: 900 18px/1.1 var(--font-body);
+        font-variant-numeric: tabular-nums;
+    }
+
+    small {
+        color: #7a5530;
+        font: 700 14px/1.2 var(--font-body);
+    }
+
+    @media (hover: hover) {
+        &:hover {
+            background: #fbeccd;
+        }
+    }
+
+    &:focus-visible {
+        outline: 3px solid #1fb3d9;
+        outline-offset: -3px;
+    }
+`;
+
+// Компактне число: 12 500 -> 12.5K, щоб кнопка не розросталась.
+const compact = (n: number): string => (n >= 10000 ? `${Math.floor(n / 100) / 10}K` : String(n));
+
 const PlusIcon = () => (
     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" aria-hidden="true" style={{ filter: "drop-shadow(0 1px 0 rgba(10, 50, 15, 0.6))" }}>
         <path d="M12 4v16M4 12h16" />
@@ -370,6 +503,31 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
         return () => clearTimeout(timer);
     }, [earning]);
 
+    const [resOpen, setResOpen] = useState(false);
+    const resRef = useRef<HTMLDivElement>(null);
+    // Список ресурсів закривається кліком поза ним, Escape і коли екран стає ширшим (там - плашки).
+    useEffect(() => {
+        if (!resOpen) return;
+        const onDown = (event: PointerEvent) => {
+            if (!resRef.current?.contains(event.target as Node)) setResOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape") setResOpen(false);
+        };
+        const wide = window.matchMedia(WIDE_STATS);
+        const onWide = () => {
+            if (wide.matches) setResOpen(false);
+        };
+        document.addEventListener("pointerdown", onDown);
+        document.addEventListener("keydown", onKey);
+        wide.addEventListener("change", onWide);
+        return () => {
+            document.removeEventListener("pointerdown", onDown);
+            document.removeEventListener("keydown", onKey);
+            wide.removeEventListener("change", onWide);
+        };
+    }, [resOpen]);
+
     const stars = totalStars(campaign);
     const streak = currentStreak(daily);
 
@@ -413,33 +571,112 @@ export const TopBar: React.FC<TopBarProps> = ({ onDaily, crumb, greeting }) => {
             <SettingsButton inline />
             {greeting}
             <Spacer />
-            <Stat>
-                <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
-                    <Flame size={28} />
-                    <span>{streak}</span>
-                </Pill>
-                {plus("streak")}
-            </Stat>
-            <Stat>
-                <Pill
-                    type="button"
-                    onClick={() => openPanel("campaign")}
-                    aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
-                    data-tip={t("tipStars", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
-                >
-                    <StarIcon />
-                    <span>{stars}</span>
-                </Pill>
-                {plus("stars")}
-            </Stat>
-            <Stat>
-                <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} data-tip={t("tipCoins")}>
-                    <Coin size={28} />
-                    <span>{wallet.coins}</span>
+            <WideStats>
+                <Stat>
+                    <Pill type="button" onClick={onDaily} aria-label={t("streakOpen", { n: String(streak) })} data-tip={t("tipStreak", { n: String(streak) })}>
+                        <Flame size={28} />
+                        <span>{streak}</span>
+                    </Pill>
+                    {plus("streak")}
+                </Stat>
+                <Stat>
+                    <Pill
+                        type="button"
+                        onClick={() => openPanel("campaign")}
+                        aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
+                        data-tip={t("tipStars", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
+                    >
+                        <StarIcon />
+                        <span>{stars}</span>
+                    </Pill>
+                    {plus("stars")}
+                </Stat>
+                <Stat>
+                    <Pill type="button" onClick={() => openPanel("shop")} aria-label={t("shopOpen", { n: String(wallet.coins) })} data-tip={t("tipCoins")}>
+                        <Coin size={28} />
+                        <span>{wallet.coins}</span>
+                        {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
+                    </Pill>
+                    {plus("coins")}
+                </Stat>
+            </WideStats>
+            <ResWrap ref={resRef}>
+                <ResToggle type="button" aria-haspopup="true" aria-expanded={resOpen} aria-label={t("resMenu")} onClick={() => setResOpen((v) => !v)}>
+                    <span>
+                        <Flame size={18} />
+                        {compact(streak)}
+                    </span>
+                    <span>
+                        <StarIcon size={22} />
+                        {compact(stars)}
+                    </span>
+                    <span>
+                        <Coin size={18} />
+                        {compact(wallet.coins)}
+                    </span>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M5 9l7 7 7-7" />
+                    </svg>
                     {bubble !== null && <EarnBubble aria-hidden="true">+{bubble}</EarnBubble>}
-                </Pill>
-                {plus("coins")}
-            </Stat>
+                </ResToggle>
+                {resOpen && (
+                    <ResMenu>
+                        <ResRow>
+                            <ResLink
+                                type="button"
+                                onClick={() => {
+                                    setResOpen(false);
+                                    onDaily();
+                                }}
+                                aria-label={t("streakOpen", { n: String(streak) })}
+                            >
+                                <Flame size={30} />
+                                <span>
+                                    <b>{streak}</b>
+                                    <small>{t("resStreak")}</small>
+                                </span>
+                            </ResLink>
+                            {plus("streak")}
+                        </ResRow>
+                        <ResRow>
+                            <ResLink
+                                type="button"
+                                onClick={() => {
+                                    setResOpen(false);
+                                    openPanel("campaign");
+                                }}
+                                aria-label={t("campaignOpen", { n: String(stars), total: String(CAMPAIGN_LEVELS.length * 3) })}
+                            >
+                                <StarIcon size={38} />
+                                <span>
+                                    <b>
+                                        {stars} / {CAMPAIGN_LEVELS.length * 3}
+                                    </b>
+                                    <small>{t("resStars")}</small>
+                                </span>
+                            </ResLink>
+                            {plus("stars")}
+                        </ResRow>
+                        <ResRow>
+                            <ResLink
+                                type="button"
+                                onClick={() => {
+                                    setResOpen(false);
+                                    openPanel("shop");
+                                }}
+                                aria-label={t("shopOpen", { n: String(wallet.coins) })}
+                            >
+                                <Coin size={30} />
+                                <span>
+                                    <b>{wallet.coins}</b>
+                                    <small>{t("resCoins")}</small>
+                                </span>
+                            </ResLink>
+                            {plus("coins")}
+                        </ResRow>
+                    </ResMenu>
+                )}
+            </ResWrap>
             {reward && <RewardPopup kind={reward} icon={REWARD_ICON[reward]} onRewardedAd={rewarded} onClose={() => setReward(null)} />}
         </Bar>
     );
