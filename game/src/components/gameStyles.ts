@@ -1,6 +1,7 @@
 "use client";
 import styled, { createGlobalStyle, css, keyframes } from "styled-components";
 import { assetUrl } from "@game/lib/assets";
+import { winterBackdrop } from "@game/components/themeFxStyles";
 
 // Вигляд поля (як у прототипі й артах порталу): об'ємна плита з тінню й світлим краєм,
 // клітинки - окремі заглиблені плитки поверх фону теми, без ліній-розділювачів.
@@ -166,6 +167,7 @@ export const Container = styled.div`
     background-size: auto, auto, auto, 22px 22px, auto;
     background-repeat: no-repeat, no-repeat, no-repeat, repeat, no-repeat;
     color: white;
+    ${winterBackdrop}
 `;
 
 // Стилі для ігрового контейнера.

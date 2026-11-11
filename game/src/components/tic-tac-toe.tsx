@@ -52,6 +52,7 @@ import { useDailyRun } from "@game/lib/daily";
 import { pickMasterMove3, randomFreeCell } from "@game/components/aiLevels";
 import { playSound } from "@game/lib/sound";
 import { CoinToss, useBotCoinToss } from "@game/components/CoinToss";
+import { setThemeFx } from "@game/lib/themeFx";
 
 const makeComputerMove = (board: Grid3, playerMarker: string, aiMarker: string, difficulty: Difficulty): [number, number] => {
     // Легкий: інколи просто випадковий хід. Майстер: мінімакс (непереможний).
@@ -129,6 +130,8 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     const equippedSkinId = getEquippedSkinId(useWallet());
     const skinId = embed?.skinId ?? equippedSkinId;
     const theme: Theme = availableThemes.find((item) => item.id === skinId) ?? CLASSIC_THEME;
+    // Оформлення скіна (сніг, бурульки, колір виграшу) - на всю гру, поки його вибрано; не в грі з новини.
+    useEffect(() => setThemeFx(embed ? undefined : theme.fx), [embed, theme.fx]);
     // Пул імен завантажено - ім'я гравця з пулу можна показати мовою гри.
     const [, setNamesLoaded] = useState(false);
     const [score, setScore] = useState({ ai: 0, human: 0 });

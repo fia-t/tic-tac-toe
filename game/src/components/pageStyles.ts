@@ -1,5 +1,6 @@
 "use client";
 import styled, { createGlobalStyle } from "styled-components";
+import { winterFrost } from "@game/components/themeFxStyles";
 
 // Шапка гри - у потоці сторінки (TopBar), тож верхній відступ Container під кнопку в куті
 // не потрібен; бічні поля - як у прототипі.
@@ -122,6 +123,7 @@ export const Card = styled.section<{ $tone?: "daily" }>`
     box-shadow:
         inset 0 -5px 0 #ebcb98,
         0 12px 24px rgba(70, 40, 10, 0.16);
+    ${winterFrost("inset 0 -5px 0 #ebcb98, 0 12px 24px rgba(70, 40, 10, 0.16)")}
 
     h2 {
         margin: 0;

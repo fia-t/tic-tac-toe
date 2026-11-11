@@ -60,9 +60,9 @@ const winPulse = keyframes`
 `;
 
 // Подвійне світіння: щільне біле ядро читається навіть на світлих/жовтих фонах тем,
-// золотий ореол - на темних.
+// золотий ореол - на темних (у зимовому скіні - блакитний, див. themeFxStyles).
 export const winGlow =
-    "drop-shadow(0 0 4px rgba(255, 255, 255, 1)) drop-shadow(0 0 10px rgba(255, 210, 60, 1)) drop-shadow(0 0 20px rgba(255, 170, 20, 0.9))";
+    "drop-shadow(0 0 4px rgba(255, 255, 255, 1)) drop-shadow(0 0 10px var(--win-glow-a, rgba(255, 210, 60, 1))) drop-shadow(0 0 20px var(--win-glow-b, rgba(255, 170, 20, 0.9)))";
 
 // Обгортка для будь-якого елемента переможної лінії (напр. результат міні-поля в Ultimate).
 export const WinningHighlight = styled.div<{ $active: boolean }>`

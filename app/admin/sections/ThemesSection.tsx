@@ -15,6 +15,7 @@ import {
     eventStatus,
     shortDate,
     type EventStatus,
+    type ThemeFx,
 } from "@game/lib/themes";
 import { deleteField } from "firebase/firestore";
 import styled from "styled-components";
@@ -249,6 +250,21 @@ export const ThemesSection: React.FC = () => {
         }
     };
 
+    // Оформлення гри для скіна (сніг, бурульки, колір виграшу); порожньо - звичайне.
+    const handleFxSave = async (theme: Theme, value: string) => {
+        if ((theme.fx ?? "") === value) return;
+        setBusyThemeId(theme.id);
+        setThemesError(null);
+        try {
+            await saveTheme(theme, { fx: (value as ThemeFx) || deleteField() } as Partial<Theme>);
+            await refreshThemes();
+        } catch (err) {
+            setThemesError(describeError("Не вдалося зберегти оформлення.", err));
+        } finally {
+            setBusyThemeId(null);
+        }
+    };
+
     // Назва (укр.) і назва англійською - зберігаються при виході з поля.
     const handleNameSave = async (theme: Theme, field: "name" | "nameEn", raw: string) => {
         const value = raw.trim();
@@ -410,6 +426,14 @@ export const ThemesSection: React.FC = () => {
                                             </DateRow>
                                         )}
                                     </EventBox>
+
+                                    <SmallLabel>
+                                        Оформлення гри
+                                        <TextInput as="select" value={theme.fx ?? ""} disabled={busy} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => void handleFxSave(theme, e.target.value)}>
+                                            <option value="">Звичайне</option>
+                                            <option value="winter">Зима: сніг, бурульки, блакитна підсвітка виграшу</option>
+                                        </TextInput>
+                                    </SmallLabel>
 
                                     {!complete && <ErrorText style={{ margin: 0 }}>Додайте всі 3 зображення, щоб тема стала доступною в грі.</ErrorText>}
 

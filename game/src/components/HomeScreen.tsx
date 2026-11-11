@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
+import { winterFrost, winterIcicles } from "@game/components/themeFxStyles";
 import { GameButton } from "@game/components/GameButton";
 import { DiffButton, DiffGroup, ModIcon, ModifierSelect } from "@game/components/GameOptions";
 import { FriendGameModal } from "@game/components/FriendGameModal";
@@ -148,6 +149,8 @@ export const Tabs = styled.div<{ $cols?: number }>`
     border-radius: 18px;
     background: rgba(255, 246, 230, 0.7);
     box-shadow: inset 0 -3px 0 #ebcb98;
+    ${winterIcicles}
+    ${winterFrost("inset 0 -3px 0 #ebcb98")}
 `;
 
 export const Tab = styled.button`

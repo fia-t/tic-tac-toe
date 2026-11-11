@@ -36,7 +36,12 @@ export type Theme = {
     // скін зникає з магазину (у кого він уже є - лишається). Порожньо - без обмеження з того боку.
     eventStart?: string;
     eventEnd?: string;
+    // Оформлення гри, поки скін вибрано: "winter" - блакитне світіння виграшу, сніг на фоні, бурульки.
+    fx?: ThemeFx;
 };
+
+export const THEME_FX = ["winter"] as const;
+export type ThemeFx = (typeof THEME_FX)[number];
 
 export type EventStatus = "none" | "soon" | "live" | "ended";
 
@@ -197,6 +202,7 @@ const toTheme = (id: string, data: Record<string, unknown>): Theme => ({
     event: data.event === true,
     eventStart: typeof data.eventStart === "string" && DATE_RE.test(data.eventStart) ? data.eventStart : undefined,
     eventEnd: typeof data.eventEnd === "string" && DATE_RE.test(data.eventEnd) ? data.eventEnd : undefined,
+    fx: (THEME_FX as readonly unknown[]).includes(data.fx) ? (data.fx as ThemeFx) : undefined,
 });
 
 // Публічний список активних тем - читає будь-хто, навіть до анонімного входу

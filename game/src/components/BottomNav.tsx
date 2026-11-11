@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import styled from "styled-components";
+import { WINTER } from "@game/components/themeFxStyles";
 import { gameButtonCss } from "@game/components/GameButton";
 import { useT } from "@game/lib/i18n";
 
@@ -22,6 +23,11 @@ const Nav = styled.nav`
     padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
     background: linear-gradient(to top, rgba(243, 226, 196, 0.97) 0%, rgba(243, 226, 196, 0.9) 55%, rgba(243, 226, 196, 0) 100%);
     pointer-events: none;
+
+    /* Зимовий скін: замість піщаної смуги - сніг. */
+    ${WINTER} & {
+        background: linear-gradient(to top, rgba(246, 251, 255, 0.97) 0%, rgba(240, 248, 255, 0.9) 55%, rgba(240, 248, 255, 0) 100%);
+    }
 
     & > div {
         max-width: 760px;
