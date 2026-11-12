@@ -348,13 +348,13 @@ const Buttons = styled.div<{ $two: boolean }>`
     gap: 10px;
 `;
 
-const AdButton = styled.span`
+export const AdButton = styled.span`
     position: relative;
     display: block;
 `;
 
 // Ярлик "AD" - як на бустерах: помаранчевий, з кремовим обідком, трохи нахилений.
-const AdTag = styled.span`
+export const AdTag = styled.span`
     position: absolute;
     top: -8px;
     right: -6px;

@@ -1,12 +1,15 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, PillButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
 import { buttonTone } from "@game/components/GameButton";
 import { Coin } from "@game/components/SkinShop";
-import { getWallet, useWallet } from "@game/lib/wallet";
+import { AdButton, AdTag } from "@game/components/DailyGift";
+import { RewardedAdContext } from "@game/components/GameScreen";
+import { earnCoins, getWallet, useWallet } from "@game/lib/wallet";
+import { watchRewardedAd } from "@game/lib/adTracking";
 import { getProfile, useProfile } from "@game/lib/profile";
 import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
@@ -17,7 +20,9 @@ import { EmbedResult } from "@game/components/EmbedResult";
 // Вікно після партії проти ШІ (як у прототипі): режим і результат по центру, нагороди -
 // іконки з числами (не кнопки), далі "Ще раз" і "До меню". Клік поза вікном лише ховає його.
 
-export type RoundSummary = { coins: number; xp: number; moves: number };
+// round - сталий для однієї партії об'єкт (точка відліку нагород): по ньому вікно пам'ятає,
+// що монети цієї партії вже подвоєні, навіть якщо його закрили й відкрили знову.
+export type RoundSummary = { coins: number; xp: number; moves: number; round?: object };
 
 // Для вікон, що не бачать дошку (виклик дня, рівень кампанії): знімок монет і досвіду на старті
 // й підсумок відносно нього.
@@ -27,7 +32,11 @@ export const rewardsSince = (base: RewardBase, moves: number): RoundSummary => (
     coins: Math.max(0, getWallet().coins - base.coins),
     xp: Math.max(0, getProfile().xp - base.xp),
     moves,
+    round: base,
 });
+
+// Партія -> скільки монет додано за рекламу (×2). Без round (онлайн) - лише в межах вікна.
+const doubledRounds = new WeakMap<object, number>();
 
 // Підсумок поточної партії: скільки ходів зробив гравець і скільки монет/досвіду додалось.
 // Нагороди нараховують обробники ігрових подій (wallet.ts, profile.ts) - тут різниця між
@@ -58,6 +67,7 @@ export const useRoundSummary = (cells: unknown[], playerMarker: string): RoundSu
         coins: Math.max(0, wallet.coins - base.current.coins),
         xp: Math.max(0, profile.xp - base.current.xp),
         moves,
+        round: base.current,
     };
 };
 
@@ -257,6 +267,44 @@ const PrimaryButton = styled(PillButton)`
     ${buttonTone("primary")}
 `;
 
+const AdPillButton = styled(PillButton)`
+    ${buttonTone("amber")}
+    width: 100%;
+`;
+
+// "×2 монети за рекламу" - лише після перемоги з монетами й там, де є реклама за винагороду
+// (портал). Додає ще стільки ж монет, скільки дала партія; один раз на партію.
+const useWinDouble = (result: "win" | "lose" | "draw", summary: RoundSummary) => {
+    const rewarded = useContext(RewardedAdContext);
+    const [localBonus, setLocalBonus] = useState<number | undefined>(undefined);
+    const [watching, setWatching] = useState(false);
+    const bonus = (summary.round && doubledRounds.get(summary.round)) ?? localBonus;
+    const available = Boolean(rewarded) && result === "win" && summary.coins > 0 && bonus === undefined;
+
+    const watch = async () => {
+        if (!rewarded || watching || bonus !== undefined) return;
+        const amount = summary.coins;
+        const round = summary.round;
+        setWatching(true);
+        try {
+            if (await watchRewardedAd("win_double", rewarded, { coins: amount })) {
+                // Перевірка ще раз: поки йшла реклама, вікно могли закрити й подвоїти з іншого.
+                if (round && doubledRounds.has(round)) return;
+                if (round) doubledRounds.set(round, amount);
+                setLocalBonus(amount);
+                earnCoins(amount);
+            }
+        } finally {
+            setWatching(false);
+        }
+    };
+
+    // Після подвоєння показуємо монети партії ×2 (живий підсумок і так уже включає бонус,
+    // знімок кампанії/виклику дня - ні; так однаково для обох).
+    const coins = bonus !== undefined ? bonus * 2 : summary.coins;
+    return { available, watching, watch, coins, doubled: bonus !== undefined };
+};
+
 type ResultPopupProps = {
     result: "win" | "lose" | "draw";
     summary: RoundSummary;
@@ -318,6 +366,7 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
     secondary,
 }) => {
     const t = useT();
+    const double = useWinDouble(result, summary);
     // Гра з новини (iframe): без нагород і "До меню", для хелловінського скіна - анімація.
     if (isEmbed()) return <EmbedResult result={result} onClose={onClose} onRestart={onRestart} />;
     // Яку дію обрали після партії - видно, де гравці зупиняються (меню / закрили) чи грають далі.
@@ -345,10 +394,27 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                     </StarsRow>
                 )}
                 <Rewards role="list">
-                    <RewardStat icon={<Coin size={30} />} value={summary.coins} prefix="+" label={t("resultCoins", { n: String(summary.coins) })} order={0} count />
+                    {/* key: після ×2 нагорода з'являється наново - з відліком, іскрами й звуком монет. */}
+                    <RewardStat
+                        key={double.doubled ? "x2" : "x1"}
+                        icon={<Coin size={30} />}
+                        value={double.coins}
+                        prefix="+"
+                        label={t("resultCoins", { n: String(double.coins) })}
+                        order={0}
+                        count
+                    />
                     <RewardStat icon={<Steps />} value={summary.moves} label={t("resultMoves", { n: String(summary.moves) })} order={1} count={false} />
                 </Rewards>
                 {extra && <Extra>{extra}</Extra>}
+                {double.available && (
+                    <AdButton>
+                        <AdPillButton type="button" disabled={double.watching} onClick={() => void double.watch()}>
+                            {t("giftDouble")}
+                        </AdPillButton>
+                        <AdTag aria-hidden="true">AD</AdTag>
+                    </AdButton>
+                )}
                 <PrimaryButton type="button" data-attract="" onClick={act("restart", onRestart)} disabled={restartDisabled}>
                     {restartLabel ?? t("playAgain")}
                 </PrimaryButton>

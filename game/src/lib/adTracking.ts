@@ -11,6 +11,7 @@ export type AdPlacement =
     | "stars"
     | "streak"
     | "gift_double"
+    | "win_double"
     | "booster"
     | "friend_game";
 

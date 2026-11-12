@@ -180,6 +180,7 @@ export const OnlineBoard: React.FC<OnlineBoardProps> = ({ roomId, room, mySymbol
         coins: Math.max(0, wallet.coins - base.current.coins),
         xp: Math.max(0, profile.xp - base.current.xp),
         moves: room.board.filter((cell) => cell === mySymbol).length,
+        round: base.current,
     };
 
     const opponentSymbol: PlayerSymbol = mySymbol === "X" ? "O" : "X";
