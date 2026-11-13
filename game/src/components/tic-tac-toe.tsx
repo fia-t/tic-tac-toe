@@ -145,22 +145,22 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Поточна партія для відкладених ходів бота: після рестарту старий хід не застосовується.
     const roundRef = useRef(round);
     roundRef.current = round;
-    // Гра відкривається на головному меню; "game" - саме поле, решта - розділи нижнього меню.
-    const [screen, setScreen] = useState<Screen>(embed ? "game" : "home");
+    // Гра відкривається одразу на полі "Класика 3×3" (і для новачка, і для тих, хто вже грав):
+    // перша партія - без меню й зайвих кліків. Меню - кнопка "Назад" у смузі над полем.
+    // "game" - саме поле, решта - головна й розділи нижнього меню.
+    const [screen, setScreen] = useState<Screen>("game");
     // Вогник серії в шапці - прокрутити головну до картки виклику дня.
     const [focusDaily, setFocusDaily] = useState(0);
     const topRef = useRef<HTMLDivElement>(null);
     // Область прокрутки сторінок меню (між шапкою й нижнім меню).
     const menuScrollRef = useRef<HTMLDivElement>(null);
     const profile = useProfile();
-    // Новачок (ще жодної партії) - одразу на полі "Класика 3×3", а не в меню: так не треба
-    // шукати, як почати гру. Меню - логотип у шапці.
+    // Новачок (ще жодної партії) - туторіал і підказка першого ходу, без монетки.
     const isNewPlayer = profile.stats.games === 0;
     // Перша партія новачка - на рівні "Легкий" (якщо він ще сам не обирав рівень),
     // щоб перша гра частіше закінчувалась перемогою.
     useEffect(() => {
         if (getProfile().stats.games !== 0) return;
-        setScreen("game");
         if (!hasStoredDifficulty()) setDifficulty("easy");
     }, []);
     // Ім'я, яке гравець задав сам, - головне; інакше ім'я акаунта порталу (якщо знаємо), інакше наше випадкове.

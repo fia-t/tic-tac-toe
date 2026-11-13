@@ -182,7 +182,7 @@ export const Tutorial: React.FC<{ onDone: () => void; steps?: TutorialStep[]; do
         trackEvent("tutorial_step", { step: step + 1 });
     }, [step]);
 
-    // Поки відкрито туторіал - гра на паузі (App.tsx шле порталу gameplayStop/Start).
+    // Події для аналітики; гру туторіал не ставить на паузу - поле лишається клікабельним.
     useEffect(() => {
         trackEvent("tutorial_shown");
         return () => trackEvent("tutorial_closed");

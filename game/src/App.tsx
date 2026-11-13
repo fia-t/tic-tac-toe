@@ -159,12 +159,8 @@ export default function App() {
                 case "open_game":
                     startGameplay();
                     break;
-                case "tutorial_shown":
-                    lifecycle.setPaused("tutorial", true);
-                    break;
-                case "tutorial_closed":
-                    lifecycle.setPaused("tutorial", false);
-                    break;
+                // Туторіал - картки поверх поля, що не блокують ходи: це гра, а не пауза
+                // (інакше перша партія новачка не рахувалась порталом як геймплей).
                 case "open_menu":
                     lifecycle.setGameplay(false);
                     sdk.setGameContext?.({ screen: "menu", stats: getProfile().stats });
@@ -193,8 +189,11 @@ export default function App() {
     // Дошка 3×3 одразу доступна для ходу - тож після завантаження одразу йде партія.
     const handleReady = useCallback(() => {
         lifecycle.loadingStop();
-        // Гра відкривається на головному меню - геймплей стартує, коли гравець перейде до поля.
-        sdk.setGameContext?.({ screen: "menu", stats: getProfile().stats });
+        // Гра відкривається одразу на полі. Подія open_game могла прийти ще до підписки вище
+        // (ефекти дітей ідуть раніше за батьківські), тож геймплей вмикаємо й тут.
+        const onBoard = getScreen() === "game";
+        if (onBoard) lifecycle.setGameplay(true);
+        sdk.setGameContext?.({ screen: onBoard ? "game" : "menu", mode: onBoard ? "traditional" : undefined, difficulty: getDifficulty(), stats: getProfile().stats });
     }, []);
 
     const handleRoomStatus = useCallback(
