@@ -21,9 +21,11 @@ import { setFullscreenProvider } from "@game/lib/fullscreen";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 import { watchRewardedAd } from "@game/lib/adTracking";
 
-// Після кожних 5 зіграних партій - midgame-реклама перед наступною (6-ю) партією: не посеред
-// результату, а коли гравець сам починає нову гру. Ліміти частоти перевіряє ще й портал.
-const MIDGAME_AD_EVERY = 5;
+// Midgame-реклама - за часом, а не за кількістю партій (партія триває ~1 хв, і до 5-ї мало хто
+// доходив): коли гравець сам починає нову гру (не посеред результату), якщо від початку сесії чи
+// минулої реклами минуло 3 хв і відтоді зіграно хоч одну партію з ботом. Новачку в його першій
+// сесії - без реклами: він ще вирішує, чи лишатись. Ліміти частоти перевіряє ще й портал.
+const MIDGAME_INTERVAL_MS = 3 * 60_000;
 
 // Invite-лінк "Гри з другом" веде на сайт (/play/<roomId>), а не на origin, з якого
 // віддано цей білд - у самому білді маршруту /play немає. На порталі замість нього
@@ -76,8 +78,11 @@ export default function App() {
     // не рендеримо - інакше меню блимнуло б іншою мовою чи перед переходом у кімнату
     // (і випадкове імʼя гравця обралось би не з того мовного пулу).
     const [startupChecked, setStartupChecked] = useState(!sdk.getInviteParams && !sdk.getLocale);
-    const finishedCount = useRef(0);
-    const midgameDue = useRef(false);
+    // Партії з ботом після минулої midgame-реклами, усі партії цієї сесії й час минулої реклами
+    // (на старті - початок сесії).
+    const gamesSinceAd = useRef(0);
+    const sessionGames = useRef(0);
+    const lastAdAt = useRef(Date.now());
     const panel = useOpenPanel();
 
     // Відкрите вікно поверх гри (налаштування, магазин, нагороди...) - пауза: порталу gameplayStop,
@@ -131,12 +136,18 @@ export default function App() {
         }
 
         // Початок партії: якщо настала черга - спершу реклама (геймплей стоїть), потім гра.
+        const midgameDue = () =>
+            gamesSinceAd.current > 0 &&
+            Date.now() - lastAdAt.current >= MIDGAME_INTERVAL_MS &&
+            // Новачок: до цієї сесії не зіграв жодної партії (лічильник профілю включає й партії сесії).
+            getProfile().stats.games - sessionGames.current > 0;
         const startGameplay = () => {
-            if (!midgameDue.current) {
+            if (!midgameDue()) {
                 lifecycle.setGameplay(true);
                 return;
             }
-            midgameDue.current = false;
+            gamesSinceAd.current = 0;
+            lastAdAt.current = Date.now();
             void sdk.showMidgameAd().finally(() => {
                 if (getScreen() === "game") lifecycle.setGameplay(true);
             });
@@ -170,10 +181,8 @@ export default function App() {
                     lifecycle.setGameplay(false);
                     const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
                     sdk.setGameContext?.({ screen: "result", mode, result, difficulty: getDifficulty(), stats: getProfile().stats });
-                    if (name === "game_finished") {
-                        finishedCount.current += 1;
-                        if (finishedCount.current % MIDGAME_AD_EVERY === 0) midgameDue.current = true;
-                    }
+                    sessionGames.current += 1;
+                    if (name === "game_finished") gamesSinceAd.current += 1;
                     break;
                 }
             }
