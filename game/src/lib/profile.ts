@@ -60,6 +60,10 @@ export const levelBounds = (level: number): [number, number] => [(level - 1) ** 
 
 const XP = { win: 20, draw: 8, lose: 3, onlineWin: 25, onlineDraw: 10, onlineLoss: 4, daily: 15, campaignStar: 5 };
 
+// Бонус за серію перемог над ботом: з 2-ї перемоги поспіль +2 монети за кожну, до +10 (6+ поспіль).
+// Мотивує зіграти ще партію замість виходу після перемоги.
+export const streakBonus = (streak: number): number => (streak < 2 ? 0 : Math.min((streak - 1) * 2, 10));
+
 // --- досягнення ---
 
 export type Achievement = { id: string; reward: number; progress: (s: ProfileState) => [number, number] };
@@ -222,6 +226,7 @@ if (typeof window !== "undefined") {
                 }),
                 result === "win" ? XP.win : result === "draw" ? XP.draw : XP.lose
             );
+            earnCoins(streakBonus(state.stats.currentStreak));
         } else if (name === "online_game_finished") {
             const result = params?.result === "win" ? "win" : params?.result === "draw" ? "draw" : "lose";
             recordResult(

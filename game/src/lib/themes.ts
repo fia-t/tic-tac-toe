@@ -215,9 +215,34 @@ export const getActiveThemes = async (): Promise<Theme[]> => {
         // Усі документи (не лише active) - щоб вимкнений в адмінці вбудований скін не повертався з коду.
         // Сортування "order" - на клієнті (каталог невеликий, читання публічне).
         const snap = await getDocs(collection(db, themesCollection));
-        return withCampaignThemes(snap.docs.map((d) => withBuiltIn(toTheme(d.id, d.data()))));
+        const themes = withCampaignThemes(snap.docs.map((d) => withBuiltIn(toTheme(d.id, d.data()))));
+        writeCachedThemes(themes);
+        return themes;
     } catch {
         return BUILT_IN_THEMES;
+    }
+};
+
+// Список тем з останнього вдалого завантаження - щоб наступний запуск гри не чекав Firestore:
+// поле показується одразу з кешованим списком, свіжий підтягується у фоні.
+const THEMES_CACHE_KEY = "ttt-themes-cache-v1";
+
+const writeCachedThemes = (themes: Theme[]): void => {
+    try {
+        localStorage.setItem(THEMES_CACHE_KEY, JSON.stringify(themes.map((theme) => ({ ...theme, createdAt: null }))));
+    } catch {
+        // Сховище недоступне (приватний режим, заборона в iframe) - просто без кешу.
+    }
+};
+
+export const readCachedThemes = (): Theme[] | null => {
+    try {
+        const list: unknown = JSON.parse(localStorage.getItem(THEMES_CACHE_KEY) ?? "null");
+        if (!Array.isArray(list) || !list.length) return null;
+        const valid = list.every((item) => item && typeof item.id === "string" && typeof item.xMarkerUrl === "string");
+        return valid ? (list as Theme[]) : null;
+    } catch {
+        return null;
     }
 };
 

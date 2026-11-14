@@ -80,6 +80,8 @@ const uk = {
     roomSetupRated: "У рейтинговому матчі поле й модифікатор не змінюються",
     waitingRematch: "Очікуємо, поки суперник погодиться...",
     playAgain: "Грати ще раз",
+    streakWin: "Серія перемог: {n} · бонус +{b} {b:монета|монети|монет}",
+    streakNext: "Виграй ще раз - бонус +{b} {b:монета|монети|монет}",
     opponentWantsRematch: "Суперник хоче реванш!",
     firebaseTitle: "Firebase не налаштовано",
     firebaseBody:
@@ -556,6 +558,8 @@ const en: Record<Key, string> = {
     roomSetupRated: "The board and modifier are fixed in a rated match",
     waitingRematch: "Waiting for your opponent to accept...",
     playAgain: "Play again",
+    streakWin: "Win streak: {n} · +{b} bonus coins",
+    streakNext: "Win again for +{b} bonus coins",
     opponentWantsRematch: "Your opponent wants a rematch!",
     firebaseTitle: "Firebase is not configured",
     firebaseBody:

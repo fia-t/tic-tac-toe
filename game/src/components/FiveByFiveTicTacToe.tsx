@@ -362,6 +362,7 @@ export const FiveByFiveTicTacToe: React.FC<FiveByFiveProps> = ({
                     onClose={() => setShowResultPopup(false)}
                     onRestart={restartGame}
                     onMenu={onMenu}
+                    botStreak
                 />
             )}
 

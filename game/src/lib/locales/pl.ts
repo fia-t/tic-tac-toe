@@ -62,6 +62,8 @@ const pack: LocalePack = {
         roomSetupRated: "W meczu rankingowym plansza i modyfikator się nie zmieniają",
         waitingRematch: "Czekamy, aż przeciwnik się zgodzi...",
         playAgain: "Zagraj jeszcze raz",
+        streakWin: "Seria zwycięstw: {n} · bonus +{b} {b:moneta|monety|monet}",
+        streakNext: "Wygraj jeszcze raz - bonus +{b} {b:moneta|monety|monet}",
         opponentWantsRematch: "Przeciwnik chce rewanżu!",
         firebaseTitle: "Firebase nie jest skonfigurowany",
         firebaseBody:

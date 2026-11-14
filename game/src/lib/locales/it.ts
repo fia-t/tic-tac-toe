@@ -61,6 +61,8 @@ const pack: LocalePack = {
         roomSetupRated: "Nella partita classificata campo e modificatore non cambiano",
         waitingRematch: "In attesa che l'avversario accetti...",
         playAgain: "Gioca ancora",
+        streakWin: "Serie di vittorie: {n} · +{b} monete bonus",
+        streakNext: "Vinci ancora per +{b} monete bonus",
         opponentWantsRematch: "Il tuo avversario vuole la rivincita!",
         firebaseTitle: "Firebase non è configurato",
         firebaseBody:

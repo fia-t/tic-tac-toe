@@ -20,7 +20,7 @@ import {
 } from "@game/components/gameLogic";
 import { DifficultTicTacToe } from "@game/components/DifficultTicTacToe";
 import { FiveByFiveTicTacToe } from "@game/components/FiveByFiveTicTacToe";
-import { CLASSIC_THEME, Theme, eventSkinsOf, eventStatus, getActiveThemes, preloadThemeImages } from "@game/lib/themes";
+import { CLASSIC_THEME, Theme, eventSkinsOf, eventStatus, getActiveThemes, preloadThemeImages, readCachedThemes } from "@game/lib/themes";
 import { getEquippedSkinId, getWallet, setEventSkins, useWallet } from "@game/lib/wallet";
 import { DailyGift, isGiftReady } from "@game/components/DailyGift";
 import { ShopBarTitle, ShopPage } from "@game/components/SkinShop";
@@ -28,7 +28,6 @@ import { CampaignPage, CampaignResults } from "@game/components/CampaignMap";
 import { HomeGreeting, HomeScreen, readTab, saveTab, type PanelTab } from "@game/components/HomeScreen";
 import { AwardsBarTitle, AwardsPage, ProfileBarTitle, ProfilePage, ProfilePanels } from "@game/components/ProfilePanels";
 import { TopBar } from "@game/components/TopBar";
-import { SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
 import { AppColumn, MenuColumn, MenuScroll, ShellVars, scrollMenuTop } from "@game/components/pageStyles";
 import { BottomNav, NavItem } from "@game/components/BottomNav";
 import { GameHomeContext, GameScreen, RewardedAdContext, useEmbedCompact } from "@game/components/GameScreen";
@@ -86,8 +85,6 @@ const checkWinner = (board: Grid3, playerMarker: string, aiMarker: string): stri
 
 // Розділи меню - окремі екрани (як у прототипі); "game" - саме поле.
 type Screen = "home" | "game" | Exclude<NavItem, "home">;
-// Банер на екрані гри - лише праворуч від кнопок біля поля (замість лівого - відео між партіями, див. App.tsx).
-const GAME_SIDE_BANNERS: SideBannerLayout = { center: '[data-tour="board"], [data-tour="boosters"]', topEdge: '[data-tour="bar"]', rightOnly: true };
 
 const PAGES: Screen[] = ["campaign", "shop", "awards", "profile"];
 
@@ -365,21 +362,36 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
     // Список активних тем завантажується один раз на все ігрове завантаження.
     // До моменту завантаження замість дошки - спінер, кліки ігноруються (themeReady нижче),
     // щоб не вийшло гри з "напівзмішаними" скінами.
+    // Щоб гра відкривалась швидше, поле чекає лише картинки скіна, у якому гравець зараз гратиме;
+    // список тем береться з кешу минулого запуску (свіжий з Firestore підміняє його у фоні).
     useEffect(() => {
         let cancelled = false;
-        getActiveThemes().then(async (themes) => {
-            if (cancelled) return;
-            // Підвантажуємо картинки всіх тем заздалегідь (не лише обраної) - скін можна
-            // змінити в магазині, і на той момент картинки вже мають бути в кеші браузера.
-            // У грі з новини скін один і магазину немає - лише його картинки (менше трафіку й очікування).
-            const skin = embed ? themes.find((item) => item.id === embed.skinId) : undefined;
-            await preloadThemeImages(embed ? [skin ?? CLASSIC_THEME] : [CLASSIC_THEME, ...themes]);
-            if (cancelled) return;
-            setAvailableThemes(themes);
+        let ready = false;
+        let fresh = false;
+        const show = async (themes: Theme[], isFresh: boolean) => {
             // Івентовий скін - одразу обраний у всіх іграх; після кінця івенту - "Класика".
+            // Спершу він: від нього залежить, який скін обрано зараз.
             setEventSkins(eventSkinsOf(themes));
+            const skinId = embed?.skinId ?? getEquippedSkinId(getWallet());
+            const skin = themes.find((item) => item.id === skinId);
+            await preloadThemeImages([skin ?? CLASSIC_THEME]);
+            // Кеш довантажився пізніше за свіжий список - лишаємо свіжий.
+            if (cancelled || (!isFresh && fresh)) return;
+            if (isFresh) fresh = true;
+            setAvailableThemes(themes);
+            if (ready) return;
+            ready = true;
             setThemeReady(true);
             onReady?.();
+        };
+        const cached = embed ? null : readCachedThemes();
+        if (cached) void show(cached, false);
+        getActiveThemes().then(async (themes) => {
+            if (cancelled) return;
+            await show(themes, true);
+            // Решта скінів - у фоні: скін можна змінити в магазині, і на той момент картинки вже
+            // мають бути в кеші браузера. У грі з новини скін один і магазину немає.
+            if (!embed && !cancelled) void preloadThemeImages([CLASSIC_THEME, ...themes]);
         });
         return () => {
             cancelled = true;
@@ -687,6 +699,7 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
                         onClose={() => setShowResultPopup(false)}
                         onRestart={restartGame}
                         onMenu={goToMenu}
+                        botStreak
                     />
                 )}
                 <GameScreen
@@ -763,7 +776,6 @@ export const TicTacToe = ({ onRoomReady, onBeforeFriendOpen, onReady, getShareLi
             {onGameScreen && themeReady ? (
                 <AppColumn ref={topRef}>
                     <GameHomeContext.Provider value={crumb?.onClick ?? goToMenu}>{content}</GameHomeContext.Provider>
-                    <SideBanners id="ad-game" layout={GAME_SIDE_BANNERS} />
                 </AppColumn>
             ) : (
                     <MenuColumn ref={topRef}>

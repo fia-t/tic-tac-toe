@@ -61,6 +61,8 @@ const pack: LocalePack = {
         roomSetupRated: "In een gerankte partij liggen bord en modifier vast",
         waitingRematch: "Wachten tot je tegenstander akkoord gaat...",
         playAgain: "Opnieuw spelen",
+        streakWin: "Winreeks: {n} · +{b} bonusmunten",
+        streakNext: "Win nog een keer voor +{b} bonusmunten",
         opponentWantsRematch: "Je tegenstander wil een revanche!",
         firebaseTitle: "Firebase is niet ingesteld",
         firebaseBody:

@@ -383,6 +383,7 @@ export const DifficultTicTacToe: React.FC<DifficultProps> = ({
                     onClose={() => setShowResultPopup(false)}
                     onRestart={restartUltimateGame}
                     onMenu={onMenu}
+                    botStreak
                 />
             )}
 

@@ -15,6 +15,8 @@ import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { BoosterKind, FREE_SKIN_ID, boosterStock, equipSkin, getEquippedSkinId, getLiveEventSkinId, spendBooster, useWallet } from "@game/lib/wallet";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
+import { AdBannerContext, InlineBanner } from "@game/components/AdBanner";
+import { useFullscreen } from "@game/lib/fullscreen";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
 import { dayOfYear, endDailyRun, nextRunId, setDailyRun, useDailyRun } from "@game/lib/daily";
@@ -34,14 +36,16 @@ export const RewardedAdContext = createContext<(() => Promise<boolean>) | undefi
 // Екран партії на сайті: кнопка-стрілка "Назад" у смузі повертає туди, звідки прийшли (замість шапки).
 export const GameHomeContext = createContext<(() => void) | null>(null);
 
-export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean; $switch?: boolean; $sitePhone?: boolean }>`
+export const GameRoot = styled.div<{ $ad?: boolean; $timer?: boolean; $embed?: boolean; $phone?: boolean; $compact?: boolean; $switch?: boolean; $sitePhone?: boolean }>`
     /* Ширина поля - і рядків над/під ним. Запас по висоті - шапка, смуга виборів, рядок рахунку
        й ряд бустерів під полем; від 800px бустери збоку, тож запас менший. Верхня межа 628px -
        щоб колонка бустерів вміщалась у 760px. Рядок таймера над полем забирає ще --timer-h. */
     --timer-h: ${({ $timer }) => ($timer ? "38px" : "0px")};
     /* Рядок "святкова / класична тема" під полем (під час івенту). */
     --switch-h: ${({ $switch }) => ($switch ? "34px" : "0px")};
-    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h) - var(--switch-h))));
+    /* Рекламний банер 728×90 під полем (повний екран на порталі) разом із відступом над ним. */
+    --ad-h: ${({ $ad }) => ($ad ? "98px" : "0px")};
+    --board-w: min(100%, 628px, max(280px, calc(100dvh - 236px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -50,7 +54,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
     padding-bottom: 16px;
 
     @media (min-width: 800px) {
-        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h) - var(--switch-h))));
+        --board-w: min(100%, 628px, max(280px, calc(100dvh - 184px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
     }
 
     /* Гра в новині й екран партії на сайті: шапки немає - поле займає всю висоту iframe (чи екрана
@@ -60,7 +64,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
         css`
             /* До 800px смуга у два рядки, бустери - рядком під полем: усе це вміщається по висоті
                iframe без прокрутки. */
-            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h) - var(--switch-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 252px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
 
             /* Знизу - лише відступ контейнера (12px): інакше вміст на кілька пікселів вищий за
                iframe і з'являлась смуга прокрутки. */
@@ -78,12 +82,12 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
             --mod-menu-s: 14px;
 
             @media (min-width: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h) - var(--switch-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 84px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
             }
 
             /* Великий екран (повний екран): смуга й рахунок більші - під них більше висоти. */
             @media (min-width: 1200px) and (min-height: 800px) {
-                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2 - var(--switch-h))));
+                --board-w: min(calc(100vw - 180px), 1000px, max(280px, calc(100dvh - 98px - var(--timer-h) * 1.2 - var(--switch-h) - var(--ad-h))));
                 --tip-fs: 21px;
                 --tip-pad: 8px 16px;
             }
@@ -93,7 +97,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
     ${({ $phone }) =>
         $phone &&
         css`
-            --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h) - var(--switch-h))));
+            --board-w: min(100%, max(200px, calc(100dvh - 276px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
             gap: 10px;
             /* По вертикальному центру екрана (AppColumn - flex-колонка). */
             margin-block: auto;
@@ -104,7 +108,7 @@ export const GameRoot = styled.div<{ $timer?: boolean; $embed?: boolean; $phone?
     ${({ $sitePhone }) =>
         $sitePhone &&
         css`
-            --board-w: min(100%, max(220px, calc(100dvh - 318px - var(--timer-h) - var(--switch-h))));
+            --board-w: min(100%, max(220px, calc(100dvh - 318px - var(--timer-h) - var(--switch-h) - var(--ad-h))));
             flex: 1 0 auto;
             gap: 10px;
             padding-top: 8px;
@@ -380,6 +384,12 @@ const StatusSlot = styled.div`
         text-align: center;
         line-height: 1.1;
         ${winterIce()}
+    }
+
+    /* Текст і "Результат" - не впритул до країв плашки (у плашці свого ходу - власні відступи). */
+    && > *:not([data-mine]) {
+        padding-inline: 14px;
+        border-radius: 14px;
     }
 `;
 
@@ -1807,6 +1817,10 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     const compact = useEmbedCompact(embed);
     // Телефон на сайті й порталі (не новина): окрема розкладка з аркушем виборів партії.
     const sitePhone = useMedia("(max-width: 560px)", !embed && goHome !== null);
+    // Повний екран на порталі (є банерний модуль SDK): під полем - горизонтальний банер 728×90.
+    const fullscreen = useFullscreen();
+    const bannerApi = useContext(AdBannerContext);
+    const adBelow = !embed && fullscreen && bannerApi !== null;
     const [setupOpen, setSetupOpen] = useState(false);
     const sheetClose = useRef<HTMLButtonElement>(null);
     useEffect(() => {
@@ -1915,6 +1929,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
         <TurnLine
             key={showFirstHint ? "first" : timerBoost.expired ? "expired" : status}
             $mine={myTurn && !over && !timerBoost.expired}
+            data-mine={(myTurn && !over && !timerBoost.expired) || undefined}
             $pill={isHalloweenEmbed()}
             role="status"
             aria-live="polite"
@@ -2338,7 +2353,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
     }
 
     return (
-        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide} $switch={Boolean(themeSwitch)}>
+        <GameRoot $timer={timer !== null && timer !== undefined && !over} $embed={wide} $switch={Boolean(themeSwitch)} $ad={adBelow}>
             <Bar data-tour="bar" $embed={wide} $site={!embed}>
                 {wide ? (
                     <>
@@ -2452,6 +2467,8 @@ export const GameScreen: React.FC<GameScreenProps> = ({
                     {themeSwitch.label}
                 </ThemeSwitch>
             )}
+
+            {adBelow && <InlineBanner id="ad-game-bottom" />}
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
         </GameRoot>

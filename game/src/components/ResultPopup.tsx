@@ -10,7 +10,7 @@ import { AdButton, AdTag } from "@game/components/DailyGift";
 import { RewardedAdContext } from "@game/components/GameScreen";
 import { earnCoins, getWallet, useWallet } from "@game/lib/wallet";
 import { watchRewardedAd } from "@game/lib/adTracking";
-import { getProfile, useProfile } from "@game/lib/profile";
+import { getProfile, streakBonus, useProfile } from "@game/lib/profile";
 import { playSound } from "@game/lib/sound";
 import { useT } from "@game/lib/i18n";
 import { isEmbed } from "@game/lib/embed";
@@ -323,6 +323,8 @@ type ResultPopupProps = {
     stars?: number;
     // Друга дія між "Грати ще раз" і "Повернутися в меню" (напр. "До карти").
     secondary?: { label: string; onClick: () => void };
+    // Партія з ботом: рядок серії перемог (бонус монет) і "Реванш" замість "Грати ще раз" після поразки.
+    botStreak?: boolean;
 };
 
 const StarsRow = styled.div`
@@ -364,9 +366,17 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
     extra,
     stars,
     secondary,
+    botStreak = false,
 }) => {
     const t = useT();
     const double = useWinDouble(result, summary);
+    const streak = useProfile().stats.currentStreak;
+    if (botStreak && result === "win") {
+        // Бонус уже нараховано (profile.ts) і він є в монетах партії; тут - лише пояснення й наступна ціль.
+        const bonus = streakBonus(streak);
+        extra = bonus > 0 ? t("streakWin", { n: String(streak), b: String(bonus) }) : t("streakNext", { b: String(streakBonus(streak + 1)) });
+    }
+    if (botStreak && result === "lose") restartLabel = t("rematchButton");
     // Гра з новини (iframe): без нагород і "До меню", для хелловінського скіна - анімація.
     if (isEmbed()) return <EmbedResult result={result} onClose={onClose} onRestart={onRestart} />;
     // Яку дію обрали після партії - видно, де гравці зупиняються (меню / закрили) чи грають далі.
