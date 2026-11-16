@@ -66,13 +66,6 @@ export default function TermsPage() {
 
         <h2>Contact</h2>
         <p>Questions about these terms can be sent via our <Link href="/contact">contact page</Link>.</p>
-
-        <p>
-          <em>
-            This is a template terms of service - have it reviewed by a legal professional for your
-            jurisdiction before relying on it in production.
-          </em>
-        </p>
       </div>
     </>
   );

@@ -20,6 +20,7 @@ import { refreshPortalUser, setPortalUserProvider } from "@game/lib/players";
 import { setFullscreenProvider } from "@game/lib/fullscreen";
 import { getSavedLocale, setLocale, toLocale } from "@game/lib/i18n";
 import { watchRewardedAd } from "@game/lib/adTracking";
+import { LegalNotice } from "@game/components/LegalLinks";
 
 // Midgame-реклама - за часом, а не за кількістю партій (партія триває ~1 хв, і до 5-ї мало хто
 // доходив): коли гравець сам починає нову гру (не посеред результату), якщо від початку сесії чи
@@ -252,6 +253,7 @@ export default function App() {
         return (
             <>
                 <GlobalStyle />
+                <LegalNotice />
                 <Bridge origin={PORTAL_ORIGIN}>
                     <PlayRoomClient
                         roomId={roomId}
@@ -268,6 +270,7 @@ export default function App() {
     return (
         <>
             <GlobalStyle />
+            <LegalNotice />
             {/* Шестерня налаштувань - у шапці самої гри (TopBar). */}
             <Bridge origin={PORTAL_ORIGIN}>
                 <Container>

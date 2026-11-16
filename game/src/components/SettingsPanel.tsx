@@ -11,6 +11,7 @@ import { LOCALES, LOCALE_NAMES, chooseLocale, useLocale, useT, type Locale } fro
 import { closePanel, openPanel, useOpenPanel } from "@game/lib/ui";
 import { setInvitesEnabled, useInvitesEnabled } from "@game/lib/presence";
 import { isFullscreenSupported, toggleFullscreen, useFullscreen } from "@game/lib/fullscreen";
+import { SettingsLegalLinks } from "@game/components/LegalLinks";
 
 // Кнопка-шестерня в правому верхньому куті (на місці колишнього перемикача звуку) і вікно
 // налаштувань: звук і мова. Над полем, але під BlockingOverlay порталу (z-index 2000).
@@ -223,6 +224,7 @@ export const SettingsButton: React.FC<{ inline?: boolean; round?: boolean }> = (
                                 ))}
                             </LanguageSelect>
                         </Row>
+                        <SettingsLegalLinks />
                     </ModalCard>
                 </>
             )}
