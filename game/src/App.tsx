@@ -30,7 +30,9 @@ const MIDGAME_INTERVAL_MS = 3 * 60_000;
 // Invite-лінк "Гри з другом" веде на сайт (/play/<roomId>), а не на origin, з якого
 // віддано цей білд - у самому білді маршруту /play немає. На порталі замість нього
 // використовується game.inviteLink() SDK (createInviteLink нижче).
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ? process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "") : undefined;
+// На CrazyGames зовнішні посилання заборонені - там лінк лише з SDK (game.inviteLink), без фолбеку на сайт.
+const SITE_URL =
+    sdkTarget !== "crazygames" && process.env.NEXT_PUBLIC_SITE_URL ? process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "") : undefined;
 
 // Ключ, під яким roomId їде в invite-параметрах порталу (game.inviteLink/getInviteParams).
 const INVITE_ROOM_KEY = "roomId";
@@ -50,7 +52,8 @@ const encodeInvite = (params: Record<string, string>): string => {
 const createInviteLink = sdk.createInviteLink
     ? async (roomId: string) => {
           const params = { [INVITE_ROOM_KEY]: roomId };
-          if (!sdk.getUser || (await sdk.getUser())) return sdk.createInviteLink!(params);
+          // Обхід для гостя потрібен лише порталу: inviteLink() CrazyGames працює й без входу.
+          if (sdkTarget !== "portal" || !sdk.getUser || (await sdk.getUser())) return sdk.createInviteLink!(params);
           const share = await sdk.shareLink?.();
           if (!share) return null;
           try {
@@ -68,7 +71,10 @@ const bannerApi: BannerApi | null =
     sdk.showBanner && sdk.clearBanner && (sdk.hasBanners ?? true) ? { show: sdk.showBanner, clear: sdk.clearBanner } : null;
 
 // На порталі "Гра з другом" відкривається без реклами: rewarded там - лише за явним вибором гравця ("+" у шапці).
-const beforeFriendOpen = sdkTarget === "portal" ? undefined : () => watchRewardedAd("friend_game", sdk.showRewardedAd);
+// На CrazyGames теж: rewarded має бути добровільною, а гра - працювати з AdBlock (там adError ->
+// false заблокував би гру з другом назавжди).
+const beforeFriendOpen =
+    sdkTarget === "portal" || sdkTarget === "crazygames" ? undefined : () => watchRewardedAd("friend_game", sdk.showRewardedAd);
 
 export default function App() {
     // Room-екран тут - локальний стан, а не next/navigation роутинг (якого в

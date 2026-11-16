@@ -13,6 +13,8 @@ import { getAuth } from "firebase-admin/auth";
 export const runtime = "nodejs";
 
 const WORKFLOW_FILE = "build-game.yml";
+// Мають збігатися з TARGETS у game/vite.config.ts (poki/itch поки не збираємо з адмінки).
+const TARGETS = ["portal", "crazygames"];
 const BUILD_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
 
 // verifyIdToken потребує лише projectId (публічні ключі Google тягне сам) -
@@ -36,9 +38,11 @@ export async function POST(request: Request) {
         return fail(401, "Недійсний токен авторизації.");
     }
 
-    const body = (await request.json().catch(() => null)) as { buildId?: unknown } | null;
+    const body = (await request.json().catch(() => null)) as { buildId?: unknown; target?: unknown } | null;
     const buildId = typeof body?.buildId === "string" ? body.buildId : "";
     if (!BUILD_ID_PATTERN.test(buildId)) return fail(400, "Некоректний buildId.");
+    const target = body?.target === undefined ? "portal" : String(body.target);
+    if (!TARGETS.includes(target)) return fail(400, "Некоректна ціль білду.");
 
     const token = process.env.GITHUB_BUILD_TOKEN;
     if (!token) return fail(500, "На сервері не задано GITHUB_BUILD_TOKEN.");
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
             "X-GitHub-Api-Version": "2022-11-28",
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ref, inputs: { build_id: buildId, target: "portal" } }),
+        body: JSON.stringify({ ref, inputs: { build_id: buildId, target } }),
     });
 
     if (!res.ok) {

@@ -21,8 +21,8 @@ const SDK_SCRIPTS: Record<Target, string> = {
     // document.write - щоб SDK, як і звичайний <script>, завантажився до коду гри.
     portal: `<script>(function(){var list=[location.href,document.referrer||""];try{var a=location.ancestorOrigins;for(var i=0;a&&i<a.length;i++)list.push(a[i])}catch(e){}var dev=list.some(function(u){var h=(String(u).split("/")[2]||"").toLowerCase();return h.indexOf("dev")>=0&&/quartsoft\\.com$/.test(h)})||/[?&]sdk=dev/.test(location.search);window.__QSPLAY_SDK_ENV=dev?"dev":"prod";console.info("[QSPlaySDK] "+window.__QSPLAY_SDK_ENV+" SDK",list);document.write('<script src="https://sdk'+(dev?"-dev":"")+'.quartsoft.com/v1/sdk.js"><\\/script>')})()</script>`,
     itch: "",
-    // CrazyGames HTML5 v2 SDK - https://docs.crazygames.com/sdk/html5-v2/intro/
-    crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v2.js"></script>',
+    // CrazyGames HTML5 SDK v3 - https://docs.crazygames.com/sdk/intro/ (v2 - застарілий, без init()).
+    crazygames: '<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>',
     // Poki HTML5 SDK - https://sdk.poki.com/html5
     poki: '<script src="https://game-cdn.poki.com/scripts/v2/poki-sdk.js"></script>',
 };

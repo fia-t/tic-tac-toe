@@ -69,7 +69,12 @@ npm run game:typecheck
 
 ## Адаптери агрегаторів (`src/sdk/`)
 
-- **`crazygames.ts`** - `window.CrazyGames.SDK` (HTML5 v2). https://docs.crazygames.com/sdk/html5-v2/
+- **`crazygames.ts`** - `window.CrazyGames.SDK` (HTML5 **v3**, потрібен `await init()` - адаптер чекає
+  його сам). https://docs.crazygames.com/sdk/intro/. Прогрес - Data Module (вимога CrazyGames), імʼя -
+  акаунт CrazyGames, мова - `user.systemInfo.locale`, інвайти - `game.inviteLink`/`getInviteParam`
+  (без фолбеку на сайт - зовнішні посилання заборонені), звук глушиться на рекламі й при
+  `settings.muteAudio`. Білд: адмінка -> «Зібрати для CrazyGames» (лише ZIP, `/game/` на сайті
+  лишається білдом порталу) або `npm run game:build:crazygames`.
 - **`poki.ts`** - `window.PokiSDK`. https://sdk.poki.com/html5
 - **`qsplay.ts`** - портал play.quartsoft.com, QSPlay SDK (`https://sdk.quartsoft.com/v1/sdk.js`).
   https://docs-dev.quartsoft.com/sdk/intro. Обовʼязкові loading/gameplay-виклики йдуть через

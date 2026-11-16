@@ -102,25 +102,29 @@ const publish = async () => {
         },
     });
 
-    const sitePrefix = `game-builds/${buildId}/site`;
-    for (const file of files) {
-        const ext = path.extname(file).toLowerCase();
-        await bucket.upload(path.join(distDir, file), {
-            destination: `${sitePrefix}/${file}`,
+    // /game/ на сайті - завжди білд порталу. Білди агрегаторів (CrazyGames тощо) - лише ZIP:
+    // інакше збірка для CrazyGames підмінила б гру, яку портал і сайт віддають гравцям.
+    if (target === "portal") {
+        const sitePrefix = `game-builds/${buildId}/site`;
+        for (const file of files) {
+            const ext = path.extname(file).toLowerCase();
+            await bucket.upload(path.join(distDir, file), {
+                destination: `${sitePrefix}/${file}`,
+                resumable: false,
+                metadata: {
+                    contentType: CONTENT_TYPES[ext] || "application/octet-stream",
+                    // Vite хешує імена бандлів - їх можна кешувати назавжди; решта (index.html,
+                    // картинки зі сталими іменами) мусить підхоплювати новий білд одразу.
+                    cacheControl: file.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache",
+                },
+            });
+        }
+
+        await bucket.file("game-builds/current.json").save(JSON.stringify({ buildId, sitePrefix }), {
             resumable: false,
-            metadata: {
-                contentType: CONTENT_TYPES[ext] || "application/octet-stream",
-                // Vite хешує імена бандлів - їх можна кешувати назавжди; решта (index.html,
-                // картинки зі сталими іменами) мусить підхоплювати новий білд одразу.
-                cacheControl: file.startsWith("assets/") ? "public, max-age=31536000, immutable" : "no-cache",
-            },
+            metadata: { contentType: "application/json", cacheControl: "no-cache" },
         });
     }
-
-    await bucket.file("game-builds/current.json").save(JSON.stringify({ buildId, sitePrefix }), {
-        resumable: false,
-        metadata: { contentType: "application/json", cacheControl: "no-cache" },
-    });
 
     await setStatus("success", {
         finishedAt: FieldValue.serverTimestamp(),

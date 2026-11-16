@@ -16,6 +16,10 @@ import { getFirebaseDb } from "@game/lib/firebase";
 // Білди standalone-гри для порталу. Життєвий цикл документа gameBuilds/{id}:
 // queued (створює адмінка) -> building -> success | failed (пише GitHub Actions,
 // game/scripts/build-publish.mjs).
+// Ціль білду = --mode у game/vite.config.ts. Лише portal публікується як /game/ на сайті.
+export const GAME_BUILD_TARGETS = ["portal", "crazygames"] as const;
+export type GameBuildTarget = (typeof GAME_BUILD_TARGETS)[number];
+
 export type GameBuildStatus = "queued" | "building" | "success" | "failed";
 
 export type GameBuild = {
@@ -56,10 +60,10 @@ export const subscribeToGameBuilds = (
     );
 };
 
-export const requestGameBuild = async (user: User): Promise<void> => {
+export const requestGameBuild = async (user: User, target: GameBuildTarget = "portal"): Promise<void> => {
     const docRef = await addDoc(collection(getFirebaseDb(), COLLECTION), {
         status: "queued",
-        target: "portal",
+        target,
         requestedAt: serverTimestamp(),
         requestedBy: user.email ?? user.uid,
     });
@@ -72,7 +76,7 @@ export const requestGameBuild = async (user: User): Promise<void> => {
                 "Content-Type": "application/json",
                 Authorization: `Bearer ${await user.getIdToken()}`,
             },
-            body: JSON.stringify({ buildId: docRef.id }),
+            body: JSON.stringify({ buildId: docRef.id, target }),
         });
         if (!res.ok) {
             const body = (await res.json().catch(() => null)) as { error?: string } | null;
