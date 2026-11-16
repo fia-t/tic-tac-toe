@@ -17,7 +17,7 @@ import {
     ErrorText,
 } from "@game/components/onlineStyles";
 import { createRoom, onlineModifiers } from "@game/lib/onlineGame";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { ModButton, ModIcon, ModRow } from "@game/components/GameOptions";
 import { Eyebrow } from "@game/components/pageStyles";
 import { ALL_MODIFIERS, type Modifier } from "@game/lib/modifiers";
@@ -59,6 +59,58 @@ const ModEdgeRow = styled(ModRow)`
         right: calc(-1 * var(--gb-c, 0px));
         transform: none;
     }
+`;
+
+// Низький екран (CrazyGames на ноутбуці, телефон горизонтально): вікно не вміщалось і "Приєднатися"
+// ховалось під прокруткою. Компактний вигляд - лише в standalone-білдах (портал, CrazyGames);
+// на сайті й у грі в новині (GAME_TARGET не задано) вікно не змінюється.
+const COMPACT_ON_SHORT = Boolean(process.env.GAME_TARGET);
+const SHORT = "@media (max-height: 640px)";
+
+const Card = styled(ModalCard)`
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            padding: 14px 20px 16px;
+
+            h2 {
+                margin-bottom: 4px;
+            }
+            p {
+                margin-bottom: 6px;
+            }
+            img {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    `}
+`;
+
+const CompactGroup = styled(ModeOptionGroup)`
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            margin-bottom: 12px;
+        }
+    `}
+`;
+
+const Actions = styled.div`
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+
+            & > button {
+                flex: 1;
+                width: auto;
+                margin-top: 0;
+            }
+        }
+    `}
 `;
 
 const ModInfo = styled.div`
@@ -151,7 +203,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
     return (
         <>
             <Overlay onClick={onClose} style={{ zIndex: 1600 }} />
-            <ModalCard onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
+            <Card onClick={(e) => e.stopPropagation()} style={{ zIndex: 1601 }}>
                 <ModalCloseButton onClick={onClose} aria-label={t("close")}>
                     <IconClose size={16} />
                 </ModalCloseButton>
@@ -160,7 +212,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                     <>
                         <ModalTitle>{t("friendTitle")}</ModalTitle>
                         <ModalSubtitle>{t("chooseMode")}</ModalSubtitle>
-                        <ModeOptionGroup>
+                        <CompactGroup>
                             <ModeOption type="button" aria-pressed={mode === "3x3"} $active={mode === "3x3"} onClick={() => setMode("3x3")}>
                                 <ModeOptionIcon src={assetUrl("images/traditional.png")} alt="3×3" />
                                 <ModeOptionHint>3×3</ModeOptionHint>
@@ -173,7 +225,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                                 <ModeOptionIcon src={assetUrl("images/difficult.png")} alt="9×9" />
                                 <ModeOptionHint>9×9</ModeOptionHint>
                             </ModeOption>
-                        </ModeOptionGroup>
+                        </CompactGroup>
 
                         <ModPicker>
                             <Eyebrow id="friend-mod">{t("modifierLabel")}</Eyebrow>
@@ -198,20 +250,22 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                             </ModInfo>
                         </ModPicker>
 
-                        <PillButton type="button" onClick={handleCreate} disabled={loading}>
-                            {loading ? t("creating") : t("createGame")}
-                        </PillButton>
-                        <PillButton
-                            type="button"
-                            $variant="ghost"
-                            disabled={loading}
-                            onClick={() => {
-                                setError(null);
-                                setView("join");
-                            }}
-                        >
-                            {t("join")}
-                        </PillButton>
+                        <Actions>
+                            <PillButton type="button" onClick={handleCreate} disabled={loading}>
+                                {loading ? t("creating") : t("createGame")}
+                            </PillButton>
+                            <PillButton
+                                type="button"
+                                $variant="ghost"
+                                disabled={loading}
+                                onClick={() => {
+                                    setError(null);
+                                    setView("join");
+                                }}
+                            >
+                                {t("join")}
+                            </PillButton>
+                        </Actions>
 
                         {error && <ErrorText>{error}</ErrorText>}
                     </>
@@ -243,7 +297,7 @@ export const FriendGameModal: React.FC<FriendGameModalProps> = ({ onClose, onRoo
                         </ButtonRow>
                     </>
                 )}
-            </ModalCard>
+            </Card>
         </>
     );
 };
