@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { TicTacToe } from "@game/components/tic-tac-toe";
 import { PlayRoomClient } from "@game/components/PlayRoomClient";
 import { GlobalStyle, Container } from "@game/components/gameStyles";
@@ -66,6 +66,10 @@ const createInviteLink = sdk.createInviteLink
       }
     : undefined;
 
+// Міст postMessage з порталом play.quartsoft.com (реклама порталу, події партій) - лише в білді порталу.
+// На CrazyGames/Poki батьківська сторінка інша, і кожне повідомлення давало б помилку в консолі.
+const Bridge = sdkTarget === "portal" ? PortalGameBridge : ({ children }: { origin: string; children: ReactNode }) => <>{children}</>;
+
 // Банери - лише там, де SDK їх має (портал з модулем banner).
 const bannerApi: BannerApi | null =
     sdk.showBanner && sdk.clearBanner && (sdk.hasBanners ?? true) ? { show: sdk.showBanner, clear: sdk.clearBanner } : null;
@@ -90,6 +94,9 @@ export default function App() {
     const sessionGames = useRef(0);
     const lastAdAt = useRef(Date.now());
     const panel = useOpenPanel();
+    // Кнопки "за рекламу" - поки SDK її не відмовив до кінця сесії (CrazyGames, базовий запуск).
+    const [rewardedAds, setRewardedAds] = useState(Boolean(sdk.hasRewardedAds));
+    useEffect(() => sdk.onRewardedAdsUnavailable?.(() => setRewardedAds(false)), []);
 
     // Відкрите вікно поверх гри (налаштування, магазин, нагороди...) - пауза: порталу gameplayStop,
     // після закриття - знову gameplayStart (якщо партія ще триває).
@@ -245,7 +252,7 @@ export default function App() {
         return (
             <>
                 <GlobalStyle />
-                <PortalGameBridge origin={PORTAL_ORIGIN}>
+                <Bridge origin={PORTAL_ORIGIN}>
                     <PlayRoomClient
                         roomId={roomId}
                         onExit={() => setRoomId(null)}
@@ -253,7 +260,7 @@ export default function App() {
                         createInviteLink={createInviteLink}
                         onStatusChange={handleRoomStatus}
                     />
-                </PortalGameBridge>
+                </Bridge>
             </>
         );
     }
@@ -262,7 +269,7 @@ export default function App() {
         <>
             <GlobalStyle />
             {/* Шестерня налаштувань - у шапці самої гри (TopBar). */}
-            <PortalGameBridge origin={PORTAL_ORIGIN}>
+            <Bridge origin={PORTAL_ORIGIN}>
                 <Container>
                     <AdBannerContext.Provider value={bannerApi}>
                         <TicTacToe
@@ -270,11 +277,11 @@ export default function App() {
                             onBeforeFriendOpen={beforeFriendOpen}
                             onReady={handleReady}
                             getShareLink={sdk.shareLink}
-                            onRewardedAd={sdk.hasRewardedAds ? sdk.showRewardedAd : undefined}
+                            onRewardedAd={rewardedAds ? sdk.showRewardedAd : undefined}
                         />
                     </AdBannerContext.Provider>
                 </Container>
-            </PortalGameBridge>
+            </Bridge>
         </>
     );
 }

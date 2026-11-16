@@ -15,6 +15,9 @@ export type AggregatorSdk = {
     // Чи справді є rewarded-реклама (CrazyGames, Poki). Без неї гра не пропонує
     // "нагород за рекламу" - showRewardedAd там лише заглушка, що одразу віддає true.
     hasRewardedAds?: boolean;
+    // Реклама за винагороду стала недоступною до кінця сесії (CrazyGames: adsDisabled на базовому
+    // запуску) - UI ховає кнопки "за рекламу". Повертає відписку.
+    onRewardedAdsUnavailable?: (callback: () => void) => () => void;
     happyTime?: () => void;
 
     // --- Нижче - можливості, які має лише QSPlay SDK порталу (src/sdk/qsplay.ts). ---

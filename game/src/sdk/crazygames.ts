@@ -1,5 +1,8 @@
 import type { AggregatorSdk } from "./types";
 import { setSoundSuppressed } from "@game/lib/sound";
+import { t } from "@game/lib/i18n";
+import { showToast } from "@game/lib/ui";
+import { reportAdOutcome } from "@game/lib/adTracking";
 
 // CrazyGames HTML5 SDK v3 (https://docs.crazygames.com/sdk/intro/). Скрипт
 // https://sdk.crazygames.com/crazygames-sdk-v3.js підставляє game/vite.config.ts (--mode crazygames).
@@ -93,6 +96,16 @@ const call = (fn: (sdk: Sdk) => void) => {
     });
 };
 
+// Реклама вимкнена для гри (CrazyGames: "adsDisabled" - базовий запуск) - до кінця сесії не просимо
+// її знову, а UI ховає кнопки "за рекламу".
+let adsDisabled = false;
+const adsDisabledListeners = new Set<() => void>();
+const markAdsDisabled = () => {
+    if (adsDisabled) return;
+    adsDisabled = true;
+    adsDisabledListeners.forEach((listener) => listener());
+};
+
 // Звук глушиться, якщо йде реклама АБО CrazyGames просить вимкнути аудіо (settings.muteAudio).
 let adPlaying = false;
 let platformMuted = false;
@@ -103,6 +116,7 @@ const syncSound = () => setSoundSuppressed(adPlaying || platformMuted);
 const requestAd = async (type: "midgame" | "rewarded"): Promise<boolean> => {
     const sdk = await ready();
     if (!sdk) return true;
+    if (adsDisabled) return false;
     return new Promise((resolve) => {
         const done = (result: boolean) => {
             adPlaying = false;
@@ -116,9 +130,14 @@ const requestAd = async (type: "midgame" | "rewarded"): Promise<boolean> => {
                     syncSound();
                 },
                 adFinished: () => done(true),
-                adError: () => done(false),
+                adError: (error) => {
+                    console.warn(`[CrazyGames] requestAd ${type} failed`, error);
+                    if ((error as { code?: string } | undefined)?.code === "adsDisabled") markAdsDisabled();
+                    done(false);
+                },
             });
-        } catch {
+        } catch (error) {
+            console.warn(`[CrazyGames] requestAd ${type} threw`, error);
             done(false);
         }
     });
@@ -145,8 +164,19 @@ export const crazyGamesSdk: AggregatorSdk = {
     showMidgameAd: async () => {
         await requestAd("midgame");
     },
-    showRewardedAd: () => requestAd("rewarded"),
+    // Без повідомлення кнопки "за рекламу" при порожній рекламі мовчки нічого не робили б.
+    showRewardedAd: async () => {
+        const rewarded = await requestAd("rewarded");
+        reportAdOutcome(rewarded ? "rewarded" : "unavailable");
+        if (!rewarded) showToast(t("adUnavailable"));
+        return rewarded;
+    },
     hasRewardedAds: true,
+    onRewardedAdsUnavailable: (callback) => {
+        if (adsDisabled) callback();
+        adsDisabledListeners.add(callback);
+        return () => adsDisabledListeners.delete(callback);
+    },
     happyTime: () => call((sdk) => sdk.game.happytime()),
 
     // --- Гра з другом: запрошення веде на сторінку гри на CrazyGames (зовнішні посилання заборонені).

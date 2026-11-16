@@ -1,6 +1,6 @@
 "use client";
 import React, { useContext, useEffect, useRef, useState } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import { Overlay } from "@game/components/gameStyles";
 import { ModalCard, ModalCloseButton, PillButton } from "@game/components/onlineStyles";
 import { IconClose } from "@game/components/GameIcons";
@@ -71,10 +71,51 @@ export const useRoundSummary = (cells: unknown[], playerMarker: string): RoundSu
     };
 };
 
+// Низький екран (CrazyGames на ноутбуці, телефон горизонтально): вікно не вміщалось і нижні кнопки
+// ховались під прокруткою. Компактний вигляд - лише в standalone-білдах (портал, CrazyGames);
+// на сайті (GAME_TARGET не задано) вікно не змінюється, у грі з новини - власне EmbedResult.
+const COMPACT_ON_SHORT = Boolean(process.env.GAME_TARGET);
+const SHORT = "@media (max-height: 640px)";
+
 // Тексти вікна трохи більші за звичайні модалки (і кнопки - через --btn-fs-add).
 const Card = styled(ModalCard)`
     text-align: center;
     --btn-fs-add: 2px;
+
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            padding: 12px 20px 14px;
+            --btn-fs-add: 0px;
+
+            h2 {
+                margin: 0 0 4px;
+                font-size: 28px;
+            }
+            svg[width="34"] {
+                width: 26px;
+                height: 26px;
+            }
+        }
+    `}
+`;
+
+// Нижні кнопки: на низькому екрані - в один ряд.
+const Actions = styled.div`
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+
+            & > button {
+                flex: 1;
+                width: auto;
+                margin-top: 0;
+            }
+        }
+    `}
 `;
 
 const Eyebrow = styled.div`
@@ -100,6 +141,18 @@ const Rewards = styled.div`
     padding: 10px 4px;
     border-top: 1px dashed rgba(139, 101, 60, 0.3);
     border-bottom: 1px dashed rgba(139, 101, 60, 0.3);
+
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            padding: 6px 4px;
+            margin-bottom: 6px;
+
+            & > div {
+                padding: 4px;
+            }
+        }
+    `}
 `;
 
 // Нагорода: іконка зліва від числа в одному рядку, підпис під ними.
@@ -332,6 +385,13 @@ const StarsRow = styled.div`
     justify-content: center;
     gap: 6px;
     margin: -4px 0 10px;
+
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            margin: 0 0 6px;
+        }
+    `}
 `;
 
 const StarIcon = ({ on }: { on: boolean }) => (
@@ -348,6 +408,14 @@ const StarIcon = ({ on }: { on: boolean }) => (
 
 const Extra = styled.div`
     margin: 0 0 10px;
+
+    ${COMPACT_ON_SHORT &&
+    css`
+        ${SHORT} {
+            margin-bottom: 4px;
+        }
+    `}
+
     color: #4a2c0c;
     font-size: 15px;
     font-weight: 800;
@@ -425,19 +493,21 @@ export const ResultPopup: React.FC<ResultPopupProps> = ({
                         <AdTag aria-hidden="true">AD</AdTag>
                     </AdButton>
                 )}
-                <PrimaryButton type="button" data-attract="" onClick={act("restart", onRestart)} disabled={restartDisabled}>
-                    {restartLabel ?? t("playAgain")}
-                </PrimaryButton>
-                {secondary && (
-                    <PillButton type="button" onClick={act("secondary", secondary.onClick)}>
-                        {secondary.label}
-                    </PillButton>
-                )}
-                {onMenu && (
-                    <PillButton type="button" $variant="ghost" onClick={act("menu", onMenu)}>
-                        {t("backToMenu")}
-                    </PillButton>
-                )}
+                <Actions>
+                    <PrimaryButton type="button" data-attract="" onClick={act("restart", onRestart)} disabled={restartDisabled}>
+                        {restartLabel ?? t("playAgain")}
+                    </PrimaryButton>
+                    {secondary && (
+                        <PillButton type="button" onClick={act("secondary", secondary.onClick)}>
+                            {secondary.label}
+                        </PillButton>
+                    )}
+                    {onMenu && (
+                        <PillButton type="button" $variant="ghost" onClick={act("menu", onMenu)}>
+                            {t("backToMenu")}
+                        </PillButton>
+                    )}
+                </Actions>
             </Card>
         </>
     );
