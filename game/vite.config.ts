@@ -72,7 +72,8 @@ export default defineConfig(({ mode }) => {
         "process.env.NEXT_PUBLIC_GAME_ASSET_BASE": JSON.stringify("./"),
     };
     for (const key of INLINED_ENV_KEYS) {
-        define[`process.env.${key}`] = JSON.stringify(env[key] ?? "");
+        // trim: у змінних CI траплявся пробіл на початку (" AIza...", " 1:...") - Firebase відповідав 400.
+        define[`process.env.${key}`] = JSON.stringify((env[key] ?? "").trim());
     }
 
     return {
