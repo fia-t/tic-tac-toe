@@ -11,7 +11,7 @@ import { EmptyState, Section, StatCard, StatCardRow, StatLabel, StatValue, Table
 
 // Гравці: картки з players/{uid}, які пише сама гра (game/src/lib/players.ts) - на старті й
 // після кожної партії. Хто (ім'я або наше випадкове, акаунт порталу), де грав, коли востаннє
-// і прогрес кампанії; рядок розгортається в подробиці.
+// і скільки партій зіграв; рядок розгортається в подробиці.
 
 type Row = PlayerRecord & { id: string };
 
@@ -91,24 +91,6 @@ const Chip = styled.span<{ $direct?: boolean }>`
 const Sub = styled.div`
     color: #9a876d;
     font-size: 12px;
-`;
-
-const Bar = styled.span`
-    display: inline-block;
-    vertical-align: middle;
-    width: 90px;
-    height: 7px;
-    margin-left: 8px;
-    border-radius: 999px;
-    background: #efe6d6;
-    overflow: hidden;
-
-    i {
-        display: block;
-        height: 100%;
-        border-radius: inherit;
-        background: #1fb37a;
-    }
 `;
 
 const Details = styled.div`
@@ -202,7 +184,7 @@ export const PlayersSection: React.FC = () => {
                                 <Th>Гравець</Th>
                                 <Th>Де грав</Th>
                                 <Th>Остання гра</Th>
-                                <Th>Кампанія (зірки)</Th>
+                                <Th>Партій</Th>
                             </tr>
                         </thead>
                         <tbody>
@@ -233,10 +215,10 @@ export const PlayersSection: React.FC = () => {
                                                 <Sub>{ago(last)}</Sub>
                                             </Td>
                                             <Td>
-                                                {r.campaignStars ?? 0} / {MAX_STARS}
-                                                <Bar>
-                                                    <i style={{ width: `${Math.min(1, (r.campaignStars ?? 0) / MAX_STARS) * 100}%` }} />
-                                                </Bar>
+                                                <Name>{r.games ?? 0}</Name>
+                                                <Sub title="перемоги / нічиї / поразки">
+                                                    {r.wins ?? 0} / {r.draws ?? 0} / {r.losses ?? 0}
+                                                </Sub>
                                             </Td>
                                         </RowButton>
                                         {isOpen && (
@@ -262,6 +244,10 @@ export const PlayersSection: React.FC = () => {
                                                         <div>
                                                             <b>Партій</b>
                                                             {r.games} (перемог {r.wins}, нічиїх {r.draws}, поразок {r.losses})
+                                                        </div>
+                                                        <div>
+                                                            <b>Кампанія</b>
+                                                            {r.campaignStars ?? 0} / {MAX_STARS} зірок
                                                         </div>
                                                         <div>
                                                             <b>Онлайн-перемог</b>
