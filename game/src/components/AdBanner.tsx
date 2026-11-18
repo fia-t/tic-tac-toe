@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import type { BannerResult } from "@game/sdk/types";
 
@@ -64,7 +64,10 @@ const AdSlot: React.FC<{
         };
     }, [api, id, width, height]);
 
-    if (!api || failed) return null;
+    if (!api) return null;
+    // Реклами немає - лишаємо порожнє місце того ж розміру (без id, щоб SDK його не чіпав),
+    // інакше розкладка стрибала б, коли банер зникає.
+    if (failed) return <SlotBox aria-hidden style={{ width, height, pointerEvents: "none", ...style }} />;
     return <SlotBox ref={ref} id={id} style={{ width, height, ...style }} />;
 };
 
@@ -86,9 +89,11 @@ export const InlineBanner: React.FC<{ id: string }> = ({ id }) => {
     const ref = useRef<HTMLDivElement>(null);
     const [width, setWidth] = useState(0);
 
-    useEffect(() => {
+    // Ширину міряємо до першого малювання - інакше рядок спершу мав би висоту 0 і поле стрибало б.
+    useLayoutEffect(() => {
         const node = ref.current;
         if (!node) return;
+        setWidth(node.clientWidth);
         const observer = new ResizeObserver(() => setWidth(node.clientWidth));
         observer.observe(node);
         return () => observer.disconnect();

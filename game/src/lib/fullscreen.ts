@@ -61,10 +61,19 @@ const watch = () => {
     // Розмір вікна - запасна ознака: вихід/вхід у повний екран завжди змінює розмір iframe.
     if (!resizeBound) {
         resizeBound = true;
+        // Найбільша площа вікна з моменту, коли гру розгорнуто (до того - поточна).
+        let peakArea = window.innerWidth * window.innerHeight;
         window.addEventListener("resize", () => {
-            // Портал міг пропустити подію виходу - якщо вікно вже не на весь екран, гра не розгорнута.
+            // Портал міг пропустити подію виходу - тоді iframe зменшився назад. Дивимось саме на
+            // зменшення: у повному екрані порталу iframe не завжди дорівнює екрану (масштаб сторінки,
+            // панелі порталу), і перевірка "не на весь екран" скидала щойно отриманий стан - кнопка
+            // гри лишалась "Розгорнути", і вийти нею було неможливо. Суттєво (площа -25%+), щоб
+            // напр. поява панелі порталу в повному екрані не скидала стан.
+            const area = window.innerWidth * window.innerHeight;
+            peakArea = reported ? Math.max(peakArea, area) : area;
+            const shrank = area < peakArea * 0.75;
             const coarse = window.matchMedia?.("(pointer: coarse)").matches;
-            if (reported && !coarse && !fillsScreen() && !document.fullscreenElement) reported = false;
+            if (reported && shrank && !coarse && !fillsScreen() && !document.fullscreenElement) reported = false;
             publish();
         });
     }
