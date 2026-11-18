@@ -15,7 +15,14 @@ import { isEmbed, isHalloweenEmbed } from "@game/lib/embed";
 import { BoosterKind, FREE_SKIN_ID, boosterStock, equipSkin, getEquippedSkinId, getLiveEventSkinId, spendBooster, useWallet } from "@game/lib/wallet";
 import { ScoreCobweb } from "@game/components/HalloweenDecor";
 import { FullscreenButton, SettingsButton } from "@game/components/SettingsPanel";
-import { AdBannerContext, InlineBanner } from "@game/components/AdBanner";
+import { AdBannerContext, InlineBanner, SideBanners, type SideBannerLayout } from "@game/components/AdBanner";
+
+// Великий банер праворуч від поля й бустерів (повний екран на порталі); ліворуч - плитки полів.
+const GAME_SIDE_BANNERS: SideBannerLayout = {
+    center: '[data-tour="board"], [data-tour="boosters"]',
+    topEdge: '[data-tour="bar"]',
+    rightOnly: true,
+};
 import { useFullscreen } from "@game/lib/fullscreen";
 import { useT } from "@game/lib/i18n";
 import { DIFFICULTIES, Difficulty, setDifficulty, useDifficulty } from "@game/lib/difficulty";
@@ -2469,6 +2476,7 @@ export const GameScreen: React.FC<GameScreenProps> = ({
             )}
 
             {adBelow && <InlineBanner id="ad-game-bottom" />}
+            {adBelow && <SideBanners id="ad-game" layout={GAME_SIDE_BANNERS} />}
 
             {friendOpen && <FriendGameModal onClose={() => setFriendOpen(false)} onRoomReady={onRoomReady} defaultMode={FRIEND_MODE[mode]} />}
         </GameRoot>
